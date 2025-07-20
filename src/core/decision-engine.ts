@@ -83,7 +83,11 @@ Return as JSON array of decisions ordered by priority.
         .query(prompt)
         .asText();
 
-      return JSON.parse(response);
+      // Extract JSON from markdown code blocks if present
+      const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+      const jsonText = jsonMatch ? jsonMatch[1] : response;
+      
+      return JSON.parse(jsonText);
     } catch {
       return [];
     }
@@ -92,7 +96,14 @@ Return as JSON array of decisions ordered by priority.
   private async convertDecisionToAction(decision: Decision): Promise<Action | null> {
     const actionType = this.mapDecisionToActionType(decision);
     
-    if (!actionType) return null;
+    // 🔥 CRITICAL: デバッグログ追加
+    if (!actionType) {
+      console.log(`❌ Unknown decision type: "${decision.type}" - Available types:`, 
+        Object.keys(this.getTypeMappingForDebug()));
+      return null;
+    }
+    
+    console.log(`✅ Mapped decision "${decision.type}" to action "${actionType}"`);
     
     return {
       id: `action-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -110,7 +121,11 @@ Return as JSON array of decisions ordered by priority.
       'immediate_post': 'post_immediate',
       'analyze_performance': 'performance_analysis',
       'optimize_timing': 'timing_optimization',
-      'clean_data': 'data_cleanup'
+      'clean_data': 'data_cleanup',
+      // 🔥 CRITICAL: 実際に使用されているtypeを追加
+      'strategy_shift': 'strategy_optimization',
+      'content_generation': 'content_creation',
+      'posting_schedule': 'schedule_optimization'
     };
     
     return typeMapping[decision.type] || null;
@@ -138,7 +153,7 @@ Return as JSON array of decisions ordered by priority.
     const fs = (await import('fs/promises')).default;
     const path = (await import('path')).default;
     
-    const decisionsPath = path.join(process.cwd(), 'data', 'decisions', 'strategic-decisions.yaml');
+    const decisionsPath = path.join(process.cwd(), 'data', 'strategic-decisions.yaml');
     
     let history = loadYamlArraySafe<any>(decisionsPath);
     
@@ -154,5 +169,19 @@ Return as JSON array of decisions ordered by priority.
     
     await fs.mkdir(path.dirname(decisionsPath), { recursive: true });
     await fs.writeFile(decisionsPath, yaml.dump(history, { indent: 2 }));
+  }
+
+  // デバッグ用ヘルパー関数追加
+  private getTypeMappingForDebug(): Record<string, string> {
+    return {
+      'collect_content': 'content_collection',
+      'immediate_post': 'post_immediate',
+      'analyze_performance': 'performance_analysis',
+      'optimize_timing': 'timing_optimization',
+      'clean_data': 'data_cleanup',
+      'strategy_shift': 'strategy_optimization',
+      'content_generation': 'content_creation',
+      'posting_schedule': 'schedule_optimization'
+    };
   }
 }
