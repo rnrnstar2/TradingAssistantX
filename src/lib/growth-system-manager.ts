@@ -1,6 +1,7 @@
 import { PostHistory } from '../types/index';
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { loadYamlSafe } from '../utils/yaml-utils';
 import * as yaml from 'js-yaml';
 
 export interface AccountStrategy {
@@ -259,13 +260,8 @@ export class GrowthSystemManager {
   
   private loadFile<T>(filePath: string, defaultValue: T): T {
     if (existsSync(filePath)) {
-      try {
-        const data = readFileSync(filePath, 'utf8');
-        return yaml.load(data) as T;
-      } catch (error) {
-        console.error(`Error loading ${filePath}:`, error);
-        return defaultValue;
-      }
+      const result = loadYamlSafe<T>(filePath);
+      return result !== null ? result : defaultValue;
     }
     return defaultValue;
   }

@@ -74,7 +74,7 @@ export interface Task {
 export interface TaskResult {
   taskId: string;
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
   timestamp: number;
   duration: number;
@@ -90,7 +90,7 @@ export interface ParallelTaskGroup {
 export interface IntermediateResult {
   id: string;
   taskId: string;
-  data: any;
+  data: unknown;
   timestamp: number;
   expiresAt?: number;
 }
@@ -110,7 +110,7 @@ export interface DataCommunicationMessage {
   type: 'status' | 'result' | 'error' | 'progress';
   from: string;
   to?: string;
-  data: any;
+  data: unknown;
   timestamp: number;
 }
 

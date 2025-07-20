@@ -1,9 +1,9 @@
 import 'dotenv/config';
 import { SimpleXClient } from './x-client';
 import { ScrapedData } from '../types/index';
-import { readFileSync, existsSync } from 'fs';
+import { existsSync } from 'fs';
 import Anthropic from '@anthropic-ai/sdk';
-import * as yaml from 'js-yaml';
+import { loadYamlArraySafe } from '../utils/yaml-utils';
 
 export class ClaudeXAgent {
   private xClient: SimpleXClient;
@@ -29,9 +29,7 @@ export class ClaudeXAgent {
         return;
       }
       
-      const data: ScrapedData[] = yaml.load(
-        readFileSync('data/scraped.yaml', 'utf8')
-      ) as ScrapedData[];
+      const data: ScrapedData[] = loadYamlArraySafe<ScrapedData>('data/scraped.yaml');
       
       if (data.length === 0) {
         console.log('No data to process');

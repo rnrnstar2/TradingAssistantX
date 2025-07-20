@@ -1,5 +1,6 @@
 import { claude } from '@instantlyeasy/claude-code-sdk-ts';
 import type { Context, Decision, Need, Action } from '../types/autonomous-system.js';
+import { loadYamlSafe, loadYamlArraySafe } from '../utils/yaml-utils';
 import * as yaml from 'js-yaml';
 
 export class DecisionEngine {
@@ -116,22 +117,21 @@ Return as JSON array of decisions ordered by priority.
   }
 
   private async loadSharedContext(): Promise<any> {
-    const fs = (await import('fs/promises')).default;
     const path = (await import('path')).default;
     
     const insightsPath = path.join(process.cwd(), 'data', 'context', 'shared-insights.yaml');
     
-    try {
-      const data = await fs.readFile(insightsPath, 'utf-8');
-      return yaml.load(data) as any;
-    } catch {
-      return {
-        lastUpdated: new Date().toISOString(),
-        insights: [],
-        patterns: {},
-        recommendations: []
-      };
+    const result = loadYamlSafe<any>(insightsPath);
+    if (result !== null) {
+      return result;
     }
+    
+    return {
+      lastUpdated: new Date().toISOString(),
+      insights: [],
+      patterns: {},
+      recommendations: []
+    };
   }
 
   private async saveDecisions(decisions: Decision[]): Promise<void> {
@@ -140,13 +140,7 @@ Return as JSON array of decisions ordered by priority.
     
     const decisionsPath = path.join(process.cwd(), 'data', 'decisions', 'strategic-decisions.yaml');
     
-    let history = [];
-    try {
-      const data = await fs.readFile(decisionsPath, 'utf-8');
-      history = yaml.load(data) as any[];
-    } catch {
-      // File doesn't exist yet
-    }
+    let history = loadYamlArraySafe<any>(decisionsPath);
     
     history.push({
       timestamp: new Date().toISOString(),

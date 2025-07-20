@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
-import { writeFileSync, readFileSync, existsSync } from 'fs';
+import { writeFileSync, existsSync } from 'fs';
 import { PostHistory, PostingResult, XClientConfig } from '../types/index';
+import { loadYamlArraySafe } from '../utils/yaml-utils';
 import * as yaml from 'js-yaml';
 
 export class SimpleXClient {
@@ -22,13 +23,7 @@ export class SimpleXClient {
   
   private loadPostHistory(): void {
     if (existsSync(this.historyFile)) {
-      try {
-        const data = readFileSync(this.historyFile, 'utf8');
-        this.postHistory = yaml.load(data) as PostHistory[];
-      } catch (error) {
-        console.error('Error loading post history:', error);
-        this.postHistory = [];
-      }
+      this.postHistory = loadYamlArraySafe<PostHistory>(this.historyFile);
     }
   }
   

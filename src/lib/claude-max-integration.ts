@@ -1,6 +1,7 @@
 import { claude } from '@instantlyeasy/claude-code-sdk-ts';
 import fs from 'fs';
 import path from 'path';
+import { loadYamlArraySafe } from '../utils/yaml-utils';
 import * as yaml from 'js-yaml';
 import { chromium } from 'playwright';
 import { createBrowserTools, createAnalysisTools } from './claude-tools';
@@ -213,17 +214,8 @@ export class ClaudeMaxIntegration {
   }
 
   private loadPostHistory(): PostHistory[] {
-    try {
-      const historyPath = path.join(process.cwd(), 'data', 'posting-history.yaml');
-      if (fs.existsSync(historyPath)) {
-        const rawData = fs.readFileSync(historyPath, 'utf8');
-        return yaml.load(rawData) as PostHistory[];
-      }
-      return [];
-    } catch (error) {
-      console.warn('Failed to load post history:', error);
-      return [];
-    }
+    const historyPath = path.join(process.cwd(), 'data', 'posting-history.yaml');
+    return loadYamlArraySafe<PostHistory>(historyPath);
   }
 }
 

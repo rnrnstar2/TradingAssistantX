@@ -28,7 +28,7 @@ export interface Need {
   type: 'content' | 'immediate' | 'maintenance' | 'optimization';
   priority: 'high' | 'medium' | 'low';
   description: string;
-  context?: any;
+  context?: unknown;
   createdAt: string;
 }
 
@@ -49,7 +49,7 @@ export interface Action {
   priority: string;
   params: Record<string, any>;
   status: 'pending' | 'running' | 'completed' | 'failed';
-  result?: any;
+  result?: unknown;
   error?: string;
   createdAt: string;
   startedAt?: string;
@@ -74,7 +74,7 @@ export interface Result {
   taskId: string;
   actionId: string;
   status: 'success' | 'failed' | 'partial';
-  data?: any;
+  data?: unknown;
   error?: string;
   completedAt: string;
   metadata?: ResultMetadata;
@@ -105,7 +105,7 @@ export interface Message {
   from: string;
   to: string;
   type: 'info' | 'request' | 'response' | 'error';
-  content: any;
+  content: unknown;
   timestamp: string;
 }
 
@@ -122,7 +122,7 @@ export interface Insight {
   type: string;
   description: string;
   confidence: number;
-  evidence?: any[];
+  evidence?: unknown[];
   createdAt: string;
 }
 
@@ -130,7 +130,7 @@ export interface Pattern {
   type: string;
   frequency: number;
   lastSeen: string;
-  examples: any[];
+  examples: unknown[];
 }
 
 export interface Recommendation {
@@ -163,6 +163,6 @@ export interface SystemError {
   timestamp: string;
   error: string;
   stack?: string;
-  context?: any;
+  context?: unknown;
   recoveryAttempted?: boolean;
 }
