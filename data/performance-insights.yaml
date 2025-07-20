@@ -1,0 +1,60 @@
+# パフォーマンス分析レポート
+version: "1.0.0"
+lastUpdated: 1752847622647
+analysisDate: 1752847622647
+
+metrics:
+  followers:
+    current: 0
+    weeklyGrowth: 0
+    monthlyGrowth: 0
+    trend: stable  # up, down, stable
+  
+  engagement:
+    averageLikes: 0
+    averageRetweets: 0
+    averageReplies: 0
+    engagementRate: 0
+    trend: down
+  
+  reach:
+    averageViews: 0
+    impressions: 0
+    trend: stable
+
+topPerformingPosts:
+  - id: "1752833223526"
+    content: "テスト投稿 - 2025/7/18 19:07:03"
+    likes: 0
+    retweets: 0
+    replies: 0
+    views: 0
+    timestamp: 1752833223526
+    themes: []
+  
+  - id: "1752833251476"
+    content: "最新情報: BTC/USDTで5%のアービトラージ機会を検出。Binance: $50,000, Coinbase: $52,500"
+    likes: 0
+    retweets: 0
+    replies: 0
+    views: 0
+    timestamp: 1752833251476
+    themes: []
+
+contentAnalysis:
+  bestPerformingThemes: []
+  bestPerformingTimes:
+    - "19:00"
+  bestPerformingFormats:
+    - 教育コンテンツ
+    - 実例紹介
+  underperformingPatterns:
+    - 30%以上の投稿で低エンゲージメント
+
+recommendations:
+  immediate:
+    - エンゲージメント率向上のため、より対話的なコンテンツを検討
+  shortTerm:
+    - 投稿内容の教育的価値を高める
+  longTerm:
+    - 継続的な投稿でアカウントの信頼性を構築

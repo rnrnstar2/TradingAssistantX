@@ -1,0 +1,35 @@
+{
+  "id": "1752850978787-dtohsn4bd",
+  "taskId": "analyze-1752850978785-6yycqo0ix-subtask-2",
+  "data": {
+    "subtaskId": "analyze-1752850978785-6yycqo0ix-subtask-2",
+    "parentTaskId": "analyze-1752850978785-6yycqo0ix",
+    "result": [
+      {
+        "type": "content",
+        "description": "エンゲージメント率向上のためのコンテンツ戦略調整",
+        "changes": {
+          "themes": [
+            "リスク管理",
+            "市場分析",
+            "投資心理",
+            "基礎知識",
+            "実践的なアドバイス",
+            "実践的なアドバイス",
+            "実践的なアドバイス",
+            "実践的なアドバイス",
+            "実践的なアドバイス",
+            "実践的なアドバイス"
+          ],
+          "postingFrequency": 15
+        },
+        "confidence": 0.8
+      }
+    ],
+    "checkpoint": "非同期テスト - 詳細分析_step_3_of_4_75%",
+    "timestamp": 1752850978787,
+    "progress": 75
+  },
+  "timestamp": 1752850978787,
+  "expiresAt": 1752937378787
+}

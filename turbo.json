@@ -1,0 +1,219 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "remoteCache": {
+    "enabled": true,
+    "preflight": false
+  },
+  "globalDependencies": [
+    "packages/shared-backend/amplify_outputs.json",
+    ".env*",
+    "pnpm-lock.yaml"
+  ],
+  "globalEnv": [
+    "NEXT_PUBLIC_*",
+    "NODE_ENV",
+    "AWS_*",
+    "TURBO_TOKEN",
+    "TURBO_TEAM",
+    "ANALYZE"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*",
+        "amplify_outputs.json",
+        "!**/*.test.*",
+        "!**/*.spec.*",
+        "!**/*.integration.*"
+      ],
+      "outputs": [
+        "dist/**",
+        "out/**", 
+        ".next/**",
+        "!.next/cache/**",
+        "src-tauri/target/release/**"
+      ],
+      "env": [],
+      "persistent": false,
+      "cache": true
+    },
+    "build:analyze": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": [".next/analyze/**"],
+      "env": ["ANALYZE"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "env": []
+    },
+    "dev:clean": {
+      "dependsOn": ["clean"],
+      "cache": false,
+      "persistent": true
+    },
+    "dev:fresh": {
+      "dependsOn": ["clean:all", "^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "dev:mt5": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^build"]
+    },
+    "lint": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "eslint.config.*",
+        ".eslintrc.*",
+        "!**/*.test.*",
+        "!**/*.spec.*"
+      ],
+      "outputs": [".eslintcache"],
+      "cache": true
+    },
+    "lint:fix": {
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": [".eslintcache"],
+      "cache": false
+    },
+    "check-types": {
+      "inputs": [
+        "**/*.{ts,tsx}",
+        "tsconfig.json",
+        "!dist/**",
+        "!out/**",
+        "!.next/**"
+      ],
+      "outputs": [".next/cache/tsconfig.tsbuildinfo"],
+      "cache": true
+    },
+    "check-types:watch": {
+      "cache": false,
+      "persistent": true
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "**/*.{ts,tsx,js,jsx}",
+        "**/*.test.*",
+        "**/*.spec.*",
+        "vitest.config.*",
+        "jest.config.*",
+        "!**/*.integration.*"
+      ],
+      "outputs": ["coverage/**"],
+      "cache": true
+    },
+    "test:unit": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "**/*.test.{ts,tsx}",
+        "vitest.config.*",
+        "!tests/integration/**"
+      ],
+      "outputs": ["coverage/**"],
+      "cache": true
+    },
+    "test:integration": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "tests/integration/**",
+        "vitest.integration.config.*"
+      ],
+      "outputs": ["coverage/**"],
+      "cache": false
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
+    },
+    "test:ui": {
+      "cache": false,
+      "persistent": true
+    },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": ["coverage/**"],
+      "cache": true
+    },
+    "test:e2e": {
+      "dependsOn": ["build"],
+      "inputs": ["tests/e2e/**", "playwright.config.*"],
+      "outputs": ["test-results/**"],
+      "cache": false
+    },
+    "tauri:dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "tauri:build": {
+      "dependsOn": ["build"],
+      "inputs": ["src-tauri/**", "!src-tauri/target/**"],
+      "outputs": ["src-tauri/target/**"],
+      "cache": false
+    },
+    "tauri:build:release": {
+      "dependsOn": ["build"],
+      "inputs": ["src-tauri/**", "!src-tauri/target/**"],
+      "outputs": ["src-tauri/target/**"],
+      "cache": false
+    },
+    "tauri:release": {
+      "dependsOn": ["build"],
+      "inputs": ["src-tauri/**", "!src-tauri/target/**"],
+      "outputs": ["src-tauri/target/**"],
+      "cache": false
+    },
+    "preflight": {
+      "dependsOn": ["check-types", "lint", "test:unit"]
+    },
+    "preflight:ci": {
+      "dependsOn": ["check-types", "lint", "test:coverage", "test:integration"]
+    },
+    "preflight:tauri": {
+      "dependsOn": ["preflight", "tauri:build"]
+    },
+    "clean": {
+      "cache": false,
+      "outputs": []
+    },
+    "clean:all": {
+      "dependsOn": ["clean"],
+      "cache": false,
+      "outputs": []
+    },
+    "clean:cache": {
+      "cache": false,
+      "outputs": []
+    },
+    "optimize:deps": {
+      "cache": false
+    },
+    "build:css": {
+      "dependsOn": ["^build:css"],
+      "inputs": [
+        "**/*.css",
+        "tailwind.config.*",
+        "postcss.config.*"
+      ],
+      "outputs": ["dist/**/*.css"]
+    },
+    "amplify:deploy": {
+      "dependsOn": ["@workspace/shared-backend#build"],
+      "inputs": [
+        "amplify/**",
+        "*.ts",
+        "amplify_outputs.json"
+      ],
+      "outputs": ["amplify_outputs.json"],
+      "cache": false
+    }
+  }
+}

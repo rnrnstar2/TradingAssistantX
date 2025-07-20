@@ -1,0 +1,197 @@
+{
+  "id": "1752850978788",
+  "type": "result",
+  "from": "async-execution-manager",
+  "to": "system",
+  "data": {
+    "taskId": "async-1752850978785-87iryg9nc",
+    "result": {
+      "taskId": "analyze-1752850978785-6yycqo0ix",
+      "success": true,
+      "data": {
+        "taskId": "analyze-1752850978785-6yycqo0ix",
+        "taskName": "非同期テスト",
+        "taskType": "analyze",
+        "completedAt": 1752850978787,
+        "totalSubtasks": 4,
+        "subtaskResults": [
+          {
+            "subtaskId": "analyze-1752850978785-6yycqo0ix-subtask-0",
+            "checkpoint": "非同期テスト - データ準備_step_1_of_4_25%",
+            "progress": 25,
+            "timestamp": 1752850978786,
+            "hasData": true
+          },
+          {
+            "subtaskId": "analyze-1752850978785-6yycqo0ix-subtask-1",
+            "checkpoint": "非同期テスト - 基本分析_step_2_of_4_50%",
+            "progress": 50,
+            "timestamp": 1752850978786,
+            "hasData": true
+          },
+          {
+            "subtaskId": "analyze-1752850978785-6yycqo0ix-subtask-2",
+            "checkpoint": "非同期テスト - 詳細分析_step_3_of_4_75%",
+            "progress": 75,
+            "timestamp": 1752850978787,
+            "hasData": true
+          },
+          {
+            "subtaskId": "analyze-1752850978785-6yycqo0ix-subtask-3",
+            "checkpoint": "非同期テスト - 結果統合_step_4_of_4_100%",
+            "progress": 100,
+            "timestamp": 1752850978787,
+            "hasData": true
+          }
+        ],
+        "combinedData": {
+          "analysisPhases": [
+            {
+              "phase": "非同期テスト - データ準備_step_1_of_4_25%",
+              "result": [
+                {
+                  "type": "content",
+                  "description": "エンゲージメント率向上のためのコンテンツ戦略調整",
+                  "changes": {
+                    "themes": [
+                      "リスク管理",
+                      "市場分析",
+                      "投資心理",
+                      "基礎知識",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス"
+                    ],
+                    "postingFrequency": 15
+                  },
+                  "confidence": 0.8
+                }
+              ],
+              "timestamp": 1752850978786
+            },
+            {
+              "phase": "非同期テスト - 基本分析_step_2_of_4_50%",
+              "result": [
+                {
+                  "type": "content",
+                  "description": "エンゲージメント率向上のためのコンテンツ戦略調整",
+                  "changes": {
+                    "themes": [
+                      "リスク管理",
+                      "市場分析",
+                      "投資心理",
+                      "基礎知識",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス"
+                    ],
+                    "postingFrequency": 15
+                  },
+                  "confidence": 0.8
+                }
+              ],
+              "timestamp": 1752850978786
+            },
+            {
+              "phase": "非同期テスト - 詳細分析_step_3_of_4_75%",
+              "result": [
+                {
+                  "type": "content",
+                  "description": "エンゲージメント率向上のためのコンテンツ戦略調整",
+                  "changes": {
+                    "themes": [
+                      "リスク管理",
+                      "市場分析",
+                      "投資心理",
+                      "基礎知識",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス"
+                    ],
+                    "postingFrequency": 15
+                  },
+                  "confidence": 0.8
+                }
+              ],
+              "timestamp": 1752850978787
+            },
+            {
+              "phase": "非同期テスト - 結果統合_step_4_of_4_100%",
+              "result": [
+                {
+                  "type": "content",
+                  "description": "エンゲージメント率向上のためのコンテンツ戦略調整",
+                  "changes": {
+                    "themes": [
+                      "リスク管理",
+                      "市場分析",
+                      "投資心理",
+                      "基礎知識",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス",
+                      "実践的なアドバイス"
+                    ],
+                    "postingFrequency": 15
+                  },
+                  "confidence": 0.8
+                }
+              ],
+              "timestamp": 1752850978787
+            }
+          ],
+          "finalAnalysis": [
+            {
+              "type": "content",
+              "description": "エンゲージメント率向上のためのコンテンツ戦略調整",
+              "changes": {
+                "themes": [
+                  "リスク管理",
+                  "市場分析",
+                  "投資心理",
+                  "基礎知識",
+                  "実践的なアドバイス",
+                  "実践的なアドバイス",
+                  "実践的なアドバイス",
+                  "実践的なアドバイス",
+                  "実践的なアドバイス",
+                  "実践的なアドバイス",
+                  "実践的なアドバイス"
+                ],
+                "postingFrequency": 15
+              },
+              "confidence": 0.8
+            }
+          ]
+        },
+        "summary": {
+          "totalSubtasks": 4,
+          "successfulSubtasks": 4,
+          "failedSubtasks": 0,
+          "successRate": 100,
+          "totalDuration": 1,
+          "averageSubtaskDuration": 0,
+          "checkpoints": [
+            "非同期テスト - データ準備_step_1_of_4_25%",
+            "非同期テスト - 基本分析_step_2_of_4_50%",
+            "非同期テスト - 詳細分析_step_3_of_4_75%",
+            "非同期テスト - 結果統合_step_4_of_4_100%"
+          ]
+        }
+      },
+      "timestamp": 1752850978787,
+      "duration": 2
+    },
+    "completedAt": 1752850978788
+  },
+  "timestamp": 1752850978788
+}

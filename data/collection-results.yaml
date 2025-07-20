@@ -1,0 +1,8 @@
+version: "1.0.0"
+lastUpdated: 1721376794000
+collections: []
+sources:
+  - type: "trending"
+    url: "https://x.com/explore"
+  - type: "keywords"
+    targets: ["トレーディング", "投資", "リスク管理"]

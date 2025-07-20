@@ -1,0 +1,131 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# npm lockfile (generated for production only)
+package-lock.json
+
+# Local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Testing
+coverage
+
+# Turbo
+.turbo
+
+# Vercel
+.vercel
+
+# Build Outputs
+.next/
+out/
+build
+dist
+!packages/shared-backend/dist/
+
+# TypeScript cache
+**/*.tsbuildinfo
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+.DS_Store
+*.pem
+
+# Build outputs
+apps/*/out/
+apps/*/dist/
+apps/*/.next/
+
+# Next.js
+**/next-env.d.ts
+
+# Tauri build
+**/src-tauri/target/
+
+# OS generated files
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+*.lcov
+
+# Temporary folders
+tmp/
+temp/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Amplify
+.amplify/
+**/.amplify/
+
+# Amplify outputs (managed by sync script)
+amplify_outputs.json
+apps/*/amplify_outputs.json
+packages/shared-amplify/amplify_outputs.json
+
+# Keep only source
+!packages/shared-backend/amplify_outputs.json
+
+.venv
+
+# Git Worktrees - サブディレクトリ配下のworktreeを除外
+worktrees/
+tasks_backup/
+
+# Analysis reports and temporary files (should be in tasks/analysis-results/ directory)
+*-analysis.md
+*-analysis.txt
+*-report.txt
+*-report.json
+*-tree.txt
+*-fixes.md
+*-optimization.md
+dependencies-tree.txt
+duplicate-analysis.txt
+import-path-analysis.txt
+package-usage-report.txt
+unused-exports-report.txt
+any-type-analysis.md
+any-type-report.txt
+type-duplication-analysis.md
+type-import-optimization.md
+
+# X autonomous system
+x/.env
+x/test-output/

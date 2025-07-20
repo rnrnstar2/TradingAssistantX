@@ -1,0 +1,25 @@
+{
+  "id": "1752850978784-a2x7pz9s9",
+  "taskId": "long-1752850978782-jpnwdkroi-subtask-0",
+  "data": [
+    {
+      "type": "content",
+      "description": "エンゲージメント率向上のためのコンテンツ戦略調整",
+      "changes": {
+        "themes": [
+          "リスク管理",
+          "市場分析",
+          "投資心理",
+          "基礎知識",
+          "実践的なアドバイス",
+          "実践的なアドバイス",
+          "実践的なアドバイス"
+        ],
+        "postingFrequency": 15
+      },
+      "confidence": 0.8
+    }
+  ],
+  "timestamp": 1752850978784,
+  "expiresAt": 1752937378784
+}

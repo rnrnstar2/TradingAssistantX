@@ -1,0 +1,8 @@
+version: "1.0.0"
+lastUpdated: 1721376794000
+assessments: []
+criteria:
+  engagement: 0.0-1.0    # エンゲージメント評価
+  relevance: 0.0-1.0     # 関連性評価
+  credibility: 0.0-1.0   # 信頼性評価
+  uniqueness: 0.0-1.0    # 独自性評価

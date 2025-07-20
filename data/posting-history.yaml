@@ -1,0 +1,16 @@
+# 投稿履歴
+- id: "1752833223526"
+  content: "テスト投稿 - 2025/7/18 19:07:03"
+  timestamp: 1752833223526
+  success: true
+
+- id: "1752833246037"
+  content: "📊ビットコインが12万ドル突破！規制明確化は価格上昇要因となりますが、急騰後は調整リスクも。\n\n💡トレーディングの基本：\n・ニュースに飛びつかず冷静な分析を\n・ポジションサイズは資金の2-5%以内..."
+  timestamp: 1752833246037
+  success: false
+  error: "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+
+- id: "1752833251476"
+  content: "最新情報: BTC/USDTで5%のアービトラージ機会を検出。Binance: $50,000, Coinbase: $52,500"
+  timestamp: 1752833251476
+  success: true
