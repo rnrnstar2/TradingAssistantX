@@ -34,14 +34,21 @@ export class AutonomousExecutor {
 Current context:
 ${JSON.stringify(context, null, 2)}
 
-Analyze the current situation and identify what needs to be done.
-Consider:
-1. Content collection needs
-2. Immediate posting opportunities
-3. System maintenance requirements
-4. Performance optimizations
+Analyze and identify what needs to be done with the following EXACT JSON structure.
+Each need MUST include all required fields:
 
-Return as JSON array of needs.
+REQUIRED NEED FORMAT:
+{
+  "id": "need-[timestamp]-[random]",
+  "type": "[one of: content, immediate, maintenance, optimization]",
+  "priority": "[one of: high, medium, low]",
+  "description": "detailed description of what needs to be done",
+  "context": {},
+  "createdAt": "[ISO timestamp]"
+}
+
+Return ONLY a JSON array of need objects. No markdown, no explanation.
+Example: [{"id":"need-123-abc","type":"content","priority":"high","description":"Collect trending content","context":{},"createdAt":"2025-07-20T15:10:00.000Z"}]
 `;
 
     try {
@@ -50,7 +57,11 @@ Return as JSON array of needs.
         .query(prompt)
         .asText();
 
-      return JSON.parse(response);
+      // Extract JSON from markdown code blocks if present
+      const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+      const jsonText = jsonMatch ? jsonMatch[1] : response;
+      
+      return JSON.parse(jsonText);
     } catch {
       return [];
     }

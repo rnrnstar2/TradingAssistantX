@@ -71,24 +71,52 @@ Return as JSON array of decisions with priority levels.
 Current needs:
 ${JSON.stringify(needs, null, 2)}
 
-Prioritize these needs and convert them to actionable decisions.
-Consider urgency, impact, and resource requirements.
+Convert these needs to actionable decisions with the following EXACT JSON structure.
+Each decision MUST include all required fields:
 
-Return as JSON array of decisions ordered by priority.
+REQUIRED DECISION FORMAT:
+{
+  "id": "decision-[timestamp]-[random]",
+  "type": "[one of: collect_content, immediate_post, analyze_performance, optimize_timing, clean_data, strategy_shift, content_generation, posting_schedule]",
+  "priority": "[one of: critical, high, medium, low]",
+  "reasoning": "explanation of why this decision was made",
+  "params": {},
+  "dependencies": [],
+  "estimatedDuration": [number in minutes]
+}
+
+Return ONLY a JSON array of decision objects. No markdown, no explanation.
+Example: [{"id":"decision-123-abc","type":"content_generation","priority":"high","reasoning":"Need fresh content","params":{},"dependencies":[],"estimatedDuration":30}]
 `;
 
+    let response = '';
     try {
-      const response = await claude()
+      response = await claude()
         .withModel('sonnet')
         .query(prompt)
         .asText();
+
+      // 🔥 CRITICAL: Claude応答内容をログ出力
+      console.log('🔍 Claude raw response:', response);
 
       // Extract JSON from markdown code blocks if present
       const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
       const jsonText = jsonMatch ? jsonMatch[1] : response;
       
-      return JSON.parse(jsonText);
-    } catch {
+      console.log('🔍 Extracted JSON text:', jsonText);
+      
+      const decisions = JSON.parse(jsonText);
+      console.log('🔍 Parsed decisions:', JSON.stringify(decisions, null, 2));
+      
+      // 各decision.typeを検証
+      decisions.forEach((decision: any, index: number) => {
+        console.log(`🔍 Decision ${index}: type="${decision.type}", id="${decision.id}"`);
+      });
+      
+      return decisions;
+    } catch (error) {
+      console.error('❌ prioritizeNeeds JSON parse error:', error);
+      console.error('❌ Raw response was:', response);
       return [];
     }
   }
