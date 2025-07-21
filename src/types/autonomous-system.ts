@@ -160,6 +160,9 @@ export interface CollectionResult {
     engagement?: number;
     author?: string;
     hashtags?: string[];
+    searchTerm?: string;
+    activityLevel?: number;
+    [key: string]: any;  // 追加のプロパティを許可
   };
 }
 

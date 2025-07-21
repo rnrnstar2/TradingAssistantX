@@ -1,0 +1,441 @@
+version: 1.1.0
+lastUpdated: 1753029830630
+currentPhase: growth
+objectives:
+  primary: トレーディング教育コンテンツで信頼性のあるアカウントを構築
+  secondary:
+    - フォロワー数の安定的な増加
+    - エンゲージメント率の向上
+    - 質の高いコミュニティ形成
+  timeline: 6ヶ月
+contentStrategy:
+  themes:
+    - リスク管理
+    - 市場分析
+    - 投資心理
+    - 基礎知識
+    - 実践的なアドバイス
+    - トレード手法
+    - ツール活用法
+    - 実践的なアドバイス
+  toneOfVoice: 教育的で親しみやすい
+  postingFrequency: 15
+  optimalTimes:
+    - '07:00'
+    - '07:30'
+    - '08:00'
+    - '08:30'
+    - '12:00'
+    - '12:30'
+    - '18:00'
+    - '18:30'
+    - '19:00'
+    - '19:30'
+    - '21:00'
+    - '21:30'
+    - '22:00'
+    - '22:30'
+    - '23:30'
+  avoidTopics:
+    - 確実に儲かる話
+    - 投資勧誘
+    - 誇大表現
+  discoveryKeywords:
+    - FX
+    - 為替
+    - トレード
+    - 投資
+    - テクニカル分析
+    - ファンダメンタル分析
+    - EA
+    - 自動売買
+    - リスク管理
+    - 資金管理
+  discoveryCategories:
+    - educational_content
+    - market_analysis
+    - trading_strategies
+    - technical_tools
+    - risk_management
+  focusAreas:
+    - スピード注文の重要性
+    - リスク管理と資金効率
+    - 自動売買とツール活用
+    - 初心者向け教育コンテンツ
+    - 市場分析と取引タイミング
+  engagementTactics:
+    - 実践的なトレードTips共有
+    - 市場の重要イベント事前告知
+    - トレード手法の解説
+    - ツール活用のベストプラクティス
+  quickTradeIntegration:
+    - 素早い注文執行の重要性を定期的に強調
+    - タイミングを逃さない取引の実例紹介
+    - 効率的なトレード環境構築の提案
+targetAudience:
+  demographics:
+    - 20-40代
+    - 投資初心者
+    - 兼業トレーダー
+  interests:
+    - 投資
+    - トレーディング
+    - 資産運用
+    - 副業
+  painPoints:
+    - リスク管理
+    - 情報の信頼性
+    - 継続的な学習
+  preferredContentTypes:
+    - 教育コンテンツ
+    - 実例紹介
+    - 分析結果
+growthTactics:
+  primary:
+    - 教育的価値の提供
+    - 継続的な情報発信
+    - 信頼性の構築
+  testing:
+    - 投稿時間の最適化
+    - コンテンツ形式の実験
+  deprecated: []
+constraints:
+  maxPostsPerDay: 15
+  minQualityScore: 7
+  brandSafety:
+    - 投資勧誘禁止
+    - 誇大表現禁止
+    - 根拠のない情報禁止
+  discoveryQuality:
+    contentDepth: 0.8
+    authorityScore: 0.7
+    freshnessWeight: 0.9
+    engagementMetric: 0.6
+systemConfig:
+  autonomous_system:
+    max_parallel_tasks: 3
+    context_sharing_enabled: true
+    decision_persistence: true
+  claude_integration:
+    sdk_enabled: true
+    max_context_size: 100000
+  data_management:
+    cleanup_interval: 3600
+    max_history_entries: 1000
+contentTemplates:
+  claude_templates:
+    educational:
+      goal: トレーディング教育に役立つ情報を収集
+      preferences:
+        topics:
+          - リスク管理
+          - 市場分析
+          - 投資心理
+        avoidTopics:
+          - 確実に儲かる
+          - 絶対勝てる
+        quality: educational
+      autonomyLevel: high
+    market-update:
+      goal: 今日の市場動向と重要なニュースを収集
+      preferences:
+        topics:
+          - 経済指標
+          - 市場動向
+          - 重要ニュース
+        avoidTopics:
+          - 噂
+          - 未確認情報
+        quality: informative
+      autonomyLevel: medium
+    risk-management:
+      goal: リスク管理手法とベストプラクティスを収集
+      preferences:
+        topics:
+          - ポジションサイジング
+          - 損切り
+          - 資金管理
+        avoidTopics:
+          - ギャンブル
+          - 一発逆転
+        quality: educational
+      autonomyLevel: high
+      constraints:
+        - 実証済みの手法のみ
+        - 具体的な手順を含める
+    technical-analysis:
+      goal: テクニカル分析の手法と実践例を収集
+      preferences:
+        topics:
+          - チャート分析
+          - 指標
+          - パターン認識
+        avoidTopics:
+          - 必勝法
+          - 100%勝てる
+        quality: educational
+      autonomyLevel: medium
+      constraints:
+        - 客観的な分析
+        - バックテストデータを含める
+    psychology:
+      goal: トレーディング心理学と感情管理の情報を収集
+      preferences:
+        topics:
+          - 感情制御
+          - メンタルトレーニング
+          - 認知バイアス
+        avoidTopics:
+          - スピリチュアル
+          - 非科学的手法
+        quality: educational
+      autonomyLevel: high
+    market-news:
+      goal: 今日の重要な市場ニュースと経済指標を収集
+      preferences:
+        topics:
+          - 経済指標
+          - 央行政策
+          - 企業決算
+        avoidTopics:
+          - 憶測
+          - 未確認情報
+        quality: informative
+      autonomyLevel: guided
+      constraints:
+        - 信頼できるソースのみ
+        - 時系列で整理
+  post_templates:
+    - type: market-update
+      format: |-
+        📊 市場アップデート
+
+        {content}
+
+        #トレーディング #FX #株式投資
+      priority: high
+      description: 市場の最新動向を共有
+    - type: quick-trade-tips
+      format: |-
+        ⚡ クイックトレードのコツ
+
+        {content}
+
+        素早い注文で機会を逃さない！
+
+        #クイックトレード #トレード術
+      priority: high
+      description: クイックトレード活用法
+      engagement_boost: true
+    - type: trading-tools
+      format: |-
+        🛠️ トレーディングツール紹介
+
+        {content}
+
+        効率的な取引をサポート
+
+        #トレードツール #投資効率化
+      priority: medium
+      description: 便利なトレーディングツール紹介
+    - type: beginner-guide
+      format: |-
+        📚 初心者ガイド
+
+        {content}
+
+        トレードの基本を学ぼう
+
+        #投資初心者 #トレード学習
+      priority: medium
+      description: 初心者向け教育コンテンツ
+    - type: market-analysis
+      format: |-
+        📈 今日の相場分析
+
+        {content}
+
+        #相場分析 #マーケット情報
+      priority: high
+      description: 日々の相場分析
+    - type: trading-mindset
+      format: |-
+        🧠 トレーダーマインドセット
+
+        {content}
+
+        成功への心構え
+
+        #トレード心理 #投資マインド
+      priority: low
+      description: メンタル面のアドバイス
+    - type: risk-management
+      format: |-
+        ⚠️ リスク管理の重要性
+
+        {content}
+
+        安全なトレードのために
+
+        #リスク管理 #資金管理
+      priority: high
+      description: リスク管理の啓発
+    - type: community-update
+      format: |-
+        👥 トレーダーコミュニティ
+
+        {content}
+
+        一緒に学び成長しよう！
+
+        #トレーダー仲間 #投資コミュニティ
+      priority: low
+      description: コミュニティ活動の共有
+    - type: execution-speed
+      format: |-
+        ⏱️ 注文執行スピードの話
+
+        {content}
+
+        数秒の遅れが大きな損失につながることも…
+
+        #執行スピード #トレード効率
+      priority: high
+      description: 注文執行スピードの重要性
+      engagement_boost: true
+    - type: missed-opportunity
+      format: |-
+        😱 逃したチャンス
+
+        {content}
+
+        タイミングを逃さないための工夫とは？
+
+        #トレードチャンス #取引タイミング
+      priority: medium
+      description: 機会損失の例と改善策
+      engagement_boost: true
+    - type: tool-comparison
+      format: |-
+        🎯 トレードツール比較
+
+        {content}
+
+        あなたはどんなツールを使っていますか？
+
+        #トレードツール #取引プラットフォーム
+      priority: medium
+      description: ツール選びのポイント
+      engagement_boost: true
+    - type: pro-trader-secret
+      format: |-
+        🤫 プロトレーダーの秘密
+
+        {content}
+
+        勝ち続けるトレーダーの共通点
+
+        #プロトレーダー #成功の秘訣
+      priority: high
+      description: プロの手法を紹介
+      engagement_boost: true
+    - type: question-poll
+      format: |-
+        🤔 質問
+
+        {content}
+
+        コメントで教えてください！
+
+        #トレーダーコミュニティ #投資アンケート
+      priority: high
+      description: エンゲージメント促進
+      engagement_boost: true
+  posting_strategy:
+    time_slots:
+      - time: '07:00'
+        type_preference:
+          - market-analysis
+          - risk-management
+          - trading-mindset
+      - time: '07:30'
+        type_preference:
+          - market-update
+          - execution-speed
+          - pro-trader-secret
+      - time: '08:00'
+        type_preference:
+          - quick-trade-tips
+          - tool-comparison
+          - missed-opportunity
+      - time: '08:30'
+        type_preference:
+          - trading-tools
+          - market-analysis
+          - question-poll
+      - time: '12:00'
+        type_preference:
+          - beginner-guide
+          - trading-mindset
+          - quick-trade-tips
+      - time: '12:30'
+        type_preference:
+          - question-poll
+          - tool-comparison
+          - community-update
+      - time: '18:00'
+        type_preference:
+          - market-update
+          - market-analysis
+          - execution-speed
+      - time: '18:30'
+        type_preference:
+          - missed-opportunity
+          - quick-trade-tips
+          - pro-trader-secret
+      - time: '19:00'
+        type_preference:
+          - risk-management
+          - trading-tools
+          - tool-comparison
+      - time: '19:30'
+        type_preference:
+          - question-poll
+          - trading-mindset
+          - beginner-guide
+      - time: '21:00'
+        type_preference:
+          - beginner-guide
+          - market-analysis
+          - community-update
+      - time: '21:30'
+        type_preference:
+          - trading-mindset
+          - risk-management
+          - pro-trader-secret
+      - time: '22:00'
+        type_preference:
+          - question-poll
+          - tool-comparison
+          - execution-speed
+      - time: '22:30'
+        type_preference:
+          - trading-tools
+          - quick-trade-tips
+          - missed-opportunity
+      - time: '23:30'
+        type_preference:
+          - market-update
+          - pro-trader-secret
+          - risk-management
+    engagement_goals:
+      - 質問投稿でコメントを促す
+      - 実践的なTipsで保存・シェアを促す
+      - タイミングの重要性を定期的に強調
+      - ツールの便利さをさりげなく伝える
+  discovery_params:
+    enable_trend_following: true
+    enable_influencer_tracking: true
+    enable_hashtag_discovery: true
+    quality_threshold: 0.7
+    relevance_threshold: 0.8

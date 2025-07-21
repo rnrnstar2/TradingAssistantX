@@ -1,0 +1,627 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ParallelManager = void 0;
+require("dotenv/config");
+const claude_controlled_collector_js_1 = require("../lib/claude-controlled-collector.js");
+const growth_system_manager_js_1 = require("../lib/growth-system-manager.js");
+const posting_manager_js_1 = require("../lib/posting-manager.js");
+const x_performance_analyzer_js_1 = require("../lib/x-performance-analyzer.js");
+const expanded_action_executor_js_1 = require("../lib/expanded-action-executor.js");
+const daily_action_planner_js_1 = require("../lib/daily-action-planner.js");
+const x_client_js_1 = require("../lib/x-client.js");
+const yaml = __importStar(require("js-yaml"));
+class ParallelManager {
+    collector;
+    growthManager;
+    postingManager;
+    performanceAnalyzer;
+    expandedActionExecutor;
+    dailyActionPlanner;
+    xClient;
+    constructor() {
+        this.collector = new claude_controlled_collector_js_1.ClaudeControlledCollector();
+        this.growthManager = new growth_system_manager_js_1.GrowthSystemManager();
+        // API key configuration
+        const apiKey = process.env.X_API_KEY || '';
+        this.postingManager = new posting_manager_js_1.PostingManager(apiKey);
+        this.xClient = new x_client_js_1.SimpleXClient(apiKey);
+        // Initialize expanded action components
+        this.expandedActionExecutor = new expanded_action_executor_js_1.ExpandedActionExecutor(this.xClient, this.postingManager);
+        this.dailyActionPlanner = new daily_action_planner_js_1.DailyActionPlanner();
+        this.performanceAnalyzer = new x_performance_analyzer_js_1.XPerformanceAnalyzer();
+    }
+    async executeActions(actions) {
+        console.log(`🚀 [アクション実行開始] ${actions.length}件のアクションを処理開始`);
+        actions.forEach((action, index) => {
+            console.log(`   ${index + 1}. 【${action.type}】(${action.priority})`);
+        });
+        const tasks = actions.map(action => this.convertActionToTask(action));
+        const validTasks = tasks.filter((task) => task !== null);
+        const invalidCount = tasks.length - validTasks.length;
+        if (invalidCount > 0) {
+            console.log(`⚠️  [タスク変換] ${invalidCount}件のアクションは未対応のため無視`);
+        }
+        console.log(`✅ [タスク変換完了] ${validTasks.length}件のタスクを並列実行`);
+        const results = await this.executeInParallel(validTasks);
+        console.log(`🎯 [実行完了] ${results.length}件の結果を取得`);
+        results.forEach((result, index) => {
+            const status = result.status === 'success' ? '✅' : '❌';
+            console.log(`   ${index + 1}. ${status} ${result.taskId || 'unknown'}`);
+        });
+        return results;
+    }
+    async executeInParallel(tasks) {
+        await this.initializeDataSharing(tasks);
+        const results = await Promise.allSettled(tasks.map(task => this.executeWithDataSharing(task)));
+        return this.integrateResults(results, tasks);
+    }
+    convertActionToTask(action) {
+        const taskExecutors = {
+            'content_collection': () => this.executeContentCollection(action),
+            'content_creation': () => this.executeContentCreation(action),
+            'post_immediate': () => this.executePostImmediate(action),
+            'performance_analysis': () => this.executePerformanceAnalysis(action),
+            'engagement_analysis': () => this.executeEngagementAnalysis(action),
+            'growth_analysis': () => this.executeGrowthAnalysis(action),
+            'timing_optimization': () => this.executeTimingOptimization(action),
+            'data_cleanup': () => this.executeDataCleanup(action)
+        };
+        const executor = taskExecutors[action.type];
+        if (!executor)
+            return null;
+        return {
+            id: action.id,
+            actionId: action.id,
+            type: action.type,
+            priority: action.priority,
+            executor,
+            status: 'pending',
+            createdAt: action.createdAt
+        };
+    }
+    async executeContentCollection(action) {
+        console.log('🌐 [情報収集開始] Playwright + Claude自律収集システム起動');
+        // ClaudeControlledCollector doesn't have parameters - it explores autonomously
+        const results = await this.collector.performParallelCollection();
+        console.log(`📊 [情報収集完了] ${results.length}件のデータを収集`);
+        results.forEach((data, index) => {
+            console.log(`  ${index + 1}. ${data.content?.substring(0, 50) || 'No content'}...`);
+        });
+        return results;
+    }
+    async executeContentCreation(action) {
+        console.log('✍️ [コンテンツ生成開始] Claude主導コンテンツ作成');
+        const prompt = `
+Generate a valuable and engaging social media post.
+Focus on providing useful insights, educational content, or thought-provoking questions.
+Keep it under 280 characters.
+Write in Japanese.
+Adapt the content style to match the account's theme and target audience.
+`;
+        try {
+            const { claude } = await Promise.resolve().then(() => __importStar(require('@instantlyeasy/claude-code-sdk-ts')));
+            const content = await claude()
+                .withModel('sonnet')
+                .query(prompt)
+                .asText();
+            if (content) {
+                console.log('📝 [生成完了] コンテンツ:', content.substring(0, 100) + (content.length > 100 ? '...' : ''));
+                return { content, length: content.length };
+            }
+        }
+        catch (error) {
+            console.error('❌ [生成エラー] コンテンツ生成に失敗:', error);
+        }
+        return null;
+    }
+    async executePostImmediate(action) {
+        console.log('📱 [即座投稿開始] X投稿システム起動');
+        const params = action.params || {};
+        let content = params.content;
+        if (!content) {
+            console.log('📝 [コンテンツ生成] 新規投稿コンテンツを生成中...');
+            // Generate content using Claude
+            const prompt = `
+Generate a valuable and engaging social media post.
+Focus on providing useful insights, educational content, or thought-provoking questions.
+Keep it under 280 characters.
+Write in Japanese.
+Adapt the content style to match the account's theme and target audience.
+`;
+            try {
+                const { claude } = await Promise.resolve().then(() => __importStar(require('@instantlyeasy/claude-code-sdk-ts')));
+                content = await claude()
+                    .withModel('sonnet')
+                    .query(prompt)
+                    .asText();
+                if (content) {
+                    console.log('📝 [生成完了] 投稿内容:', content);
+                }
+            }
+            catch (error) {
+                console.error('❌ [生成エラー]:', error);
+                return null;
+            }
+        }
+        else {
+            console.log('📝 [既存コンテンツ] 投稿内容:', content);
+        }
+        if (content) {
+            console.log('🚀 [投稿実行中] X APIに送信...');
+            const result = await this.postingManager.postNow(content);
+            if (result) {
+                console.log('✅ [投稿完了] 投稿に成功しました');
+                console.log(`📊 [投稿詳細] 文字数: ${content.length}, 内容: "${content}"`);
+            }
+            else {
+                console.log('❌ [投稿失敗] 投稿に失敗しました');
+            }
+            return result;
+        }
+        return null;
+    }
+    async executePerformanceAnalysis(action) {
+        console.log('📈 [パフォーマンス分析開始] X アカウント詳細分析中...');
+        const username = action.params?.username || process.env.X_USERNAME || 'default_user';
+        try {
+            const result = await this.performanceAnalyzer.performFullAnalysis(username);
+            console.log('📊 [分析完了] 包括的パフォーマンス分析を実行');
+            console.log(`📋 [フォロワー数] ${result.accountMetrics.followers_count}`);
+            console.log(`📋 [エンゲージメント率] ${result.engagement.averageEngagementRate?.toFixed(2) || 'N/A'}%`);
+            console.log(`📋 [最近の投稿数] ${result.recentPosts.length}件`);
+            // Save performance report
+            await this.savePerformanceReport(result);
+            return result;
+        }
+        catch (error) {
+            console.error('❌ [分析エラー] パフォーマンス分析に失敗:', error);
+            return null;
+        }
+    }
+    async executeEngagementAnalysis(action) {
+        console.log('💬 [エンゲージメント分析開始] エンゲージメント詳細分析中...');
+        const username = action.params?.username || process.env.X_USERNAME || 'default_user';
+        try {
+            const recentPosts = await this.performanceAnalyzer.analyzeRecentPosts(username, 20);
+            const engagement = await this.performanceAnalyzer.calculateEngagementRate(recentPosts);
+            console.log('💬 [エンゲージメント分析完了] 詳細エンゲージメント指標を算出');
+            console.log(`📊 [平均エンゲージメント率] ${engagement.averageEngagementRate?.toFixed(2) || 'N/A'}%`);
+            console.log(`📈 [トレンド] ${engagement.engagementTrend}`);
+            console.log(`⏰ [最適投稿時間] ${engagement.optimalPostingTimes?.join(', ') || 'データなし'}`);
+            return {
+                recentPosts,
+                engagement,
+                analysisType: 'engagement_analysis',
+                timestamp: new Date().toISOString()
+            };
+        }
+        catch (error) {
+            console.error('❌ [エンゲージメント分析エラー]:', error);
+            return null;
+        }
+    }
+    async executeGrowthAnalysis(action) {
+        console.log('📊 [成長分析開始] フォロワー成長動向分析中...');
+        const username = action.params?.username || process.env.X_USERNAME || 'default_user';
+        try {
+            const accountMetrics = await this.performanceAnalyzer.analyzeAccountMetrics(username);
+            const followerMetrics = await this.performanceAnalyzer.analyzeFollowerTrends(username);
+            console.log('📊 [成長分析完了] フォロワー成長指標を算出');
+            console.log(`👥 [現在のフォロワー数] ${followerMetrics.currentCount}`);
+            console.log(`📈 [成長率] ${followerMetrics.growthRate}%`);
+            console.log(`📊 [トレンド] ${followerMetrics.growthTrend}`);
+            return {
+                accountMetrics,
+                followerMetrics,
+                analysisType: 'growth_analysis',
+                timestamp: new Date().toISOString()
+            };
+        }
+        catch (error) {
+            console.error('❌ [成長分析エラー]:', error);
+            return null;
+        }
+    }
+    async executeTimingOptimization(action) {
+        console.log('⏰ [タイミング最適化開始] 投稿タイミング戦略を調整中...');
+        // Use optimizeStrategy which includes timing optimization
+        const result = await this.growthManager.optimizeStrategy();
+        console.log('✅ [最適化完了] 新しい投稿戦略を策定');
+        return result;
+    }
+    async executeDataCleanup(action) {
+        console.log('🧹 [データクリーンアップ開始] 古いデータファイルを整理中...');
+        const fs = (await Promise.resolve().then(() => __importStar(require('fs/promises')))).default;
+        const path = (await Promise.resolve().then(() => __importStar(require('path')))).default;
+        const dataDir = path.join(process.cwd(), 'data');
+        const maxAge = action.params?.maxAgeHours || 24;
+        const cleanupTargets = [
+            'context/execution-history.json',
+            'strategic-decisions.yaml',
+            'communication/claude-to-claude.json'
+        ];
+        let cleanedCount = 0;
+        for (const target of cleanupTargets) {
+            try {
+                const filePath = path.join(dataDir, target);
+                const data = await fs.readFile(filePath, 'utf-8');
+                // ファイル拡張子に応じてパーサーを選択
+                const parsed = target.endsWith('.yaml') || target.endsWith('.yml')
+                    ? yaml.load(data)
+                    : JSON.parse(data);
+                if (Array.isArray(parsed)) {
+                    const originalCount = parsed.length;
+                    const cutoff = new Date(Date.now() - maxAge * 60 * 60 * 1000);
+                    const filtered = parsed.filter((item) => {
+                        const timestamp = new Date(item.timestamp || item.createdAt);
+                        return timestamp > cutoff;
+                    });
+                    await fs.writeFile(filePath, JSON.stringify(filtered, null, 2));
+                    const removedCount = originalCount - filtered.length;
+                    console.log(`📁 [${target}] ${removedCount}件の古いデータを削除 (${originalCount} → ${filtered.length})`);
+                    cleanedCount++;
+                }
+            }
+            catch (error) {
+                console.error(`❌ [クリーンアップエラー] ${target}:`, error);
+            }
+        }
+        console.log(`✅ [クリーンアップ完了] ${cleanedCount}/${cleanupTargets.length}ファイルを整理`);
+        return { cleaned: cleanedCount, targets: cleanupTargets.length };
+    }
+    async executeWithDataSharing(task) {
+        const fs = (await Promise.resolve().then(() => __importStar(require('fs/promises')))).default;
+        const path = (await Promise.resolve().then(() => __importStar(require('path')))).default;
+        const statusPath = path.join(process.cwd(), 'data', 'communication', 'execution-status.json');
+        try {
+            const statusData = {
+                taskId: task.id,
+                type: task.type,
+                status: 'running',
+                startedAt: new Date().toISOString()
+            };
+            let statuses = [];
+            try {
+                const existing = await fs.readFile(statusPath, 'utf-8');
+                statuses = JSON.parse(existing);
+            }
+            catch {
+                // File doesn't exist
+            }
+            statuses.push(statusData);
+            await fs.mkdir(path.dirname(statusPath), { recursive: true });
+            await fs.writeFile(statusPath, JSON.stringify(statuses, null, 2));
+            const result = await task.executor();
+            const completedStatus = {
+                ...statusData,
+                status: 'completed',
+                completedAt: new Date().toISOString(),
+                resultSummary: this.summarizeResult(result)
+            };
+            statuses = statuses.map((s) => s.taskId === task.id ? completedStatus : s);
+            await fs.writeFile(statusPath, JSON.stringify(statuses, null, 2));
+            return result;
+        }
+        catch (error) {
+            const errorStatus = {
+                taskId: task.id,
+                type: task.type,
+                status: 'failed',
+                error: error instanceof Error ? error.message : String(error),
+                failedAt: new Date().toISOString()
+            };
+            let statuses = [];
+            try {
+                const existing = await fs.readFile(statusPath, 'utf-8');
+                statuses = JSON.parse(existing);
+            }
+            catch {
+                // File doesn't exist
+            }
+            statuses = statuses.map((s) => s.taskId === task.id ? errorStatus : s);
+            await fs.writeFile(statusPath, JSON.stringify(statuses, null, 2));
+            throw error;
+        }
+    }
+    integrateResults(results, tasks) {
+        return results.map((result, index) => {
+            const task = tasks[index];
+            if (result.status === 'fulfilled') {
+                return {
+                    id: `result-${task.id}`,
+                    taskId: task.id,
+                    actionId: task.actionId,
+                    status: 'success',
+                    data: result.value,
+                    completedAt: new Date().toISOString()
+                };
+            }
+            else {
+                return {
+                    id: `result-${task.id}`,
+                    taskId: task.id,
+                    actionId: task.actionId,
+                    status: 'failed',
+                    error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+                    completedAt: new Date().toISOString()
+                };
+            }
+        });
+    }
+    async initializeDataSharing(tasks) {
+        const fs = (await Promise.resolve().then(() => __importStar(require('fs/promises')))).default;
+        const path = (await Promise.resolve().then(() => __importStar(require('path')))).default;
+        const communicationPath = path.join(process.cwd(), 'data', 'communication', 'claude-to-claude.json');
+        const initData = {
+            sessionId: `session-${Date.now()}`,
+            startedAt: new Date().toISOString(),
+            plannedTasks: tasks.map(t => ({
+                id: t.id,
+                type: t.type,
+                priority: t.priority
+            }))
+        };
+        await fs.mkdir(path.dirname(communicationPath), { recursive: true });
+        await fs.writeFile(communicationPath, JSON.stringify(initData, null, 2));
+    }
+    summarizeResult(result) {
+        if (!result)
+            return null;
+        if (typeof result === 'object') {
+            const keys = Object.keys(result);
+            if (keys.length > 5) {
+                return {
+                    _summary: 'large_object',
+                    keyCount: keys.length,
+                    sampleKeys: keys.slice(0, 5)
+                };
+            }
+            return result;
+        }
+        if (typeof result === 'string' && result.length > 200) {
+            return {
+                _summary: 'long_string',
+                length: result.length,
+                preview: result.substring(0, 100) + '...'
+            };
+        }
+        return result;
+    }
+    async savePerformanceReport(result) {
+        const fs = (await Promise.resolve().then(() => __importStar(require('fs/promises')))).default;
+        const path = (await Promise.resolve().then(() => __importStar(require('path')))).default;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const reportPath = path.join(process.cwd(), 'data', 'performance-reports', `performance-${timestamp}.md`);
+        const reportContent = `# X アカウント パフォーマンス分析報告書
+
+## 📊 基本指標
+- フォロワー数: ${result.accountMetrics.followers_count}
+- フォロー数: ${result.accountMetrics.following_count}
+- 投稿総数: ${result.accountMetrics.tweet_count}
+- エンゲージメント率: ${result.engagement.averageEngagementRate.toFixed(2)}%
+- 分析時刻: ${result.analysisTimestamp}
+
+## 📈 パフォーマンス分析
+- 最高パフォーマンス投稿: "${result.engagement.bestPerformingPost.content.substring(0, 50)}..."
+- エンゲージメント率: ${result.engagement.bestPerformingPost.engagementRate.toFixed(2)}%
+- トレンド: ${result.engagement.engagementTrend}
+- 最適投稿時間: ${result.engagement.optimalPostingTimes.join(', ')}
+
+## 📋 最近の投稿データ (${result.recentPosts.length}件)
+${result.recentPosts.slice(0, 5).map((post, index) => `
+${index + 1}. "${post.content.substring(0, 80)}..."
+   - いいね: ${post.likes}, RT: ${post.retweets}, 返信: ${post.replies}
+   - エンゲージメント率: ${post.engagementRate.toFixed(2)}%`).join('')}
+
+## 🎯 推奨改善点
+${result.recommendations.map((rec) => `- ${rec}`).join('\n')}
+
+## 📊 フォロワー動向
+- 現在のフォロワー数: ${result.followerMetrics.currentCount}
+- 成長率: ${result.followerMetrics.growthRate}%
+- 成長トレンド: ${result.followerMetrics.growthTrend}
+- エンゲージメント品質: ${result.followerMetrics.engagementQuality}
+
+---
+*このレポートは Claude Code 自律実行システムにより自動生成されました*
+`;
+        await fs.mkdir(path.dirname(reportPath), { recursive: true });
+        await fs.writeFile(reportPath, reportContent);
+        console.log(`📄 [レポート保存] ${reportPath} に保存完了`);
+    }
+    // 拡張アクション実行システム
+    async executeExpandedActions(decisions) {
+        console.log(`🚀 [拡張アクション実行開始] ${decisions.length}件の多様なアクションを並列処理`);
+        // 日次配分プランの確認
+        const distribution = await this.dailyActionPlanner.planDailyDistribution();
+        console.log(`📋 [日次配分] 残り${distribution.remaining}/${15}回 - 最適配分:`, distribution.optimal_distribution);
+        if (distribution.remaining <= 0) {
+            console.log('✅ [配分完了] 本日の目標回数に到達済み、実行をスキップ');
+            return [];
+        }
+        // 実行可能な決定を選択（残り回数を考慮）
+        const executableDecisions = decisions.slice(0, distribution.remaining);
+        console.log(`🎯 [実行対象] ${executableDecisions.length}件のアクションを実行予定`);
+        const actionTasks = executableDecisions.map(decision => ({
+            id: decision.id,
+            task: this.createActionTask(decision)
+        }));
+        // API制限を考慮した並列実行
+        const batchSize = 3; // 同時実行数制限
+        const results = [];
+        for (let i = 0; i < actionTasks.length; i += batchSize) {
+            const batch = actionTasks.slice(i, i + batchSize);
+            console.log(`📦 [バッチ実行] ${i + 1}-${i + batch.length}/${actionTasks.length} (${batch.length}件同時実行)`);
+            const batchPromises = batch.map(actionTask => this.executeActionTask(actionTask));
+            const batchResults = await Promise.allSettled(batchPromises);
+            // 結果の処理
+            for (let j = 0; j < batchResults.length; j++) {
+                const result = batchResults[j];
+                const originalDecision = executableDecisions[i + j];
+                if (result.status === 'fulfilled') {
+                    const actionResult = result.value;
+                    results.push(actionResult);
+                    // 実行記録をDailyActionPlannerに保存
+                    await this.dailyActionPlanner.recordAction(actionResult);
+                    console.log(`✅ [アクション完了] ${actionResult.type} - ${actionResult.success ? '成功' : '失敗'}`);
+                }
+                else {
+                    const errorResult = {
+                        success: false,
+                        actionId: originalDecision.id,
+                        type: originalDecision.type,
+                        timestamp: Date.now(),
+                        error: result.reason instanceof Error ? result.reason.message : 'Unknown error'
+                    };
+                    results.push(errorResult);
+                    console.log(`❌ [アクション失敗] ${originalDecision.type} - ${errorResult.error}`);
+                }
+            }
+            // バッチ間の待機（API制限対応）
+            if (i + batchSize < actionTasks.length) {
+                console.log('⏰ [API制限対応] 3秒待機中...');
+                await new Promise(resolve => setTimeout(resolve, 3000));
+            }
+        }
+        // 実行結果のサマリー
+        const successCount = results.filter(r => r.success).length;
+        const failureCount = results.length - successCount;
+        console.log(`🎯 [拡張アクション実行完了] ${successCount}成功, ${failureCount}失敗 (計${results.length}件)`);
+        // アクション型別の実行結果表示
+        const breakdown = this.calculateActionBreakdown(results);
+        console.log('📊 [実行配分]', breakdown);
+        // 今日の進捗確認
+        const todayProgress = await this.dailyActionPlanner.getTodayProgress();
+        console.log(`📈 [日次進捗] ${todayProgress.completed}/${todayProgress.target}回 (${todayProgress.progress}%)`);
+        return results;
+    }
+    // アクションタスクの作成
+    createActionTask(decision) {
+        return async () => {
+            console.log(`🔄 [アクションタスク実行] ${decision.type} - ${decision.reasoning}`);
+            try {
+                switch (decision.type) {
+                    case 'original_post':
+                        return await this.executeExpandedPost(decision);
+                    case 'quote_tweet':
+                        return await this.executeExpandedQuoteTweet(decision);
+                    case 'retweet':
+                        return await this.executeExpandedRetweet(decision);
+                    case 'reply':
+                        return await this.executeExpandedReply(decision);
+                    default:
+                        throw new Error(`Unknown action type: ${decision.type}`);
+                }
+            }
+            catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                console.error(`❌ [アクションタスクエラー] ${decision.type}:`, errorMessage);
+                return {
+                    success: false,
+                    actionId: decision.id,
+                    type: decision.type,
+                    timestamp: Date.now(),
+                    error: errorMessage
+                };
+            }
+        };
+    }
+    // アクションタスクの実行
+    async executeActionTask(actionTask) {
+        const startTime = Date.now();
+        try {
+            const result = await actionTask.task();
+            const duration = Date.now() - startTime;
+            console.log(`⏱️  [タスク完了] ${actionTask.id} - ${duration}ms`);
+            return result;
+        }
+        catch (error) {
+            const duration = Date.now() - startTime;
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error(`❌ [タスク失敗] ${actionTask.id} - ${duration}ms - ${errorMessage}`);
+            throw error;
+        }
+    }
+    // 拡張オリジナル投稿実行
+    async executeExpandedPost(decision) {
+        console.log('📝 [拡張投稿実行] オリジナルコンテンツ投稿を実行中...');
+        return await this.expandedActionExecutor.executeAction(decision);
+    }
+    // 拡張引用ツイート実行
+    async executeExpandedQuoteTweet(decision) {
+        console.log('💬 [拡張引用実行] 引用ツイートを実行中...');
+        return await this.expandedActionExecutor.executeAction(decision);
+    }
+    // 拡張リツイート実行
+    async executeExpandedRetweet(decision) {
+        console.log('🔄 [拡張RT実行] リツイートを実行中...');
+        return await this.expandedActionExecutor.executeAction(decision);
+    }
+    // 拡張リプライ実行
+    async executeExpandedReply(decision) {
+        console.log('💭 [拡張リプライ実行] リプライを実行中...');
+        return await this.expandedActionExecutor.executeAction(decision);
+    }
+    // アクション配分の計算
+    calculateActionBreakdown(results) {
+        const breakdown = {
+            original_post: { success: 0, failure: 0 },
+            quote_tweet: { success: 0, failure: 0 },
+            retweet: { success: 0, failure: 0 },
+            reply: { success: 0, failure: 0 }
+        };
+        results.forEach(result => {
+            if (breakdown.hasOwnProperty(result.type)) {
+                const category = result.success ? 'success' : 'failure';
+                breakdown[result.type][category]++;
+            }
+        });
+        return breakdown;
+    }
+    // 拡張アクション統計の取得
+    async getExpandedActionStats(days = 7) {
+        console.log(`📊 [拡張アクション統計] 過去${days}日間の拡張アクション統計を取得中...`);
+        const stats = await this.dailyActionPlanner.getActionStats(days);
+        const todayProgress = await this.dailyActionPlanner.getTodayProgress();
+        return {
+            ...stats,
+            todayProgress,
+            dailyTarget: 15,
+            systemVersion: 'expanded_actions_v1.0'
+        };
+    }
+}
+exports.ParallelManager = ParallelManager;

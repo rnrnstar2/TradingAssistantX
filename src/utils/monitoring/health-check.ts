@@ -22,10 +22,10 @@ interface DiskSpaceInfo {
 class HealthChecker {
   private readonly outputDir = 'tasks/20250721_001131/outputs';
   private readonly requiredDataFiles = [
-    'data/account-strategy.yaml',
-    'data/content-patterns.yaml',
-    'data/growth-targets.yaml',
-    'data/posting-history.yaml'
+    'data/account-config.yaml',
+    'data/autonomous-config.yaml',
+    'data/content-strategy.yaml',
+    'data/posting-data.yaml'
   ];
 
   async checkHealth(verbose: boolean = false): Promise<HealthStatus> {

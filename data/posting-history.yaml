@@ -1,0 +1,65 @@
+- id: '1753075131155'
+  content: >-
+    Quote: This resonates! Building good habits early makes such a difference in
+    long-term development s...
+  timestamp: 1753075131155
+  success: false
+  error: >-
+    X API error: 403 - Authenticating with OAuth 2.0 Application-Only is
+    forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a
+    User Context, OAuth 2.0 User Context].
+- id: '1753075131158'
+  content: >-
+    Quote: Great list! I'd add that learning keyboard shortcuts for your editor
+    can save hours weekly. S...
+  timestamp: 1753075131158
+  success: false
+  error: >-
+    X API error: 403 - Authenticating with OAuth 2.0 Application-Only is
+    forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a
+    User Context, OAuth 2.0 User Context].
+- id: '1753075135314'
+  content: 'Retweet: educational_programming_content'
+  timestamp: 1753075135314
+  success: false
+  error: 'X API error: 403 - Forbidden'
+- id: '1753075624074'
+  content: >-
+    🚀 Starting my trading journey documentation here! Following Warren
+    Buffett's advice: 'Rule #1: Don'...
+  timestamp: 1753075624074
+  success: false
+  error: >-
+    X API error: 403 - Authenticating with OAuth 2.0 Application-Only is
+    forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a
+    User Context, OAuth 2.0 User Context].
+- id: '1753076172879'
+  content: |-
+    投資初心者が最初に学ぶべき5つのこと：
+
+    1️⃣ 自分のリスク許容度
+    2️⃣ 投資の基本用語
+    3️⃣ 複利の力
+    4️⃣ 分散投資の重要性
+    5️⃣ 手数料・税金の影響
+
+    基礎をしっかり固めることが長期成...
+  timestamp: 1753076172879
+  success: false
+  error: 'X API error: 401 - Unauthorized'
+- id: '1753077133407'
+  content: 'テスト投稿: システム動作確認'
+  timestamp: 1753077133407
+  success: true
+- id: '1753077133413'
+  content: 'Quote: テスト引用'
+  timestamp: 1753077133413
+  success: true
+- id: '1753077133414'
+  content: 'Retweet: test-tweet-id'
+  timestamp: 1753077133414
+  success: true
+- id: '1753077133416'
+  content: 'Reply: テストリプライ'
+  timestamp: 1753077133416
+  success: true

@@ -29,24 +29,6 @@
             "command": "bash /Users/rnrnstar/github/TradingAssistantX/.claude/hooks/quality-check-role-based.sh \"$CLAUDE_FILE_PATHS\""
           }
         ]
-      },
-      {
-        "matcher": "Read|Grep|Glob|LS",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash /Users/rnrnstar/github/TradingAssistantX/.claude/hooks/task-complete-notify.sh \"$CLAUDE_TOOL_NAME\" \"$CLAUDE_FILE_PATHS\""
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash -c 'if [ \"$ROLE\" = \"manager\" ] || [ \"$ROLE\" = \"worker\" ]; then bash /Users/rnrnstar/github/TradingAssistantX/.claude/hooks/task-complete-notify.sh \"Bash\" \"\"; fi'"
-          }
-        ]
       }
     ],
     "Stop": [

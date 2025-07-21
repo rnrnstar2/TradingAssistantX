@@ -1,0 +1,27 @@
+[
+  {
+    "timestamp": "2025-07-21T04:58:39.455Z",
+    "error": "X API error: 403 - Forbidden",
+    "stack": "Error: X API error: 403 - Forbidden\n    at SimpleXClient.getMyAccountInfo (/Users/rnrnstar/github/TradingAssistantX/src/lib/x-client.ts:204:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at AccountAnalyzer.analyzeCurrentStatus (/Users/rnrnstar/github/TradingAssistantX/src/lib/account-analyzer.ts:56:27)\n    at async Promise.all (index 0)\n    at AutonomousExecutor.executeAutonomously (/Users/rnrnstar/github/TradingAssistantX/src/core/autonomous-executor.ts:56:50)\n    at main (/Users/rnrnstar/github/TradingAssistantX/src/scripts/autonomous-runner-single.ts:12:5)"
+  },
+  {
+    "timestamp": "2025-07-21T05:06:04.919Z",
+    "error": "X API error: 403 - Forbidden",
+    "stack": "Error: X API error: 403 - Forbidden\n    at SimpleXClient.getMyAccountInfo (/Users/rnrnstar/github/TradingAssistantX/src/lib/x-client.ts:204:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at AccountAnalyzer.analyzeCurrentStatus (/Users/rnrnstar/github/TradingAssistantX/src/lib/account-analyzer.ts:57:27)\n    at async Promise.all (index 0)\n    at AutonomousExecutor.executeAutonomously (/Users/rnrnstar/github/TradingAssistantX/src/core/autonomous-executor.ts:56:50)\n    at main (/Users/rnrnstar/github/TradingAssistantX/src/scripts/autonomous-runner-single.ts:12:5)"
+  },
+  {
+    "timestamp": "2025-07-21T05:06:10.750Z",
+    "error": "this.getAccountInfoWithFallback is not a function",
+    "stack": "TypeError: this.getAccountInfoWithFallback is not a function\n    at AccountAnalyzer.analyzeCurrentStatus (/Users/rnrnstar/github/TradingAssistantX/src/lib/account-analyzer.ts:57:38)\n    at AutonomousExecutor.executeAutonomously (/Users/rnrnstar/github/TradingAssistantX/src/core/autonomous-executor.ts:57:30)\n    at main (/Users/rnrnstar/github/TradingAssistantX/src/scripts/autonomous-runner-single.ts:12:5)"
+  },
+  {
+    "timestamp": "2025-07-21T05:06:18.324Z",
+    "error": "this.getAccountInfoWithFallback is not a function",
+    "stack": "TypeError: this.getAccountInfoWithFallback is not a function\n    at AccountAnalyzer.analyzeCurrentStatus (/Users/rnrnstar/github/TradingAssistantX/src/lib/account-analyzer.ts:59:38)\n    at AutonomousExecutor.executeAutonomously (/Users/rnrnstar/github/TradingAssistantX/src/core/autonomous-executor.ts:57:30)\n    at main (/Users/rnrnstar/github/TradingAssistantX/src/scripts/autonomous-runner-single.ts:12:5)"
+  },
+  {
+    "timestamp": "2025-07-21T05:07:08.117Z",
+    "error": "this.getAccountInfoWithFallback is not a function",
+    "stack": "TypeError: this.getAccountInfoWithFallback is not a function\n    at AccountAnalyzer.analyzeCurrentStatus (/Users/rnrnstar/github/TradingAssistantX/src/lib/account-analyzer.ts:59:38)\n    at AutonomousExecutor.executeAutonomously (/Users/rnrnstar/github/TradingAssistantX/src/core/autonomous-executor.ts:57:30)\n    at main (/Users/rnrnstar/github/TradingAssistantX/src/scripts/autonomous-runner-single.ts:12:5)"
+  }
+]

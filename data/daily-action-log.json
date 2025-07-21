@@ -1,0 +1,113 @@
+[
+  {
+    "date": "2025-07-21",
+    "totalActions": 12,
+    "actionBreakdown": {
+      "original_post": 9,
+      "quote_tweet": 2,
+      "retweet": 1,
+      "reply": 0
+    },
+    "executedActions": [
+      {
+        "success": false,
+        "actionId": "action-1721541600-001",
+        "type": "original_post",
+        "timestamp": 1753075121556,
+        "content": "Hi Twitter! 👋 I'm sharing my journey building tech solutions and learning in public. What should I work on next?",
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "success": false,
+        "actionId": "action-1721541600-002",
+        "type": "original_post",
+        "timestamp": 1753075121556,
+        "content": "🧵 Thread: 5 common mistakes developers make when starting their coding journey (and how to avoid them)",
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "success": false,
+        "actionId": "action-1721541600-003",
+        "type": "original_post",
+        "timestamp": 1753075121557,
+        "content": "What's the one piece of tech advice you wish someone had told you when you started? Drop it below 👇",
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "success": false,
+        "actionId": "action-1721541600-004",
+        "type": "original_post",
+        "timestamp": 1753075125839,
+        "content": "🔥 Free resource alert: 10 websites every developer should bookmark (thread below)",
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "success": false,
+        "actionId": "action-1721541600-005",
+        "type": "original_post",
+        "timestamp": 1753075125839,
+        "content": "🚀 Building my first side project publicly. Day 1: Setting up the development environment. What would you build if you had unlimited time?",
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "success": false,
+        "actionId": "action-1721541600-006",
+        "type": "original_post",
+        "timestamp": 1753075125839,
+        "content": "Today I learned: You can use console.table() instead of console.log() for better array/object visualization in DevTools 🤯",
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "success": false,
+        "actionId": "action-1721541600-007",
+        "type": "original_post",
+        "timestamp": 1753075130006,
+        "content": "💭 Shower thought: We spend more time reading code than writing it. Yet most developer education focuses on writing. What if we taught reading first?",
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "success": false,
+        "actionId": "action-1721541600-008",
+        "type": "quote_tweet",
+        "timestamp": 1753075130008,
+        "originalTweetId": "trending_tech_content",
+        "comment": "This resonates! Building good habits early makes such a difference in long-term development success. What habit changed your coding journey the most?",
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "success": false,
+        "actionId": "action-1721541600-009",
+        "type": "quote_tweet",
+        "timestamp": 1753075130009,
+        "originalTweetId": "dev_tools_discussion",
+        "comment": "Great list! I'd add that learning keyboard shortcuts for your editor can save hours weekly. Small optimizations compound over time 🚀",
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "success": false,
+        "actionId": "action-1721541600-010",
+        "type": "retweet",
+        "timestamp": 1753075134167,
+        "originalTweetId": "educational_programming_content",
+        "error": "X API error: 403 - Forbidden"
+      },
+      {
+        "success": false,
+        "actionId": "action-1721534719801-bf7a2",
+        "type": "original_post",
+        "timestamp": 1753075622701,
+        "content": "🚀 Starting my trading journey documentation here! Following Warren Buffett's advice: 'Rule #1: Don't lose money. Rule #2: Don't forget rule #1.' What's your top trading rule? #Trading101 #InvestmentWisdom",
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "success": false,
+        "actionId": "action-1721541256-7891",
+        "type": "original_post",
+        "timestamp": 1753076171550,
+        "content": "投資初心者が最初に学ぶべき5つのこと：\n\n1️⃣ 自分のリスク許容度\n2️⃣ 投資の基本用語\n3️⃣ 複利の力\n4️⃣ 分散投資の重要性\n5️⃣ 手数料・税金の影響\n\n基礎をしっかり固めることが長期成功の秘訣です。\n\n#投資初心者 #基礎知識 #投資教育",
+        "error": "X API error: 401 - Unauthorized"
+      }
+    ],
+    "targetReached": false
+  }
+]

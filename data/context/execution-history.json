@@ -1,125 +1,5 @@
 [
   {
-    "timestamp": "2025-07-20T12:42:49.986Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T12:46:38.924Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T12:49:02.700Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T12:51:33.255Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T12:54:58.119Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T12:57:16.990Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:01:00.365Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:04:35.201Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:07:18.532Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:11:11.414Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:14:39.365Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:17:48.419Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:20:16.789Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:22:28.762Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:24:42.569Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:28:27.778Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:31:52.976Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:35:43.384Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:38:53.359Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:42:34.127Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:45:51.179Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:49:27.823Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:52:39.404Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:56:52.279Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T13:59:58.628Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T14:04:10.108Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T14:08:08.936Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T14:12:08.019Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T14:16:33.668Z",
-    "actions": []
-  },
-  {
-    "timestamp": "2025-07-20T14:19:47.807Z",
-    "actions": []
-  },
-  {
     "timestamp": "2025-07-20T14:23:14.461Z",
     "actions": []
   },
@@ -715,5 +595,128 @@
         "status": "pending"
       }
     ]
+  },
+  {
+    "timestamp": "2025-07-21T05:18:55.329Z",
+    "workflow": "optimized_integrated_v2",
+    "context": {
+      "accountHealth": 35,
+      "marketOpportunities": 0,
+      "actionSuggestions": 15
+    },
+    "results": [
+      {
+        "type": "original_post",
+        "success": false,
+        "timestamp": 1753075121556,
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "type": "original_post",
+        "success": false,
+        "timestamp": 1753075121556,
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "type": "original_post",
+        "success": false,
+        "timestamp": 1753075121557,
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "type": "original_post",
+        "success": false,
+        "timestamp": 1753075125839,
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "type": "original_post",
+        "success": false,
+        "timestamp": 1753075125839,
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "type": "original_post",
+        "success": false,
+        "timestamp": 1753075125839,
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "type": "original_post",
+        "success": false,
+        "timestamp": 1753075130006,
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "type": "quote_tweet",
+        "success": false,
+        "timestamp": 1753075130008,
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "type": "quote_tweet",
+        "success": false,
+        "timestamp": 1753075130009,
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      },
+      {
+        "type": "retweet",
+        "success": false,
+        "timestamp": 1753075134167,
+        "error": "X API error: 403 - Forbidden"
+      }
+    ],
+    "metrics": {
+      "totalActions": 10,
+      "successCount": 0,
+      "failureCount": 10,
+      "successRate": 0
+    }
+  },
+  {
+    "timestamp": "2025-07-21T05:27:04.082Z",
+    "workflow": "optimized_integrated_v2",
+    "context": {
+      "accountHealth": 35,
+      "marketOpportunities": 0,
+      "actionSuggestions": 15
+    },
+    "results": [
+      {
+        "type": "original_post",
+        "success": false,
+        "timestamp": 1753075622701,
+        "error": "X API error: 403 - Authenticating with OAuth 2.0 Application-Only is forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a User Context, OAuth 2.0 User Context]."
+      }
+    ],
+    "metrics": {
+      "totalActions": 1,
+      "successCount": 0,
+      "failureCount": 1,
+      "successRate": 0
+    }
+  },
+  {
+    "timestamp": "2025-07-21T05:36:12.886Z",
+    "workflow": "optimized_integrated_v2",
+    "context": {
+      "accountHealth": 35,
+      "marketOpportunities": 0,
+      "actionSuggestions": 14
+    },
+    "results": [
+      {
+        "type": "original_post",
+        "success": false,
+        "timestamp": 1753076171550,
+        "error": "X API error: 401 - Unauthorized"
+      }
+    ],
+    "metrics": {
+      "totalActions": 1,
+      "successCount": 0,
+      "failureCount": 1,
+      "successRate": 0
+    }
   }
 ]

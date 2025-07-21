@@ -1,0 +1,10 @@
+- id: '1753065937936'
+  content: >-
+    I'll help you generate a valuable social media post. Let me first check the
+    account strategy and con...
+  timestamp: 1753065937936
+  success: false
+  error: >-
+    X API error: 403 - Authenticating with OAuth 2.0 Application-Only is
+    forbidden for this endpoint.  Supported authentication types are [OAuth 1.0a
+    User Context, OAuth 2.0 User Context].

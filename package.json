@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "tsx src/scripts/autonomous-runner.ts",
-    "dev": "tsx watch src/scripts/autonomous-runner.ts",
+    "dev": "tsx watch src/scripts/autonomous-runner-single.ts",
+    "dev:watch": "tsx watch src/scripts/autonomous-runner-single.ts",
     "stop": "pkill -f 'tsx watch src/scripts/autonomous-runner.ts'",
     "status": "ps aux | grep 'autonomous-runner' | grep -v grep || echo 'システムは停止中'",
     "health": "tsx src/utils/monitoring/health-check.ts",

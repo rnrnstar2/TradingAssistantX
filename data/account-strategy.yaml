@@ -1,0 +1,72 @@
+version: 1.0.0
+lastUpdated: 1753073918890
+currentPhase: growth
+objectives:
+  primary: トレーディング教育コンテンツで信頼性のあるアカウントを構築
+  secondary:
+    - フォロワー数の安定的な増加
+    - エンゲージメント率の向上
+    - 質の高いコミュニティ形成
+  timeline: 6ヶ月
+contentStrategy:
+  themes:
+    - リスク管理
+    - 市場分析
+    - 投資心理
+    - 基礎知識
+  toneOfVoice: 教育的で親しみやすい
+  postingFrequency: 15
+  optimalTimes:
+    - '07:00'
+    - '07:30'
+    - '08:00'
+    - '08:30'
+    - '12:00'
+    - '12:30'
+    - '18:00'
+    - '18:30'
+    - '19:00'
+    - '19:30'
+    - '21:00'
+    - '21:30'
+    - '22:00'
+    - '22:30'
+    - '23:30'
+  avoidTopics:
+    - 確実に儲かる話
+    - 投資勧誘
+    - 誇大表現
+targetAudience:
+  demographics:
+    - 20-40代
+    - 投資初心者
+    - 兼業トレーダー
+  interests:
+    - 投資
+    - トレーディング
+    - 資産運用
+    - 副業
+  painPoints:
+    - リスク管理
+    - 情報の信頼性
+    - 継続的な学習
+  preferredContentTypes:
+    - 教育コンテンツ
+    - 実例紹介
+    - 分析結果
+growthTactics:
+  primary:
+    - 教育的価値の提供
+    - 継続的な情報発信
+    - 信頼性の構築
+  testing:
+    - 投稿時間の最適化
+    - コンテンツ形式の実験
+  deprecated: []
+constraints:
+  maxPostsPerDay: 15
+  minQualityScore: 7
+  brandSafety:
+    - 投資勧誘禁止
+    - 誇大表現禁止
+    - 根拠のない情報禁止

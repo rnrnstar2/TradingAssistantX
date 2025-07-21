@@ -1,0 +1,20 @@
+# X アカウント情報管理ファイル
+# MVP実装: 基本的なアカウント情報とメトリクス管理
+
+account:
+  username: "rnrnstar" 
+  user_id: ""  # API取得後に更新
+  display_name: ""  # API取得後に更新
+  verified: false  # API取得後に更新
+
+current_metrics:
+  followers_count: 0
+  following_count: 0  
+  tweet_count: 0
+  listed_count: 0
+  last_updated: 0
+
+history:
+  # 過去のメトリクス履歴（直近10件のみ保持）
+  - timestamp: 0
+    followers_count: 0

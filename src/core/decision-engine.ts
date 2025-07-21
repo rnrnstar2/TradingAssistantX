@@ -505,12 +505,12 @@ ${JSON.stringify(integratedContext.market, null, 2)}
 ACTION SUGGESTIONS:
 ${JSON.stringify(integratedContext.actionSuggestions, null, 2)}
 
-Create strategic action decisions considering:
-1. Daily target: 15 actions total
-2. Optimal distribution: 40% original_post, 30% quote_tweet, 20% retweet, 10% reply
+Create ONE strategic action decision for this single execution considering:
+1. Daily target: 15 actions total (this is just 1 of 15 for today)
+2. Current session focus: Choose the most impactful single action
 3. Account health and growth needs (current score: ${integratedContext.account.healthScore}/100)
 4. Market trends and opportunities (${integratedContext.market.opportunities.length} opportunities available)
-5. Quality over quantity approach
+5. Quality over quantity approach - focus on ONE high-impact action
 
 Available action types:
 - original_post: Create original educational/insight content
@@ -518,7 +518,7 @@ Available action types:
 - retweet: Share relevant content efficiently
 - reply: Engage with community discussions
 
-Return action decisions as JSON array with this exact structure:
+Return ONE action decision as JSON array with this exact structure:
 [{
   "id": "action-{timestamp}-{random}",
   "type": "original_post|quote_tweet|retweet|reply",
@@ -539,11 +539,11 @@ Return action decisions as JSON array with this exact structure:
 }]
 
 Prioritize based on account health:
-- Health < 70: Focus on educational original posts (70% original, 20% quote, 10% retweet)
-- Health 70-80: Balanced approach (40% original, 30% quote, 20% retweet, 10% reply)
-- Health > 80: Aggressive engagement (30% original, 35% quote, 25% retweet, 10% reply)
+- Health < 70: Focus on educational original posts
+- Health 70-80: Balanced approach, consider quote tweets for engagement
+- Health > 80: Aggressive engagement focus
 
-Limit to 8-12 actions maximum for this session.
+Return exactly ONE action decision that will have the highest impact for this execution.
 `;
 
     try {

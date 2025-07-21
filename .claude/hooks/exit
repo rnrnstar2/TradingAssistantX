@@ -1,0 +1,15 @@
+#!/bin/bash
+# Claude Code 終了時通知
+
+# スクリプトのディレクトリを取得
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# メイン通知スクリプトのパス
+NOTIFY_SCRIPT="$SCRIPT_DIR/session-complete-notify.sh"
+
+# 通知スクリプトが存在し実行可能の場合のみ実行
+if [ -f "$NOTIFY_SCRIPT" ] && [ -x "$NOTIFY_SCRIPT" ]; then
+    "$NOTIFY_SCRIPT"
+fi
+
+exit 0

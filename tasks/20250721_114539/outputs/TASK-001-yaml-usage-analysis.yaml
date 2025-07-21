@@ -1,0 +1,242 @@
+# TASK-001: YAMLファイル使用状況分析結果
+# 調査実施日: 2025-07-21
+# 対象: dataディレクトリの全YAMLファイル（9個）
+
+file_usage_analysis:
+  account-info.yaml:
+    used_in_files:
+      - "src/lib/x-client.ts"
+    type_definitions:
+      - "AccountInfo (src/types/index.ts:124)"
+    read_frequency: 1
+    read_methods:
+      - "readFileSync (x-client.ts:236)"
+    safety_level: "low-risk"
+    notes: "アカウント情報の読み書きに使用、型定義あり"
+    
+  account-strategy.yaml:
+    used_in_files:
+      - "src/utils/monitoring/health-check.ts"
+      - "src/lib/growth-system-manager.ts"
+    type_definitions:
+      - "AccountStrategy (growth-system-manager.ts:7-24で定義)"
+    read_frequency: 2
+    read_methods:
+      - "loadYamlSafe (growth-system-manager.ts:263)"
+    safety_level: "medium-risk"
+    notes: "戦略設定管理、ヘルスチェックで監視対象"
+    
+  collection-results.yaml:
+    used_in_files: []
+    type_definitions: []
+    read_frequency: 0
+    read_methods: []
+    safety_level: "safe"
+    notes: "現在未使用、統合時に安全"
+    
+  content-patterns.yaml:
+    used_in_files:
+      - "src/utils/monitoring/health-check.ts"
+    type_definitions: []
+    read_frequency: 1
+    read_methods: []
+    safety_level: "low-risk"
+    notes: "ヘルスチェックでのみ参照、型定義なし"
+    
+  growth-targets.yaml:
+    used_in_files:
+      - "src/utils/monitoring/health-check.ts"
+      - "src/lib/growth-system-manager.ts"
+    type_definitions:
+      - "GrowthTargets (growth-system-manager.ts:26-33で定義)"
+    read_frequency: 2
+    read_methods:
+      - "loadYamlSafe (growth-system-manager.ts:263)"
+    safety_level: "medium-risk"
+    notes: "成長目標管理、複数箇所で読み込み"
+    
+  performance-insights.yaml:
+    used_in_files:
+      - "src/lib/growth-system-manager.ts"
+    type_definitions:
+      - "PerformanceInsights (growth-system-manager.ts:35-48で定義)"
+    read_frequency: 1
+    read_methods:
+      - "loadYamlSafe (growth-system-manager.ts:263)"
+    safety_level: "low-risk"
+    notes: "パフォーマンス分析データ、単一箇所で使用"
+    
+  posting-history.yaml:
+    used_in_files:
+      - "src/lib/x-client.ts"
+      - "src/utils/monitoring/health-check.ts"
+      - "src/lib/claude-max-integration.ts"
+    type_definitions:
+      - "PostHistory (src/types/index.ts:29-45)"
+    read_frequency: 3
+    read_methods:
+      - "loadYamlArraySafe (x-client.ts:26)"
+      - "loadYamlArraySafe (claude-max-integration.ts:218)"
+    safety_level: "high-risk"
+    notes: "投稿履歴管理、最も使用頻度が高い、統合時要注意"
+    
+  quality-assessments.yaml:
+    used_in_files: []
+    type_definitions: []
+    read_frequency: 0
+    read_methods: []
+    safety_level: "safe"
+    notes: "現在未使用、統合時に安全"
+    
+  strategic-decisions.yaml:
+    used_in_files:
+      - "src/core/parallel-manager.ts"
+      - "src/core/decision-engine.ts"
+      - "src/lib/growth-system-manager.ts"
+    type_definitions:
+      - "StrategicDecisions (growth-system-manager.ts:50-63で定義)"
+    read_frequency: 3
+    read_methods:
+      - "fs.readFile (parallel-manager.ts:223)"
+      - "loadYamlSafe (growth-system-manager.ts:263)"
+    safety_level: "high-risk"
+    notes: "戦略決定データ、コアシステムで使用、統合時要注意"
+
+# 依存関係マップ
+dependency_map:
+  high_risk:
+    - file_name: "posting-history.yaml"
+      impact_score: 9
+      reason: "3箇所で使用、X投稿システムのコア機能"
+      affected_components:
+        - "X投稿クライアント"
+        - "ヘルスチェック監視"
+        - "Claude統合システム"
+    - file_name: "strategic-decisions.yaml"
+      impact_score: 9
+      reason: "3箇所で使用、システム決定エンジンのコア"
+      affected_components:
+        - "並列処理マネージャー"
+        - "意思決定エンジン"
+        - "成長システム管理"
+        
+  medium_risk:
+    - file_name: "account-strategy.yaml"
+      impact_score: 6
+      reason: "2箇所で使用、戦略管理の中核"
+      affected_components:
+        - "ヘルスチェック"
+        - "成長システム管理"
+    - file_name: "growth-targets.yaml"
+      impact_score: 6
+      reason: "2箇所で使用、成長管理システム"
+      affected_components:
+        - "ヘルスチェック"
+        - "成長システム管理"
+        
+  low_risk:
+    - file_name: "account-info.yaml"
+      impact_score: 3
+      reason: "1箇所で使用、アカウント情報管理"
+      affected_components:
+        - "Xクライアント"
+    - file_name: "content-patterns.yaml"
+      impact_score: 2
+      reason: "1箇所で使用、ヘルスチェックのみ"
+      affected_components:
+        - "ヘルスチェック"
+    - file_name: "performance-insights.yaml"
+      impact_score: 3
+      reason: "1箇所で使用、分析システム"
+      affected_components:
+        - "成長システム管理"
+        
+  safe:
+    - file_name: "collection-results.yaml"
+      impact_score: 0
+      reason: "未使用、統合時の影響なし"
+      affected_components: []
+    - file_name: "quality-assessments.yaml"
+      impact_score: 0
+      reason: "未使用、統合時の影響なし"
+      affected_components: []
+
+# 統合時の推奨事項
+integration_recommendations:
+  immediate_attention:
+    - "posting-history.yaml: 統合前にバックアップ必須、段階的移行推奨"
+    - "strategic-decisions.yaml: コアシステム影響大、慎重な統合計画必要"
+    
+  careful_monitoring:
+    - "account-strategy.yaml: 戦略設定の整合性確認"
+    - "growth-targets.yaml: 成長目標の統一性確保"
+    
+  low_priority:
+    - "account-info.yaml: 単純なデータ統合で対応可能"
+    - "content-patterns.yaml: ヘルスチェック設定の更新のみ"
+    - "performance-insights.yaml: 分析データの統合"
+    
+  safe_integration:
+    - "collection-results.yaml: 新規追加として統合可能"
+    - "quality-assessments.yaml: 新規追加として統合可能"
+
+# ユーティリティ関数分析
+utility_functions:
+  loadYamlSafe:
+    location: "src/utils/yaml-utils"
+    usage_count: 4
+    files_using:
+      - "growth-system-manager.ts"
+    description: "安全なYAML読み込み、エラーハンドリング付き"
+    
+  loadYamlArraySafe:
+    location: "src/utils/yaml-utils"
+    usage_count: 3
+    files_using:
+      - "x-client.ts"
+      - "claude-max-integration.ts"
+      - "claude-agent.ts"
+    description: "配列形式YAML読み込み、型安全性確保"
+    
+  readFileSync:
+    usage_count: 多数
+    description: "直接ファイル読み込み、複数システムで使用"
+
+# 型定義の整備状況
+type_definitions_status:
+  defined:
+    - "AccountInfo (types/index.ts:124)"
+    - "PostHistory (types/index.ts:29-45)"
+    - "AccountStrategy (growth-system-manager.ts:7-24)"
+    - "GrowthTargets (growth-system-manager.ts:26-33)"
+    - "PerformanceInsights (growth-system-manager.ts:35-48)"
+    - "StrategicDecisions (growth-system-manager.ts:50-63)"
+    
+  missing:
+    - "CollectionResults: 型定義なし、未使用"
+    - "ContentPatterns: 型定義なし"
+    - "QualityAssessments: 型定義なし、未使用"
+    
+  recommendations:
+    - "ContentPatterns型を追加してヘルスチェックの型安全性向上"
+    - "将来使用予定のCollectionResults、QualityAssessments型を事前定義"
+
+# 総合評価
+summary:
+  total_files_analyzed: 9
+  files_in_use: 7
+  files_unused: 2
+  high_risk_files: 2
+  medium_risk_files: 2
+  low_risk_files: 3
+  safe_files: 2
+  type_definitions_coverage: "67% (6/9)"
+  
+  key_findings:
+    - "posting-history.yamlとstrategic-decisions.yamlが最も重要"
+    - "2ファイルが完全に未使用で統合時に安全"
+    - "型定義の整備が部分的、一部ファイルで欠如"
+    - "loadYamlSafe/loadYamlArraySafeが標準的読み込み方法"
+    
+  risk_assessment: "MEDIUM"
+  integration_complexity: "MEDIUM-HIGH"

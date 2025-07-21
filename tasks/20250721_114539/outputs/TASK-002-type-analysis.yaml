@@ -1,0 +1,232 @@
+# TASK-002: 型定義依存関係分析レポート
+# Date: 2025-07-21
+# Analyzer: Claude Worker
+
+version: "1.0.0"
+analysis_timestamp: "2025-07-21T11:45:39+09:00"
+
+# =============================================================================
+# 型定義マッピング
+# =============================================================================
+type_definition_analysis:
+  existing_types:
+    AccountInfo:
+      file_path: "src/types/index.ts"
+      lines: "124-129"
+      complexity: "simple"  # 4つのプリミティブフィールドのみ
+      dependencies: []
+      used_by: 
+        - "src/lib/x-client.ts"
+      yaml_relevance: "high"  # アカウント戦略YAMLファイルと直接関連
+      
+    AccountMetrics:
+      file_path: "src/types/index.ts"
+      lines: "131-137"
+      complexity: "simple"  # 5つの数値フィールドのみ
+      dependencies: []
+      used_by: 
+        - "src/lib/x-client.ts"
+      yaml_relevance: "high"  # パフォーマンス管理YAMLと関連
+      
+    PostingResult:
+      file_path: "src/types/index.ts"
+      lines: "47-53"
+      complexity: "simple"  # 基本フィールドのみ
+      dependencies: []
+      used_by: 
+        - "src/lib/posting-manager.ts"
+        - "src/lib/x-client.ts"
+      yaml_relevance: "high"  # 投稿履歴YAMLと関連
+      
+    PostHistory:
+      file_path: "src/types/index.ts"
+      lines: "29-45"
+      complexity: "medium"  # オプショナルフィールド多数
+      dependencies: []
+      used_by: 
+        - "src/lib/growth-system-manager.ts"
+        - "src/lib/claude-max-integration.ts"
+        - "src/lib/x-client.ts"
+      yaml_relevance: "high"  # 投稿履歴YAMLに直接対応
+      
+    QualityScore:
+      file_path: "src/types/claude-tools.ts"
+      lines: "4-8"
+      complexity: "simple"  # 配列フィールド含む簡潔な構造
+      dependencies: []
+      used_by: 
+        - "src/lib/claude-tools.ts"
+        - "src/types/claude-tools.ts (CollectionResult, GeneratedPost)"
+      yaml_relevance: "medium"  # 品質設定YAMLと間接的関連
+      
+    CollectionResult:
+      file_path: "src/types/claude-tools.ts"
+      lines: "38-44"
+      complexity: "medium"  # 複数の型参照
+      dependencies: 
+        - "QualityScore"
+        - "Date"
+      used_by: 
+        - "src/lib/claude-max-integration.ts"
+      yaml_relevance: "low"  # YAMLファイルとの直接関連は限定的
+      
+    PostTemplate:
+      file_path: "src/types/index.ts"
+      lines: "8-16"
+      complexity: "simple"  # 基本フィールド構成
+      dependencies: []
+      used_by: 
+        - "src/types/index.ts (Config interface)"
+      yaml_relevance: "high"  # コンテンツパターンYAMLと直接関連
+
+# =============================================================================
+# リファクタリング影響度
+# =============================================================================
+refactoring_impact:
+  high_impact:  # 変更時に多数のファイルに影響
+    - type_name: "PostHistory"
+      affected_files: 4
+      complexity_score: 6
+      reason: "多数のオプショナルフィールドと3つのライブラリで使用"
+      risk_level: "high"
+      
+  medium_impact:
+    - type_name: "AccountInfo"
+      affected_files: 1
+      complexity_score: 3
+      reason: "シンプルだが重要なアカウント情報"
+      risk_level: "medium"
+      
+    - type_name: "AccountMetrics"
+      affected_files: 1
+      complexity_score: 3
+      reason: "パフォーマンス指標の基盤型"
+      risk_level: "medium"
+      
+    - type_name: "PostingResult"
+      affected_files: 2
+      complexity_score: 3
+      reason: "投稿システムの中核型"
+      risk_level: "medium"
+      
+  low_impact:
+    - type_name: "QualityScore"
+      affected_files: 2
+      complexity_score: 2
+      reason: "独立性が高く、変更影響が限定的"
+      risk_level: "low"
+      
+    - type_name: "CollectionResult"
+      affected_files: 1
+      complexity_score: 4
+      reason: "使用箇所が限定的"
+      risk_level: "low"
+      
+    - type_name: "PostTemplate"
+      affected_files: 1
+      complexity_score: 2
+      reason: "Config内でのみ使用"
+      risk_level: "low"
+
+# =============================================================================
+# 統合推奨戦略
+# =============================================================================
+integration_strategy:
+  phase1_safe:  # 影響の少ない型から統合
+    description: "低リスクで即座に実行可能"
+    targets:
+      - "QualityScore"
+      - "PostTemplate"
+      - "CollectionResult"
+    estimated_effort: "低"
+    prerequisites: []
+    
+  phase2_medium:  # 中程度の影響
+    description: "慎重な準備と段階的実行が必要"
+    targets:
+      - "AccountInfo"
+      - "AccountMetrics"
+      - "PostingResult"
+    estimated_effort: "中"
+    prerequisites: 
+      - "Phase1の完了"
+      - "関連YAMLファイル構造の確定"
+    
+  phase3_complex:  # 慎重に進める必要がある
+    description: "最も慎重なアプローチが必要"
+    targets:
+      - "PostHistory"
+    estimated_effort: "高"
+    prerequisites:
+      - "Phase1-2の完了"
+      - "投稿履歴YAML設計の完了"
+      - "バックアップ戦略の準備"
+
+# =============================================================================
+# リスク評価
+# =============================================================================
+risk_assessment:
+  technical_risks:
+    type_safety:
+      level: "medium"
+      description: "型定義変更時のTypeScriptエラーリスク"
+      mitigation: "段階的実装と厳密なtype-check"
+      
+    dependency_breakage:
+      level: "high"
+      description: "PostHistoryの変更による複数システムへの影響"
+      mitigation: "影響範囲の事前特定と個別対応"
+      
+    data_migration:
+      level: "medium"
+      description: "既存データ構造からYAML形式への移行"
+      mitigation: "データ変換ツールの事前準備"
+      
+  operational_risks:
+    system_downtime:
+      level: "low"
+      description: "型定義のみの変更では実行時影響は限定的"
+      mitigation: "開発環境での十分なテスト"
+      
+    rollback_complexity:
+      level: "medium"
+      description: "統合後のロールバックの複雑性"
+      mitigation: "明確なロールバック手順書の準備"
+
+# =============================================================================
+# 推奨事項
+# =============================================================================
+recommendations:
+  immediate_actions:
+    - "Phase1対象型の詳細設計開始"
+    - "型安全性確保のためのテスト戦略策定"
+    - "既存データのYAML移行計画作成"
+    
+  preparation_required:
+    - "PostHistory型の複雑性軽減検討"
+    - "YAML Schema Validationの導入検討"
+    - "型定義変更の自動テスト強化"
+    
+  long_term_considerations:
+    - "型定義の一元管理体制構築"
+    - "YAML-TypeScript型同期の自動化"
+    - "パフォーマンス影響の継続監視"
+
+# =============================================================================
+# メタデータ
+# =============================================================================
+metadata:
+  total_types_analyzed: 7
+  yaml_relevant_types: 5
+  high_priority_types: 4
+  analysis_method: "static_code_analysis"
+  tools_used: 
+    - "grep"
+    - "find"
+    - "manual_code_review"
+  confidence_level: "high"
+  
+  next_steps:
+    - "TASK-003での詳細なシステム参照分析"
+    - "TASK-004での新構造設計への反映"
+    - "型安全性を保った段階的移行計画の策定"

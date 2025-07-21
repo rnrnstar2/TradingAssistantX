@@ -11,15 +11,19 @@ X システムは、Xプラットフォーム（旧Twitter）上でのアカウ�
 - **成長目標管理**: フォロワー数、エンゲージメント率の目標設定と追跡
 - **パフォーマンス分析**: 投稿履歴の分析と改善提案
 
-### 2. 自律的情報探索
+### 2. 自律的情報探索（アクション特化型）
+- **ActionSpecificCollector**: 実行決定に基づく特化情報収集
 - **Playwright統合**: リアルタイムのトレンド情報収集
+- **連鎖判断システム**: 収集→分析→再判断→追加収集の自律サイクル
 - **品質評価システム**: 収集した情報の品質判定
 - **コンテンツ分析**: 関連性・信頼性の自動評価
 
-### 3. AI主導の投稿生成
+### 3. AI主導の投稿生成（連鎖判断型）
 - **Claude Code SDK統合**: 戦略的コンテンツ生成
+- **連鎖判断エンジン**: 決定→収集→再判断→実行の自律プロセス
 - **品質管理**: 教育的価値の高い投稿の自動生成
 - **コンテキスト最適化**: 成長戦略に基づくコンテンツ調整
+- **動的情報統合**: ActionSpecificCollectorとの連携
 
 ### 4. 最適化された投稿スケジュール
 - **1日15回投稿**: 最適化された投稿頻度
@@ -35,6 +39,7 @@ graph TB
     subgraph "X System Core"
         GSM[Growth System Manager]
         AXC[Autonomous X Collector]
+        ASC[ActionSpecificCollector]
         CMI[Claude Max Integration]
         PM[Posting Manager]
     end
@@ -60,9 +65,13 @@ graph TB
     GSM --> CMI
     AXC --> PLAYWRIGHT
     AXC --> YAML
+    ASC --> PLAYWRIGHT
+    ASC --> CMI
+    ASC --> YAML
     CMI --> CLAUDE
     CMI --> ANTHROPIC
     CMI --> GSM
+    CMI --> ASC
     PM --> XAPI
     PM --> YAML
     PM --> SCHEDULER
@@ -83,10 +92,15 @@ graph TB
 - **役割**: 外部情報の収集と品質管理
 - **実装**: Playwright統合、非同期処理
 
+#### ActionSpecificCollector
+- **機能**: アクション特化型情報収集、連鎖判断支援、動的データ取得
+- **役割**: 実行決定に基づく特化情報の収集と分析
+- **実装**: Claude SDK連携、Playwright統合、リアルタイム分析
+
 #### Claude Max Integration
-- **機能**: 投稿生成、コンテキスト最適化、品質管理
-- **役割**: AI主導コンテンツ生成
-- **実装**: Claude Code SDK、フォールバック機能
+- **機能**: 投稿生成、コンテキスト最適化、品質管理、連鎖判断エンジン
+- **役割**: AI主導コンテンツ生成と自律判断プロセス
+- **実装**: Claude Code SDK、フォールバック機能、ActionSpecificCollector連携
 
 #### Posting Manager
 - **機能**: スケジューリング、投稿実行、履歴管理
@@ -95,12 +109,13 @@ graph TB
 
 ## データフロー
 
-### 投稿生成フロー
+### 投稿生成フロー（連鎖判断型）
 
 ```mermaid
 sequenceDiagram
     participant GSM as Growth System Manager
     participant AXC as Autonomous Collector
+    participant ASC as ActionSpecificCollector
     participant CMI as Claude Integration
     participant PM as Posting Manager
     participant XAPI as X API
@@ -111,6 +126,19 @@ sequenceDiagram
     
     AXC->>AXC: exploreAutonomously()
     AXC->>CMI: collectedData
+    
+    CMI->>CMI: makeInitialDecision()
+    CMI->>ASC: requestSpecificData(decision)
+    ASC->>ASC: collectActionSpecificInfo()
+    ASC->>CMI: specificData
+    
+    CMI->>CMI: refineDecision(specificData)
+    
+    alt Need More Information
+        CMI->>ASC: requestAdditionalData()
+        ASC->>CMI: additionalData
+        CMI->>CMI: finalizeDecision()
+    end
     
     CMI->>CMI: generateStrategicPost()
     CMI->>GSM: recordStrategicDecision()
@@ -124,31 +152,45 @@ sequenceDiagram
     PM->>GSM: updatePostHistory()
 ```
 
-### 情報収集フロー
+### 情報収集フロー（アクション特化型）
 
 ```mermaid
 sequenceDiagram
+    participant CMI as Claude Integration
+    participant ASC as ActionSpecificCollector
     participant AXC as Autonomous Collector
     participant PW as Playwright
     participant QA as Quality Assessment
     participant DATA as Data Storage
     
-    AXC->>PW: initBrowser()
+    CMI->>ASC: requestSpecificInfo(actionType, context)
+    ASC->>PW: initBrowser()
     PW->>PW: navigateToX()
     
-    alt Trending Strategy
+    alt Action-Specific Collection
+        ASC->>PW: searchByActionRequirements()
+        PW->>ASC: targetedData
+    else General Collection (Fallback)
+        ASC->>AXC: delegateToGeneralCollector()
         AXC->>PW: searchTrending()
         PW->>AXC: trendingTopics
-    else Keywords Strategy
-        AXC->>PW: findInfluentialContent()
-        PW->>AXC: contentList
+        AXC->>ASC: generalData
     end
     
-    AXC->>QA: assessContentQuality()
-    QA->>AXC: qualityScore
+    ASC->>QA: assessSpecificRelevance(actionType)
+    QA->>ASC: relevanceScore
     
-    AXC->>DATA: saveCollectionResult()
-    AXC->>PW: cleanup()
+    ASC->>CMI: returnCollectedData()
+    
+    alt Claude Requests More Info
+        CMI->>ASC: requestAdditionalData(refinedCriteria)
+        ASC->>PW: searchWithRefinedCriteria()
+        PW->>ASC: additionalData
+        ASC->>CMI: returnAdditionalData()
+    end
+    
+    ASC->>DATA: saveCollectionResult()
+    ASC->>PW: cleanup()
 ```
 
 ### 戦略最適化フロー

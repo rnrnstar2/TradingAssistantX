@@ -1,0 +1,23 @@
+version: 1.0.0
+lastUpdated: 1753073918895
+targets:
+  followers:
+    current: 0
+    daily: 2
+    weekly: 14
+    monthly: 60
+    quarterly: 180
+  engagement:
+    likesPerPost: 5
+    retweetsPerPost: 1
+    repliesPerPost: 1
+    engagementRate: 3
+  reach:
+    viewsPerPost: 50
+    impressionsPerDay: 750
+progress:
+  followersGrowth: 0
+  engagementGrowth: 0
+  reachGrowth: 0
+  overallScore: 0
+  trend: ontrack

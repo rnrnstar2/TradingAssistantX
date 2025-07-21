@@ -1,0 +1,455 @@
+# TASK-004: 新YAML構造設計書
+# 設計実施日: 2025-07-21
+# 基礎データ: TASK-001, TASK-002, TASK-003調査結果
+
+design_metadata:
+  version: "1.0.0"
+  design_timestamp: "2025-07-21T12:30:00+09:00"
+  base_analysis:
+    - "TASK-001: YAML使用状況分析"
+    - "TASK-002: 型定義依存関係分析" 
+    - "TASK-003: システム参照確認"
+  mvp_constraints_applied: true
+
+# =============================================================================
+# 1. ファイル統合マトリックス
+# =============================================================================
+integration_matrix:
+  safe_merges:  # 低リスク、即座に統合可能
+    group_1:
+      target_file: "account-config.yaml"
+      source_files:
+        - "account-info.yaml"      # 1箇所使用、AccountInfo型
+        - "growth-targets.yaml"    # 2箇所使用、GrowthTargets型
+      risk_level: "low"
+      dependencies: []
+      integration_complexity: 2
+      reason: "基本アカウント情報の統合、明確な責任分離"
+      
+    group_2:
+      target_file: "posting-data.yaml"
+      source_files:
+        - "performance-insights.yaml"  # 1箇所使用、PerformanceInsights型
+        - "collection-results.yaml"    # 未使用、安全
+        - "quality-assessments.yaml"   # 未使用、安全
+      risk_level: "low"
+      dependencies: []
+      integration_complexity: 2
+      reason: "データ系ファイルの統合、未使用ファイル統合"
+      
+  complex_merges:  # 高リスク、慎重な統合が必要
+    group_3:
+      target_file: "content-strategy.yaml"
+      source_files:
+        - "content-patterns.yaml"      # 1箇所使用、型定義なし
+        - "account-strategy.yaml"      # 2箇所使用、一部のみ統合
+      risk_level: "medium"
+      dependencies: ["account-config.yaml統合完了"]
+      integration_complexity: 5
+      reason: "戦略設定の部分統合、型定義追加が必要"
+      
+    group_4:
+      target_file: "system-config.yaml"
+      source_files:
+        - "strategic-decisions.yaml"   # 3箇所使用、StrategicDecisions型
+        - "posting-history.yaml"       # 3箇所使用、PostHistory型
+      risk_level: "high"
+      dependencies: ["全ての他統合完了", "型定義更新", "バックアップ作成"]
+      integration_complexity: 9
+      reason: "最重要システムファイル、コアエンジンで使用"
+
+# =============================================================================
+# 2. 新ファイル構造定義
+# =============================================================================
+new_file_structure:
+  account-config.yaml:
+    responsibility: "アカウント基本設定と成長目標"
+    priority: 1
+    sections:
+      account_info:
+        description: "基本アカウント情報"
+        source: "account-info.yaml"
+        estimated_lines: 8
+      growth_targets:
+        description: "成長目標とメトリクス"
+        source: "growth-targets.yaml"
+        estimated_lines: 15
+      current_metrics:
+        description: "現在のパフォーマンス指標"
+        source: "新規セクション"
+        estimated_lines: 10
+    estimated_total_size: "35行"
+    type_definitions_needed:
+      - "AccountConfig (統合型)"
+      - "GrowthTargets (既存更新)"
+    usage_impact: "低" # account-info.yaml(1箇所) + growth-targets.yaml(2箇所)
+    
+  content-strategy.yaml:
+    responsibility: "コンテンツ戦略とパターン管理"
+    priority: 2
+    sections:
+      content_themes:
+        description: "コンテンツテーマと方向性"
+        source: "content-patterns.yaml"
+        estimated_lines: 20
+      posting_schedule:
+        description: "投稿スケジュールと頻度"
+        source: "account-strategy.yaml (部分)"
+        estimated_lines: 15
+      engagement_tactics:
+        description: "エンゲージメント戦略"
+        source: "account-strategy.yaml (部分)"
+        estimated_lines: 25
+      templates:
+        description: "投稿テンプレート"
+        source: "新規セクション"
+        estimated_lines: 20
+    estimated_total_size: "80行"
+    type_definitions_needed:
+      - "ContentStrategy (新規)"
+      - "ContentPatterns (型定義追加)"
+    usage_impact: "中" # content-patterns.yaml(1箇所) + account-strategy.yaml(2箇所の一部)
+    
+  posting-data.yaml:
+    responsibility: "実行データと分析結果"
+    priority: 2
+    sections:
+      performance_insights:
+        description: "パフォーマンス分析データ"
+        source: "performance-insights.yaml"
+        estimated_lines: 15
+      collection_results:
+        description: "収集・分析結果"
+        source: "collection-results.yaml"
+        estimated_lines: 10
+      quality_assessments:
+        description: "品質評価データ"
+        source: "quality-assessments.yaml"
+        estimated_lines: 15
+    estimated_total_size: "40行"
+    type_definitions_needed:
+      - "PostingData (新規)"
+      - "PerformanceInsights (移行)"
+    usage_impact: "低" # performance-insights.yaml(1箇所) + 未使用ファイル
+    
+  system-config.yaml:  # 最重要・最後に統合
+    responsibility: "システム設定と戦略決定"
+    priority: 4  # 最後に実行
+    sections:
+      strategic_decisions:
+        description: "システム戦略決定データ"
+        source: "strategic-decisions.yaml"
+        estimated_lines: 30
+      posting_history:
+        description: "投稿履歴とシステム実行データ"
+        source: "posting-history.yaml"
+        estimated_lines: 25
+      system_settings:
+        description: "システム動作設定"
+        source: "新規セクション"
+        estimated_lines: 15
+    estimated_total_size: "70行"
+    type_definitions_needed:
+      - "SystemConfig (新規)"
+      - "StrategicDecisions (移行)"
+      - "PostHistory (更新)"
+    usage_impact: "高" # strategic-decisions.yaml(3箇所) + posting-history.yaml(3箇所)
+
+# =============================================================================
+# 3. 段階的移行計画
+# =============================================================================
+migration_plan:
+  phase1_preparation:
+    description: "事前準備とバックアップ"
+    order: 0
+    duration: "準備段階"
+    actions:
+      - "全dataディレクトリのバックアップ作成"
+      - "新ファイル骨格作成（空の構造）"
+      - "型定義ファイル準備"
+      - "移行テストスクリプト作成"
+    success_criteria:
+      - "バックアップの完全性確認"
+      - "新構造での基本読み込みテスト成功"
+    
+  phase2_safe_migration:
+    description: "低リスクファイルの統合"
+    order: 1
+    duration: "実装フェーズ1"
+    parallel_execution: true
+    targets:
+      - "account-config.yaml"
+      - "posting-data.yaml"
+    dependencies: ["phase1完了"]
+    actions:
+      - "account-info.yaml + growth-targets.yaml → account-config.yaml"
+      - "performance-insights.yaml + 未使用ファイル → posting-data.yaml"
+      - "型定義AccountConfig, PostingData作成"
+      - "参照更新（x-client.ts, growth-system-manager.ts）"
+    risk_mitigation:
+      - "段階的更新（1ファイルずつ）"
+      - "各段階でのTypeScriptコンパイル確認"
+    success_criteria:
+      - "TypeScriptエラーゼロ"
+      - "affected_componentsの正常動作確認"
+    
+  phase3_medium_migration:
+    description: "中リスクファイルの統合"
+    order: 2
+    duration: "実装フェーズ2"
+    parallel_execution: false
+    targets:
+      - "content-strategy.yaml"
+    dependencies: ["phase2完了", "AccountConfig型確定"]
+    actions:
+      - "content-patterns.yaml統合"
+      - "account-strategy.yamlの部分統合"
+      - "ContentStrategy, ContentPatterns型定義追加"
+      - "health-check.ts更新"
+    risk_mitigation:
+      - "account-strategy.yamlの段階的分割"
+      - "残存部分の依存関係確認"
+    success_criteria:
+      - "ヘルスチェック機能の正常動作"
+      - "戦略設定の整合性確認"
+    
+  phase4_critical_migration:
+    description: "高リスク・最重要ファイルの統合"
+    order: 3
+    duration: "実装フェーズ3"
+    parallel_execution: false
+    targets:
+      - "system-config.yaml"
+    dependencies: ["phase3完了", "全型定義確定", "十分なテスト完了"]
+    actions:
+      - "strategic-decisions.yaml統合"
+      - "posting-history.yaml統合"
+      - "SystemConfig型定義作成"
+      - "コアシステムファイル更新"
+    critical_updates:
+      - "src/core/decision-engine.ts (strategic-decisions.yaml参照)"
+      - "src/core/parallel-manager.ts (動的参照)"
+      - "src/lib/claude-max-integration.ts (posting-history.yaml参照)"
+      - "src/core/autonomous-executor.ts (パス参照)"
+    risk_mitigation:
+      - "1ファイルずつの慎重な統合"
+      - "各更新後の機能テスト"
+      - "ロールバック手順の事前準備"
+    success_criteria:
+      - "全コアシステムの正常動作"
+      - "動的参照の正常性確認"
+      - "エンドツーエンドテスト成功"
+    
+  phase5_cleanup:
+    description: "最終クリーンアップ"
+    order: 4
+    duration: "後処理"
+    actions:
+      - "旧ファイル削除（バックアップ保持）"
+      - "ドキュメント更新（8ファイル）"
+      - "参照マップ再作成"
+      - "最終動作確認"
+    success_criteria:
+      - "全システム機能の正常性確認"
+      - "ドキュメント整合性確認"
+
+# =============================================================================
+# 4. 型定義マッピング
+# =============================================================================
+type_definition_changes:
+  new_interfaces:
+    AccountConfig:
+      properties: 
+        - "accountInfo: AccountInfo"
+        - "growthTargets: GrowthTargets"
+        - "currentMetrics: AccountMetrics"
+      file: "src/types/account-config.ts"
+      usage_locations:
+        - "src/lib/x-client.ts"
+        - "src/lib/growth-system-manager.ts"
+      migration_priority: 1
+      
+    ContentStrategy:
+      properties:
+        - "themes: ContentPatterns"
+        - "schedule: PostingSchedule"
+        - "engagement: EngagementTactics"
+        - "templates: PostTemplate[]"
+      file: "src/types/content-strategy.ts"
+      usage_locations:
+        - "src/utils/monitoring/health-check.ts"
+        - "src/lib/growth-system-manager.ts"
+      migration_priority: 2
+      
+    PostingData:
+      properties:
+        - "performanceInsights: PerformanceInsights"
+        - "collectionResults: CollectionResult[]"
+        - "qualityAssessments: QualityScore[]"
+      file: "src/types/posting-data.ts"
+      usage_locations:
+        - "src/lib/growth-system-manager.ts"
+      migration_priority: 1
+      
+    SystemConfig:
+      properties:
+        - "strategicDecisions: StrategicDecisions"
+        - "postingHistory: PostHistory[]"
+        - "systemSettings: SystemSettings"
+      file: "src/types/system-config.ts"
+      usage_locations:
+        - "src/core/decision-engine.ts"
+        - "src/core/parallel-manager.ts"
+        - "src/lib/claude-max-integration.ts"
+        - "src/core/autonomous-executor.ts"
+      migration_priority: 4
+      
+  updated_interfaces:
+    GrowthTargets:
+      change_type: "integration_into_AccountConfig"
+      new_location: "AccountConfig['growthTargets']"
+      affected_files:
+        - "src/lib/growth-system-manager.ts"
+        - "src/utils/monitoring/health-check.ts"
+        
+    PerformanceInsights:
+      change_type: "integration_into_PostingData"
+      new_location: "PostingData['performanceInsights']"
+      affected_files:
+        - "src/lib/growth-system-manager.ts"
+        
+    StrategicDecisions:
+      change_type: "integration_into_SystemConfig"
+      new_location: "SystemConfig['strategicDecisions']"
+      affected_files:
+        - "src/core/decision-engine.ts"
+        - "src/core/parallel-manager.ts"
+        - "src/lib/growth-system-manager.ts"
+        
+    PostHistory:
+      change_type: "integration_into_SystemConfig"
+      new_location: "SystemConfig['postingHistory']"
+      affected_files:
+        - "src/lib/claude-max-integration.ts"
+        - "src/lib/x-client.ts"
+        - "src/utils/monitoring/health-check.ts"
+        
+  deprecated_interfaces:
+    # 統合後に個別型定義は不要となる
+    - interface: "AccountInfo"
+      replacement: "AccountConfig['accountInfo']"
+      deprecation_phase: "phase2完了後"
+      
+  new_type_definitions_needed:
+    PostingSchedule:
+      description: "投稿スケジュール設定"
+      location: "src/types/content-strategy.ts"
+      
+    EngagementTactics:
+      description: "エンゲージメント戦略設定"
+      location: "src/types/content-strategy.ts"
+      
+    SystemSettings:
+      description: "システム動作設定"
+      location: "src/types/system-config.ts"
+      
+    ContentPatterns:
+      description: "コンテンツパターン定義（型定義追加）"
+      location: "src/types/content-strategy.ts"
+
+# =============================================================================
+# 5. リスク評価と対策
+# =============================================================================
+risk_assessment:
+  integration_risks:
+    high_risk:
+      - component: "strategic-decisions.yaml統合"
+        impact: "コア決定エンジン停止"
+        probability: "medium"
+        mitigation: "段階的統合とロールバック準備"
+        
+      - component: "posting-history.yaml統合"
+        impact: "投稿システム履歴管理停止"
+        probability: "medium"
+        mitigation: "バックアップとテスト強化"
+        
+      - component: "動的参照の更新"
+        impact: "parallel-manager.tsの予期しない動作"
+        probability: "low"
+        mitigation: "動的参照ロジックの事前詳細調査"
+        
+    medium_risk:
+      - component: "型定義の大量更新"
+        impact: "TypeScriptコンパイルエラー"
+        probability: "medium"
+        mitigation: "段階的型定義更新"
+        
+      - component: "ドキュメント整合性"
+        impact: "開発者の混乱"
+        probability: "high"
+        mitigation: "統合と同時のドキュメント更新"
+        
+    low_risk:
+      - component: "未使用ファイルの統合"
+        impact: "なし"
+        probability: "low"
+        mitigation: "通常の統合プロセス"
+        
+  success_factors:
+    critical:
+      - "段階的移行の厳格な実行"
+      - "各フェーズでの動作確認"
+      - "ロールバック手順の準備"
+      
+    important:
+      - "型安全性の維持"
+      - "既存機能の完全保護"
+      - "ドキュメントの同期更新"
+
+# =============================================================================
+# 6. 成功基準
+# =============================================================================
+success_criteria:
+  functional_requirements:
+    - "全ての既存機能が統合後も正常動作"
+    - "TypeScriptコンパイルエラーゼロ"
+    - "ファイル数の4個以下への削減達成"
+    - "各ファイル100行以下の制約遵守"
+    
+  quality_requirements:
+    - "型安全性の完全保持"
+    - "明確な責任分離の実現"
+    - "重複データの完全排除"
+    
+  operational_requirements:
+    - "段階的移行の実現"
+    - "ロールバック可能性の確保"
+    - "ドキュメント整合性の維持"
+    
+  performance_requirements:
+    - "ファイル読み込み性能の維持または向上"
+    - "メモリ使用量の最適化"
+
+# =============================================================================
+# メタデータ
+# =============================================================================
+metadata:
+  design_complexity: "high"
+  estimated_implementation_time: "3-4 phases"
+  critical_dependencies: 4
+  total_files_affected: 12  # 9 YAML + 4 core system files
+  documentation_updates_required: 8
+  type_definitions_to_create: 4
+  type_definitions_to_update: 4
+  
+  next_steps:
+    - "実装ガイドの詳細作成"
+    - "Phase 1バックアップスクリプト作成"
+    - "型定義テンプレート準備"
+    - "Worker向け実装指示書作成"
+    
+  confidence_level: "high"
+  based_on_analysis:
+    - "完全なファイル使用状況把握"
+    - "型定義依存関係の詳細調査"
+    - "システム参照の網羅的確認"

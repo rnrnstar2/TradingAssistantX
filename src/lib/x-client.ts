@@ -3,6 +3,7 @@ import { writeFileSync, existsSync } from 'fs';
 import { PostHistory, PostingResult, XClientConfig, AccountInfo, AccountMetrics, UserResponse, Tweet, TweetsResponse, EngagementMetrics } from '../types/index';
 import { loadYamlArraySafe } from '../utils/yaml-utils';
 import * as yaml from 'js-yaml';
+import crypto from 'crypto';
 
 export class SimpleXClient {
   private apiKey: string;
@@ -103,10 +104,13 @@ export class SimpleXClient {
     await this.waitForRateLimit();
     
     try {
-      const response = await fetch(`${this.baseUrl}/tweets`, {
+      const url = `${this.baseUrl}/tweets`;
+      const authHeader = this.generateOAuthHeaders('POST', url);
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          'Authorization': authHeader,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -160,7 +164,7 @@ export class SimpleXClient {
     try {
       const response = await fetch(`${this.baseUrl}/users/by/username/${username}?user.fields=public_metrics`, {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          'Authorization': `Bearer ${process.env.X_BEARER_TOKEN}`,
           'Content-Type': 'application/json',
         }
       });
@@ -195,7 +199,7 @@ export class SimpleXClient {
     try {
       const response = await fetch(`${this.baseUrl}/users/me?user.fields=public_metrics`, {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          'Authorization': `Bearer ${process.env.X_BEARER_TOKEN}`,
           'Content-Type': 'application/json',
         }
       });
@@ -230,7 +234,7 @@ export class SimpleXClient {
     try {
       const response = await fetch(`${this.baseUrl}/users/me?user.fields=public_metrics,description,location,created_at,verified,profile_image_url`, {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          'Authorization': `Bearer ${process.env.X_BEARER_TOKEN}`,
           'Content-Type': 'application/json',
         }
       });
@@ -258,7 +262,7 @@ export class SimpleXClient {
         `${this.baseUrl}/users/${userId}/tweets?max_results=${Math.min(count, 100)}&tweet.fields=public_metrics,created_at,context_annotations&expansions=author_id`, 
         {
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
+            'Authorization': `Bearer ${process.env.X_BEARER_TOKEN}`,
             'Content-Type': 'application/json',
           }
         }
@@ -298,7 +302,7 @@ export class SimpleXClient {
             `${this.baseUrl}/tweets/${tweetId}?tweet.fields=public_metrics,created_at`,
             {
               headers: {
-                'Authorization': `Bearer ${this.apiKey}`,
+                'Authorization': `Bearer ${process.env.X_BEARER_TOKEN}`,
                 'Content-Type': 'application/json',
               }
             }
@@ -383,10 +387,13 @@ export class SimpleXClient {
     await this.waitForRateLimit();
     
     try {
-      const response = await fetch(`${this.baseUrl}/tweets`, {
+      const url = `${this.baseUrl}/tweets`;
+      const authHeader = this.generateOAuthHeaders('POST', url);
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          'Authorization': authHeader,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -453,10 +460,13 @@ export class SimpleXClient {
       const userDetails = await this.getMyAccountDetails();
       const userId = userDetails.data.id;
       
-      const response = await fetch(`${this.baseUrl}/users/${userId}/retweets`, {
+      const url = `${this.baseUrl}/users/${userId}/retweets`;
+      const authHeader = this.generateOAuthHeaders('POST', url);
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          'Authorization': authHeader,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -530,7 +540,7 @@ export class SimpleXClient {
       const response = await fetch(`${this.baseUrl}/tweets`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          'Authorization': `Bearer ${process.env.X_BEARER_TOKEN}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -612,5 +622,80 @@ export class SimpleXClient {
     } catch (error) {
       console.error('Error saving account info:', error);
     }
+  }
+
+  // OAuth 1.0a認証ヘルパーメソッド
+  private generateOAuthHeaders(method: string, url: string, params: Record<string, string> = {}): string {
+    interface OAuthParams {
+      oauth_consumer_key: string;
+      oauth_token: string;
+      oauth_signature_method: string;
+      oauth_timestamp: string;
+      oauth_nonce: string;
+      oauth_version: string;
+      oauth_signature?: string;
+      [key: string]: string | undefined;
+    }
+
+    const consumerKey = process.env.X_API_KEY || '';
+    const consumerSecret = process.env.X_API_SECRET || '';
+    const accessToken = process.env.X_ACCESS_TOKEN || '';
+    const accessTokenSecret = process.env.X_ACCESS_TOKEN_SECRET || '';
+
+    const oauthParams: OAuthParams = {
+      oauth_consumer_key: consumerKey,
+      oauth_token: accessToken,
+      oauth_signature_method: 'HMAC-SHA1',
+      oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
+      oauth_nonce: crypto.randomBytes(16).toString('hex'),
+      oauth_version: '1.0'
+    };
+
+    // パラメータをマージ
+    const allParams = { ...params, ...oauthParams };
+
+    // パラメータを文字列としてソート
+    const paramString = Object.keys(allParams)
+      .sort()
+      .map(key => {
+        const value = allParams[key];
+        return `${this.encodeRFC3986(key)}=${this.encodeRFC3986(value || '')}`;
+      })
+      .join('&');
+
+    // 署名ベース文字列を作成
+    const signatureBaseString = [
+      method.toUpperCase(),
+      this.encodeRFC3986(url),
+      this.encodeRFC3986(paramString)
+    ].join('&');
+
+    // 署名キーを作成
+    const signingKey = `${this.encodeRFC3986(consumerSecret)}&${this.encodeRFC3986(accessTokenSecret)}`;
+
+    // 署名を生成
+    const signature = crypto
+      .createHmac('sha1', signingKey)
+      .update(signatureBaseString)
+      .digest('base64');
+
+    // OAuth署名を追加
+    oauthParams.oauth_signature = signature;
+
+    // Authorization ヘッダーを生成
+    const authHeader = 'OAuth ' + Object.keys(oauthParams)
+      .sort()
+      .map(key => {
+        const value = oauthParams[key];
+        return `${this.encodeRFC3986(key)}="${this.encodeRFC3986(value || '')}"`;
+      })
+      .join(', ');
+
+    return authHeader;
+  }
+
+  private encodeRFC3986(str: string): string {
+    return encodeURIComponent(str)
+      .replace(/[!'()*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
   }
 }

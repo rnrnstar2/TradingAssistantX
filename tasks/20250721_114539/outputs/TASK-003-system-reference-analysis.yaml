@@ -1,0 +1,215 @@
+# TASK-003: システム内参照確認レポート
+# 調査日時: 2025-07-21
+# 目的: YAMLファイル統合前のシステム全体での参照状況調査
+
+system_reference_analysis:
+  direct_references:
+    config_files:
+      - file: "turbo.json"
+        references: ["pnpm-lock.yaml"]
+        context: "ツール設定でのlock file参照"
+      - file: "package.json"
+        references: []
+      - file: "tsconfig.json"  
+        references: []
+        
+    script_files:
+      - file: "scripts/"
+        references: []
+        note: "スクリプト内でのYAMLファイル直接参照は見つからず"
+        
+    documentation:
+      - file: "docs/reference.md"
+        references: 
+          - "account-strategy.yaml"
+          - "performance-insights.yaml"
+          - "growth-targets.yaml"
+          - "posting-history.yaml"
+          - "collection-results.yaml"
+          - "generated-post.yaml"
+        context: "システム構成説明、バックアップコマンド例"
+        
+      - file: "docs/architecture.md"
+        references:
+          - "account-strategy.yaml"
+          - "performance-insights.yaml"
+          - "growth-targets.yaml"
+          - "content-patterns.yaml"
+          - "strategic-decisions.yaml"
+          - "posting-history.yaml"
+          - "collection-results.yaml"
+          - "quality-assessments.yaml"
+        context: "データ構造図、ファイル統合計画"
+        
+      - file: "docs/operations.md"
+        references: 
+          - "account-strategy.yaml"
+          - "posts.yaml"
+        context: "運用コマンド例、設定確認手順"
+        
+      - file: "docs/setup.md"
+        references:
+          - "account-strategy.yaml"
+          - "growth-targets.yaml"
+        context: "セットアップ手順、設定作成ガイド"
+        
+      - file: "docs/common/naming-conventions.md"
+        references:
+          - "account-strategy.yaml"
+          - "content-patterns.yaml"
+          - "growth-targets.yaml"
+          - "posting-history.yaml"
+        context: "命名規則とディレクトリ構造例"
+        
+      - file: "docs/CLAUDE.md"
+        references:
+          - "account-strategy.yaml"
+        context: "データファイル構成例"
+        
+      - file: "CLAUDE.md"
+        references:
+          - "account-strategy.yaml"
+          - "content-patterns.yaml"
+          - "growth-targets.yaml"
+          - "posting-history.yaml"
+        context: "プロジェクト概要、データ管理セクション"
+        
+  dynamic_references:
+    path_construction:
+      - pattern: "path.join(process.cwd(), 'data', 'context', '*.json')"
+        locations: 
+          - "src/core/autonomous-executor.ts:contextPath"
+          - "src/core/autonomous-executor.ts:historyPath"
+          - "src/core/autonomous-executor.ts:errorPath"
+        context: "実行コンテキストファイル管理"
+        
+      - pattern: "path.join(process.cwd(), 'data', '*.yaml')"
+        locations:
+          - "src/core/decision-engine.ts:insightsPath (shared-insights.yaml)"
+          - "src/core/decision-engine.ts:decisionsPath (strategic-decisions.yaml)"
+          - "src/lib/claude-max-integration.ts:historyPath (posting-history.yaml)"
+        context: "戦略ファイル、履歴ファイル管理"
+        
+      - pattern: "path.join(process.cwd(), 'data', 'generated-post.json')"
+        locations:
+          - "src/lib/claude-max-integration.ts:outputPath (複数箇所)"
+        context: "生成投稿出力管理"
+        
+      - pattern: "path.join(dataDir, target)"
+        locations:
+          - "src/core/parallel-manager.ts"
+        context: "動的ファイル参照（target変数による）"
+        
+    config_driven:
+      - pattern: "動的設定による参照"
+        locations: []
+        note: "設定ファイル経由の動的パス構築は見つからず"
+        
+  potential_references:
+    test_files: []
+    ci_cd_files: []
+    other_scripts: []
+    note: "テストファイル、CI/CD、その他スクリプトでの参照は見つからず"
+
+reference_risks:
+  breaking_changes:  # 変更時に壊れる可能性
+    high:
+      - reference: "src/core/decision-engine.ts -> strategic-decisions.yaml"
+        impact: "戦略決定エンジンの停止"
+        reason: "ハードコードされたパス参照"
+        
+      - reference: "src/lib/claude-max-integration.ts -> posting-history.yaml"
+        impact: "投稿システム履歴管理の停止"
+        reason: "ハードコードされたパス参照"
+        
+      - reference: "docs/setup.md -> account-strategy.yaml, growth-targets.yaml"
+        impact: "セットアップ手順の整合性喪失"
+        reason: "具体的なファイル名での説明"
+        
+    medium:
+      - reference: "docs/architecture.md -> 複数YAMLファイル"
+        impact: "アーキテクチャドキュメントの整合性"
+        reason: "構成図と実際の構造の不一致"
+        
+      - reference: "docs/operations.md -> account-strategy.yaml"
+        impact: "運用手順書の正確性"
+        reason: "コマンド例の参照先変更"
+        
+      - reference: "CLAUDE.md -> 4つのYAMLファイル"
+        impact: "プロジェクト説明の整合性"
+        reason: "概要説明でのファイル構成言及"
+        
+    low:
+      - reference: "turbo.json -> pnpm-lock.yaml"
+        impact: "ビルドツール設定"
+        reason: "標準的なツール設定（変更の可能性低い）"
+        
+      - reference: "docs/common/naming-conventions.md -> 複数YAML"
+        impact: "命名規則例の整合性"
+        reason: "例示目的での参照"
+        
+  hidden_dependencies:  # 見落としやすい依存関係
+    - location: "src/core/parallel-manager.ts の動的パス構築"
+      risk_level: "high"
+      description: "target変数による動的ファイル参照のため、具体的な依存ファイルが不明"
+      
+    - location: "path.joinによるハードコード参照"
+      risk_level: "high"
+      description: "4ファイルでハードコードされたパス参照、変更時の連動修正が必要"
+      
+    - location: "ドキュメント内の具体的ファイル名言及"
+      risk_level: "medium"
+      description: "8つのドキュメントファイルでの具体的参照、統合時の更新が必要"
+
+critical_findings:
+  # 最も重要な発見事項
+  high_impact_code_references:
+    count: 4
+    files:
+      - "src/core/decision-engine.ts"
+      - "src/core/autonomous-executor.ts" 
+      - "src/core/parallel-manager.ts"
+      - "src/lib/claude-max-integration.ts"
+    risk: "システム機能停止の可能性"
+    
+  extensive_documentation_references:
+    count: 8
+    files: 
+      - "docs/reference.md"
+      - "docs/architecture.md"
+      - "docs/operations.md"
+      - "docs/setup.md"
+      - "docs/common/naming-conventions.md"
+      - "docs/CLAUDE.md"
+      - "CLAUDE.md"
+    risk: "ドキュメント整合性の大幅な喪失"
+    
+  dynamic_reference_complexity:
+    location: "src/core/parallel-manager.ts"
+    description: "target変数による動的参照のため、全ての依存関係を静的解析で特定不可"
+    risk: "隠れた依存関係による予期しない障害"
+
+recommendations:
+  before_integration:
+    - "コード内のハードコード参照を設定ファイル化"
+    - "parallel-manager.tsの動的参照ロジックの詳細調査"
+    - "ドキュメント更新計画の策定"
+    
+  during_integration:
+    - "段階的な統合（critical_findingsの高リスクファイルから順次対応）"
+    - "各段階での動作確認"
+    - "ドキュメントの同時更新"
+    
+  post_integration:
+    - "動的参照の正常性確認"
+    - "ドキュメント整合性の全面チェック"
+    - "統合後の参照マップ再作成"
+
+summary:
+  total_references_found: 32
+  high_risk_references: 6
+  medium_risk_references: 5
+  low_risk_references: 2
+  hidden_dependencies: 3
+  
+  key_insight: "コード内のハードコード参照（4ファイル）とドキュメント内の広範囲な参照（8ファイル）が統合時の主要リスク。特にparallel-manager.tsの動的参照は詳細調査が必要。"
