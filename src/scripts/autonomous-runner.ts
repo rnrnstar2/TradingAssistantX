@@ -6,40 +6,80 @@ async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+let isShuttingDown = false;
+let currentExecutionPromise: Promise<void> | null = null;
+
+/**
+ * システム停止時処理
+ * 現在実行中の処理完了待機のみ
+ */
+async function performSystemShutdownCleanup(): Promise<void> {
+  // 現在実行中の処理完了待機（最大30秒）
+  if (currentExecutionPromise) {
+    console.log('⏳ 現在の実行完了を待機中（最大30秒）...');
+    try {
+      await Promise.race([
+        currentExecutionPromise,
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 30000)
+        )
+      ]);
+    } catch (error) {
+      console.log('⚠️  実行完了待機タイムアウト、強制終了します');
+    }
+  }
+}
+
 async function main() {
-  console.log('🚀 Starting Autonomous System...');
-  console.log(`📅 Started at: ${new Date().toISOString()}`);
+  console.log('🚀 TradingAssistantX 自動投稿システム起動');
+  console.log(`📅 開始時刻: ${new Date().toISOString()}`);
+  console.log('⏹️  停止方法: Ctrl+C または `pnpm stop`');
+  console.log('📊 状態確認: `pnpm status`');
+  console.log('🔄 自動投稿システム実行中...\n');
   
   const executor = new AutonomousExecutor();
   
   let iterationCount = 0;
   
-  while (true) {
+  while (!isShuttingDown) {
     iterationCount++;
-    console.log(`\n🔄 Iteration ${iterationCount} starting...`);
+    console.log(`\n🔄 [${new Date().toLocaleTimeString('ja-JP')}] イテレーション ${iterationCount}`);
     
-    try {
-      await executor.executeAutonomously();
-      console.log(`✅ Iteration ${iterationCount} completed successfully`);
-    } catch (error) {
-      console.error(`❌ Iteration ${iterationCount} failed:`, error);
-    }
+    // 現在の実行を追跡
+    currentExecutionPromise = (async () => {
+      try {
+        await executor.executeAutonomously();
+        console.log(`✅ [${new Date().toLocaleTimeString('ja-JP')}] 完了`);
+        
+      } catch (error) {
+        console.error(`❌ [${new Date().toLocaleTimeString('ja-JP')}] エラー:`, error);
+      }
+    })();
     
-    const waitTime = await executor.determineNextExecutionTime();
-    const waitMinutes = Math.round(waitTime / 60000);
-    console.log(`⏳ Waiting ${waitMinutes} minutes before next execution...`);
+    await currentExecutionPromise;
+    currentExecutionPromise = null;
     
-    await sleep(waitTime);
+    if (isShuttingDown) break;
+    
+    // 固定96分間隔（1日15回投稿）
+    const POSTING_INTERVAL_MS = 96 * 60 * 1000; // 96分 = 1日15回
+    console.log(`✅ [${new Date().toLocaleTimeString('ja-JP')}] 完了 (次回: 96分後)`);
+    
+    await sleep(POSTING_INTERVAL_MS);
   }
 }
 
-process.on('SIGINT', () => {
-  console.log('\n⏹️  Shutting down Autonomous System...');
+process.on('SIGINT', async () => {
+  console.log('\n⏹️  システム停止処理開始...');
+  isShuttingDown = true;
+  await performSystemShutdownCleanup();
   process.exit(0);
 });
 
-process.on('SIGTERM', () => {
-  console.log('\n⏹️  Shutting down Autonomous System...');
+process.on('SIGTERM', async () => {
+  console.log('\n⏹️  システム停止処理開始...');
+  isShuttingDown = true;
+  await performSystemShutdownCleanup();
   process.exit(0);
 });
 

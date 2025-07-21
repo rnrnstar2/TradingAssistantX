@@ -11,9 +11,7 @@
 4. **シンプル設計** - 複雑さを排除した直感的なシステム
 
 ### 🌿 ブランチ戦略
-- **dev** - 開発の中心ブランチ（全ての開発はここから分岐）
-- **main** - 最終段階のみ使用（安定版リリース用）
-- **issue-*** - 機能開発用ブランチ（devから分岐、devへマージ）
+- **main** - 全ての開発・運用を行うメインブランチ（単一ブランチ戦略）
 
 ## 🚨 起動時必須確認事項
 
@@ -23,58 +21,39 @@
 # 1. 環境変数確認（ROLE=manager/worker）
 echo "ROLE: $ROLE"
 
-# 2. 現在のブランチ確認
+# 2. 現在のブランチ確認（mainブランチであることを確認）
 git branch --show-current
 
 # 3. 役割宣言
-# 「私は[ブランチ名]ブランチの[Manager/Worker]です」
+# 「私はmainブランチの[Manager/Worker]です」
 ```
 
-### 📄 **4. ブランチ別詳細ファイル読み込み（必須）**
+### 📄 **4. 権限別詳細ファイル読み込み（必須）**
 
-現在のブランチに応じて、以下ファイルを **Read ツール** で必ず読み込む：
+ROLE環境変数に応じて、以下ファイルを **Read ツール** で必ず読み込む：
 
-#### 🌿 **devブランチの場合（dev直接作業）**
+#### 📋 **権限別ファイル**
 ```
 Manager権限: docs/roles/manager-role.md
 Worker権限:  docs/roles/worker-role.md
-システム詳細: tasks/README.md
-```
-
-#### 🏗️ **issue-*ブランチの場合（イシュー駆動開発）**
-```
-Manager権限: docs/roles/manager-issue-driven.md
-Worker権限:  docs/roles/worker-role.md
-システム詳細: docs/guides/issue-driven-development/README.md
 ```
 
 **🚨 重要**: 該当ファイル読み込み完了まで作業開始禁止  
-**💡 ポイント**: 自分のブランチ・権限に関係ないファイルは読まない
+**💡 ポイント**: 自分の権限に関係ないファイルは読まない
 
-## 📋 MVP制約
 
-**全イシュー共通のMVP原則**: `docs/mvp-constraints/mvp-principles.md`
+## 🤖 シンプル開発システム
 
-## 🚫 絶対禁止機能（全ブランチ共通）
+本プロジェクトでは**mainブランチ単一開発**を採用します：
 
-- **統計・分析システム**（パフォーマンス指標、Z-score等）
-- **複雑なエラーハンドリング**（リトライ機構、自動回復等）
-- **高度なプロトコル実装**（FIX/REST詳細実装等）
-- **将来の拡張機能**（設定可能パラメータ、プラグイン等）
-
-## 🤖 デュアル開発システム
-
-本プロジェクトでは**2つの開発フロー**をブランチに応じて使い分けます：
-
-- **🌿 devブランチ**: 簡単な修正・小改善（tasks/システム）
-- **🏗️ issue-*ブランチ**: 大型機能・複雑作業（worktrees/システム）
+- **🌿 mainブランチ**: 全ての開発・修正・機能追加を直接実行
 
 ### 📋 役割定義
 
 **🎯 Manager** (`ROLE=manager`): セッション管理・指示書作成・git操作責任者  
 **⚡ Worker** (`ROLE=worker`): 実装実行・品質チェック・報告書作成専門
 
-**詳細**: 起動時ブランチ判定で適切なファイルを読み込み
+**詳細**: 起動時ROLE判定で適切なファイルを読み込み
 
 ## 📊 技術スタック
 - **Runtime**: Node.js + TypeScript
@@ -92,11 +71,23 @@ Worker権限:  docs/roles/worker-role.md
 - **types/** - 型定義、システム全体のインターフェース
 - **scripts/** - 実行スクリプト、自動化ランナー
 
+### テストシステム (tests/)
+**🚨 重要**: 全てのテストファイルはこのディレクトリに統一配置
+
+- **unit/** - 単体テスト（*.test.ts形式）
+- **integration/** - 統合テスト（*.test.ts形式）
+- **テスト実行**: Vitestを使用（`pnpm test` / `pnpm test:watch`）
+
 ### データ管理 (data/)
-- **account-strategy.yaml** - アカウント戦略設定
-- **content-patterns.yaml** - コンテンツパターン定義
-- **growth-targets.yaml** - 成長目標管理
-- **posting-history.yaml** - 投稿履歴データ
+**🚨 重要**: 全ての設定・データファイルはこのディレクトリに統一配置
+
+- **システム設定**: autonomous-config.yaml
+- **アカウント設定**: account-config.yaml, account-strategy.yaml
+- **コンテンツ管理**: content-strategy.yaml, content-patterns.yaml
+- **投稿データ**: posting-data.yaml, posting-history.yaml
+- **成長管理**: growth-targets.yaml
+- **コンテキスト**: context/ サブディレクトリ
+- **履歴・メトリクス**: metrics-history/ サブディレクトリ
 
 ## 🏗️ アーキテクチャ原則
 
@@ -106,14 +97,45 @@ Worker権限:  docs/roles/worker-role.md
 - **全設定・データファイル**: 人間が読みやすいYAML形式で管理
 - **Claude Code SDK連携**: YAML形式での動的操作最適化
 - **自己文書化**: コメント機能による構造化データ
-- **実装ガイド**: `x/docs/guides/yaml-driven-development.md` **必読**
+- **実装ガイド**: `docs/guides/yaml-driven-development.md` **必読**
+
+### 📂 **設定ファイル配置ルール（厳格遵守）**
+
+**🚨 CRITICAL: 全ての設定・データファイルはdata/ディレクトリ配下に統一配置**
+
+#### **配置原則**
+- **✅ 配置場所**: `data/` ディレクトリ直下のみ
+- **✅ ファイル形式**: `.yaml` 拡張子必須
+- **🚫 禁止場所**: `config/`, `settings/`, ルートディレクトリ等
+
+#### **設定ファイル分類**
+```yaml
+# システム設定
+data/autonomous-config.yaml    # 自律システム設定
+data/account-config.yaml       # アカウント設定
+
+# コンテンツ戦略
+data/content-strategy.yaml     # コンテンツ戦略設定
+data/posting-data.yaml        # 投稿データ管理
+
+# 履歴・分析データ（削除済みファイルの参考）
+data/account-strategy.yaml    # アカウント戦略
+data/growth-targets.yaml      # 成長目標
+data/posting-history.yaml     # 投稿履歴
+```
+
+#### **命名規則**
+- **設定ファイル**: `{機能名}-config.yaml`
+- **戦略ファイル**: `{機能名}-strategy.yaml`
+- **データファイル**: `{機能名}-data.yaml`
+- **履歴ファイル**: `{機能名}-history.yaml`
 
 ```yaml
 # 設定ファイル例
 version: "1.0.0"
 currentPhase: growth  # growth, engagement, authority, maintenance
 objectives:
-  primary: 価値創造に集中したMVP開発
+  primary: 価値創造に集中した実用的開発
 ```
 
 ## 🎨 重要ルール
@@ -145,24 +167,23 @@ objectives:
 - **関数削除時**: `docs/guides/deletion-safety-rules.md` **必読・必須実行**
   - ⚠️ **3-Step Safety Rule必須**: 1)grep使用確認 2)TypeScriptチェック 3)1つずつ削除
   - 🚨 **hedge-system停止事故防止**: 削除前に `grep -r "関数名" apps/` で全アプリの使用状況を必ず確認
-  - ✅ **MVP準拠**: 複雑な自動化より確実な手動チェックを優先
+  - ✅ **実用性重視**: 複雑な自動化より確実な手動チェックを優先
 
 ## 🚀 システム起動
 
 **起動コマンド**:
-- **devブランチ**: `pnpm run manager` / `pnpm run worker`
-- **issue-*ブランチ**: `pnpm run go` でWorktree選択
+- **Manager**: `pnpm run manager`
+- **Worker**: `pnpm run worker`
 
-**詳細手順**: 起動時ブランチ判定で読み込むファイルに記載
+**詳細手順**: 起動時ROLE判定で読み込むファイルに記載
 
 ## 📚 参考資料
 
-### ブランチ・権限別詳細（起動時読み込み必須）
-- **devブランチ**: `docs/roles/manager-role.md` / `docs/roles/worker-role.md` + `tasks/README.md`
-- **issue-*ブランチ**: `docs/roles/manager-issue-driven.md` / `docs/roles/worker-role.md` + `docs/guides/issue-driven-development/README.md`
+### 権限別詳細（起動時読み込み必須）
+- **Manager**: `docs/roles/manager-role.md`
+- **Worker**: `docs/roles/worker-role.md`
 
 ### 技術ガイド（必要時参照）
-- `docs/mvp-constraints/mvp-principles.md` - MVP実装の本質的原則
 - `docs/guides/global-style-system.md` - グローバルスタイルシステム
 - `docs/guides/tailwind-v4-guide.md` - Tailwind CSS v4実装
 - `docs/guides/amplify-gen2-guide.md` - Amplify Gen2実装

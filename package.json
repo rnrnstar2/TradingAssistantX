@@ -1,17 +1,27 @@
 {
-  "name": "trading-assistant-x",
+  "name": "x-account-automation-system",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "start": "tsx src/scripts/autonomous-runner.ts",
     "dev": "tsx watch src/scripts/autonomous-runner.ts",
+    "stop": "pkill -f 'tsx watch src/scripts/autonomous-runner.ts'",
+    "status": "ps aux | grep 'autonomous-runner' | grep -v grep || echo 'システムは停止中'",
+    "health": "tsx src/utils/monitoring/health-check.ts",
+    "status:full": "tsx src/utils/monitoring/health-check.ts --verbose",
     "check-types": "tsc --noEmit",
     "lint": "echo 'Lint check passed'",
     "build": "tsc",
-    "test": "echo 'No tests configured'",
-    "manager": "ROLE=manager claude --dangerously-skip-permissions",
-    "worker": "ROLE=worker claude --dangerously-skip-permissions",
-    "go": "./scripts/issue-go.sh"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "manager": "ROLE=manager claude --dangerously-skip-permissions; ./.claude/hooks/session-complete-notify.sh",
+    "worker": "ROLE=worker claude --dangerously-skip-permissions; ./.claude/hooks/session-complete-notify.sh",
+    "go": "./scripts/issue-go.sh",
+    "cleanup": "tsx scripts/cleanup/data-cleanup.ts",
+    "cleanup:force": "tsx scripts/cleanup/data-cleanup.ts --force",
+    "validate:config-placement": "bash scripts/config-management/validate-config-placement.sh",
+    "fix:config-placement": "bash scripts/config-management/validate-config-placement.sh --fix",
+    "validate:all": "pnpm validate:config-placement && echo 'All validations passed'"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.56.0",
@@ -26,6 +36,7 @@
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.0.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^3.2.4"
   }
 }

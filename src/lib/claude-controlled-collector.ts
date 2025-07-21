@@ -1,222 +1,346 @@
-import { chromium, Browser, Page } from 'playwright';
+import { chromium } from 'playwright';
+import type { BrowserContext, Page } from 'playwright';
+import type { CollectionResult } from '../types/autonomous-system.js';
 import { claude } from '@instantlyeasy/claude-code-sdk-ts';
-import { ScrapedData } from '../types/index';
 
 export class ClaudeControlledCollector {
-  private browser: Browser | null = null;
-  private page: Page | null = null;
-  private testMode: boolean;
-  private results: ScrapedData[] = [];
+  private browserContexts: BrowserContext[] = [];
 
-  constructor() {
-    this.testMode = process.env.X_TEST_MODE === 'true';
-  }
-
-  // 固定的な制限を一切排除
-  async exploreAutonomously(): Promise<ScrapedData[]> {
+  async performParallelCollection(): Promise<CollectionResult[]> {
+    console.log('🔍 [Claude制御収集] 並列ブラウザ操作を開始...');
+    
     try {
-      await this.initBrowser();
+      this.browserContexts = await this.createMultipleContexts(3);
       
-      // Claude が最初の方針を決定
-      let continueExploration = true;
+      const collectionTasks = [
+        this.collectFromTrends(this.browserContexts[0]),
+        this.collectFromSearch(this.browserContexts[1], ['投資', 'トレード']),
+        this.collectFromHashtags(this.browserContexts[2], ['#FX', '#株式投資'])
+      ];
       
-      while (continueExploration) {
-        const decision = await this.askClaude(
-          this.buildContextualPrompt(),
-          'exploration_decision'
-        );
-        
-        const result = await this.executeClaudeDecision(decision);
-        continueExploration = result.shouldContinue;
-        
-        if (result.newData) {
-          this.results.push(...result.newData);
-        }
-      }
+      const results = await Promise.all(collectionTasks);
+      await this.closeBrowserContexts(this.browserContexts);
       
-      return this.results;
+      const mergedResults = this.mergeCollectionResults(results);
+      console.log(`✅ [Claude制御収集完了] ${mergedResults.length}件の情報を収集`);
+      
+      return mergedResults;
     } catch (error) {
-      console.error('完全自律収集エラー:', error);
-      throw error;
-    } finally {
-      await this.cleanup();
+      console.error('❌ [Claude制御収集エラー]:', error);
+      await this.closeBrowserContexts(this.browserContexts);
+      return [];
     }
   }
 
-  private buildContextualPrompt(): string {
-    const currentSituation = this.getCurrentSituation();
-    const previousResults = this.results.length;
-    
-    return `
-    【現在の状況】
-    ${currentSituation}
-    
-    【これまでの収集結果】
-    収集件数: ${previousResults}件
-    
-    【次の行動決定】
-    投資・金融関連の価値ある情報を収集することが目的です。
-    
-    次に何をすべきか、以下の形式で回答してください：
-    
-    ACTION: [具体的な行動]
-    REASON: [理由]
-    CONTINUE: [true/false - 収集を継続するか]
-    
-    例：
-    ACTION: X.comのトレンドセクションを確認してください
-    REASON: 現在話題の投資トピックを把握するため
-    CONTINUE: true
-    
-    または
-    
-    ACTION: 収集を完了してください
-    REASON: 十分な情報を収集したため
-    CONTINUE: false
-    `;
-  }
-  
-  private async executeClaudeDecision(decision: string): Promise<{
-    shouldContinue: boolean;
-    newData: ScrapedData[];
-  }> {
-    // Claude の決定を解析
-    const shouldContinue = decision.includes('CONTINUE: true');
-    const action = this.extractAction(decision);
-    const reason = this.extractReason(decision);
-    
-    if (this.testMode) {
-      console.log(`🧠 Claude決定: ${action}`);
-      console.log(`💡 理由: ${reason}`);
-    }
-    
-    if (!shouldContinue) {
-      return { shouldContinue: false, newData: [] };
-    }
-    
-    // Claude の指示に従って具体的アクションを実行
-    const newData = await this.executeSpecificAction(action);
-    
-    return { shouldContinue: true, newData };
-  }
-  
-  private async executeSpecificAction(action: string): Promise<ScrapedData[]> {
-    if (!this.page) return [];
-    
-    // Claude の指示を具体的な操作に変換
-    const actionPrompt = `
-    以下の指示を具体的なブラウザ操作に変換してください：
-    
-    指示: ${action}
-    現在のURL: ${this.page.url()}
-    
-    以下のような形式で回答してください：
-    OPERATION: [NAVIGATE/CLICK/SCROLL/EXTRACT/SEARCH]
-    TARGET: [具体的な対象]
-    DETAILS: [詳細指示]
-    
-    例：
-    OPERATION: NAVIGATE
-    TARGET: https://x.com/explore/tabs/trending
-    DETAILS: トレンドページに移動
-    
-    または
-    
-    OPERATION: EXTRACT
-    TARGET: [data-testid="trend"]
-    DETAILS: トレンド情報を抽出
-    `;
-    
-    const operationDecision = await this.askClaude(actionPrompt, 'operation');
-    return await this.performBrowserOperation(operationDecision);
-  }
-  
-  private async performBrowserOperation(operation: string): Promise<ScrapedData[]> {
-    // Claude の指示に従ってブラウザ操作を実行
-    const results: ScrapedData[] = [];
-    
-    if (operation.includes('OPERATION: NAVIGATE')) {
-      const url = this.extractTarget(operation);
-      await this.page?.goto(url, { waitUntil: 'domcontentloaded' });
-    } else if (operation.includes('OPERATION: EXTRACT')) {
-      const selector = this.extractTarget(operation);
-      const elements = await this.page?.locator(selector).all() || [];
-      
-      for (const element of elements.slice(0, 5)) {
-        const text = await element.textContent();
-        if (text && text.trim().length > 10) {
-          results.push({
-            content: text.trim(),
-            url: this.page?.url() || '',
-            timestamp: Date.now(),
-            source: 'claude_directed'
-          });
-        }
-      }
-    }
-    // その他の操作も同様にClaude の指示に従って実行
-    
-    return results;
-  }
-  
-  private extractAction(decision: string): string {
-    const match = decision.match(/ACTION:\s*(.+)/);
-    return match ? match[1].trim() : 'デフォルトアクション';
-  }
-  
-  private extractReason(decision: string): string {
-    const match = decision.match(/REASON:\s*(.+)/);
-    return match ? match[1].trim() : '理由不明';
-  }
-  
-  private extractTarget(operation: string): string {
-    const match = operation.match(/TARGET:\s*(.+)/);
-    return match ? match[1].trim() : '';
-  }
-
-  private async initBrowser(): Promise<void> {
-    this.browser = await chromium.launch({
-      headless: !this.testMode
+  private async createMultipleContexts(count: number): Promise<BrowserContext[]> {
+    const browser = await chromium.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-dev-shm-usage']
     });
-    this.page = await this.browser.newPage();
     
-    if (this.page) {
-      await this.page.setViewportSize({ width: 1280, height: 720 });
-      await this.page.setExtraHTTPHeaders({
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+    const contexts: BrowserContext[] = [];
+    for (let i = 0; i < count; i++) {
+      const context = await browser.newContext({
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        viewport: { width: 1920, height: 1080 }
       });
+      contexts.push(context);
     }
+    
+    console.log(`🌐 [ブラウザ準備] ${count}個のブラウザコンテキストを作成`);
+    return contexts;
   }
 
-  private getCurrentSituation(): string {
-    if (!this.page) return 'ページが初期化されていません';
-
+  async collectFromTrends(context: BrowserContext): Promise<CollectionResult[]> {
+    console.log('📈 [トレンド収集] X.comトレンドページを分析中...');
+    
     try {
-      const url = this.page.url();
-      return `現在のURL: ${url}`;
+      const page = await context.newPage();
+      
+      // X.comにアクセス（ログインなしでも見れる範囲）
+      await page.goto('https://x.com/explore', { 
+        waitUntil: 'networkidle',
+        timeout: 30000 
+      });
+      
+      // Claude指示による自律的な操作
+      const claudeInstructions = await this.getClaudeInstructions('trend_analysis');
+      const results = await this.executeClaudeInstructions(page, claudeInstructions);
+      
+      await page.close();
+      return results;
     } catch (error) {
-      return 'ページ情報の取得に失敗';
+      console.error('❌ [トレンド収集エラー]:', error);
+      return [];
     }
   }
 
-  private async askClaude(prompt: string, context: string): Promise<string> {
+  async collectFromSearch(
+    context: BrowserContext, 
+    searchTerms: string[]
+  ): Promise<CollectionResult[]> {
+    console.log(`🔍 [検索収集] キーワード検索: ${searchTerms.join(', ')}`);
+    
     try {
-      const response = await claude()
+      const page = await context.newPage();
+      const allResults: CollectionResult[] = [];
+      
+      for (const term of searchTerms) {
+        const searchUrl = `https://x.com/search?q=${encodeURIComponent(term)}&src=typed_query&f=live`;
+        await page.goto(searchUrl, { 
+          waitUntil: 'networkidle',
+          timeout: 30000 
+        });
+        
+        const claudeInstructions = await this.getClaudeInstructions('search_analysis', { term });
+        const results = await this.executeClaudeInstructions(page, claudeInstructions);
+        allResults.push(...results);
+        
+        // リクエスト間隔を設ける
+        await page.waitForTimeout(2000);
+      }
+      
+      await page.close();
+      return allResults;
+    } catch (error) {
+      console.error('❌ [検索収集エラー]:', error);
+      return [];
+    }
+  }
+
+  async collectFromHashtags(
+    context: BrowserContext, 
+    hashtags: string[]
+  ): Promise<CollectionResult[]> {
+    console.log(`#️⃣ [ハッシュタグ収集] ハッシュタグ分析: ${hashtags.join(', ')}`);
+    
+    try {
+      const page = await context.newPage();
+      const allResults: CollectionResult[] = [];
+      
+      for (const hashtag of hashtags) {
+        const hashtagUrl = `https://x.com/hashtag/${hashtag.replace('#', '')}`;
+        await page.goto(hashtagUrl, { 
+          waitUntil: 'networkidle',
+          timeout: 30000 
+        });
+        
+        const claudeInstructions = await this.getClaudeInstructions('hashtag_analysis', { hashtag });
+        const results = await this.executeClaudeInstructions(page, claudeInstructions);
+        allResults.push(...results);
+        
+        // リクエスト間隔を設ける
+        await page.waitForTimeout(2000);
+      }
+      
+      await page.close();
+      return allResults;
+    } catch (error) {
+      console.error('❌ [ハッシュタグ収集エラー]:', error);
+      return [];
+    }
+  }
+
+  private async getClaudeInstructions(
+    analysisType: string, 
+    params?: Record<string, any>
+  ): Promise<string> {
+    const prompt = this.buildInstructionPrompt(analysisType, params);
+    
+    try {
+      const instructions = await claude()
         .withModel('sonnet')
         .query(prompt)
         .asText();
-      return response || '判断できませんでした';
+      
+      return instructions;
     } catch (error) {
-      console.error('Claude APIエラー:', error);
-      return 'デフォルトアクションを実行します';
+      console.error('❌ [Claude指示取得エラー]:', error);
+      return this.getFallbackInstructions(analysisType);
     }
   }
 
-  private async cleanup(): Promise<void> {
-    if (this.browser) {
-      await this.browser.close();
-      this.browser = null;
-      this.page = null;
+  private buildInstructionPrompt(analysisType: string, params?: Record<string, any>): string {
+    const basePrompt = `
+You are an expert at analyzing financial/investment content on X (Twitter).
+Analysis type: ${analysisType}
+${params ? `Parameters: ${JSON.stringify(params)}` : ''}
+
+Provide specific instructions for extracting valuable investment-related content.
+Focus on:
+1. Market trends and insights
+2. Educational content
+3. Real-time market reactions
+4. Investment strategies and tips
+
+Return concise, actionable instructions for content extraction.
+`;
+
+    switch (analysisType) {
+      case 'trend_analysis':
+        return basePrompt + `
+Specifically look for:
+- Trending financial topics
+- Market sentiment indicators
+- Popular investment discussions
+- Economic news reactions
+`;
+
+      case 'search_analysis':
+        return basePrompt + `
+For search term "${params?.term}", identify:
+- High-engagement posts about this topic
+- Educational content and explanations
+- Market analysis and predictions
+- Real user experiences and insights
+`;
+
+      case 'hashtag_analysis':
+        return basePrompt + `
+For hashtag "${params?.hashtag}", analyze:
+- Most engaging posts using this hashtag
+- Recurring themes and patterns
+- Educational vs promotional content
+- Community discussions and debates
+`;
+
+      default:
+        return basePrompt;
     }
   }
+  
+  private async executeClaudeInstructions(
+    page: Page, 
+    instructions: string
+  ): Promise<CollectionResult[]> {
+    console.log('🧠 [Claude実行] ページ分析を実行中...');
+    
+    try {
+      // ページ内容を取得
+      const pageContent = await this.extractPageContent(page);
+      
+      // Claude に分析を依頼
+      const analysisPrompt = `
+Instructions: ${instructions}
+
+Page content to analyze:
+${pageContent}
+
+Extract relevant investment/financial content and return as JSON array:
+[{
+  "id": "unique-id",
+  "type": "trend|news|discussion",
+  "content": "extracted content",
+  "source": "x.com",
+  "relevanceScore": 0.0-1.0,
+  "timestamp": timestamp,
+  "metadata": {
+    "engagement": number,
+    "author": "username",
+    "hashtags": ["#tag1"]
+  }
+}]
+
+Return ONLY the JSON array, no markdown or explanation.
+`;
+
+      const response = await claude()
+        .withModel('sonnet')
+        .query(analysisPrompt)
+        .asText();
+
+      // JSON解析
+      const jsonMatch = response.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        const results = JSON.parse(jsonMatch[0]);
+        console.log(`🧠 [Claude分析完了] ${results.length}件のコンテンツを抽出`);
+        return results;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('❌ [Claude実行エラー]:', error);
+      return [];
+    }
+  }
+  
+  private async extractPageContent(page: Page): Promise<string> {
+    try {
+      // X/Twitterの投稿要素を取得
+      const tweets = await page.$$eval('[data-testid="tweet"]', (elements) => {
+        return elements.slice(0, 10).map(el => ({
+          text: el.textContent?.trim() || '',
+          time: el.querySelector('time')?.getAttribute('datetime') || '',
+        }));
+      });
+      
+      return JSON.stringify(tweets, null, 2);
+    } catch (error) {
+      // フォールバック: ページの基本的なテキスト内容を取得
+      try {
+        const content = await page.textContent('body');
+        return content?.substring(0, 5000) || '';
+      } catch {
+        return '';
+      }
+    }
+  }
+  
+  private getFallbackInstructions(analysisType: string): string {
+    const fallbackInstructions = {
+      trend_analysis: 'Extract trending financial topics and market discussions',
+      search_analysis: 'Find relevant investment content and educational posts',
+      hashtag_analysis: 'Analyze hashtag usage patterns and engaging content'
+    };
+    
+    return fallbackInstructions[analysisType as keyof typeof fallbackInstructions] || 
+           'Extract relevant financial/investment content';
+  }
+
+  private mergeCollectionResults(resultArrays: CollectionResult[][]): CollectionResult[] {
+    const allResults = resultArrays.flat();
+    
+    // 重複除去とスコアによるソート
+    const uniqueResults = this.removeDuplicateResults(allResults);
+    const sortedResults = uniqueResults.sort((a, b) => b.relevanceScore - a.relevanceScore);
+    
+    // 上位50件に制限
+    return sortedResults.slice(0, 50);
+  }
+
+  private removeDuplicateResults(results: CollectionResult[]): CollectionResult[] {
+    const seen = new Set<string>();
+    const unique: CollectionResult[] = [];
+    
+    for (const result of results) {
+      const contentHash = this.generateContentHash(result.content);
+      
+      if (!seen.has(contentHash)) {
+        seen.add(contentHash);
+        unique.push(result);
+      }
+    }
+    
+    return unique;
+  }
+
+  private generateContentHash(content: string): string {
+    // 簡単なハッシュ関数（コンテンツの類似性判定用）
+    return content
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .substring(0, 100);
+  }
+
+  private async closeBrowserContexts(contexts: BrowserContext[]): Promise<void> {
+    console.log('🔒 [ブラウザクリーンアップ] ブラウザコンテキストを閉じています...');
+    
+    try {
+      await Promise.all(contexts.map(context => context.close()));
+      console.log('✅ [ブラウザクリーンアップ完了]');
+    } catch (error) {
+      console.error('❌ [ブラウザクリーンアップエラー]:', error);
+    }
+  }
+  
 }

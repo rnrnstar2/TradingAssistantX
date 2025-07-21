@@ -141,6 +141,99 @@ export interface Recommendation {
   expectedImpact?: string;
 }
 
+// Information Collection types
+export interface CollectionTarget {
+  type: 'trend' | 'competitor' | 'hashtag' | 'news';
+  source: string;
+  priority: 'high' | 'medium' | 'low';
+  searchTerms: string[];
+}
+
+export interface CollectionResult {
+  id: string;
+  type: string;
+  content: string;
+  source: string;
+  relevanceScore: number;
+  timestamp: number;
+  metadata: {
+    engagement?: number;
+    author?: string;
+    hashtags?: string[];
+  };
+}
+
+export interface EvaluatedInfo {
+  id: string;
+  originalResult: CollectionResult;
+  relevanceScore: number;
+  contentValue: number;
+  actionableInsights: string[];
+  recommendedUsage: 'original_post' | 'quote_tweet' | 'retweet' | 'ignore';
+  confidence: number;
+}
+
+export interface ContentOpportunity {
+  type: 'original_post' | 'quote_tweet' | 'retweet' | 'reply';
+  content?: string;
+  targetTweetId?: string;
+  priority: 'high' | 'medium' | 'low';
+  reasoning: string;
+  estimatedEngagement: number;
+}
+
+// Account Analysis types
+export interface AccountStatus {
+  timestamp: string;
+  followers: {
+    current: number;
+    change_24h: number;
+    growth_rate: string;
+  };
+  engagement: {
+    avg_likes: number;
+    avg_retweets: number;
+    engagement_rate: string;
+  };
+  performance: {
+    posts_today: number;
+    target_progress: string;
+    best_posting_time: string;
+  };
+  health: {
+    status: 'healthy' | 'warning' | 'critical';
+    api_limits: 'normal' | 'approaching' | 'limited';
+    quality_score: number;
+  };
+  recommendations: string[];
+  healthScore: number;
+}
+
+// Integrated Context types
+export interface IntegratedContext {
+  account: {
+    currentState: AccountStatus;
+    recommendations: string[];
+    healthScore: number;
+  };
+  market: {
+    trends: CollectionResult[];
+    opportunities: ContentOpportunity[];
+    competitorActivity: CollectionResult[];
+  };
+  actionSuggestions: ActionSuggestion[];
+  timestamp: number;
+}
+
+export interface ActionSuggestion {
+  type: 'original_post' | 'quote_tweet' | 'retweet' | 'reply';
+  content?: string;
+  reasoning: string;
+  priority: 'high' | 'medium' | 'low';
+  expectedImpact: number;
+  metadata?: Record<string, any>;
+}
+
 // Configuration types
 export interface AutonomousConfig {
   autonomous_system: {

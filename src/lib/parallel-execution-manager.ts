@@ -205,7 +205,7 @@ export class ParallelExecutionManager {
 
   private async executeCollectTask(task: Task): Promise<any> {
     try {
-      const result = await this.claudeCollector.exploreAutonomously();
+      const result = await this.claudeCollector.performParallelCollection();
       
       // 結果を保存
       await this.contextManager.saveIntermediateResult(

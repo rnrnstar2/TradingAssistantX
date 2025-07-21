@@ -1,7 +1,5 @@
-# 成長目標設定
-version: "1.0.0"
-lastUpdated: 1752845992796
-
+version: 1.0.0
+lastUpdated: 1753073171431
 targets:
   followers:
     current: 0
@@ -9,20 +7,17 @@ targets:
     weekly: 14
     monthly: 60
     quarterly: 180
-  
   engagement:
     likesPerPost: 5
     retweetsPerPost: 1
     repliesPerPost: 1
-    engagementRate: 3  # パーセント
-  
+    engagementRate: 3
   reach:
     viewsPerPost: 50
     impressionsPerDay: 750
-
 progress:
   followersGrowth: 0
   engagementGrowth: 0
   reachGrowth: 0
   overallScore: 0
-  trend: ontrack  # ontrack, ahead, behind
+  trend: ontrack

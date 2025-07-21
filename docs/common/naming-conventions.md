@@ -1,8 +1,8 @@
-# 命名規則統一ガイド
+# X自動化システム命名規則統一ガイド
 
 ## 📋 概要
 
-プロジェクト全体で統一された命名規則を定義し、一貫性を保つためのガイドラインです。
+TradingAssistantX（X自動化システム）全体で統一された命名規則を定義し、一貫性を保つためのガイドラインです。
 
 ## 🗂️ ファイル・ディレクトリ命名規則
 
@@ -15,8 +15,8 @@
 ### プロジェクト・ブランチ関連
 - **メインブランチ**: `main`
 - **開発ブランチ**: `dev`
-- **機能ブランチ**: `issue-[issue-number]-[feature-name]`
-- **修正ブランチ**: `fix-[issue-number]-[bug-description]`
+- **機能ブランチ**: `feature-[feature-name]`
+- **修正ブランチ**: `fix-[bug-description]`
 
 ### 出力管理
 - **承認出力先**: `tasks/[TIMESTAMP]/outputs/`
@@ -26,46 +26,52 @@
 
 ## 🧩 コンポーネント・モジュール命名規則
 
-### React コンポーネント
-- **コンポーネント**: `PascalCase` （例: `TradingDashboard`）
-- **ファイル名**: `PascalCase.tsx` （例: `TradingDashboard.tsx`）
-- **Props 型定義**: `[ComponentName]Props` （例: `TradingDashboardProps`）
+### Node.js コンポーネント
+- **モジュール**: `PascalCase` （例: `ContentGenerator`, `XApiManager`）
+- **ファイル名**: `kebab-case.ts` （例: `content-generator.ts`, `x-api-manager.ts`）
+- **型定義**: `[ModuleName]Config` （例: `ContentGeneratorConfig`）
 
 ### TypeScript
-- **型定義**: `PascalCase` （例: `UserAccount`, `TradePosition`）
-- **インターフェース**: `I[Name]` （例: `IUserAccount`, `ITradePosition`）
-- **変数**: `camelCase` （例: `currentPrice`, `tradeAmount`）
-- **関数**: `camelCase` （例: `calculateProfit`, `executeOrder`）
-- **定数**: `UPPER_SNAKE_CASE` （例: `MAX_CONNECTIONS`, `DEFAULT_TIMEOUT`）
+- **型定義**: `PascalCase` （例: `PostContent`, `AccountStrategy`）
+- **インターフェース**: `I[Name]` （例: `IPostContent`, `IAccountStrategy`）
+- **変数**: `camelCase` （例: `postingFrequency`, `contentTheme`）
+- **関数**: `camelCase` （例: `generateContent`, `schedulePost`）
+- **定数**: `UPPER_SNAKE_CASE` （例: `MAX_POSTS_PER_DAY`, `DEFAULT_POSTING_INTERVAL`）
 
-### Tauri プラグイン
-- **プラグイン名**: `tauri-plugin-[name]`
-- **コマンド**: `snake_case` （例: `get_account_info`, `execute_order`）
-- **イベント**: `PascalCase` （例: `PriceUpdate`, `OrderExecuted`）
+### X API通信
+- **API関数**: `camelCase` （例: `postTweet`, `getUserProfile`）
+- **レスポンス型**: `PascalCase` （例: `TweetResponse`, `UserProfile`）
+- **エラー型**: `PascalCase` （例: `XApiError`, `RateLimitError`）
 
 ## 🔧 API・通信関連
 
-### GraphQL
-- **Query**: `camelCase` （例: `getUserAccount`, `getTradeHistory`）
-- **Mutation**: `camelCase` （例: `createOrder`, `updatePosition`）
-- **Subscription**: `camelCase` （例: `priceUpdates`, `orderStatus`）
-- **型定義**: `PascalCase` （例: `User`, `Position`, `Order`）
-
-### Named Pipe
-- **パイプ名**: `PascalCase` （例: `TauriMTBridge`）
-- **メッセージ型**: `PascalCase` （例: `AccountInfo`, `PriceData`）
-- **コマンド**: `UPPER_SNAKE_CASE` （例: `GET_ACCOUNT`, `SEND_ORDER`）
+### X Platform API
+- **エンドポイント**: `kebab-case` （例: `post-tweet`, `get-user-timeline`）
+- **リクエスト型**: `PascalCase` （例: `PostTweetRequest`, `UserTimelineRequest`）
+- **レスポンス型**: `PascalCase` （例: `PostTweetResponse`, `UserTimelineResponse`）
 
 ## 📊 データベース・設定関連
 
-### 設定ファイル
-- **設定ファイル**: `kebab-case.json` （例: `app-config.json`, `trading-settings.json`）
-- **設定キー**: `camelCase` （例: `maxConnections`, `defaultTimeout`）
-- **環境変数**: `UPPER_SNAKE_CASE` （例: `API_BASE_URL`, `DATABASE_URL`）
+### YAML設定ファイル
+**🚨 重要**: 全ての設定ファイルは `data/` ディレクトリ直下のみに配置
+
+#### ファイル命名規則
+- **設定ファイル**: `{機能名}-config.yaml` （例: `autonomous-config.yaml`, `account-config.yaml`）
+- **戦略ファイル**: `{機能名}-strategy.yaml` （例: `content-strategy.yaml`, `growth-strategy.yaml`）
+- **データファイル**: `{機能名}-data.yaml` （例: `posting-data.yaml`, `metrics-data.yaml`）
+- **履歴ファイル**: `{機能名}-history.yaml` （例: `posting-history.yaml`, `performance-history.yaml`）
+
+#### 配置ルール
+- **✅ 配置場所**: `data/` ディレクトリ直下のみ
+- **🚫 禁止場所**: `config/`, `settings/`, ルートディレクトリ等
+
+#### 設定内容
+- **設定キー**: `camelCase` （例: `postingFrequency`, `currentPhase`）
+- **環境変数**: `UPPER_SNAKE_CASE` （例: `ANTHROPIC_API_KEY`, `X_API_SECRET`）
 
 ### ログ・出力
-- **ログファイル**: `[service]-[date].log` （例: `trading-20250119.log`）
-- **出力ファイル**: `[purpose]-[timestamp].[ext]` （例: `analysis-20250119-143000.json`）
+- **ログファイル**: `[service]-[date].log` （例: `x-automation-20250120.log`）
+- **出力ファイル**: `[purpose]-[timestamp].[ext]` （例: `content-analysis-20250120-143000.json`）
 
 ## 🚀 スクリプト・コマンド関連
 
@@ -76,29 +82,33 @@
 - **リント**: `lint`, `lint:fix`
 - **型チェック**: `type-check`, `check-types`
 
-### 開発コマンド
-- **Manager起動**: `npm run manager`
-- **Worker起動**: `npm run worker`
-- **システム起動**: `npm run go`
+### X自動化システムコマンド
+- **Manager起動**: `pnpm run manager`
+- **Worker起動**: `pnpm run worker`
+- **システム起動**: `pnpm run start:all`
+- **緊急停止**: `pnpm run emergency:stop`
 
 ## 🏗️ プロジェクト構造
 
-### ディレクトリ構造
+### X自動化システム構造
 ```
-apps/
-├── admin/           # 管理者アプリ
-├── hedge-system/    # 取引システム
-packages/
-├── shared-amplify/  # 共有 Amplify 
-├── shared-backend/  # 共有バックエンド
-├── shared-types/    # 共有型定義
-├── ui/              # UI コンポーネント
+src/
+├── core/            # 自律実行エンジン
+├── lib/             # Claude連携・X API
+├── types/           # 型定義
+└── scripts/         # 実行スクリプト
+data/
+├── account-strategy.yaml    # アカウント戦略
+├── content-patterns.yaml   # コンテンツパターン
+├── growth-targets.yaml     # 成長目標
+└── posting-history.yaml    # 投稿履歴
 docs/
 ├── common/          # 共通設定・定数
 ├── guides/          # 実装ガイド
 ├── mvp-constraints/ # MVP 制約
-├── roles/           # 役割定義
-└── tauri/           # Tauri 固有
+└── roles/           # 役割定義
+tasks/
+└── outputs/         # 承認された出力場所
 ```
 
 ## 📝 コメント・ドキュメント
@@ -147,9 +157,8 @@ docs/
 - **システム定数**: [system-constants.md](system-constants.md)
 - **ファイルパス**: [file-paths.md](file-paths.md)
 - **出力管理**: [../guides/output-management-rules.md](../guides/output-management-rules.md)
-- **Issue駆動開発**: [../guides/issue-driven-development/best-practices.md](../guides/issue-driven-development/best-practices.md)
 
 ---
 
-**最終更新**: 2025-01-19  
-**管理者**: ArbitrageAssistant Development Team
+**最終更新**: 2025-01-20  
+**管理者**: TradingAssistantX Development Team

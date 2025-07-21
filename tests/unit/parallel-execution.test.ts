@@ -1,7 +1,7 @@
-import { ExecutionOrchestrator } from './src/lib/execution-orchestrator';
-import { GrowthSystemManager } from './src/lib/growth-system-manager';
-import { PostingManager } from './src/lib/posting-manager';
-import { ClaudeControlledCollector } from './src/lib/claude-controlled-collector';
+import { ExecutionOrchestrator } from '../../src/lib/execution-orchestrator';
+import { GrowthSystemManager } from '../../src/lib/growth-system-manager';
+import { PostingManager } from '../../src/lib/posting-manager';
+import { ClaudeControlledCollector } from '../../src/lib/claude-controlled-collector';
 
 async function testParallelExecution() {
   console.log('🚀 並列実行とデータ連携システムのテスト開始');

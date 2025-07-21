@@ -19,7 +19,9 @@
   ],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "inputs": [
         "$TURBO_DEFAULT$",
         ".env*",
@@ -30,7 +32,7 @@
       ],
       "outputs": [
         "dist/**",
-        "out/**", 
+        "out/**",
         ".next/**",
         "!.next/cache/**",
         "src-tauri/target/release/**"
@@ -40,10 +42,18 @@
       "cache": true
     },
     "build:analyze": {
-      "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$"],
-      "outputs": [".next/analyze/**"],
-      "env": ["ANALYZE"]
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$"
+      ],
+      "outputs": [
+        ".next/analyze/**"
+      ],
+      "env": [
+        "ANALYZE"
+      ]
     },
     "dev": {
       "cache": false,
@@ -51,19 +61,19 @@
       "env": []
     },
     "dev:clean": {
-      "dependsOn": ["clean"],
+      "dependsOn": [
+        "clean"
+      ],
       "cache": false,
       "persistent": true
     },
     "dev:fresh": {
-      "dependsOn": ["clean:all", "^build"],
+      "dependsOn": [
+        "clean:all",
+        "^build"
+      ],
       "cache": false,
       "persistent": true
-    },
-    "dev:mt5": {
-      "cache": false,
-      "persistent": true,
-      "dependsOn": ["^build"]
     },
     "lint": {
       "inputs": [
@@ -73,12 +83,18 @@
         "!**/*.test.*",
         "!**/*.spec.*"
       ],
-      "outputs": [".eslintcache"],
+      "outputs": [
+        ".eslintcache"
+      ],
       "cache": true
     },
     "lint:fix": {
-      "inputs": ["$TURBO_DEFAULT$"],
-      "outputs": [".eslintcache"],
+      "inputs": [
+        "$TURBO_DEFAULT$"
+      ],
+      "outputs": [
+        ".eslintcache"
+      ],
       "cache": false
     },
     "check-types": {
@@ -89,7 +105,9 @@
         "!out/**",
         "!.next/**"
       ],
-      "outputs": [".next/cache/tsconfig.tsbuildinfo"],
+      "outputs": [
+        ".next/cache/tsconfig.tsbuildinfo"
+      ],
       "cache": true
     },
     "check-types:watch": {
@@ -97,7 +115,9 @@
       "persistent": true
     },
     "test": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "inputs": [
         "**/*.{ts,tsx,js,jsx}",
         "**/*.test.*",
@@ -106,26 +126,36 @@
         "jest.config.*",
         "!**/*.integration.*"
       ],
-      "outputs": ["coverage/**"],
+      "outputs": [
+        "coverage/**"
+      ],
       "cache": true
     },
     "test:unit": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "inputs": [
         "**/*.test.{ts,tsx}",
         "vitest.config.*",
         "!tests/integration/**"
       ],
-      "outputs": ["coverage/**"],
+      "outputs": [
+        "coverage/**"
+      ],
       "cache": true
     },
     "test:integration": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "inputs": [
         "tests/integration/**",
         "vitest.integration.config.*"
       ],
-      "outputs": ["coverage/**"],
+      "outputs": [
+        "coverage/**"
+      ],
       "cache": false
     },
     "test:watch": {
@@ -137,55 +167,105 @@
       "persistent": true
     },
     "test:coverage": {
-      "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$"],
-      "outputs": ["coverage/**"],
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$"
+      ],
+      "outputs": [
+        "coverage/**"
+      ],
       "cache": true
     },
     "test:e2e": {
-      "dependsOn": ["build"],
-      "inputs": ["tests/e2e/**", "playwright.config.*"],
-      "outputs": ["test-results/**"],
+      "dependsOn": [
+        "build"
+      ],
+      "inputs": [
+        "tests/e2e/**",
+        "playwright.config.*"
+      ],
+      "outputs": [
+        "test-results/**"
+      ],
       "cache": false
     },
     "tauri:dev": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "cache": false,
       "persistent": true
     },
     "tauri:build": {
-      "dependsOn": ["build"],
-      "inputs": ["src-tauri/**", "!src-tauri/target/**"],
-      "outputs": ["src-tauri/target/**"],
+      "dependsOn": [
+        "build"
+      ],
+      "inputs": [
+        "src-tauri/**",
+        "!src-tauri/target/**"
+      ],
+      "outputs": [
+        "src-tauri/target/**"
+      ],
       "cache": false
     },
     "tauri:build:release": {
-      "dependsOn": ["build"],
-      "inputs": ["src-tauri/**", "!src-tauri/target/**"],
-      "outputs": ["src-tauri/target/**"],
+      "dependsOn": [
+        "build"
+      ],
+      "inputs": [
+        "src-tauri/**",
+        "!src-tauri/target/**"
+      ],
+      "outputs": [
+        "src-tauri/target/**"
+      ],
       "cache": false
     },
     "tauri:release": {
-      "dependsOn": ["build"],
-      "inputs": ["src-tauri/**", "!src-tauri/target/**"],
-      "outputs": ["src-tauri/target/**"],
+      "dependsOn": [
+        "build"
+      ],
+      "inputs": [
+        "src-tauri/**",
+        "!src-tauri/target/**"
+      ],
+      "outputs": [
+        "src-tauri/target/**"
+      ],
       "cache": false
     },
     "preflight": {
-      "dependsOn": ["check-types", "lint", "test:unit"]
+      "dependsOn": [
+        "check-types",
+        "lint",
+        "test:unit"
+      ]
     },
     "preflight:ci": {
-      "dependsOn": ["check-types", "lint", "test:coverage", "test:integration"]
+      "dependsOn": [
+        "check-types",
+        "lint",
+        "test:coverage",
+        "test:integration"
+      ]
     },
     "preflight:tauri": {
-      "dependsOn": ["preflight", "tauri:build"]
+      "dependsOn": [
+        "preflight",
+        "tauri:build"
+      ]
     },
     "clean": {
       "cache": false,
       "outputs": []
     },
     "clean:all": {
-      "dependsOn": ["clean"],
+      "dependsOn": [
+        "clean"
+      ],
       "cache": false,
       "outputs": []
     },
@@ -197,22 +277,30 @@
       "cache": false
     },
     "build:css": {
-      "dependsOn": ["^build:css"],
+      "dependsOn": [
+        "^build:css"
+      ],
       "inputs": [
         "**/*.css",
         "tailwind.config.*",
         "postcss.config.*"
       ],
-      "outputs": ["dist/**/*.css"]
+      "outputs": [
+        "dist/**/*.css"
+      ]
     },
     "amplify:deploy": {
-      "dependsOn": ["@workspace/shared-backend#build"],
+      "dependsOn": [
+        "@workspace/shared-backend#build"
+      ],
       "inputs": [
         "amplify/**",
         "*.ts",
         "amplify_outputs.json"
       ],
-      "outputs": ["amplify_outputs.json"],
+      "outputs": [
+        "amplify_outputs.json"
+      ],
       "cache": false
     }
   }

@@ -1,38 +1,63 @@
 {
-  "hooks": [
-    {
-      "event": "PreToolUse",
-      "matcher": "Bash|Read|Write|Edit|MultiEdit",
-      "command": "bash /Users/rnrnstar/github/ArbitrageAssistant/.claude/hooks/init-check.sh"
-    },
-    {
-      "event": "PreToolUse",
-      "matcher": "Bash",
-      "command": "bash -c 'INPUT=\"$1\"; if [ \"$ROLE\" = \"worker\" ] && [[ \"$INPUT\" =~ git\\s+(commit|push|merge|rebase|checkout|branch) ]]; then echo \"❌ Worker権限でgit操作は禁止です。Managerに依頼してください。\"; exit 1; fi' _ \"$INPUT\""
-    },
-    {
-      "event": "PostToolUse",
-      "matcher": "Write|Edit|MultiEdit",
-      "command": "bash /Users/rnrnstar/github/ArbitrageAssistant/.claude/hooks/quality-check-role-based.sh \"$FILE_PATH\""
-    },
-    {
-      "event": "PostToolUse",
-      "matcher": "Read|Grep|Glob|LS",
-      "command": "bash /Users/rnrnstar/github/ArbitrageAssistant/.claude/hooks/task-complete-notify.sh \"$TOOL_NAME\" \"$FILE_PATH\""
-    },
-    {
-      "event": "PostToolUse",
-      "matcher": "Bash",
-      "command": "bash -c 'if [ \"$ROLE\" = \"manager\" ] || [ \"$ROLE\" = \"worker\" ]; then bash /Users/rnrnstar/github/ArbitrageAssistant/.claude/hooks/task-complete-notify.sh \"Bash\" \"\"; fi'"
-    },
-    {
-      "event": "Stop",
-      "command": "bash /Users/rnrnstar/github/ArbitrageAssistant/.claude/hooks/session-complete-notify.sh"
-    }
-  ],
-  "thinking": {
-    "enabled": true,
-    "defaultLevel": "deep"
-  },
-  "maxThinkingTokens": 32000
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read|Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/rnrnstar/github/TradingAssistantX/.claude/hooks/init-check.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'INPUT=\"$1\"; if [ \"$ROLE\" = \"worker\" ] && [[ \"$INPUT\" =~ git\\s+(commit|push|merge|rebase|checkout|branch) ]]; then echo \"❌ Worker権限でgit操作は禁止です。Managerに依頼してください。\"; exit 1; fi' _ \"$INPUT\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/rnrnstar/github/TradingAssistantX/.claude/hooks/quality-check-role-based.sh \"$CLAUDE_FILE_PATHS\""
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Grep|Glob|LS",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/rnrnstar/github/TradingAssistantX/.claude/hooks/task-complete-notify.sh \"$CLAUDE_TOOL_NAME\" \"$CLAUDE_FILE_PATHS\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if [ \"$ROLE\" = \"manager\" ] || [ \"$ROLE\" = \"worker\" ]; then bash /Users/rnrnstar/github/TradingAssistantX/.claude/hooks/task-complete-notify.sh \"Bash\" \"\"; fi'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/rnrnstar/github/TradingAssistantX/.claude/hooks/session-complete-notify.sh"
+          }
+        ]
+      }
+    ]
+  }
 }

@@ -120,3 +120,113 @@ export interface LongTask extends Task {
   estimatedDuration?: number;
 }
 
+// Xアカウント情報管理関連の型定義
+export interface AccountInfo {
+  username: string;
+  user_id: string;
+  display_name: string;
+  verified: boolean;
+}
+
+export interface AccountMetrics {
+  followers_count: number;
+  following_count: number;
+  tweet_count: number;
+  listed_count: number;
+  last_updated: number;
+}
+
+export interface UserResponse {
+  data: {
+    id: string;
+    username: string;
+    name: string;
+    verified: boolean;
+    public_metrics: {
+      followers_count: number;
+      following_count: number;
+      tweet_count: number;
+      listed_count: number;
+    };
+  };
+}
+
+// Performance Analysis Types
+export interface PostMetrics {
+  postId: string;
+  content: string;
+  timestamp: string;
+  likes: number;
+  retweets: number;
+  replies: number;
+  views: number;
+  engagementRate: number;
+}
+
+export interface EngagementMetrics {
+  tweetId?: string;
+  likes?: number;
+  retweets?: number;
+  replies?: number;
+  quotes?: number;
+  impressions?: number;
+  engagementRate?: number;
+  timestamp?: string;
+  // 旧形式との互換性
+  averageEngagementRate?: number;
+  bestPerformingPost?: PostMetrics;
+  engagementTrend?: 'increasing' | 'stable' | 'decreasing';
+  optimalPostingTimes?: string[];
+}
+
+export interface FollowerMetrics {
+  currentCount: number;
+  growthRate: number;
+  growthTrend: 'increasing' | 'stable' | 'decreasing';
+  engagementQuality: number;
+}
+
+export interface PerformanceAnalysisResult {
+  accountMetrics: AccountMetrics;
+  recentPosts: PostMetrics[];
+  engagement: EngagementMetrics;
+  followerMetrics: FollowerMetrics;
+  analysisTimestamp: string;
+  recommendations: string[];
+}
+
+// Tweet and Twitter API response types
+export interface Tweet {
+  id: string;
+  text: string;
+  created_at?: string;
+  author_id?: string;
+  public_metrics?: {
+    like_count?: number;
+    retweet_count?: number;
+    reply_count?: number;
+    quote_count?: number;
+    impression_count?: number;
+  };
+  context_annotations?: any[];
+}
+
+export interface TweetsResponse {
+  data?: Tweet[];
+  includes?: {
+    users?: any[];
+  };
+  meta?: {
+    result_count?: number;
+    next_token?: string;
+  };
+}
+
+// New YAML structure types
+export * from './account-config';
+export * from './content-strategy';
+export * from './posting-data';
+
+// Expanded action types
+export * from './action-types';
+

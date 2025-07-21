@@ -1,3 +1,7 @@
 
 # Environment variables
 .env
+
+# Backup files
+*.backup
+*.backup[0-9]*

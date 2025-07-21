@@ -1,6 +1,7 @@
 import { writeFileSync } from 'fs';
 import { ScrapedData } from '../types/index';
 import { ClaudeControlledCollector } from './claude-controlled-collector';
+import type { CollectionResult } from '../types/autonomous-system';
 import * as yaml from 'js-yaml';
 
 // 固定分岐を完全削除
@@ -12,7 +13,15 @@ export async function scrapeTargets(): Promise<ScrapedData[]> {
   }
   
   const collector = new ClaudeControlledCollector();
-  const results = await collector.exploreAutonomously();
+  const collectionResults = await collector.performParallelCollection();
+  
+  // CollectionResultをScrapedDataに変換
+  const results: ScrapedData[] = collectionResults.map((result: CollectionResult) => ({
+    content: result.content,
+    url: result.source || 'unknown',
+    timestamp: result.timestamp,
+    source: result.source || 'claude-controlled'
+  }));
   
   writeFileSync('data/scraped.yaml', yaml.dump(results, { indent: 2 }));
   
