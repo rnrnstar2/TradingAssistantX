@@ -1,0 +1,23 @@
+#!/bin/bash
+# .claude/hooks/validate-config-placement
+
+# 設定ファイル配置検証をPre-commit Hookに統合
+SCRIPT_PATH="scripts/config-management/validate-config-placement.sh"
+
+if [ -f "$SCRIPT_PATH" ]; then
+    echo "🔍 設定ファイル配置検証を実行中..."
+    
+    if bash "$SCRIPT_PATH"; then
+        echo "✅ 設定ファイル配置検証: 合格"
+    else
+        echo "❌ 設定ファイル配置検証: 失敗"
+        echo ""
+        echo "🔧 自動修正を実行するには:"
+        echo "   bash $SCRIPT_PATH --fix"
+        echo "   git add -A"
+        echo "   git commit --amend"
+        exit 1
+    fi
+else
+    echo "⚠️  設定ファイル配置検証スクリプトが見つかりません: $SCRIPT_PATH"
+fi

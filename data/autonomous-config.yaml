@@ -1,0 +1,18 @@
+execution:
+  mode: "scheduled_posting"
+  posting_interval_minutes: 96
+  health_check_enabled: true
+  maintenance_enabled: true
+
+autonomous_system:
+  max_parallel_tasks: 3
+  context_sharing_enabled: true
+  decision_persistence: false
+
+claude_integration:
+  sdk_enabled: true
+  max_context_size: 50000
+
+data_management:
+  cleanup_interval: 3600000  # 1 hour in milliseconds
+  max_history_entries: 100
