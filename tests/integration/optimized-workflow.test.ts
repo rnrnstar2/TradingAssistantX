@@ -16,7 +16,6 @@ import type { ActionDecision, ActionResult } from '../../src/types/action-types.
 
 // テスト用環境変数設定
 process.env.X_TEST_MODE = 'true';
-process.env.ANTHROPIC_API_KEY = 'test-key';
 process.env.X_API_KEY = 'test-x-key';
 
 describe('OptimizedWorkflow Integration Tests', () => {

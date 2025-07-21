@@ -95,28 +95,20 @@ engagement_tactics:
     - 初心者向け教育コンテンツ
     - 市場分析と取引タイミング
 
-# 拡張アクション戦略（TASK-WF05追加）
-expanded_action_strategy:
+# 簡素化アクション戦略（original_post専用）
+simplified_action_strategy:
   daily_target: 15
   optimal_distribution:
-    original_post: 9      # 60%
-    quote_tweet: 4        # 25% 
-    retweet: 1           # 10%
-    reply: 1             # 5%
+    original_post: 15     # 100% - original_postのみに集中
     
   action_timing:
-    morning_focus: ["original_post", "quote_tweet"]
-    afternoon_focus: ["retweet", "reply"] 
-    evening_focus: ["original_post", "quote_tweet"]
+    morning_focus: ["original_post"]
+    afternoon_focus: ["original_post"] 
+    evening_focus: ["original_post"]
     
   quality_standards:
-    quote_tweet:
-      min_comment_length: 20
-      max_comment_length: 100
-      required_value_add: true
-    retweet:
-      relevance_threshold: 0.8
-      engagement_threshold: 10
-    reply:
-      constructive_only: true
-      max_reply_depth: 2
+    original_post:
+      min_content_length: 50
+      max_content_length: 280
+      educational_value_required: true
+      hashtag_usage: 1-3

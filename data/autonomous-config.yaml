@@ -1,18 +1,13 @@
+# 簡素化版
+claude_autonomous:
+  enabled: true
+  max_context_size: 30000  # 削減
+  decision_mode: "autonomous"  # Claude判断重視
+  
 execution:
-  mode: "scheduled_posting"
-  posting_interval_minutes: 96
-  health_check_enabled: true
-  maintenance_enabled: true
-
-autonomous_system:
-  max_parallel_tasks: 3
-  context_sharing_enabled: true
-  decision_persistence: false
-
-claude_integration:
-  sdk_enabled: true
-  max_context_size: 50000
-
+  mode: "claude_decision"  # 固定モード除去
+  quality_priority: true   # 品質最優先
+  
 data_management:
-  cleanup_interval: 3600000  # 1 hour in milliseconds
-  max_history_entries: 100
+  minimal_history: true    # 履歴最小化
+  real_time_focus: true    # リアルタイム重視
