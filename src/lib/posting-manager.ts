@@ -1,6 +1,9 @@
 import { SimpleXClient } from './x-client';
 import { PostingResult, XClientConfig } from '../types/index';
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { DailyActionPlanner } from './daily-action-planner';
+import { ActionResult } from '../types/action-types';
+import * as yaml from 'js-yaml';
 
 export interface PostingManagerConfig {
   minIntervalMinutes: number;
@@ -14,11 +17,14 @@ export interface PostingManagerConfig {
 export class PostingManager {
   private xClient: SimpleXClient;
   private config: PostingManagerConfig;
+  private dailyActionPlanner: DailyActionPlanner;
   // 即時投稿機能のみ - スケジュール実行で直接投稿
   private dataDir = 'data';
+  private historyFile = 'data/posting-history.yaml';
 
   constructor(apiKey: string, config?: Partial<PostingManagerConfig>, xClientConfig?: Partial<XClientConfig>) {
     this.xClient = new SimpleXClient(apiKey, xClientConfig);
+    this.dailyActionPlanner = new DailyActionPlanner();
     this.config = {
       minIntervalMinutes: 30, // 30分間隔（ゴールデンタイム集中投稿対応）
       maxPostsPerHour: 2,     // 1時間に2回まで（30分間隔対応）
@@ -111,24 +117,37 @@ export class PostingManager {
     // 投稿可能かチェック
     const canPost = this.canPostNow();
     if (!canPost.allowed) {
-      return {
+      const result = {
         success: false,
         error: canPost.reason,
         timestamp: Date.now()
       };
+      
+      // 失敗もDailyActionPlannerに記録
+      await this.recordToAllSystems(result, content, 'original_post');
+      return result;
     }
 
     // 重複チェック
     if (this.isDuplicateContent(content)) {
-      return {
+      const result = {
         success: false,
         error: '類似した内容が最近投稿されています',
         timestamp: Date.now()
       };
+      
+      // 失敗もDailyActionPlannerに記録
+      await this.recordToAllSystems(result, content, 'original_post');
+      return result;
     }
 
     // 投稿実行
-    return await this.xClient.post(content);
+    const result = await this.xClient.post(content);
+    
+    // 成功/失敗に関わらずDailyActionPlannerにも記録
+    await this.recordToAllSystems(result, content, 'original_post');
+    
+    return result;
   }
 
   // 即時投稿メソッドのみ - スケジュール実行で直接postNow()を使用
@@ -213,6 +232,189 @@ export class PostingManager {
     } catch (error) {
       console.error('自律投稿エラー:', error);
       return false;
+    }
+  }
+
+  // データ同期システム - 両ファイルへの統合記録
+  private async recordToAllSystems(
+    result: PostingResult, 
+    content: string, 
+    actionType: 'original_post'
+  ): Promise<void> {
+    try {
+      const actionResult: ActionResult = {
+        success: result.success,
+        actionId: `posting-${Date.now()}-${actionType}`,
+        type: actionType,
+        timestamp: result.timestamp,
+        content,
+        error: result.error
+      };
+
+      // DailyActionPlannerにも記録（xClientの記録と並行）
+      await this.dailyActionPlanner.recordAction(actionResult);
+      
+      console.log(`🔄 [データ同期] ${actionType}アクションを両システムに記録完了`);
+    } catch (error) {
+      console.error('❌ [データ同期エラー]:', error);
+    }
+  }
+
+  // データファイル間の整合性チェック
+  async syncDataFiles(): Promise<{ success: boolean; inconsistencies: string[]; repaired: boolean }> {
+    console.log('🔍 [データ同期] 両ファイル間の整合性をチェック中...');
+    
+    try {
+      const inconsistencies: string[] = [];
+      
+      // posting-history.yamlの読み込み
+      const historyData = this.loadPostingHistory();
+      const today = new Date().toISOString().split('T')[0];
+      const todayHistory = historyData.filter(entry => {
+        const entryDate = new Date(entry.timestamp).toISOString().split('T')[0];
+        return entryDate === today;
+      });
+
+      // daily-action-data.yamlの読み込み
+      const dailyActions = await this.dailyActionPlanner.getTodaysActions();
+      
+      console.log(`📊 [整合性チェック] posting-history: ${todayHistory.length}件, daily-action-data: ${dailyActions.length}件`);
+      
+      // 成功アクション数の不整合チェック
+      const historySuccessCount = todayHistory.filter(h => h.success).length;
+      const dailySuccessCount = dailyActions.filter(a => a.success).length;
+      
+      if (historySuccessCount !== dailySuccessCount) {
+        inconsistencies.push(
+          `成功アクション数不整合: posting-history=${historySuccessCount}, daily-action-data=${dailySuccessCount}`
+        );
+      }
+
+      // 全アクション数の不整合チェック（daily-action-dataは全て失敗の場合の問題）
+      if (dailyActions.length > 0 && dailyActions.every(a => !a.success) && historySuccessCount > 0) {
+        inconsistencies.push(
+          `daily-action-data.yamlに成功アクションが記録されていないが、posting-history.yamlには成功アクションが存在`
+        );
+      }
+
+      console.log(`✅ [整合性チェック完了] 不整合: ${inconsistencies.length}件`);
+      
+      return {
+        success: inconsistencies.length === 0,
+        inconsistencies,
+        repaired: false
+      };
+      
+    } catch (error) {
+      console.error('❌ [整合性チェックエラー]:', error);
+      return {
+        success: false,
+        inconsistencies: [`チェック実行エラー: ${error}`],
+        repaired: false
+      };
+    }
+  }
+
+  // 不整合データの修復
+  async repairDataInconsistency(): Promise<{ success: boolean; repairedItems: string[] }> {
+    console.log('🔧 [データ修復] 不整合データの修復を開始...');
+    
+    const repairedItems: string[] = [];
+    
+    try {
+      // 現在の不整合状況を確認
+      const syncResult = await this.syncDataFiles();
+      
+      if (syncResult.success) {
+        console.log('✅ [データ修復] 修復が必要な不整合は見つかりませんでした');
+        return { success: true, repairedItems };
+      }
+
+      // daily-action-data.yamlの不正なカウントを修復
+      const dailyActions = await this.dailyActionPlanner.getTodaysActions();
+      const successfulActions = dailyActions.filter(a => a.success);
+      
+      // totalActionsを成功アクション数に修正（指示書の要件）
+      if (dailyActions.length > 0 && successfulActions.length === 0 && dailyActions.every(a => !a.success)) {
+        console.log('🔧 [修復実行] daily-action-data.yamlのtotalActionsを0に修正中...');
+        
+        // daily-action-data.yamlの直接修正
+        await this.repairDailyActionData();
+        repairedItems.push('daily-action-data.yamlのtotalActionsを成功アクション数(0)に修正');
+      }
+
+      console.log(`✅ [データ修復完了] ${repairedItems.length}件の項目を修復しました`);
+      
+      return { success: true, repairedItems };
+      
+    } catch (error) {
+      console.error('❌ [データ修復エラー]:', error);
+      return { success: false, repairedItems };
+    }
+  }
+
+  // posting-history.yamlの読み込み
+  private loadPostingHistory(): any[] {
+    try {
+      if (!existsSync(this.historyFile)) {
+        return [];
+      }
+      
+      const rawData = readFileSync(this.historyFile, 'utf8');
+      const parsed = yaml.load(rawData) as any;
+      
+      if (parsed && parsed.recent && Array.isArray(parsed.recent)) {
+        // recent形式の場合
+        return parsed.recent.map((item: any) => ({
+          timestamp: new Date(item.time).getTime(),
+          success: item.success,
+          type: item.type
+        }));
+      } else if (Array.isArray(parsed)) {
+        // 配列形式の場合
+        return parsed;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('⚠️ [履歴読み込みエラー]:', error);
+      return [];
+    }
+  }
+
+  // daily-action-data.yamlの修復
+  private async repairDailyActionData(): Promise<void> {
+    const dailyFile = 'data/daily-action-data.yaml';
+    
+    try {
+      if (!existsSync(dailyFile)) {
+        console.log('⚠️ daily-action-data.yamlが存在しません');
+        return;
+      }
+
+      const rawData = readFileSync(dailyFile, 'utf8');
+      const data = yaml.load(rawData) as any;
+      
+      if (Array.isArray(data) && data.length > 0) {
+        const todayEntry = data[0]; // 最新エントリを修正
+        
+        if (todayEntry && todayEntry.executedActions) {
+          const successfulActions = todayEntry.executedActions.filter((a: any) => a.success);
+          
+          // totalActionsを成功アクション数に修正
+          todayEntry.totalActions = successfulActions.length;
+          
+          // targetReachedを正しい値に修正
+          todayEntry.targetReached = successfulActions.length >= 15;
+          
+          // ファイル保存
+          writeFileSync(dailyFile, yaml.dump(data, { indent: 2 }));
+          
+          console.log(`✅ [修復完了] totalActions: ${todayEntry.totalActions}, targetReached: ${todayEntry.targetReached}`);
+        }
+      }
+    } catch (error) {
+      console.error('❌ [daily-action-data修復エラー]:', error);
     }
   }
 }

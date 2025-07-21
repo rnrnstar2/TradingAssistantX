@@ -45,7 +45,8 @@ export interface HealthIndicators {
 
 export class AccountAnalyzer {
   private xClient: SimpleXClient;
-  private analysisFile = 'data/account-analysis-results.json';
+  private analysisFile = 'data/current/current-analysis.yaml';
+  private claudeSummaryFile = 'data/claude-summary.yaml';
   private playwrightCollector: PlaywrightAccountCollector;
 
   constructor(xClient: SimpleXClient) {
@@ -169,7 +170,7 @@ export class AccountAnalyzer {
       // 最近の投稿間隔をチェック
       const lastPostTime = this.getLastTweetTime();
       const timeSinceLastPost = Date.now() - lastPostTime;
-      const targetInterval = (24 * 60 * 60 * 1000) / dailyPostTarget; // 96分
+      const targetInterval = (24 * 60 * 60 * 1000) / dailyPostTarget; // 動的間隔計算（24時間÷投稿目標数）
 
       if (timeSinceLastPost > targetInterval * 2) score -= 15;
       else if (timeSinceLastPost > targetInterval * 1.5) score -= 8;
@@ -195,7 +196,7 @@ export class AccountAnalyzer {
   private calculateGrowthRate(accountInfo: AccountInfo & AccountMetrics): number {
     try {
       // アカウント履歴から成長率を計算
-      const accountFile = 'data/account-info.yaml';
+      const accountFile = 'data/account-config.yaml';
       if (!existsSync(accountFile)) return 0;
 
       const data = yaml.load(readFileSync(accountFile, 'utf8')) as any;
@@ -270,26 +271,66 @@ export class AccountAnalyzer {
 
   private saveAnalysisResult(accountStatus: AccountStatus): void {
     try {
-      // 過去の分析結果を読み込み
-      let analysisHistory: any[] = [];
-      if (existsSync(this.analysisFile)) {
-        const existingData = JSON.parse(readFileSync(this.analysisFile, 'utf8'));
-        analysisHistory = Array.isArray(existingData) ? existingData : [existingData];
-      }
+      // 軽量版のaccount-analysis-data.yamlを更新（最新データのみ）
+      const lightweightAnalysis = {
+        timestamp: accountStatus.timestamp,
+        followers: {
+          current: accountStatus.followers.current,
+          change_24h: accountStatus.followers.change_24h,
+          growth_rate: accountStatus.followers.growth_rate
+        },
+        engagement: {
+          avg_likes: accountStatus.engagement.avg_likes,
+          avg_retweets: accountStatus.engagement.avg_retweets,
+          engagement_rate: accountStatus.engagement.engagement_rate
+        },
+        performance: {
+          posts_today: accountStatus.performance.posts_today,
+          target_progress: accountStatus.performance.target_progress
+        },
+        health: {
+          status: accountStatus.health.status,
+          quality_score: accountStatus.health.quality_score || accountStatus.healthScore
+        }
+      };
 
-      // 新しい分析結果を追加
-      analysisHistory.push(accountStatus);
+      writeFileSync(this.analysisFile, yaml.dump(lightweightAnalysis, { indent: 2 }));
 
-      // 最新10件のみ保持
-      const limitedHistory = analysisHistory.slice(-10);
-
-      // ファイルに保存
-      writeFileSync(this.analysisFile, JSON.stringify(limitedHistory, null, 2));
+      // claude-summary.yamlのリアルタイム更新
+      this.updateClaudeSummary(accountStatus);
 
       // account-config.yamlも更新
       this.updateAccountConfig(accountStatus);
     } catch (error) {
       console.error('Error saving analysis result:', error);
+    }
+  }
+
+  private updateClaudeSummary(accountStatus: AccountStatus): void {
+    try {
+      // claude-summary.yamlを読み込み
+      let claudeSummary: any = {};
+      if (existsSync(this.claudeSummaryFile)) {
+        const existingData = readFileSync(this.claudeSummaryFile, 'utf8');
+        claudeSummary = yaml.load(existingData) as any || {};
+      }
+
+      // アカウント情報を更新
+      claudeSummary.lastUpdated = new Date().toISOString();
+      claudeSummary.system = claudeSummary.system || {};
+      claudeSummary.system.current_health = accountStatus.healthScore;
+      
+      claudeSummary.account = claudeSummary.account || {};
+      claudeSummary.account.followers = accountStatus.followers.current;
+      claudeSummary.account.engagement_rate = Math.round(Number(accountStatus.engagement.engagement_rate) || 0);
+      claudeSummary.account.target_progress = accountStatus.performance.target_progress;
+
+      // ファイルに保存
+      writeFileSync(this.claudeSummaryFile, yaml.dump(claudeSummary, { indent: 2 }));
+      
+      console.log('✅ [Claude Summary更新] 分析完了時の自動更新実行');
+    } catch (error) {
+      console.error('Error updating claude-summary:', error);
     }
   }
 
@@ -417,7 +458,7 @@ export class AccountAnalyzer {
       
       // Error Handling: デフォルト値
       console.log('🔧 [デフォルト値使用] デフォルトのアカウント情報を使用');
-      return this.getDefaultAccountInfo();
+      return await this.getDefaultAccountInfo();
     }
   }
 
@@ -461,10 +502,13 @@ export class AccountAnalyzer {
   }
 
   /**
-   * デフォルトのアカウント情報を生成
+   * デフォルトのアカウント情報を生成（投稿履歴強化版）
    */
-  private getDefaultAccountInfo(): AccountInfo & AccountMetrics {
+  private async getDefaultAccountInfo(): Promise<AccountInfo & AccountMetrics> {
     const defaultUsername = process.env.X_USERNAME || 'trading_assistant';
+    
+    // 投稿履歴が0件の場合、初期コンテキストを生成
+    const initialContext = await this.generateInitialContext(defaultUsername);
     
     return {
       username: defaultUsername,
@@ -473,9 +517,339 @@ export class AccountAnalyzer {
       verified: false,
       followers_count: 0,
       following_count: 0,
-      tweet_count: 0,
+      tweet_count: initialContext.demoTweetCount,  // デモ投稿数を反映
       listed_count: 0,
       last_updated: Date.now()
+    };
+  }
+
+  /**
+   * 投稿履歴生成システム - 新規アカウント向け初期コンテキスト生成
+   */
+  private async generateInitialContext(username: string): Promise<{
+    demoTweetCount: number;
+    contextData: any;
+    learningBaseline: any;
+  }> {
+    console.log(`🎯 [初期コンテキスト生成] ${username}向けの投稿履歴を作成中...`);
+
+    try {
+      // 基本的な投資戦略テンプレートを生成
+      const strategicBaseline = await this.createStrategicBaseline();
+      
+      // 業界標準トレンドの活用
+      const industryTrends = await this.getIndustryStandardTrends();
+      
+      // 類似アカウントパターンの参考
+      const similarAccountPatterns = await this.getSimilarAccountPatterns();
+      
+      // デモ投稿履歴を作成
+      const demoPostHistory = this.createDemoPostHistory(strategicBaseline, industryTrends);
+      
+      // 学習データの補完
+      const learningBaseline = this.createLearningBaseline(demoPostHistory, industryTrends);
+      
+      // 初期コンテキストをYAMLファイルに保存
+      await this.saveInitialContext(username, {
+        strategic_baseline: strategicBaseline,
+        industry_trends: industryTrends,
+        similar_patterns: similarAccountPatterns,
+        demo_posts: demoPostHistory,
+        learning_baseline: learningBaseline
+      });
+
+      console.log(`✅ [初期コンテキスト完了] ${demoPostHistory.length}件のデモ投稿履歴を生成`);
+      
+      return {
+        demoTweetCount: demoPostHistory.length,
+        contextData: {
+          strategic_baseline: strategicBaseline,
+          industry_trends: industryTrends,
+          similar_patterns: similarAccountPatterns
+        },
+        learningBaseline
+      };
+      
+    } catch (error) {
+      console.error('❌ [初期コンテキスト生成エラー]:', error);
+      
+      // フォールバック: 最小限の基本コンテキスト
+      return {
+        demoTweetCount: 5,
+        contextData: this.getMinimalFallbackContext(),
+        learningBaseline: this.getMinimalLearningBaseline()
+      };
+    }
+  }
+
+  /**
+   * 基本戦略テンプレートの作成
+   */
+  private async createStrategicBaseline(): Promise<any> {
+    return {
+      primary_focus: '投資教育とトレーディング洞察',
+      content_categories: [
+        {
+          name: '市場分析',
+          priority: 'high',
+          frequency: '1日2-3回',
+          examples: ['日経平均の動向分析', 'セクター別パフォーマンス評価']
+        },
+        {
+          name: '投資教育',
+          priority: 'high',
+          frequency: '1日2-3回',
+          examples: ['リスク管理の基本', 'ポートフォリオ構築手法']
+        },
+        {
+          name: '経済ニュース解説',
+          priority: 'medium',
+          frequency: '1日1-2回',
+          examples: ['金融政策の影響解説', '企業決算の読み方']
+        },
+        {
+          name: 'コミュニティ交流',
+          priority: 'medium',
+          frequency: '1日1-2回',
+          examples: ['質問への回答', '投資体験の共有']
+        }
+      ],
+      posting_style: {
+        tone: '教育的で親しみやすい',
+        language: '専門用語を分かりやすく説明',
+        length: '120-200文字程度',
+        hashtags: ['#投資', '#トレーディング', '#資産運用', '#経済']
+      }
+    };
+  }
+
+  /**
+   * 業界標準トレンドの取得
+   */
+  private async getIndustryStandardTrends(): Promise<any> {
+    return {
+      trending_topics: [
+        {
+          category: '金融政策',
+          relevance: 'high',
+          keywords: ['金利', '中央銀行', 'インフレ'],
+          impact: 'market_moving'
+        },
+        {
+          category: 'テクノロジー投資',
+          relevance: 'high',
+          keywords: ['AI', 'DX', 'グリーンテック'],
+          impact: 'sector_specific'
+        },
+        {
+          category: 'ESG投資',
+          relevance: 'medium',
+          keywords: ['持続可能性', '環境', 'ガバナンス'],
+          impact: 'long_term'
+        }
+      ],
+      posting_patterns: {
+        peak_engagement_times: ['09:00-11:00', '19:00-21:00'],
+        optimal_frequency: '1日12-15回',
+        best_content_mix: {
+          original_posts: '60%',
+          quote_tweets: '25%',
+          replies: '15%'
+        }
+      }
+    };
+  }
+
+  /**
+   * 類似アカウントパターンの取得
+   */
+  private async getSimilarAccountPatterns(): Promise<any> {
+    return {
+      successful_patterns: [
+        {
+          account_type: '投資教育アカウント',
+          follower_range: '1K-10K',
+          content_strategy: '基礎知識 + 実例解説',
+          engagement_rate: '3-5%'
+        },
+        {
+          account_type: '市場分析アカウント',
+          follower_range: '5K-50K',
+          content_strategy: 'データ分析 + 予測解説',
+          engagement_rate: '2-4%'
+        }
+      ],
+      content_templates: [
+        {
+          type: 'market_insight',
+          structure: '現象観察 → データ分析 → 教育的解説',
+          example: '本日の日経平均は...(観察) データによると...(分析) これが投資家にとって意味するのは...(解説)'
+        },
+        {
+          type: 'educational_post',
+          structure: '問題提起 → 解決策説明 → 実践アドバイス',
+          example: '多くの投資初心者が...(問題) これを解決するには...(解決策) 具体的には...(アドバイス)'
+        }
+      ]
+    };
+  }
+
+  /**
+   * デモ投稿履歴の作成
+   */
+  private createDemoPostHistory(baseline: any, trends: any): any[] {
+    const demoPostsTemplates = [
+      {
+        type: 'market_analysis',
+        content: '本日の市場動向：日経平均が続伸。テクノロジーセクターの堅調な推移が全体を牽引。投資家にとって重要なのは、個別銘柄の業績と市場全体のトレンドを分離して分析することです。 #投資 #市場分析',
+        engagement_potential: 'high',
+        learning_value: 'market_trend_analysis'
+      },
+      {
+        type: 'educational_content',
+        content: '【投資の基本】リスク許容度の決め方💡\n1️⃣年齢と投資期間を考慮\n2️⃣家計の余剰資金を確認\n3️⃣感情的な許容範囲を把握\n投資は自分に合ったペースで進めることが成功の鍵です。 #投資教育 #リスク管理',
+        engagement_potential: 'high',
+        learning_value: 'risk_education'
+      },
+      {
+        type: 'news_commentary',
+        content: '米国の金利政策発表を受けて：\n長期金利の動向が日本株に与える影響を分析中📊 グローバル投資において、各国の金融政策の相関関係を理解することは必須スキルですね。 #金融政策 #グローバル投資',
+        engagement_potential: 'medium',
+        learning_value: 'policy_impact_analysis'
+      },
+      {
+        type: 'practical_advice',
+        content: '投資初心者の方へ：まずは「なぜその銘柄を選ぶのか」を明確に。感情ではなく、データと論理に基づいた判断を心がけましょう。小額から始めて経験を積むことが大切です🌱 #投資初心者 #資産運用',
+        engagement_potential: 'high',
+        learning_value: 'beginner_guidance'
+      },
+      {
+        type: 'community_engagement',
+        content: '投資に関する質問をお気軽にどうぞ！特に初心者の方の疑問や不安について、できる限り分かりやすくお答えします。一緒に学んでいきましょう💪 #投資相談 #コミュニティ',
+        engagement_potential: 'very_high',
+        learning_value: 'community_building'
+      },
+      {
+        type: 'trend_analysis',
+        content: 'ESG投資への関心が高まる中、企業の持続可能性指標をどう評価するか🌍 財務データだけでなく、環境・社会・ガバナンス要素も投資判断の重要な要素になっています。 #ESG投資 #持続可能性',
+        engagement_potential: 'medium',
+        learning_value: 'esg_investment'
+      },
+      {
+        type: 'technical_insight',
+        content: 'チャート分析の基本：移動平均線の見方📈\n短期線が長期線を上回る「ゴールデンクロス」は上昇トレンドのサイン。ただし、これだけで判断せず、他の指標も併用することが重要です。 #テクニカル分析',
+        engagement_potential: 'medium',
+        learning_value: 'technical_analysis'
+      },
+      {
+        type: 'psychology_education',
+        content: '投資心理学：「損失回避バイアス」について💭\n人は利益を得る喜びよりも、損失を被る痛みを強く感じる傾向があります。これを理解して、感情的な売買を避けることが重要です。 #投資心理学',
+        engagement_potential: 'high',
+        learning_value: 'behavioral_finance'
+      }
+    ];
+
+    return demoPostsTemplates.map((template, index) => ({
+      id: `demo_post_${index + 1}`,
+      content: template.content,
+      type: template.type,
+      timestamp: Date.now() - (index * 2 * 60 * 60 * 1000), // 2時間間隔
+      success: true,
+      qualityScore: 0.7 + Math.random() * 0.3, // 0.7-1.0の範囲
+      engagement_potential: template.engagement_potential,
+      learning_value: template.learning_value,
+      likes: Math.floor(Math.random() * 50) + 10,
+      retweets: Math.floor(Math.random() * 20) + 5,
+      replies: Math.floor(Math.random() * 15) + 2
+    }));
+  }
+
+  /**
+   * 学習ベースラインの作成
+   */
+  private createLearningBaseline(demoHistory: any[], trends: any): any {
+    return {
+      content_performance: {
+        best_performing_types: ['educational_content', 'community_engagement', 'practical_advice'],
+        avg_engagement_rate: 4.2,
+        optimal_posting_times: trends.posting_patterns.peak_engagement_times,
+        successful_hashtags: ['#投資', '#投資教育', '#資産運用', '#投資初心者']
+      },
+      audience_preferences: {
+        preferred_content_length: '120-180文字',
+        engagement_drivers: ['実用性', '教育価値', '親しみやすさ'],
+        response_patterns: {
+          questions: 'high_engagement',
+          advice: 'high_retention',
+          analysis: 'medium_engagement'
+        }
+      },
+      strategic_insights: {
+        growth_focus: '教育価値とコミュニティ構築',
+        differentiation: '初心者にも分かりやすい専門解説',
+        long_term_vision: '信頼される投資教育プラットフォーム'
+      }
+    };
+  }
+
+  /**
+   * 初期コンテキストの保存
+   */
+  private async saveInitialContext(username: string, contextData: any): Promise<void> {
+    try {
+      const contextFile = `data/context/initial-context-${username}.yaml`;
+      
+      // ディレクトリが存在しない場合は作成
+      const contextDir = 'data/context';
+      if (!existsSync(contextDir)) {
+        const fs = await import('fs');
+        fs.mkdirSync(contextDir, { recursive: true });
+      }
+
+      const contextWithMetadata = {
+        generated_at: new Date().toISOString(),
+        username,
+        version: '1.0.0',
+        purpose: '新規アカウント向け初期投稿履歴・学習コンテキスト',
+        ...contextData
+      };
+
+      writeFileSync(contextFile, yaml.dump(contextWithMetadata, { indent: 2 }));
+      console.log(`💾 [初期コンテキスト保存] ${contextFile}に保存完了`);
+    } catch (error) {
+      console.error('❌ [初期コンテキスト保存エラー]:', error);
+    }
+  }
+
+  /**
+   * 最小限のフォールバックコンテキスト
+   */
+  private getMinimalFallbackContext(): any {
+    return {
+      fallback_mode: true,
+      basic_strategy: {
+        focus: '投資教育',
+        posting_frequency: '1日10-15回',
+        content_mix: {
+          educational: '50%',
+          market_analysis: '30%',
+          community: '20%'
+        }
+      }
+    };
+  }
+
+  /**
+   * 最小限の学習ベースライン
+   */
+  private getMinimalLearningBaseline(): any {
+    return {
+      fallback_mode: true,
+      basic_metrics: {
+        target_engagement_rate: 3.0,
+        optimal_post_length: 150,
+        preferred_hashtags: ['#投資', '#投資教育']
+      }
     };
   }
 

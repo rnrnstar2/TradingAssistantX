@@ -537,10 +537,13 @@ export class SimpleXClient {
     await this.waitForRateLimit();
     
     try {
-      const response = await fetch(`${this.baseUrl}/tweets`, {
+      const url = `${this.baseUrl}/tweets`;
+      const authHeader = this.generateOAuthHeaders('POST', url);
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.X_BEARER_TOKEN}`,
+          'Authorization': authHeader,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

@@ -32,15 +32,6 @@ export interface Need {
   createdAt: string;
 }
 
-export interface Decision {
-  id: string;
-  type: string;
-  priority: 'critical' | 'high' | 'medium' | 'low';
-  reasoning?: string;
-  params?: Record<string, any>;
-  dependencies?: string[];
-  estimatedDuration?: number;
-}
 
 // Action and Task types
 export interface Action {
@@ -252,6 +243,230 @@ export interface AutonomousConfig {
     cleanup_interval: number;
     max_history_entries: number;
   };
+}
+
+// Action-specific collection types
+export interface ActionCollectionConfig {
+  strategies: {
+    original_post: ActionCollectionStrategy;
+    quote_tweet: ActionCollectionStrategy;
+    retweet: ActionCollectionStrategy;
+    reply: ActionCollectionStrategy;
+  };
+  sufficiencyThresholds: Record<string, number>;
+  maxExecutionTime: number;
+  qualityStandards: QualityStandards;
+}
+
+export interface ActionCollectionStrategy {
+  priority: number;
+  focusAreas: string[];
+  sources: LegacySourceConfig[];
+  collectMethods: CollectMethod[];
+  sufficiencyTarget: number;
+}
+
+export interface LegacySourceConfig {
+  name: string;
+  url: string;
+  priority: 'high' | 'medium' | 'low';
+  searchPatterns?: string[];
+  filters?: string[];
+}
+
+export interface CollectMethod {
+  type: string;
+  enabled: boolean;
+  config?: Record<string, any>;
+}
+
+export interface QualityStandards {
+  relevanceScore: number;
+  credibilityScore: number;
+  uniquenessScore: number;
+  timelinessScore: number;
+}
+
+export interface ActionSpecificResult {
+  actionType: string;
+  results: CollectionResult[];
+  sufficiencyScore: number;
+  executionTime: number;
+  strategyUsed: CollectionStrategy;
+  qualityMetrics: QualityEvaluation;
+}
+
+export interface SufficiencyEvaluation {
+  score: number;
+  shouldContinue: boolean;
+  reasoning: string;
+  suggestedActions: string[];
+}
+
+export interface CollectionStrategy {
+  actionType: string;
+  targets: CollectionTarget[];
+  priority: 'high' | 'medium' | 'low';
+  expectedDuration: number;
+  searchTerms: string[];
+  sources: string[];
+}
+
+export interface QualityEvaluation {
+  relevanceScore: number;
+  credibilityScore: number;
+  uniquenessScore: number;
+  timelinessScore: number;
+  overallScore: number;
+  feedback: string[];
+}
+
+// ActionSpecific統合関連の型定義
+export interface ActionSpecificPreloadResult {
+  original_post?: ActionSpecificResult;
+  quote_tweet?: ActionSpecificResult;
+  retweet?: ActionSpecificResult;
+  reply?: ActionSpecificResult;
+  executionTime: number;
+  status: 'success' | 'partial' | 'fallback';
+  error?: string;
+}
+
+export interface ParallelAnalysisResult {
+  account: AccountStatus;
+  information: ActionSpecificPreloadResult;
+  timestamp: number;
+}
+
+// Decision型の拡張（メタデータフィールド追加）
+export interface DecisionMetadata {
+  enhancedWithSpecificCollection?: boolean;
+  collectionSufficiency?: number;
+  collectionQuality?: number;
+  enhancementTimestamp?: number;
+  [key: string]: any;
+}
+
+// 拡張されたDecision型（既存のDecision型を上書き）
+export interface Decision {
+  id: string;
+  type: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  reasoning?: string;
+  params?: Record<string, any>;
+  dependencies?: string[];
+  estimatedDuration?: number;
+  action?: ActionSuggestion;
+  expectedImpact?: string;
+  metadata?: DecisionMetadata;
+}
+
+// Multi-Source Integration types
+export interface MultiSourceResult {
+  source: 'rss' | 'api' | 'community' | 'twitter';
+  provider: string;
+  data: CollectionResult[];
+  timestamp: number;
+  metadata: {
+    requestCount: number;
+    rateLimitRemaining?: number;
+    cacheUsed: boolean;
+    quality?: SourceQualityMetrics;
+  };
+}
+
+export interface SourceQualityMetrics {
+  reliability: number; // 0-1
+  freshness: number;   // 0-1
+  relevance: number;   // 0-1
+  confidence: number;  // 0-1
+}
+
+export interface SourceConfig {
+  name: string;
+  url: string;
+  type: 'rss' | 'api' | 'community';
+  priority: 'high' | 'medium' | 'low';
+  searchPatterns?: string[];
+  filters?: string[];
+  config?: Record<string, any>;
+}
+
+export interface RSSSources {
+  type: 'rss';
+  sources: {
+    name: string;
+    url: string;
+    priority: 'high' | 'medium' | 'low';
+    refreshInterval?: number;
+    filters?: string[];
+  }[];
+}
+
+export interface APISources {
+  type: 'api';
+  sources: {
+    name: string;
+    provider: 'alpha_vantage' | 'iex_cloud' | 'coingecko' | 'fred';
+    apiKey?: string;
+    endpoint: string;
+    rateLimit?: {
+      requests: number;
+      period: number; // seconds
+    };
+    priority: 'high' | 'medium' | 'low';
+  }[];
+}
+
+export interface CommunitySources {
+  type: 'community';
+  sources: {
+    name: string;
+    platform: 'reddit' | 'hackernews' | 'discord';
+    endpoint: string;
+    subreddits?: string[]; // For Reddit
+    keywords?: string[];
+    priority: 'high' | 'medium' | 'low';
+  }[];
+}
+
+// Extended ActionCollectionConfig for multi-source support
+export interface ExtendedActionCollectionConfig extends ActionCollectionConfig {
+  multiSources: {
+    rss: RSSSources;
+    apis: APISources;
+    community: CommunitySources;
+  };
+  sourceSelection: {
+    [actionType: string]: {
+      preferred: ('rss' | 'api' | 'community' | 'twitter')[];
+      fallback: ('rss' | 'api' | 'community' | 'twitter')[];
+      priority: 'quality' | 'speed' | 'diversity';
+    };
+  };
+  qualityWeights: {
+    [sourceType: string]: {
+      weight: number;
+      baseline: number;
+    };
+  };
+}
+
+// MultiSourceCollector interface
+export interface MultiSourceCollector {
+  collectFromRSS(config: RSSSources): Promise<MultiSourceResult>;
+  collectFromAPIs(config: APISources): Promise<MultiSourceResult>;
+  collectFromCommunity(config: CommunitySources): Promise<MultiSourceResult>;
+  executeMultiSourceCollection(): Promise<MultiSourceResult[]>;
+}
+
+// Cross-source quality evaluation
+export interface CrossSourceQualityEvaluation extends QualityEvaluation {
+  sourceDistribution: Record<string, number>;
+  crossSourceConsistency: number;
+  diversityScore: number;
+  sourceReliabilityAverage: number;
+  qualityBySource: Record<string, SourceQualityMetrics>;
 }
 
 // Error handling types

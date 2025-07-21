@@ -1,11 +1,6 @@
 import { Tweet } from './index';
 
-export type ActionType = 
-  | 'original_post'      // オリジナル投稿
-  | 'quote_tweet'        // 引用ツイート
-  | 'retweet'           // リツイート
-  | 'reply'             // リプライ
-  | 'thread_post';      // スレッド投稿
+export type ActionType = 'original_post';
 
 export interface ActionDecision {
   id: string;
@@ -20,20 +15,14 @@ export interface ActionDecision {
 
 export interface ActionParams {
   // オリジナル投稿用
-  originalContent?: string;
+  originalContent: string;  // Required to fix undefined errors
   hashtags?: string[];
+  contentType?: string;  // 投稿のコンテンツタイプ（例：educational, engaging, beginner_friendly）
   
-  // 引用ツイート用
-  quotedTweetId?: string;
-  quoteComment?: string;
-  
-  // リツイート用
-  retweetId?: string;
-  addComment?: boolean;
-  
-  // リプライ用
-  replyToTweetId?: string;
-  replyContent?: string;
+  // 共通フィールド
+  riskLevel?: string;       // リスクレベル（low, medium, high）
+  timeOfDay?: number;       // 投稿時刻（時間）
+  dateGenerated?: string;   // 生成日
 }
 
 export interface ActionResult {
@@ -41,6 +30,7 @@ export interface ActionResult {
   actionId: string;
   type: ActionType;
   timestamp: number;
+  content?: string;  // 投稿内容（オプショナル）
   error?: string;
 }
 
@@ -50,32 +40,11 @@ export interface PostResult extends ActionResult {
   content?: string;
 }
 
-export interface QuoteResult extends ActionResult {
-  type: 'quote_tweet';
-  tweetId?: string;
-  originalTweetId: string;
-  comment: string;
-}
-
-export interface RetweetResult extends ActionResult {
-  type: 'retweet';
-  originalTweetId: string;
-}
-
-export interface ReplyResult extends ActionResult {
-  type: 'reply';
-  tweetId?: string;
-  originalTweetId: string;
-  content: string;
-}
 
 export interface ActionDistribution {
   remaining: number;
   optimal_distribution: {
     original_post: number;
-    quote_tweet: number;
-    retweet: number;
-    reply: number;
   };
   timing_recommendations: TimingRecommendation[];
 }
@@ -92,9 +61,6 @@ export interface DailyActionLog {
   totalActions: number;
   actionBreakdown: {
     original_post: number;
-    quote_tweet: number;
-    retweet: number;
-    reply: number;
   };
   executedActions: ActionResult[];
   targetReached: boolean;

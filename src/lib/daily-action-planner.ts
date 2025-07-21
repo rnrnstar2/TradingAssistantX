@@ -1,4 +1,4 @@
-import { writeFileSync, existsSync, readFileSync } from 'fs';
+import { writeFileSync, existsSync, readFileSync, mkdirSync } from 'fs';
 import { 
   ActionDistribution, 
   TimingRecommendation, 
@@ -11,17 +11,17 @@ import * as yaml from 'js-yaml';
 
 export class DailyActionPlanner {
   private readonly DAILY_TARGET = 15;
-  private readonly logFile = 'data/daily-action-log.json';
+  private readonly logFile = 'data/daily-action-data.yaml';
   private readonly strategyFile = 'data/content-strategy.yaml';
+  private readonly claudeSummaryFile = 'data/claude-summary.yaml';
   
   constructor() {
     this.ensureDataDirectory();
   }
   
   private ensureDataDirectory(): void {
-    const fs = require('fs');
-    if (!fs.existsSync('data')) {
-      fs.mkdirSync('data', { recursive: true });
+    if (!existsSync('data')) {
+      mkdirSync('data', { recursive: true });
     }
   }
 
@@ -30,9 +30,10 @@ export class DailyActionPlanner {
     console.log('📋 [日次配分計画] 1日15回の最適配分を策定中...');
     
     const currentActions = await this.getTodaysActions();
-    const remaining = this.DAILY_TARGET - currentActions.length;
+    const successfulActions = currentActions.filter(action => action.success);
+    const remaining = this.DAILY_TARGET - successfulActions.length;
     
-    console.log(`📊 [配分状況] 本日実行済み: ${currentActions.length}/15, 残り: ${remaining}`);
+    console.log(`📊 [配分状況] 本日成功: ${successfulActions.length}/15 (実行済み: ${currentActions.length}), 残り: ${remaining}`);
     
     if (remaining <= 0) {
       console.log('✅ [配分完了] 本日の目標回数に到達済み');
@@ -54,75 +55,28 @@ export class DailyActionPlanner {
     return distribution;
   }
   
-  // 最適配分の計算
+  // 最適配分の計算（original_post専用）
   private calculateOptimalDistribution(remaining: number): ActionDistribution['optimal_distribution'] {
-    console.log(`🧮 [配分計算] 残り${remaining}回の最適配分を計算中...`);
+    console.log(`🧮 [配分計算] 残り${remaining}回をoriginal_postに100%配分中...`);
     
     if (remaining <= 0) {
-      return { original_post: 0, quote_tweet: 0, retweet: 0, reply: 0 };
+      return { original_post: 0 };
     }
     
-    // 基本配分比率: 40% original, 30% quote, 20% retweet, 10% reply
-    const base = {
-      original_post: Math.ceil(remaining * 0.4),   // 40%
-      quote_tweet: Math.ceil(remaining * 0.3),     // 30%
-      retweet: Math.ceil(remaining * 0.2),         // 20%
-      reply: Math.ceil(remaining * 0.1)            // 10%
+    // 簡素化: 100% original_post配分
+    const adjusted = {
+      original_post: remaining  // 100% original_post
     };
-    
-    // 合計が残り回数と一致するよう調整
-    const adjusted = this.adjustToTarget(base, remaining);
     
     console.log('🧮 [配分計算完了]', {
       target: remaining,
       calculated: adjusted,
-      total: Object.values(adjusted).reduce((sum, count) => sum + count, 0)
+      distribution: 'original_post: 100%'
     });
     
     return adjusted;
   }
   
-  // 配分調整（合計を目標値に合わせる）
-  private adjustToTarget(
-    base: ActionDistribution['optimal_distribution'], 
-    target: number
-  ): ActionDistribution['optimal_distribution'] {
-    const currentTotal = Object.values(base).reduce((sum, count) => sum + count, 0);
-    const difference = target - currentTotal;
-    
-    if (difference === 0) return base;
-    
-    const adjusted = { ...base };
-    
-    if (difference > 0) {
-      // 不足分をoriginal_postに追加
-      adjusted.original_post += difference;
-    } else {
-      // 超過分を削減（original_post優先で調整）
-      const excess = Math.abs(difference);
-      if (adjusted.original_post >= excess) {
-        adjusted.original_post -= excess;
-      } else {
-        // original_postで足りない場合は他からも削減
-        let remaining = excess - adjusted.original_post;
-        adjusted.original_post = 0;
-        
-        if (remaining > 0 && adjusted.quote_tweet >= remaining) {
-          adjusted.quote_tweet -= remaining;
-        } else if (remaining > 0) {
-          const quoteTweetReduction = Math.min(adjusted.quote_tweet, remaining);
-          adjusted.quote_tweet -= quoteTweetReduction;
-          remaining -= quoteTweetReduction;
-          
-          if (remaining > 0) {
-            adjusted.retweet = Math.max(0, adjusted.retweet - remaining);
-          }
-        }
-      }
-    }
-    
-    return adjusted;
-  }
   
   // タイミング推奨の取得
   async getTimingRecommendations(remaining: number): Promise<TimingRecommendation[]> {
@@ -142,15 +96,36 @@ export class DailyActionPlanner {
     return this.distributeActionsAcrossSlots(availableSlots, remaining);
   }
   
-  // コンテンツ戦略の読み込み
+  // コンテンツ戦略の読み込み（claude-summary.yaml優先）
   private async loadContentStrategy(): Promise<any> {
     try {
+      // 最初にclaude-summary.yamlから軽量データを読み込み
+      if (existsSync(this.claudeSummaryFile)) {
+        const claudeSummary = loadYamlSafe<any>(this.claudeSummaryFile);
+        if (claudeSummary?.content_strategy) {
+          console.log('✅ [戦略読み込み] claude-summary.yamlから戦略データを読み込み');
+          return this.mergeWithDefaultStrategy(claudeSummary.content_strategy);
+        }
+      }
+      
+      // フォールバック: content-strategy.yaml
       const strategy = loadYamlSafe<any>(this.strategyFile);
       return strategy || this.getDefaultStrategy();
     } catch (error) {
-      console.warn('⚠️ [戦略読み込み] content-strategy.yamlの読み込みに失敗、デフォルト戦略を使用');
+      console.warn('⚠️ [戦略読み込み] 戦略ファイルの読み込みに失敗、デフォルト戦略を使用');
       return this.getDefaultStrategy();
     }
+  }
+  
+  // claude-summary戦略データとデフォルト戦略のマージ
+  private mergeWithDefaultStrategy(summaryStrategy: any): any {
+    const defaultStrategy = this.getDefaultStrategy();
+    return {
+      optimal_times: summaryStrategy.optimal_times || defaultStrategy.optimal_times,
+      posting_frequency: summaryStrategy.posting_frequency || defaultStrategy.posting_frequency,
+      content_themes: summaryStrategy.content_themes || defaultStrategy.content_themes,
+      priority_actions: summaryStrategy.priority_actions || ['original_post']
+    };
   }
   
   // デフォルト戦略の取得
@@ -192,13 +167,12 @@ export class DailyActionPlanner {
     });
   }
   
-  // アクションを時間帯に配分
+  // アクションを時間帯に配分（original_post専用）
   private distributeActionsAcrossSlots(
     availableSlots: string[], 
     remaining: number
   ): TimingRecommendation[] {
     const recommendations: TimingRecommendation[] = [];
-    const actionTypes: ActionType[] = ['original_post', 'quote_tweet', 'retweet', 'reply'];
     
     // 使用可能スロットが少ない場合は調整
     const slotsToUse = Math.min(availableSlots.length, remaining);
@@ -206,7 +180,7 @@ export class DailyActionPlanner {
     
     for (let i = 0; i < slotsToUse; i++) {
       const slot = selectedSlots[i];
-      const actionType = actionTypes[i % actionTypes.length];
+      const actionType: ActionType = 'original_post'; // 常にoriginal_postのみ
       const priority = this.calculateSlotPriority(slot, actionType);
       
       recommendations.push({
@@ -220,7 +194,7 @@ export class DailyActionPlanner {
     // 優先度順にソート
     recommendations.sort((a, b) => b.priority - a.priority);
     
-    console.log(`⏰ [タイミング推奨完了] ${recommendations.length}件の推奨タイミングを生成`);
+    console.log(`⏰ [タイミング推奨完了] ${recommendations.length}件のoriginal_post推奨タイミングを生成`);
     
     return recommendations;
   }
@@ -237,11 +211,7 @@ export class DailyActionPlanner {
     
     // アクション型による調整
     const actionModifier: Record<string, number> = {
-      'original_post': 1.2,
-      'quote_tweet': 1.1,
-      'retweet': 1.0,
-      'reply': 0.9,
-      'thread_post': 1.3
+      'original_post': 1.2
     };
     
     return Math.round(basePriority * (actionModifier[actionType] || 1.0));
@@ -264,11 +234,7 @@ export class DailyActionPlanner {
     if (hour >= 17 && hour <= 21) timeCategory = 'evening';
     
     const actionTypeReasons: Record<string, string> = {
-      'original_post': '独自コンテンツでの価値提供',
-      'quote_tweet': '有益な情報への付加価値コメント',
-      'retweet': '関連情報の効率的なシェア',
-      'reply': 'コミュニティエンゲージメント強化',
-      'thread_post': 'スレッド形式での詳細解説'
+      'original_post': '独自コンテンツでの価値提供'
     };
     
     const timeReason = timeReasons[timeCategory] || timeReasons.night;
@@ -284,8 +250,14 @@ export class DailyActionPlanner {
         return [];
       }
       
-      const logData = JSON.parse(readFileSync(this.logFile, 'utf8'));
+      const logData = yaml.load(readFileSync(this.logFile, 'utf8')) as any;
       const today = new Date().toISOString().split('T')[0];
+      
+      // 配列形式かどうかを確認
+      if (!Array.isArray(logData)) {
+        console.warn('⚠️ [ログ形式] 配列形式でないため空配列を返します');
+        return [];
+      }
       
       const todaysLog = logData.find((log: DailyActionLog) => 
         log.date === today
@@ -307,7 +279,9 @@ export class DailyActionPlanner {
       let logData: DailyActionLog[] = [];
       
       if (existsSync(this.logFile)) {
-        logData = JSON.parse(readFileSync(this.logFile, 'utf8'));
+        const rawLogData = yaml.load(readFileSync(this.logFile, 'utf8')) as any;
+        // 配列形式でない場合は空配列で初期化
+        logData = Array.isArray(rawLogData) ? rawLogData : [];
       }
       
       // 今日のログを取得または作成
@@ -317,10 +291,7 @@ export class DailyActionPlanner {
           date: today,
           totalActions: 0,
           actionBreakdown: {
-            original_post: 0,
-            quote_tweet: 0,
-            retweet: 0,
-            reply: 0
+            original_post: 0
           },
           executedActions: [],
           targetReached: false
@@ -330,23 +301,24 @@ export class DailyActionPlanner {
       
       // アクションを記録
       todaysLog.executedActions.push(actionResult);
-      todaysLog.totalActions = todaysLog.executedActions.length;
+      const successfulActions = todaysLog.executedActions.filter(action => action.success);
+      todaysLog.totalActions = successfulActions.length;
       
-      // 配分カウンターを更新（対応するアクション型のみ）
-      const validActionTypes: (keyof typeof todaysLog.actionBreakdown)[] = ['original_post', 'quote_tweet', 'retweet', 'reply'];
-      if (validActionTypes.includes(actionResult.type as any)) {
-        (todaysLog.actionBreakdown as any)[actionResult.type]++;
+      // 配分カウンターを更新（original_postのみ）
+      if (actionResult.type === 'original_post' && actionResult.success) {
+        todaysLog.actionBreakdown.original_post++;
       }
       
-      // 目標達成チェック
-      todaysLog.targetReached = todaysLog.totalActions >= this.DAILY_TARGET;
+      // 目標達成チェック（成功したアクション数で判定）
+      const successCount = todaysLog.executedActions.filter(action => action.success).length;
+      todaysLog.targetReached = successCount >= this.DAILY_TARGET;
       
       // 最新30日分のみ保持
       logData = logData.slice(-30);
       
-      writeFileSync(this.logFile, JSON.stringify(logData, null, 2));
+      writeFileSync(this.logFile, yaml.dump(logData, { indent: 2 }));
       
-      console.log(`✅ [アクション記録完了] ${actionResult.type} - 本日${todaysLog.totalActions}/${this.DAILY_TARGET}回`);
+      console.log(`✅ [アクション記録完了] ${actionResult.type} (${actionResult.success ? '成功' : '失敗'}) - 本日成功${successCount}/${this.DAILY_TARGET}回 (実行済み: ${todaysLog.executedActions.length}回)`);
       
       if (todaysLog.targetReached) {
         console.log('🎯 [目標達成] 本日の投稿目標15回に到達しました！');
@@ -361,10 +333,7 @@ export class DailyActionPlanner {
     return {
       remaining: 0,
       optimal_distribution: {
-        original_post: 0,
-        quote_tweet: 0,
-        retweet: 0,
-        reply: 0
+        original_post: 0
       },
       timing_recommendations: []
     };
@@ -379,7 +348,8 @@ export class DailyActionPlanner {
         return this.getEmptyStats();
       }
       
-      const logData: DailyActionLog[] = JSON.parse(readFileSync(this.logFile, 'utf8'));
+      const rawLogData = yaml.load(readFileSync(this.logFile, 'utf8')) as any;
+      const logData: DailyActionLog[] = Array.isArray(rawLogData) ? rawLogData : [];
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - days);
       
@@ -394,10 +364,7 @@ export class DailyActionPlanner {
         averageActionsPerDay: 0,
         targetAchievementRate: 0,
         actionBreakdown: {
-          original_post: 0,
-          quote_tweet: 0,
-          retweet: 0,
-          reply: 0
+          original_post: 0
         },
         dailyDetails: recentLogs
       };
@@ -437,10 +404,7 @@ export class DailyActionPlanner {
       averageActionsPerDay: 0,
       targetAchievementRate: 0,
       actionBreakdown: {
-        original_post: 0,
-        quote_tweet: 0,
-        retweet: 0,
-        reply: 0
+        original_post: 0
       },
       dailyDetails: []
     };

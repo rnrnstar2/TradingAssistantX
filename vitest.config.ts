@@ -1,24 +1,44 @@
 import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-import path from 'path'
 
-// MVP最適化設定: 必要最小限のテスト環境
 export default defineConfig({
-  plugins: [react()],
   test: {
-    environment: 'jsdom',
+    // 基本設定
+    environment: 'node',
     globals: true,
-    setupFiles: [path.resolve(__dirname, './vitest.setup.ts')],
-    include: ['**/*.test.{ts,tsx}'],
-    exclude: ['**/node_modules/**', '**/dist/**', '**/out/**', '**/.next/**'],
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './'),
-      '@workspace/ui': path.resolve(__dirname, './packages/ui/src'),
-      '@workspace/shared-types': path.resolve(__dirname, './packages/shared-types/src'),
-      '@workspace/shared-auth': path.resolve(__dirname, './packages/shared-auth/src'),
-      '@workspace/shared-amplify': path.resolve(__dirname, './packages/shared-amplify/src'),
+    
+    // ファイル対象
+    include: ['tests/**/*.test.ts'],
+    exclude: [
+      '**/node_modules/**', 
+      '**/dist/**',
+      '**/tasks/**'
+    ],
+    
+    // タイムアウト設定（重要）
+    timeout: 120000,        // 全体タイムアウト: 2分
+    testTimeout: 90000,     // 個別テスト: 90秒
+    hookTimeout: 60000,     // フック: 60秒
+    
+    // 並列実行制御
+    threads: false,         // Playwright競合回避
+    maxConcurrency: 1,      // 統合テストは順次実行
+    
+    // カバレッジ設定
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      reportsDirectory: './coverage',
+      exclude: [
+        'tests/',
+        'dist/',
+        '**/*.d.ts',
+        'tasks/',
+        'scripts/'
+      ],
+      include: ['src/**/*.ts']
     },
-  },
+    
+    // セットアップ
+    setupFiles: './vitest.setup.ts'
+  }
 })

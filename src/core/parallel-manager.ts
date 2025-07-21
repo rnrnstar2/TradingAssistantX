@@ -290,7 +290,7 @@ Adapt the content style to match the account's theme and target audience.
     const maxAge = action.params?.maxAgeHours || 24;
     
     const cleanupTargets = [
-      'context/execution-history.json',
+      'context/execution-history.yaml',
       'strategic-decisions.yaml',
       'communication/claude-to-claude.json'
     ];
@@ -615,12 +615,6 @@ ${result.recommendations.map((rec: string) => `- ${rec}`).join('\n')}
         switch (decision.type) {
           case 'original_post':
             return await this.executeExpandedPost(decision);
-          case 'quote_tweet':
-            return await this.executeExpandedQuoteTweet(decision);
-          case 'retweet':
-            return await this.executeExpandedRetweet(decision);
-          case 'reply':
-            return await this.executeExpandedReply(decision);
           default:
             throw new Error(`Unknown action type: ${decision.type}`);
         }
@@ -665,34 +659,11 @@ ${result.recommendations.map((rec: string) => `- ${rec}`).join('\n')}
     return await this.expandedActionExecutor.executeAction(decision);
   }
 
-  // 拡張引用ツイート実行
-  private async executeExpandedQuoteTweet(decision: ActionDecision): Promise<ActionResult> {
-    console.log('💬 [拡張引用実行] 引用ツイートを実行中...');
-    
-    return await this.expandedActionExecutor.executeAction(decision);
-  }
-
-  // 拡張リツイート実行
-  private async executeExpandedRetweet(decision: ActionDecision): Promise<ActionResult> {
-    console.log('🔄 [拡張RT実行] リツイートを実行中...');
-    
-    return await this.expandedActionExecutor.executeAction(decision);
-  }
-
-  // 拡張リプライ実行
-  private async executeExpandedReply(decision: ActionDecision): Promise<ActionResult> {
-    console.log('💭 [拡張リプライ実行] リプライを実行中...');
-    
-    return await this.expandedActionExecutor.executeAction(decision);
-  }
 
   // アクション配分の計算
   private calculateActionBreakdown(results: ActionResult[]): any {
     const breakdown = {
-      original_post: { success: 0, failure: 0 },
-      quote_tweet: { success: 0, failure: 0 },
-      retweet: { success: 0, failure: 0 },
-      reply: { success: 0, failure: 0 }
+      original_post: { success: 0, failure: 0 }
     };
     
     results.forEach(result => {
