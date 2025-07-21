@@ -1,0 +1,49 @@
+# Account Configuration
+# 統合: account-info.yaml + growth-targets.yaml
+# Created: 2025-07-21
+version: "1.0.0"
+lastUpdated: 1752845992796
+
+account:
+  username: "rnrnstar"
+  user_id: ""  # API取得後に更新
+  display_name: ""  # API取得後に更新
+  verified: false  # API取得後に更新
+
+current_metrics:
+  followers_count: 0
+  following_count: 0
+  tweet_count: 0
+  listed_count: 0
+  last_updated: 0
+
+growth_targets:
+  followers:
+    current: 0
+    daily: 2
+    weekly: 14
+    monthly: 60
+    quarterly: 180
+  
+  engagement:
+    likesPerPost: 5
+    retweetsPerPost: 1
+    repliesPerPost: 1
+    engagementRate: 3  # パーセント
+  
+  reach:
+    viewsPerPost: 50
+    impressionsPerDay: 750
+
+progress:
+  followersGrowth: 0
+  engagementGrowth: 0
+  reachGrowth: 0
+  overallScore: 0
+  trend: ontrack  # ontrack, ahead, behind
+
+history:
+  # 過去のメトリクス履歴（直近10件のみ保持）
+  metrics_history:
+    - timestamp: 0
+      followers_count: 0
