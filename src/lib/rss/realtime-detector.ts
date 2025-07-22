@@ -11,6 +11,7 @@ import {
   AlertThresholds,
   IndicatorConfig,
   DataPoint,
+  Action,
 } from '../../types/rss-collection-types';
 
 export class RealtimeDetector {
@@ -132,7 +133,7 @@ export class RealtimeDetector {
     const analysis = this.analyzeTrendData(historicalData.data);
     
     // Detect significant trend changes
-    if (analysis.significantChange) {
+    if (analysis.significantChange && analysis.changeType && analysis.direction) {
       changes.push({
         type: analysis.changeType,
         direction: analysis.direction,
@@ -145,7 +146,7 @@ export class RealtimeDetector {
 
     // Check for breakout patterns
     const breakoutDetection = this.detectBreakoutPatterns(historicalData.data);
-    if (breakoutDetection.detected) {
+    if (breakoutDetection.detected && breakoutDetection.direction) {
       changes.push({
         type: 'breakout',
         direction: breakoutDetection.direction,
@@ -260,7 +261,7 @@ export class RealtimeDetector {
       affectedPairs,
       detectedAt: new Date(),
       responseTime,
-      recommendedActions
+      recommendedActions: recommendedActions || []
     };
   }
 
@@ -344,26 +345,37 @@ export class RealtimeDetector {
   private async generateRecommendedActions(
     movementType: MarketMovement['type'], 
     severity: MarketMovement['severity']
-  ): Promise<ResponseAction[]> {
-    const actions: ResponseAction[] = [];
+  ): Promise<Action[]> {
+    const actions: Action[] = [];
     
     const baseAction = {
-      id: `action_${Date.now()}`,
       type: '',
       description: '',
       executionTime: 0,
       parameters: {},
-      status: 'pending' as const
+      priority: 50 // Default priority
     };
     
+    const getPriorityBySeverity = (sev: MarketMovement['severity']): number => {
+      switch (sev) {
+        case 'critical': return 90;
+        case 'major': return 75;
+        case 'moderate': return 60;
+        case 'minor': return 40;
+        default: return 50;
+      }
+    };
+
+    const actionPriority = getPriorityBySeverity(severity);
+
     switch (movementType) {
       case 'price_surge':
         actions.push({
           ...baseAction,
-          id: `${baseAction.id}_monitor`,
           type: 'monitor_closely',
           description: 'Monitor price levels and volume for continuation or reversal',
           executionTime: 300, // 5 minutes
+          priority: actionPriority,
           parameters: { watchLevel: 'high', alerts: true }
         });
         break;
@@ -371,10 +383,10 @@ export class RealtimeDetector {
       case 'news_impact':
         actions.push({
           ...baseAction,
-          id: `${baseAction.id}_analyze`,
           type: 'news_analysis',
           description: 'Analyze news impact and market reaction',
           executionTime: 600, // 10 minutes
+          priority: actionPriority,
           parameters: { depth: severity === 'critical' ? 'full' : 'quick' }
         });
         break;
@@ -382,10 +394,10 @@ export class RealtimeDetector {
       case 'sentiment_shift':
         actions.push({
           ...baseAction,
-          id: `${baseAction.id}_sentiment`,
           type: 'sentiment_tracking',
           description: 'Track sentiment indicators and risk assets',
           executionTime: 900, // 15 minutes
+          priority: actionPriority,
           parameters: { indicators: ['vix', 'gold', 'bonds'] }
         });
         break;
@@ -395,10 +407,10 @@ export class RealtimeDetector {
     if (severity === 'critical') {
       actions.push({
         ...baseAction,
-        id: `${baseAction.id}_emergency`,
         type: 'emergency_protocol',
         description: 'Activate emergency trading protocols',
         executionTime: 30, // 30 seconds
+        priority: 95, // Highest priority for emergency
         parameters: { protocol: 'high_impact_news', level: 'critical' }
       });
     }
@@ -556,7 +568,7 @@ export class RealtimeDetector {
     return {
       significantChange,
       changeType: Math.abs(percentChange) > 5 ? 'trend_reversal' : 'trend_acceleration',
-      direction: percentChange > 0 ? 'up' : percentChange < 0 ? 'down' : 'sideways',
+      direction: percentChange > 0 ? 'up' : percentChange < 0 ? 'down' : 'reversal',
       confidence: Math.min(Math.abs(percentChange) / 10, 1),
       significance: Math.min(Math.abs(percentChange) / 5, 1)
     };
@@ -617,7 +629,7 @@ export class RealtimeDetector {
 interface TrendAnalysis {
   significantChange: boolean;
   changeType?: string;
-  direction?: 'up' | 'down' | 'sideways';
+  direction?: 'up' | 'down' | 'reversal';
   confidence: number;
   significance: number;
 }

@@ -98,7 +98,7 @@ export class ParallelManager {
     };
   }
 
-  private async executeContentCollection(action: Action): Promise<any> {
+  private async executeContentCollection(_action: Action): Promise<any> {
     console.log('🌐 [情報収集開始] Playwright + Claude自律収集システム起動');
     
     // ClaudeControlledCollector doesn't have parameters - it explores autonomously
@@ -112,7 +112,7 @@ export class ParallelManager {
     return results;
   }
   
-  private async executeContentCreation(action: Action): Promise<any> {
+  private async executeContentCreation(_action: Action): Promise<any> {
     console.log('✍️ [コンテンツ生成開始] Claude主導コンテンツ作成');
     
     const prompt = `
@@ -638,9 +638,8 @@ ${result.recommendations.map((rec: string) => `- ${rec}`).join('\n')}
     
     try {
       const result = await actionTask.task();
-      const duration = Date.now() - startTime;
       
-      console.log(`⏱️  [タスク完了] ${actionTask.id} - ${duration}ms`);
+      // タスク完了ログを削除
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;

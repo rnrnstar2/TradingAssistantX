@@ -1,5 +1,5 @@
 import { ActionType } from './action-types';
-import { PerformanceMetrics } from './decision-types';
+import { DecisionPerformanceMetrics } from './decision-types';
 
 // ExecutionData型定義
 export interface ExecutionData {
@@ -27,7 +27,7 @@ export interface ExecutionMetadata {
 export interface ExecutionResult {
   success: boolean;
   message?: string;
-  metrics?: PerformanceMetrics;
+  metrics?: DecisionPerformanceMetrics;
   errors?: ExecutionError[];
 }
 
@@ -179,22 +179,10 @@ export interface CollectionTarget {
   weight: number;
 }
 
-export interface CollectionResult {
-  id: string;
-  type: string;
-  content: string;
-  source: string;
-  relevanceScore: number;
-  timestamp: number;
-  metadata: {
-    engagement?: number;
-    author?: string;
-    hashtags?: string[];
-    searchTerm?: string;
-    activityLevel?: number;
-    [key: string]: any;  // 追加のプロパティを許可
-  };
-}
+// Import collection types from common module
+import type { AutonomousCollectionResult } from './collection-common';
+// Re-export for backward compatibility
+export { AutonomousCollectionResult as CollectionResult } from './collection-common';
 
 export interface EvaluatedInfo {
   id: string;

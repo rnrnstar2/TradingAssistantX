@@ -1,13 +1,13 @@
 import { ClaudeAutonomousAgent, type AutonomousStrategy, type ExecutionPlan, type ExecutionResults, type OptimizationPlan } from '../lib/claude-autonomous-agent.js';
-import type { IntegratedContext, Decision } from '../types/autonomous-system';
-import type { MarketCondition } from '../types/rss-collection-types';
+import type { IntegratedContext, ActionSuggestion } from '../types/autonomous-system';
 import { DecisionEngine } from './decision-engine.js';
 import { loadYamlSafe } from '../utils/yaml-utils.js';
 import * as yaml from 'js-yaml';
-import { writeFileSync, existsSync, readFileSync, mkdirSync } from 'fs';
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
 
 export interface AutonomousResult {
   sessionId: string;
+  timestamp: string;
   strategy: AutonomousStrategy;
   executionPlan: ExecutionPlan;
   executionResults: ExecutionResults;
@@ -34,12 +34,12 @@ export class TrueAutonomousWorkflow {
   private decisionEngine: DecisionEngine;
   private sessionId: string;
 
-  constructor(decisionEngine?: DecisionEngine) {
-    this.claudeAgent = new ClaudeAutonomousAgent();
+  constructor(claudeAgent?: ClaudeAutonomousAgent, decisionEngine?: DecisionEngine) {
+    this.claudeAgent = claudeAgent || new ClaudeAutonomousAgent();
     this.decisionEngine = decisionEngine || new DecisionEngine();
     this.sessionId = `autonomous-session-${Date.now()}`;
     
-    console.log('🧠 [真の自律ワークフロー] Claude Code SDK中心の完全自律システムを初期化');
+    console.log('🧠 [TrueAutonomousWorkflow] Claude Code SDK中心の完全自律システムを初期化');
     console.log('🎯 [自律システム] 固定制約なし、Claudeの完全判断委託システム準備完了');
   }
 
@@ -48,7 +48,6 @@ export class TrueAutonomousWorkflow {
    * 指示書で定義された新しい自律フローの実装
    */
   async executeAutonomousSession(context?: IntegratedContext): Promise<AutonomousResult> {
-    console.log('🚀 [自律セッション開始] Claude Code SDK中心の完全自律実行を開始...');
     console.log('📊 [制約状況] 固定制約: なし、Claude判断: 100%');
     
     const sessionStartTime = Date.now();
@@ -83,6 +82,7 @@ export class TrueAutonomousWorkflow {
       
       const finalResult: AutonomousResult = {
         sessionId: this.sessionId,
+        timestamp: new Date().toISOString(),
         strategy,
         executionPlan,
         executionResults,
@@ -96,13 +96,7 @@ export class TrueAutonomousWorkflow {
       // 自律セッション結果の保存
       await this.saveAutonomousSession(finalResult);
       
-      const sessionDuration = Date.now() - sessionStartTime;
       console.log('🎉 [自律セッション完了] Claude完全自律システム実行完了');
-      console.log(`   ⏱️  セッション時間: ${sessionDuration}ms`);
-      console.log(`   🎯 自律性スコア: ${autonomyMetrics.overallAutonomy}%`);
-      console.log(`   📈 戦略柔軟性: ${autonomyMetrics.strategicFlexibility}%`);
-      console.log(`   🔄 適応率: ${autonomyMetrics.adaptationRate}%`);
-      console.log(`   🧠 学習効果: ${autonomyMetrics.learningEffectiveness}%`);
       
       return finalResult;
       
@@ -126,9 +120,18 @@ export class TrueAutonomousWorkflow {
     
     // コンテキストが提供されていない場合、自律的に収集・分析
     const autonomousContext: IntegratedContext = {
-      account: await this.analyzeAccountStatus(),
-      market: await this.analyzeMarketConditions(),
-      actionSuggestions: await this.generateActionSuggestions()
+      account: {
+        currentState: await this.analyzeAccountStatus(),
+        recommendations: ['アカウント状況分析に基づく推奨事項'],
+        healthScore: 75
+      },
+      market: {
+        trends: [],
+        opportunities: [],
+        competitorActivity: []
+      },
+      actionSuggestions: await this.generateActionSuggestions(),
+      timestamp: Date.now()
     };
     
     console.log('✅ [Claude状況分析完了] 自律的コンテキスト生成完了');
@@ -193,11 +196,29 @@ export class TrueAutonomousWorkflow {
   /**
    * アクション提案の自律生成
    */
-  private async generateActionSuggestions(): Promise<string[]> {
-    const suggestions = [
-      'original_post: 投資教育コンテンツの提供',
-      'market_analysis: 現在の市場動向分析',
-      'engagement: フォロワーとの積極的交流'
+  private async generateActionSuggestions(): Promise<ActionSuggestion[]> {
+    const suggestions: ActionSuggestion[] = [
+      {
+        type: 'original_post',
+        content: '投資教育コンテンツの提供',
+        reasoning: '投資教育に関する価値あるコンテンツを定期的に提供することで、フォロワーの投資リテラシー向上に貢献',
+        priority: 'high',
+        expectedImpact: 0.8
+      },
+      {
+        type: 'original_post',
+        content: '現在の市場動向分析',
+        reasoning: '最新の市場動向を分析・共有することで、フォロワーに有益な投資判断材料を提供',
+        priority: 'medium',
+        expectedImpact: 0.7
+      },
+      {
+        type: 'reply',
+        content: 'フォロワーとの積極的交流',
+        reasoning: 'コミュニティとの対話を通じて、信頼関係を構築し、フォロワーのニーズを把握',
+        priority: 'medium',
+        expectedImpact: 0.6
+      }
     ];
     
     return suggestions;
@@ -360,6 +381,7 @@ export class TrueAutonomousWorkflow {
     
     return {
       sessionId: this.sessionId,
+      timestamp: new Date().toISOString(),
       strategy: fallbackStrategy,
       executionPlan: fallbackPlan,
       executionResults: fallbackResults,

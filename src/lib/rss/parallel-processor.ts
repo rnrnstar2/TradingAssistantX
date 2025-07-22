@@ -342,7 +342,7 @@ export class ParallelProcessor {
         description,
         link,
         publishedAt: pubDate ? new Date(pubDate) : new Date(),
-        author,
+        author: author || undefined,
         sourceId: source.id,
         rawData: item.outerHTML
       };
@@ -368,7 +368,7 @@ export class ParallelProcessor {
         description: summary,
         link,
         publishedAt: published ? new Date(published) : new Date(),
-        author,
+        author: author || undefined,
         sourceId: source.id,
         rawData: entry.outerHTML
       };

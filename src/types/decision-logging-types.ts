@@ -129,7 +129,7 @@ export interface QualityScore {
 }
 
 // Performance Monitor Types
-export interface DecisionLoggingDecisionLoggingPerformanceMetrics {
+export interface DecisionLoggingPerformanceMetrics {
   sessionId: string;
   timestamp: string;
   decisionTime: number;

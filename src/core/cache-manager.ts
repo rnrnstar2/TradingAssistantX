@@ -2,7 +2,17 @@ import { EventEmitter } from 'events';
 import { AccountAnalyzer } from '../lib/account-analyzer.js';
 
 export interface AccountInfoCache {
-  data: any;
+  data: {
+    status: string;
+    healthScore: number;
+    metrics: {
+      followers: number;
+      engagement: number;
+      posts: number;
+    };
+    recommendations: string[];
+    timestamp: number;
+  };
   timestamp: number;
   expiresAt: number;
 }
@@ -26,7 +36,7 @@ export class AutonomousExecutorCacheManager {
     };
   }
 
-  async getCachedAccountStatus(): Promise<any> {
+  async getCachedAccountStatus(): Promise<AccountInfoCache['data']> {
     const cacheKey = 'account-status';
     
     // 進行中のリクエストがある場合は待機

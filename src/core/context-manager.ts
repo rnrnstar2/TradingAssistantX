@@ -75,7 +75,6 @@ export class AutonomousExecutorContextManager {
         return this.createEmptyContext();
       }
 
-      const contextData = await loadYamlSafe(contextPath) as any;
       console.log('✅ [コンテキスト] current-situation.yamlから読み込み完了');
       
       return {

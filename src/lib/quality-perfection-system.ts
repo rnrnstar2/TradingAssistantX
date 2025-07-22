@@ -116,7 +116,7 @@ export class QualityPerfectionSystem {
       const qualityMetrics = await this.assessQualityMetrics();
       const improvementRecommendations = await this.generateImprovementRecommendations(scoreBreakdown);
       
-      const totalScore = Object.values(scoreBreakdown).reduce((sum: number, score: number) => sum + score, 0) / 
+      const totalScore = Object.values(scoreBreakdown).reduce((sum: number, score: unknown) => sum + (typeof score === 'number' ? score : 0), 0) / 
                         Object.keys(scoreBreakdown).length;
       
       const verificationStatus = totalScore >= 85 ? 'PASSED' : 

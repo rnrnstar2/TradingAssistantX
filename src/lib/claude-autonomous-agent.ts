@@ -62,7 +62,7 @@ export class ClaudeAutonomousAgent {
     // X クライアント初期化
     this.xClient = new SimpleXClient();
     
-    console.log('🧠 [自律化プランナー] 固定制約除去、Claude完全自律システム初期化完了');
+    console.log('🧠 [ClaudeAutonomousAgent] 固定制約除去、Claude完全自律システム初期化完了');
   }
 
   /**

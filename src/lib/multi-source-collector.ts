@@ -8,7 +8,7 @@ import {
   CollectionResult,
   SourceType,
   CollectionStrategy,
-  MultiSourceMultiSourcePerformanceMetrics,
+  MultiSourcePerformanceMetrics,
   CacheEntry,
   CollectionError
 } from '../types/multi-source.js';

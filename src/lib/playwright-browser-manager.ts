@@ -254,9 +254,7 @@ export class PlaywrightBrowserManager {
       }
     }
     
-    if (this.sessionWaitingQueue.length > 0) {
-      console.log(`📊 [キュー状態] 待機中: ${this.sessionWaitingQueue.length}件, アクティブ: ${activeSessions}/${this.config.parallelLimit}`);
-    }
+    // キュー状態ログを削除
   }
 
   /**
@@ -815,10 +813,6 @@ export class PlaywrightBrowserManager {
       await this.cleanupInactiveSessions();
       
       // 本番環境ではセッション統計ログを抑制
-      if (!PlaywrightBrowserManager.isProductionEnvironment()) {
-        const stats = this.getSessionStats();
-        console.log(`📊 [セッション統計] アクティブセッション: ${stats.activeSessions}/${this.config.parallelLimit}, 総セッション: ${stats.totalSessions}, ブラウザ: ${stats.activeBrowsers}/${stats.totalBrowsers}`);
-      }
     }, interval);
   }
 

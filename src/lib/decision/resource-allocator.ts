@@ -20,6 +20,25 @@ import {
 } from '../../types/decision-types.js';
 
 export class ResourceAllocator {
+  findParetoOptimal(candidates: CollectionCandidate[]): ParetoSolution[] {
+    const solutions: ParetoSolution[] = [];
+
+    for (const candidate of candidates) {
+      const qualityScore = candidate.estimatedValue * candidate.confidenceLevel;
+      const efficiencyScore = this.calculateEfficiencyScore(candidate);
+      const dominatedBy = this.findDominatingCandidates(candidate, candidates);
+
+      solutions.push({
+        candidate,
+        qualityScore,
+        efficiencyScore,
+        dominatedBy
+      });
+    }
+
+    return solutions.filter(solution => solution.dominatedBy.length === 0);
+  }
+
   allocateTimebudget(totalBudget: number, tasks: CollectionTask[]): TimeBudget {
     const bufferPercentage = 0.15;
     const bufferTime = Math.round(totalBudget * bufferPercentage);
@@ -194,6 +213,40 @@ export class ResourceAllocator {
     }
 
     return priorityAdjustments;
+  }
+
+  private calculateEfficiencyScore(candidate: CollectionCandidate): number {
+    const valuePerTime = candidate.estimatedCost.timeMs > 0 ? 
+      candidate.estimatedValue / (candidate.estimatedCost.timeMs / 1000) : 0;
+    
+    const valuePerMemory = candidate.estimatedCost.memoryMb > 0 ? 
+      candidate.estimatedValue / candidate.estimatedCost.memoryMb : 0;
+
+    const confidenceBonus = candidate.confidenceLevel * 0.1;
+
+    return (valuePerTime * 0.6 + valuePerMemory * 0.3 + confidenceBonus) * 10;
+  }
+
+  private findDominatingCandidates(candidate: CollectionCandidate, allCandidates: CollectionCandidate[]): CollectionCandidate[] {
+    return allCandidates.filter(other => {
+      if (other === candidate) return false;
+      
+      const otherIsBetter = (
+        other.estimatedValue >= candidate.estimatedValue &&
+        other.estimatedCost.timeMs <= candidate.estimatedCost.timeMs &&
+        other.estimatedCost.memoryMb <= candidate.estimatedCost.memoryMb &&
+        other.confidenceLevel >= candidate.confidenceLevel
+      );
+
+      const otherIsStrictlyBetter = (
+        other.estimatedValue > candidate.estimatedValue ||
+        other.estimatedCost.timeMs < candidate.estimatedCost.timeMs ||
+        other.estimatedCost.memoryMb < candidate.estimatedCost.memoryMb ||
+        other.confidenceLevel > candidate.confidenceLevel
+      );
+
+      return otherIsBetter && otherIsStrictlyBetter;
+    });
   }
 }
 

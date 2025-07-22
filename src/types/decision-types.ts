@@ -195,15 +195,7 @@ export interface OptimalPlan {
   alternativePlans: OptimalPlan[];
 }
 
-export interface CollectionResult {
-  executionId: string;
-  success: boolean;
-  dataCollected: any[];
-  qualityAchieved: number;
-  resourcesUsed: ResourceUsage;
-  timeElapsed: number;
-  errors: string[];
-}
+// CollectionResult removed - use BaseCollectionResult from collection-common.ts if needed
 
 export interface LearningInsight {
   siteSpecificOptimizations: SiteOptimization[];

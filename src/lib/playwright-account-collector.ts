@@ -289,8 +289,8 @@ export class PlaywrightAccountCollector {
               
               // 前後のテキストでタイプを判定（タイムアウト付き）
               try {
-                const parent = await element.evaluateHandle(el => el.parentElement);
-                const parentText = await parent.evaluate(el => el.textContent?.toLowerCase() || '');
+                const parent = await element.evaluateHandle(el => el ? el.parentElement : null);
+                const parentText = await parent.evaluate(el => el ? (el.textContent?.toLowerCase() || '') : '');
                 
                 if (parentText.includes('followers') || parentText.includes('フォロワー')) {
                   followers = number;

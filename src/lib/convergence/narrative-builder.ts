@@ -6,7 +6,8 @@ import {
   NarrativeFlow,
   EnhancedContent,
   EngagingContent,
-  PostCategory
+  PostCategory,
+  TimeRelevance
 } from '../../types/convergence-types';
 
 /**
@@ -221,13 +222,14 @@ export class NarrativeBuilder {
     return (insight.confidence + impactScore + insight.educationalValue + insight.uniqueness + timeScore) / 5;
   }
   
-  private calculateTimeRelevanceScore(timeRelevance: any): number {
-    const urgencyScore = {
+  private calculateTimeRelevanceScore(timeRelevance: TimeRelevance): number {
+    const urgencyScoreMap: Record<TimeRelevance['urgency'], number> = {
       'immediate': 100,
       'daily': 80,
       'weekly': 60,
       'timeless': 40
-    }[timeRelevance.urgency] || 50;
+    };
+    const urgencyScore = urgencyScoreMap[timeRelevance.urgency] || 50;
     
     return Math.min(100, urgencyScore + timeRelevance.peakRelevance * 0.3);
   }

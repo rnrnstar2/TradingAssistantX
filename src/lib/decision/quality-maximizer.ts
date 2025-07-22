@@ -1,7 +1,6 @@
 import {
   ExecutionConstraints,
   OptimizationPlan,
-  DataSource,
   FilteredSources,
   ConditionalSource,
   QualityMetrics,
@@ -19,12 +18,13 @@ import {
   FallbackStrategy
 } from '../../types/decision-types.js';
 
+// DataSource型定義
 interface DataSource {
   url: string;
-  method: CollectionMethod;
   qualityHistory: number[];
   reliabilityScore: number;
   lastUpdated: number;
+  method: CollectionMethod;
 }
 
 export class QualityMaximizer {
@@ -324,7 +324,12 @@ export class QualityMaximizer {
   private identifyResourceOptimizations(currentQuality: QualityMetrics): ResourceOptimization[] {
     const optimizations: ResourceOptimization[] = [];
 
-    if (currentQuality.overall < 70) {
+    // overall プロパティの代わりに各メトリクスの平均を計算
+    const overallQuality = (currentQuality.accuracy + currentQuality.completeness + 
+                           currentQuality.timeliness + currentQuality.consistency + 
+                           currentQuality.reliability) / 5;
+    
+    if (overallQuality < 70) {
       optimizations.push({
         resourceType: 'time',
         optimization: 'Eliminate low-value data collection tasks',

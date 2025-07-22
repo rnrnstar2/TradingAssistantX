@@ -82,7 +82,7 @@ export class DecisionLogger {
       sessionTimeout: 30 * 60 * 1000, // 30 minutes
       outputDirectory: 'tasks/20250722_002415_next_generation_enhancement/outputs/',
       enableVisualization: true,
-      enablePerformanceMonitoring: true,
+      enablePerformanceMonitoring: false,
       performanceMonitoringInterval: 5000, // 5 seconds
       ...config
     };

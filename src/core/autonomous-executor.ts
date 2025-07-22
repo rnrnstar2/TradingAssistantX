@@ -2,14 +2,13 @@ import { DecisionEngine } from './decision-engine.js';
 import { ParallelManager } from './parallel-manager.js';
 import type { Need, Action, Context, IntegratedContext, ActionSpecificPreloadResult, ParallelAnalysisResult, Decision } from '../types/autonomous-system.js';
 import type { ActionDecision } from '../types/action-types.js';
-import { PerformanceMonitor } from '../lib/logging/performance-monitor.js';
-import type { DecisionContext } from '../types/decision-logging-types.js';
 import { HealthChecker } from '../utils/monitoring/health-check.js';
-import { AccountAnalyzer, AccountStatus } from '../lib/account-analyzer.js';
+import { AccountAnalyzer } from '../lib/account-analyzer.js';
 import { SimpleXClient } from '../lib/x-client.js';
 import { EnhancedInfoCollector } from '../lib/enhanced-info-collector.js';
 import { DailyActionPlanner } from '../lib/daily-action-planner.js';
 import { ActionSpecificCollector } from '../lib/action-specific-collector.js';
+import { ClaudeAutonomousAgent } from '../lib/claude-autonomous-agent.js';
 // 🧠 NEW: True Autonomous Workflow Integration
 import { TrueAutonomousWorkflow, type AutonomousResult } from './true-autonomous-workflow.js';
 
@@ -36,9 +35,6 @@ export class AutonomousExecutor {
   private parallelManager: ParallelManager;
   private healthChecker: HealthChecker;
   private enhancedInfoCollector: EnhancedInfoCollector;
-  
-  // Enhanced performance monitoring
-  private performanceMonitor: PerformanceMonitor;
   
   // Modular components
   private cacheManager: AutonomousExecutorCacheManager;
@@ -72,14 +68,13 @@ export class AutonomousExecutor {
     this.healthChecker = new HealthChecker();
     this.enhancedInfoCollector = new EnhancedInfoCollector();
     
-    // Initialize enhanced performance monitoring
-    this.performanceMonitor = new PerformanceMonitor();
-    
-    // Initialize event-capable config manager and connect cache events
+    // Initialize event-capable config manager
     this.eventConfigManager = new ConfigManager();
-    this.connectCacheEvents();
     
-    const dailyActionPlanner = new DailyActionPlanner();
+    // 🧠 Initialize shared ClaudeAutonomousAgent instance
+    const claudeAgent = new ClaudeAutonomousAgent();
+    
+    const dailyActionPlanner = new DailyActionPlanner(claudeAgent);
     
     // Initialize X Client and AccountAnalyzer (OAuth 2.0)
     const xClient = new SimpleXClient();
@@ -91,29 +86,13 @@ export class AutonomousExecutor {
     this.decisionProcessor = new AutonomousExecutorDecisionProcessor(actionSpecificCollector, this.contextManager);
     this.actionExecutor = new AutonomousExecutorActionExecutor(this.contextManager, dailyActionPlanner);
     
-    // 🧠 NEW: Initialize True Autonomous Workflow
-    this.trueAutonomousWorkflow = new TrueAutonomousWorkflow(this.decisionEngine);
+    // 🧠 NEW: Initialize True Autonomous Workflow with shared ClaudeAutonomousAgent
+    this.trueAutonomousWorkflow = new TrueAutonomousWorkflow(claudeAgent, this.decisionEngine);
     
     console.log('🧠 [AutonomousExecutor] True Autonomous Workflow システム初期化完了');
     console.log('🎯 [自律モード] 制約なしのClaude完全自律システム準備完了');
   }
 
-  /**
-   * Connect ConfigManager cache events to PerformanceMonitor
-   */
-  private connectCacheEvents(): void {
-    this.eventConfigManager.on('config:cache-hit', () => {
-      const sessionId = `cache-session-${Date.now()}`;
-      this.performanceMonitor.recordCacheHit(sessionId, true);
-    });
-
-    this.eventConfigManager.on('config:not-found', () => {
-      const sessionId = `cache-session-${Date.now()}`;  
-      this.performanceMonitor.recordCacheHit(sessionId, false);
-    });
-
-    console.log('✅ [キャッシュイベント] ConfigManagerとPerformanceMonitorを接続完了');
-  }
 
   private getConfigPath(): string {
     // configManagerがundefinedでないことを確認
@@ -135,30 +114,15 @@ export class AutonomousExecutor {
     this.isExecutionActive = true;
     this.executionStartTime = Date.now();
 
-    // パフォーマンス監視セッション開始
-    const sessionId = `autonomous-execution-${Date.now()}`;
-    this.performanceMonitor.startSession(sessionId, {
-      operation: 'autonomous_execution',
-      startTime: this.executionStartTime
-    });
-
     try {
       // 実行時間制限チェック
       if (Date.now() - this.executionStartTime > this.MAX_EXECUTION_TIME) {
         throw new Error('実行時間制限に達しました');
       }
 
-      // リソース使用量を追跡
-      const preExecutionUsage = this.performanceMonitor.trackResourceUsage('pre_execution');
-      console.log(`📊 [実行前リソース] メモリ: ${preExecutionUsage.memoryMB}MB, CPU: ${preExecutionUsage.cpuPercent}%`);
-
       // Delegate to the decision processor
       const decision = await this.decisionProcessor.performAutonomousExecution();
       
-      // 実行後のリソース使用量
-      const postExecutionUsage = this.performanceMonitor.trackResourceUsage('post_execution');
-      console.log(`📊 [実行後リソース] メモリ: ${postExecutionUsage.memoryMB}MB, CPU: ${postExecutionUsage.cpuPercent}%`);
-
       return decision;
 
     } catch (error) {
@@ -167,24 +131,6 @@ export class AutonomousExecutor {
       throw error;
     } finally {
       this.isExecutionActive = false;
-      const duration = Date.now() - this.executionStartTime;
-      
-      // パフォーマンス監視セッション終了
-      const performanceMetrics = this.performanceMonitor.endSession(sessionId);
-      if (performanceMetrics) {
-        console.log(`📈 [パフォーマンス統計] 決定時間: ${performanceMetrics.decisionTime}ms, メモリ使用量: ${performanceMetrics.memoryUsage}MB`);
-        
-        // 最適化提案をチェック
-        const optimizationSuggestions = this.performanceMonitor.identifyOptimizationOpportunities();
-        if (optimizationSuggestions.length > 0) {
-          console.log(`💡 [最適化提案] ${optimizationSuggestions.length}件の改善提案があります`);
-          optimizationSuggestions.slice(0, 2).forEach(suggestion => {
-            console.log(`   - ${suggestion.description}`);
-          });
-        }
-      }
-      
-      console.log(`⏱️ [実行完了] 実行時間: ${duration}ms`);
     }
   }
 
@@ -202,24 +148,9 @@ export class AutonomousExecutor {
     this.isExecutionActive = true;
     this.executionStartTime = Date.now();
 
-    // パフォーマンス監視セッション開始
-    const sessionId = `true-autonomous-${Date.now()}`;
-    this.performanceMonitor.startSession(sessionId, {
-      operation: 'true_autonomous_execution',
-      startTime: this.executionStartTime
-    });
-
     try {
-      // リソース使用量を追跡
-      const preExecutionUsage = this.performanceMonitor.trackResourceUsage('pre_execution');
-      console.log(`📊 [実行前リソース] メモリ: ${preExecutionUsage.memoryMB}MB, CPU: ${preExecutionUsage.cpuPercent}%`);
-
       // 🧠 Execute True Autonomous Workflow
       const autonomousResult = await this.trueAutonomousWorkflow.executeAutonomousSession(context);
-      
-      // 実行後のリソース使用量
-      const postExecutionUsage = this.performanceMonitor.trackResourceUsage('post_execution');
-      console.log(`📊 [実行後リソース] メモリ: ${postExecutionUsage.memoryMB}MB, CPU: ${postExecutionUsage.cpuPercent}%`);
 
       console.log('🎉 [True Autonomous完了] Claude完全自律実行完了');
       console.log(`🎯 [自律性スコア] ${autonomousResult.autonomyScore}%`);
@@ -235,15 +166,6 @@ export class AutonomousExecutor {
       throw error;
     } finally {
       this.isExecutionActive = false;
-      const duration = Date.now() - this.executionStartTime;
-      
-      // パフォーマンス監視セッション終了
-      const performanceMetrics = this.performanceMonitor.endSession(sessionId);
-      if (performanceMetrics) {
-        console.log(`📈 [パフォーマンス統計] 決定時間: ${performanceMetrics.decisionTime}ms, メモリ使用量: ${performanceMetrics.memoryUsage}MB`);
-      }
-      
-      console.log(`⏱️ [True Autonomous完了] 実行時間: ${duration}ms`);
     }
   }
 

@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as yaml from 'js-yaml';
 import chokidar, { FSWatcher } from 'chokidar';
 import { EventEmitter } from 'events';
 import { loadYamlSafe } from './yaml-utils';
@@ -236,8 +235,7 @@ export class ConfigManager extends EventEmitter {
 
   private async readConfigFile<T>(fullPath: string): Promise<T | null> {
     try {
-      const content = fs.readFileSync(fullPath, 'utf8');
-      const config = yaml.load(content) as T;
+      const config = loadYamlSafe<T>(fullPath);
       return config;
     } catch (error) {
       this.emit('config:parse-error', { 

@@ -2871,7 +2871,7 @@ JSON配列のみを返してください（マークダウンや説明不要）�
     
     // 2. APIプロバイダの場合
     if (source.provider && this.multiSourceConfig?.apis) {
-      const apiConfig = this.multiSourceConfig.apis[source.provider];
+      const apiConfig = (this.multiSourceConfig.apis as any)[source.provider];
       if (apiConfig?.base_url) {
         return apiConfig.base_url;
       }
@@ -2879,7 +2879,7 @@ JSON配列のみを返してください（マークダウンや説明不要）�
     
     // 3. プラットフォーム（Reddit等）の場合
     if (source.platform && this.multiSourceConfig?.community) {
-      const platformConfig = this.multiSourceConfig.community[source.platform];
+      const platformConfig = (this.multiSourceConfig.community as any)[source.platform];
       if (platformConfig?.base_url) {
         // subredditがある場合は適切なパスを構築
         if (source.subreddits?.length > 0) {
@@ -2891,7 +2891,7 @@ JSON配列のみを返してください（マークダウンや説明不要）�
     
     // 4. RSSソース（multi-source-configから）の場合
     if (source.type === 'rss' && this.multiSourceConfig?.rss?.sources) {
-      const rssConfig = this.multiSourceConfig.rss.sources[source.name];
+      const rssConfig = (this.multiSourceConfig.rss.sources as any)[source.name];
       if (rssConfig?.base_url) {
         return rssConfig.base_url;
       }

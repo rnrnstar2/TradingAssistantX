@@ -1,6 +1,6 @@
 import type {
   DecisionChain,
-  DecisionLoggingDecisionLoggingPerformanceMetrics,
+  DecisionLoggingPerformanceMetrics,
   QualityScore,
   OptimizationSuggestion,
   VisualFlow,

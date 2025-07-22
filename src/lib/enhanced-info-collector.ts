@@ -4,14 +4,15 @@ import { RssParallelCollectionEngine } from './rss-parallel-collection-engine';
 import type { EmergencyResult } from '../types/rss-collection-types';
 
 // Playwright evaluate環境でのDOM型宣言
-declare global {
-  interface Window {
-    document: any;
-  }
+// documentオブジェクトをPlaywright内で使用するための型定義
+
+// CollectionTargetを拡張してsearchTermsプロパティを追加
+interface ExtendedCollectionTarget extends CollectionTarget {
+  searchTerms?: string[];
 }
 
 export class EnhancedInfoCollector {
-  private targets: CollectionTarget[] = [];
+  private targets: ExtendedCollectionTarget[] = [];
   private testMode: boolean;
   private rssEngine: RssParallelCollectionEngine;
 
@@ -111,7 +112,7 @@ export class EnhancedInfoCollector {
     this.targets = this.defineCollectionTargets();
   }
 
-  private defineCollectionTargets(): CollectionTarget[] {
+  private defineCollectionTargets(): ExtendedCollectionTarget[] {
     return [
       {
         type: 'scraping',
@@ -261,8 +262,8 @@ export class EnhancedInfoCollector {
       // トレンド情報をスクレイピング
       const trends = await page.evaluate(() => {
         // DOM操作でトレンド情報取得
-        const trendElements = (globalThis as any).document.querySelectorAll('[data-testid="trend"]');
-        return Array.from(trendElements).map((el: any) => ({
+        const trendElements = document.querySelectorAll('[data-testid="trend"]');
+        return Array.from(trendElements).map((el: Element) => ({
           text: el.textContent || '',
           engagement: Math.floor(Math.random() * 1000) + 100
         }));
@@ -307,8 +308,8 @@ export class EnhancedInfoCollector {
           
           // 最新の投稿を取得
           const posts = await page.evaluate(() => {
-            const postElements = (globalThis as any).document.querySelectorAll('[data-testid="tweetText"]');
-            return Array.from(postElements).slice(0, 3).map((el: any) => el.textContent || '');
+            const postElements = document.querySelectorAll('[data-testid="tweetText"]');
+            return Array.from(postElements).slice(0, 3).map((el: Element) => el.textContent || '');
           });
           
           posts.forEach((post, index) => {
@@ -359,8 +360,8 @@ export class EnhancedInfoCollector {
           await page.goto(`https://x.com/search?q=${encodeURIComponent(term)}&f=live`, { waitUntil: 'networkidle' });
           
           const newsItems = await page.evaluate(() => {
-            const tweetElements = (globalThis as any).document.querySelectorAll('[data-testid="tweetText"]');
-            return Array.from(tweetElements).slice(0, 2).map((el: any) => el.textContent || '');
+            const tweetElements = document.querySelectorAll('[data-testid="tweetText"]');
+            return Array.from(tweetElements).slice(0, 2).map((el: Element) => el.textContent || '');
           });
           
           newsItems.forEach((item, index) => {
@@ -410,8 +411,8 @@ export class EnhancedInfoCollector {
           await page.goto(`https://x.com/hashtag/${hashtag.substring(1)}`, { waitUntil: 'networkidle' });
           
           const hashtagActivity = await page.evaluate(() => {
-            const elements = (globalThis as any).document.querySelectorAll('[data-testid="tweetText"]');
-            return Array.from(elements).slice(0, 2).map((el: any) => el.textContent || '');
+            const elements = document.querySelectorAll('[data-testid="tweetText"]');
+            return Array.from(elements).slice(0, 2).map((el: Element) => el.textContent || '');
           });
           
           if (hashtagActivity.length > 0) {

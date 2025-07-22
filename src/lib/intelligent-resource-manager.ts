@@ -10,7 +10,6 @@ import {
   AdjustmentDecision,
   CollectionCandidate,
   OptimalPlan,
-  CollectionResult,
   LearningInsight,
   ExecutionConstraints,
   CollectionMethod,
@@ -26,6 +25,7 @@ import {
   ResourceCost,
   QualityMetrics
 } from '../types/decision-types.js';
+import type { BaseCollectionResult } from '../types/collection-common.js';
 
 export class IntelligentResourceManager {
   private siteProfiler: SiteProfiler;
@@ -103,7 +103,7 @@ export class IntelligentResourceManager {
   }
 
   async optimizeQualityCostBalance(candidates: CollectionCandidate[]): Promise<OptimalPlan> {
-    const paretoSolutions = this.resourceAllocator.findParetoOptimal?.(candidates) || [];
+    const paretoSolutions = this.resourceAllocator.findParetoOptimal(candidates);
     
     const selectedCandidates = this.selectOptimalCandidates(candidates, paretoSolutions);
     const totalValue = this.calculateTotalValue(selectedCandidates);

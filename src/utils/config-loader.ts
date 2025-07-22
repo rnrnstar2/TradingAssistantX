@@ -1,5 +1,5 @@
 import { readFileSync, existsSync } from 'fs';
-import yaml from 'js-yaml';
+import { loadYamlSafe } from './yaml-utils';
 import { AutonomousConfig } from '../types/autonomous-config';
 
 // 軽量最適化設定読み込み（claude-summary.yaml優先）
@@ -11,8 +11,7 @@ export function loadOptimizedConfig() {
   try {
     // 1. 最優先: claude-summary.yaml (30行)
     if (existsSync(claudeSummaryPath)) {
-      const summaryContent = readFileSync(claudeSummaryPath, 'utf8');
-      const summary = yaml.load(summaryContent) as any;
+      const summary = loadYamlSafe(claudeSummaryPath);
       
       if (summary) {
         console.log('✅ [最適化設定] claude-summary.yamlから軽量データを読み込み');
@@ -20,8 +19,7 @@ export function loadOptimizedConfig() {
         // 2. 必要に応じて: system-state.yaml (15行)  
         let systemState = null;
         if (existsSync(systemStatePath)) {
-          const systemStateContent = readFileSync(systemStatePath, 'utf8');
-          systemState = yaml.load(systemStateContent) as any;
+          systemState = loadYamlSafe(systemStatePath);
         }
         
         return { summary, systemState, autonomousConfig: null };
@@ -47,8 +45,11 @@ export function loadAutonomousConfig(): AutonomousConfig {
     throw new Error(`Autonomous config file not found: ${configPath}`);
   }
   
-  const configContent = readFileSync(configPath, 'utf8');
-  const config = yaml.load(configContent) as AutonomousConfig;
+  const config = loadYamlSafe<AutonomousConfig>(configPath);
+  
+  if (!config) {
+    throw new Error(`Failed to load autonomous config: ${configPath}`);
+  }
   
   // 設定値検証
   if (!config.execution || !config.autonomous_system) {

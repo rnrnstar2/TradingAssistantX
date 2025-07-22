@@ -35,13 +35,7 @@ export interface InstructionContext {
   constraints?: string[];
 }
 
-export interface CollectionResult {
-  content: string;
-  insights: string[];
-  quality: QualityScore;
-  sources: string[];
-  timestamp: Date;
-}
+// CollectionResult removed - use BaseCollectionResult from collection-common.ts if needed
 
 export interface GeneratedPost {
   title: string;

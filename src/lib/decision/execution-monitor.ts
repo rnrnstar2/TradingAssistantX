@@ -1,7 +1,7 @@
 import {
   CollectionExecution,
   MonitoringSession,
-  DecisionDecisionPerformanceMetrics,
+  DecisionPerformanceMetrics,
   Alert,
   BottleneckAnalysis,
   Bottleneck,

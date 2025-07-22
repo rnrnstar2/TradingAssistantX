@@ -26,15 +26,7 @@ export interface FeedItem {
   rawData: any;
 }
 
-export interface CollectionResult {
-  sourceId: string;
-  items: FeedItem[];
-  status: 'success' | 'failure' | 'timeout' | 'retry';
-  processingTime: number;
-  timestamp: Date;
-  errorMessage?: string;
-  metadata: CollectionMetadata;
-}
+// CollectionResult removed - use BaseCollectionResult from collection-common.ts if needed
 
 export interface CollectionMetadata {
   totalItems: number;
@@ -86,7 +78,7 @@ export interface PriorityAdjustment {
   validUntil: Date;
 }
 
-export interface RSSRSSPerformanceMetrics {
+export interface RSSPerformanceMetrics {
   averageResponseTime: number;
   successRate: number;
   contentQualityScore: number;
@@ -182,6 +174,7 @@ export interface ResponseAction {
   parameters: Record<string, any>;
   status: 'pending' | 'executing' | 'completed' | 'failed';
   result?: any;
+  priority?: number;
 }
 
 export interface Detection {

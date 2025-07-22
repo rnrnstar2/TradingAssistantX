@@ -228,6 +228,9 @@ export * from './account-config';
 export * from './content-strategy';
 export * from './posting-data';
 
+// Collection common types
+export * from './collection-common';
+
 // Expanded action types
 export * from './action-types';
 

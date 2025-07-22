@@ -372,7 +372,7 @@ export class MethodSelector {
       case CollectionMethod.HYBRID:
         score += site.requiresJavaScript ? 15 : -5;
         score += site.contentStructure === 'complex' ? 15 : 0;
-        score += context.qualityRequirements.overall > 80 ? 20 : 0;
+        score += (context.qualityRequirements.accuracy + context.qualityRequirements.completeness + context.qualityRequirements.timeliness) / 3 > 80 ? 20 : 0;
         break;
 
       case CollectionMethod.PLAYWRIGHT_STEALTH:

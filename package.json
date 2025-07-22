@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/scripts/autonomous-runner-single.ts",
-    "start": "tsx src/scripts/autonomous-runner.ts"
+    "start": "tsx src/scripts/autonomous-runner.ts",
+    "manager": "ROLE=manager claude --dangerously-skip-permissions",
+    "worker": "ROLE=worker claude --dangerously-skip-permissions"
   },
   "dependencies": {
     "@inquirer/prompts": "^3.0.0",

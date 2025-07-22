@@ -13,19 +13,7 @@ export type DataProvider =
   | 'reddit'
   | 'hackernews';
 
-export interface CollectionResult {
-  id: string;
-  title: string;
-  content: string;
-  url: string;
-  timestamp: number;
-  source: string;
-  provider: DataProvider;
-  relevanceScore?: number;
-  category?: string;
-  tags?: string[];
-  metadata?: Record<string, any>;
-}
+// CollectionResult removed - use BaseCollectionResult from collection-common.ts if needed
 
 export interface MultiSourceResult {
   source: SourceType;
@@ -154,7 +142,7 @@ export interface CollectionError {
 }
 
 // Performance Monitoring
-export interface MultiSourceMultiSourcePerformanceMetrics {
+export interface MultiSourcePerformanceMetrics {
   totalRequests: number;
   successfulRequests: number;
   failedRequests: number;

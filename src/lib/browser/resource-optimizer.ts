@@ -26,13 +26,12 @@ import {
  * 50%リソース削減と300%処理能力向上を実現する核心エンジン
  */
 export class ResourceOptimizer {
-  private performanceMonitor: PerformanceMonitor;
   private optimizationCache: Map<string, OptimizedBrowserOptions> = new Map();
   private resourceHistory: ResourceUsageReport[] = [];
   private maxHistorySize = 100;
 
   constructor() {
-    this.performanceMonitor = new PerformanceMonitor();
+    // Constructor body (PerformanceMonitor removed)
   }
 
   /**
@@ -582,44 +581,3 @@ export class ResourceOptimizer {
   }
 }
 
-/**
- * パフォーマンス監視補助クラス
- */
-class PerformanceMonitor {
-  private metrics: Map<string, number[]> = new Map();
-
-  recordMetric(name: string, value: number): void {
-    if (!this.metrics.has(name)) {
-      this.metrics.set(name, []);
-    }
-    const values = this.metrics.get(name)!;
-    values.push(value);
-    
-    // 最新100件のみ保持
-    if (values.length > 100) {
-      values.shift();
-    }
-  }
-
-  getAverage(name: string): number {
-    const values = this.metrics.get(name);
-    if (!values || values.length === 0) return 0;
-    
-    const sum = values.reduce((a, b) => a + b, 0);
-    return sum / values.length;
-  }
-
-  getTrend(name: string): 'increasing' | 'stable' | 'decreasing' {
-    const values = this.metrics.get(name);
-    if (!values || values.length < 3) return 'stable';
-    
-    const recent = values.slice(-3);
-    const increasing = recent[2] > recent[0];
-    const decreasing = recent[2] < recent[0];
-    const threshold = recent[0] * 0.1; // 10%の変化を閾値とする
-    
-    if (increasing && (recent[2] - recent[0]) > threshold) return 'increasing';
-    if (decreasing && (recent[0] - recent[2]) > threshold) return 'decreasing';
-    return 'stable';
-  }
-}

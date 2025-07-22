@@ -5,7 +5,6 @@ metadata:
   lastUpdated: "2025-07-21T17:52:05Z"
   dataSource: "consolidated from individual JSON files + performance monitoring"
   username: "test_user"
-  performanceMonitoring: true
 
 # アカウントメトリクス履歴（時系列）
 accountHistory:
@@ -97,16 +96,10 @@ analytics:
     content_effectiveness: "moderate"
     community_engagement: "active"
 
-# パフォーマンスメトリクス履歴（時系列）
-performanceHistory:
-  # パフォーマンス・モニタリング・データはここに蓄積されます
-  # PerformanceMonitor.endSession()によって自動的に追加されます
-
 # 履歴管理設定
 configuration:
   retention_policy:
     max_entries_per_category: 100
-    max_performance_entries: 1000
     archive_threshold: "30_days"
     data_compression: true
   
@@ -114,31 +107,8 @@ configuration:
     account_metrics: "daily"
     follower_analysis: "daily" 
     post_metrics: "real_time"
-    performance_metrics: "per_session"
   
   data_validation:
     consistency_checks: true
     correlation_validation: true
     anomaly_detection: true
-    performance_monitoring: true
-
-# パフォーマンス・モニタリング設定
-performanceConfiguration:
-  anomaly_detection:
-    execution_time_threshold: 1.5  # 基準の1.5倍で異常
-    memory_threshold: 1.8         # 基準の1.8倍で異常
-    quality_threshold: 0.7        # 基準の70%以下で異常
-  
-  optimization_thresholds:
-    execution_time_warning: 30000  # 30秒以上で警告
-    memory_warning: 200           # 200MB以上で警告
-    quality_minimum: 7.0          # 品質スコア7.0以下で警告
-    browser_count_maximum: 3      # ブラウザ3個以上で警告
-  
-  dashboard_settings:
-    default_history_count: 20
-    trend_analysis_period: 10
-    health_score_weights:
-      anomaly_impact: 0.4
-      trend_impact: 0.3
-      quality_impact: 0.3

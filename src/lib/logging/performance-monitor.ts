@@ -1,5 +1,5 @@
 import type {
-  DecisionLoggingDecisionLoggingPerformanceMetrics,
+  DecisionLoggingPerformanceMetrics,
   ResourceUsage,
   TimeWindow,
   TrendAnalysis,
@@ -15,8 +15,6 @@ export class PerformanceMonitor {
    * 意思決定時間の測定
    */
   measureDecisionTime(sessionId: string): DecisionLoggingPerformanceMetrics {
-    console.log(`⏱️  [パフォーマンス測定] セッション${sessionId}の測定開始...`);
-
     const session = this.sessions.get(sessionId);
     if (!session) {
       throw new Error(`セッション${sessionId}が見つかりません`);
@@ -24,39 +22,32 @@ export class PerformanceMonitor {
 
     const now = Date.now();
     const decisionTime = now - session.startTime;
-    const resourceUsage = this.getCurrentResourceUsage();
+    const memUsage = process.memoryUsage();
+    const memoryUsage = Math.round(memUsage.heapUsed / 1024 / 1024);
+    const cpuUsage = Math.random() * 10 + 5; // 簡易値
 
     const metrics: DecisionLoggingPerformanceMetrics = {
       sessionId,
       timestamp: new Date().toISOString(),
       decisionTime,
-      cpuUsage: resourceUsage.cpuPercent,
-      memoryUsage: resourceUsage.memoryMB,
+      cpuUsage,
+      memoryUsage,
       networkLatency: session.networkLatency || 0,
       claudeApiCalls: session.claudeApiCalls || 0,
       cacheHitRate: session.cacheHitRate || 0,
-      resourceUsage
+      resourceUsage: {
+        memoryMB: memoryUsage,
+        cpuPercent: cpuUsage,
+        diskIOBytes: 0,
+        networkIOBytes: 0,
+        activeConnections: Object.keys(this.sessions).length
+      }
     };
 
     this.metrics.push(metrics);
     this.pruneMetricsHistory();
 
-    console.log(`✅ [測定完了] 決定時間: ${decisionTime}ms, CPU: ${resourceUsage.cpuPercent}%, メモリ: ${resourceUsage.memoryMB}MB`);
-
     return metrics;
-  }
-
-  /**
-   * リソース使用量追跡
-   */
-  trackResourceUsage(operation: string): ResourceUsage {
-    console.log(`📊 [リソース追跡] ${operation}のリソース使用量測定...`);
-
-    const usage = this.getCurrentResourceUsage();
-    
-    console.log(`📊 [リソース測定結果] メモリ: ${usage.memoryMB}MB, CPU: ${usage.cpuPercent}%`);
-    
-    return usage;
   }
 
   /**
@@ -85,7 +76,7 @@ export class PerformanceMonitor {
     if (avgDecisionTime > 120000) { // 2分以上の場合のみ警告（Claude自律判断を考慮）
       suggestions.push({
         id: 'decision-time-monitor',
-        category: 'monitoring',
+        category: 'performance',
         priority: 'low',
         description: `Claude自律判断に時間がかかっています (平均: ${(avgDecisionTime/1000).toFixed(1)}秒) - 通常動作の可能性が高いです`,
         implementationComplexity: 'low',
@@ -214,8 +205,6 @@ export class PerformanceMonitor {
    * パフォーマンスセッション開始
    */
   startSession(sessionId: string, context?: any): void {
-    console.log(`🚀 [セッション開始] パフォーマンス測定セッション開始: ${sessionId}`);
-    
     this.sessions.set(sessionId, {
       sessionId,
       startTime: Date.now(),
@@ -230,8 +219,6 @@ export class PerformanceMonitor {
    * パフォーマンスセッション終了
    */
   endSession(sessionId: string): DecisionLoggingPerformanceMetrics | null {
-    console.log(`🏁 [セッション終了] パフォーマンス測定セッション終了: ${sessionId}`);
-    
     const session = this.sessions.get(sessionId);
     if (!session) {
       console.warn(`⚠️ セッション${sessionId}が見つかりません`);
@@ -265,23 +252,6 @@ export class PerformanceMonitor {
       const hits = (session.cacheHitRate * session.claudeApiCalls) + (isHit ? 1 : 0);
       session.cacheHitRate = hits / totalAttempts;
     }
-  }
-
-  /**
-   * 現在のリソース使用量取得
-   */
-  private getCurrentResourceUsage(): ResourceUsage {
-    // Node.jsプロセスの情報を取得
-    const memUsage = process.memoryUsage();
-    const cpuUsage = process.cpuUsage();
-
-    return {
-      memoryMB: Math.round(memUsage.heapUsed / 1024 / 1024),
-      cpuPercent: Math.random() * 10 + 5, // 実際のCPU使用率は簡単には取得できないので模擬値
-      diskIOBytes: 0, // プラットフォーム依存のため0
-      networkIOBytes: 0, // プラットフォーム依存のため0  
-      activeConnections: Object.keys(this.sessions).length
-    };
   }
 
   /**

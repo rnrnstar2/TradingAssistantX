@@ -48,6 +48,12 @@ export interface ActionParams {
   hashtags?: string[];
   contentType?: string;  // 投稿のコンテンツタイプ（例：educational, engaging, beginner_friendly）
   
+  // 引用ツイート用
+  quoteContent?: string;    // 引用ツイート時のコメント内容
+  
+  // リプライ用
+  replyContent?: string;    // リプライ時の返信内容
+  
   // 共通フィールド
   riskLevel?: string;       // リスクレベル（low, medium, high）
   timeOfDay?: number;       // 投稿時刻（時間）
@@ -74,6 +80,9 @@ export interface ActionDistribution {
   remaining: number;
   optimal_distribution: {
     original_post: number;
+    quote_tweet?: number;
+    retweet?: number;
+    reply?: number;
   };
   timing_recommendations: TimingRecommendation[];
 }

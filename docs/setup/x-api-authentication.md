@@ -1,28 +1,29 @@
-# X API認証設定ガイド
+# X (Twitter) API Authentication Setup
 
-このガイドでは、TradingAssistantXでX（Twitter）APIを使用するための認証設定方法を説明します。
+## Overview
 
-## 🚨 重要な更新情報 (2025年)
+TradingAssistantXはOAuth 1.0aを使用してX APIに接続します。OAuth 1.0aは安定した認証プロトコルで、Xの投稿API（v1.1）に最適な認証方式です。
 
-**2025年3月31日**: X API v1.1メディアエンドポイント廃止予定  
-**現在推奨**: OAuth 2.0 Authorization Code Flow with PKCE  
-**投稿機能**: User Context認証が必須
+## Prerequisites
 
-## 🔑 認証方法の選択
+- X Developer Account
+- Approved X App with Read/Write permissions
+- Node.js環境（TradingAssistantX実行用）
 
-X APIには以下の認証方法があります：
+## OAuth 1.0a について
 
-### OAuth 2.0 with PKCE
-- **利点**: 最新のセキュリティ標準、投稿機能フル対応
-- **用途**: ツイート投稿、リード、User Context操作
-- **必要スコープ**: `tweet.write`, `users.read`, `offline.access`
-- **必要な情報**: Client ID, Client Secret, Access Token, Refresh Token
+OAuth 1.0aは署名ベースの認証プロトコルです。主な特徴：
 
+- **署名認証**: リクエストごとに署名を生成して認証
+- **トークンベース**: Consumer Key/Secret と Access Token/Secret の組み合わせ
+- **安定性**: 長期利用に適した安定したプロトコル
+- **X API v1.1対応**: 投稿機能に最適
 
-## 📋 設定手順
+## Setup Steps
 
-### Step 1: X Developer Portalでのアプリ作成
+### 1. X Developer Portal Configuration
 
+#### アプリケーション作成
 1. [X Developer Portal](https://developer.x.com/en/portal/dashboard) にアクセス
 2. 「Create Project」をクリック（プロジェクト > アプリの順で作成）
 3. プロジェクト名を設定（例：TradingAssistantX-Project）
@@ -30,210 +31,261 @@ X APIには以下の認証方法があります：
 5. アプリケーション用途を選択
 6. 利用規約に同意してアプリを作成
 
-### Step 2: OAuth 2.0 with PKCE設定
+#### Consumer Key/Secret取得
+1. 作成したアプリの「Keys and Tokens」タブに移動
+2. **Consumer Keys**セクションで以下を取得：
+   - **API Key (Consumer Key)**: アプリケーションを識別
+   - **API Key Secret (Consumer Secret)**: アプリケーション認証用シークレット
 
-#### OAuth 2.0アプリタイプの設定
-1. 作成したアプリの「Settings」タブに移動
-2. 「App info」セクションで「Edit」をクリック
-3. **App type**: 「Web App」を選択
-4. **Callback URI**: `https://your-app.com/callback` を設定
-5. **Website URL**: アプリのWebサイトURLを設定
+#### Access Token/Secret生成
+1. 同じ「Keys and Tokens」タブの**Authentication Tokens**セクションで：
+2. 「Generate」をクリックしてAccess Token/Secret を生成
+3. 以下の情報を記録：
+   - **Access Token**: ユーザー認証トークン
+   - **Access Token Secret**: ユーザー認証シークレット
 
-#### OAuth 2.0認証情報の取得
-1. 「Keys and Tokens」タブに移動
-2. **OAuth 2.0 Client ID and Client Secret**セクションで：
-   - **Client ID**を記録
-   - **Client Secret**を生成・記録
+#### アプリ権限設定
+1. 「Settings」タブに移動
+2. 「App permissions」セクションで「Edit」をクリック  
+3. **Read and Write**を選択（投稿機能に必要）
+4. 必要に応じて**Direct Messages**も選択
+5. 変更を保存
 
-#### 必要スコープの設定
-アプリに以下のスコープを設定：
-- `tweet.write` - ツイート投稿
-- `users.read` - ユーザー情報読み取り  
-- `offline.access` - リフレッシュトークン取得
-
-#### User Context認証フローの実装
-投稿機能には**User Context**でのアクセストークンが必要：
-1. Authorization Code Flow with PKCEを実装
-2. ユーザー承認後にアクセストークン・リフレッシュトークンを取得
-3. リフレッシュトークンでアクセストークンを定期更新
-
-
-### Step 3: OAuth 2.0認証フローの実行
-
-#### 🚀 認証ヘルパーでの自動セットアップ（推奨）
-
-1. **基本環境変数の設定**
-```bash
-# X Developer Portalから取得した情報を設定
-export X_OAUTH2_CLIENT_ID=your_client_id_here
-export X_OAUTH2_CLIENT_SECRET=your_client_secret_here
-export X_OAUTH2_REDIRECT_URI=https://your-app.com/callback
-export X_OAUTH2_SCOPES="tweet.write users.read offline.access"
-```
-
-2. **認証ヘルパーの実行**
-```bash
-# OAuth 2.0認証フローを自動実行
-npx tsx src/scripts/oauth2-auth-helper.ts
-```
-
-3. **ブラウザでの認証**
-   - 表示されたURLをブラウザで開く
-   - Xアカウントでログイン・認証
-   - リダイレクトURLからauthorization codeを取得
-   - ヘルパーにcodeを入力
-
-4. **自動トークン保存**
-   - Access Token・Refresh Tokenが `data/oauth2-tokens.yaml` に保存
-   - 以降は自動でトークン管理される
-
-#### 📋 手動設定（上級者向け）
+### 2. Environment Variables
 
 以下の環境変数を設定してください：
 
-#### OAuth 2.0認証設定
 ```bash
-# X API OAuth 2.0認証設定（2025年推奨方式）
-X_OAUTH2_CLIENT_ID=your_client_id_here
-X_OAUTH2_CLIENT_SECRET=your_client_secret_here
+# X (Twitter) OAuth 1.0a Credentials
+X_CONSUMER_KEY=your_consumer_key_here
+X_CONSUMER_SECRET=your_consumer_secret_here
+X_ACCESS_TOKEN=your_access_token_here
+X_ACCESS_TOKEN_SECRET=your_access_token_secret_here
 
-# OAuth 2.0フロー設定
-X_OAUTH2_REDIRECT_URI=https://your-app.com/callback
-X_OAUTH2_SCOPES="tweet.write users.read offline.access"
-
-# トークン（認証ヘルパーで自動取得 または 手動設定）
-X_OAUTH2_ACCESS_TOKEN=your_user_access_token_here
-X_OAUTH2_REFRESH_TOKEN=your_refresh_token_here
-
+# Optional: Test Mode
+X_TEST_MODE=false
 ```
 
+#### 設定方法
 
-#### テストモード設定
+**方法1: .envファイル使用**
 ```bash
-# テストモード（true: 実際の投稿なし、false: 実際に投稿）
-X_TEST_MODE=true
+# プロジェクトルートに .env ファイルを作成
+cp .env.example .env
+# エディタで値を設定
+nano .env
 ```
 
-## 🔧 権限設定の確認
-
-### OAuth 2.0必要スコープ
-アプリに以下のスコープが設定されていることを確認してください：
-
-1. **tweet.write**: ツイートの投稿
-2. **users.read**: ユーザー情報の読み取り
-3. **offline.access**: リフレッシュトークンの取得
-4. **tweet.read** (オプション): ツイートの読み取り
-
-### OAuth 2.0スコープの設定方法
-1. アプリの「Settings」タブに移動
-2. 「User authentication settings」で「Set up」をクリック
-3. **App permissions**で必要なスコープを選択
-4. **Type of App**: 「Web App」を選択
-5. **Callback URI**を設定
-6. 変更を保存
-
-
-## 🚨 認証エラーのトラブルシューティング
-
-### 403エラー：OAuth 2.0認証失敗
-
-#### 症状
-```
-Error: Request failed with status code 403
-Forbidden
-```
-
-#### OAuth 2.0での解決方法
-1. **User Context認証の確認**
-   - 投稿機能にはUser Contextでの認証が必須
-   - App-only認証では投稿不可
-
-2. **スコープの再確認**
-   - `tweet.write`スコープが設定されているか確認
-   - `users.read`と`offline.access`も必要
-
-3. **アクセストークンの確認**
-   - User認証フローで取得したアクセストークンを使用
-   - App-onlyのBearer Tokenは投稿に使用不可
-
-4. **環境変数の確認**
+**方法2: 環境変数で直接設定**
 ```bash
-# OAuth 2.0環境変数の確認
-echo $X_OAUTH2_CLIENT_ID
-echo $X_OAUTH2_CLIENT_SECRET
-echo $X_OAUTH2_ACCESS_TOKEN
-echo $X_OAUTH2_REFRESH_TOKEN
+export X_CONSUMER_KEY=your_consumer_key_here
+export X_CONSUMER_SECRET=your_consumer_secret_here
+export X_ACCESS_TOKEN=your_access_token_here
+export X_ACCESS_TOKEN_SECRET=your_access_token_secret_here
 ```
 
+### 3. Quick Setup
 
-### 共通の確認事項
-1. **テストモードでの確認**
-   - まず `X_TEST_MODE=true` で動作確認
-   - 問題がなければ `false` に変更
+OAuth 1.0a認証設定の簡単セットアップには、以下のヘルパースクリプトを使用できます：
 
-2. **API使用量の確認**
-   - レート制限に達していないか確認
-   - Developer Portalで使用量を監視
-
-## 🧪 動作確認
-
-### OAuth 2.0認証テスト
-
-#### ステップ1: 認証設定の確認
+#### セットアップヘルパーの実行
 ```bash
-# 認証ヘルパーで認証テストを実行
-npx tsx src/scripts/oauth2-auth-helper.ts
+# OAuth 1.0a設定ヘルパーを実行
+npx tsx src/scripts/oauth1-setup-helper.ts
 ```
 
-#### ステップ2: テスト投稿の実行
+このスクリプトは以下を行います：
+1. 環境変数の確認と検証
+2. OAuth 1.0a署名の生成テスト  
+3. X API への接続テスト
+4. 認証情報の保存（オプション）
+
+#### セットアップ出力例
+```
+🔧 OAuth 1.0a Setup Helper
+📋 環境変数チェック中...
+✅ Consumer Key: 設定済み
+✅ Consumer Secret: 設定済み  
+✅ Access Token: 設定済み
+✅ Access Token Secret: 設定済み
+
+🔐 OAuth 1.0a署名テスト...
+✅ 署名生成: 成功
+
+🌐 X API接続テスト...
+✅ API接続: 成功
+👤 認証ユーザー: @your_username
+
+🎉 OAuth 1.0a設定完了！
+```
+
+### 4. Testing Your Configuration
+
+認証設定をテストするには、接続テストスクリプトを使用します：
+
 ```bash
-# テストモードで実行（実際の投稿なし）
-X_TEST_MODE=true pnpm dev
-
-# 実際の投稿テスト（注意：実際に投稿されます）
-X_TEST_MODE=false pnpm dev
+# OAuth 1.0a接続テスト
+npx tsx src/scripts/oauth1-test-connection.ts
 ```
 
+#### テスト内容
+1. **環境変数検証**: 必要な認証情報の存在確認
+2. **署名生成テスト**: OAuth 1.0a署名の正確性確認
+3. **API接続テスト**: 実際のX APIへの接続確認
+4. **ユーザー情報取得**: 認証ユーザーの情報取得テスト
 
-### 正常な出力例
+#### 成功時の出力
 ```
-✅ [投稿完了] 投稿が成功しました
-🔗 [投稿結果]: { success: true, ... }
-```
+🧪 OAuth 1.0a Connection Test
+✅ 環境変数: 全て設定済み
+✅ OAuth署名: 生成成功
+✅ API接続: 成功
+👤 ユーザー: @your_username (User ID: 123456789)
+🔐 認証スコープ: read, write
 
-### OAuth 2.0特有の出力例
-```
-🔄 Access token expired, refreshing...
-✅ OAuth 2.0認証完了！
-📁 トークンが data/oauth2-tokens.yaml に保存されました
-```
-
-### エラー時の出力例
-```
-❌ [投稿失敗] 投稿に失敗しました  
-🔗 [投稿結果]: { success: false, error: "..." }
+✨ OAuth 1.0a認証設定完了！
 ```
 
-## 🔐 セキュリティのベストプラクティス
+## Troubleshooting
 
-### 環境変数の管理
+### よくあるエラーと解決策
+
+#### 401 Unauthorized
+**症状**: 
+```
+Error: 401 Unauthorized - Invalid or expired token
+```
+
+**解決策**:
+1. **環境変数の確認**:
+   ```bash
+   echo "Consumer Key: $X_CONSUMER_KEY"
+   echo "Consumer Secret: $X_CONSUMER_SECRET"  
+   echo "Access Token: $X_ACCESS_TOKEN"
+   echo "Access Token Secret: $X_ACCESS_TOKEN_SECRET"
+   ```
+
+2. **認証情報の再生成**:
+   - X Developer Portalで新しいAccess Token/Secretを生成
+   - 古いトークンを無効化
+   - 環境変数を更新
+
+3. **アプリ権限の確認**:
+   - 「Read and Write」権限が設定されているか確認
+   - 権限変更後は新しいAccess Tokenが必要
+
+#### 403 Forbidden
+**症状**:
+```
+Error: 403 Forbidden - Read-only application cannot POST
+```
+
+**解決策**:
+1. **権限設定の確認**:
+   - アプリ設定で「Read and Write」が選択されているか確認
+   - 権限変更後は**必ずAccess Token/Secretを再生成**
+
+2. **新しいトークン生成**:
+   ```bash
+   # 権限変更後は必ずトークンを再生成
+   # X Developer Portal > Keys and Tokens > Regenerate
+   ```
+
+#### 署名エラー (Invalid signature)
+**症状**:
+```
+Error: Invalid signature - OAuth signature verification failed
+```
+
+**解決策**:
+1. **システム時刻の確認**:
+   ```bash
+   # システム時刻が正確か確認
+   date
+   # 必要に応じて時刻同期
+   sudo sntp -sS time.apple.com  # macOS
+   ```
+
+2. **認証情報の文字エンコーディング**:
+   - 認証情報にスペース・改行が含まれていないか確認
+   - 特殊文字が正しくエンコードされているか確認
+
+3. **環境変数の再設定**:
+   ```bash
+   # 認証情報をクリーンに再設定
+   unset X_CONSUMER_KEY X_CONSUMER_SECRET X_ACCESS_TOKEN X_ACCESS_TOKEN_SECRET
+   # 再設定
+   source .env
+   ```
+
+### 診断ツールの使用方法
+
+#### 詳細診断の実行
+```bash
+# 詳細診断ツールを実行（デバッグ情報付き）
+DEBUG=oauth1a npx tsx src/scripts/oauth1-test-connection.ts
+```
+
+#### ログ出力での確認
+```bash
+# 認証プロセスの詳細ログを確認
+X_DEBUG=true npx tsx src/scripts/oauth1-setup-helper.ts
+```
+
+#### 手動署名検証
+```bash
+# OAuth 1.0a署名を手動で検証
+npx tsx -e "
+const crypto = require('crypto');
+const params = {
+  oauth_consumer_key: process.env.X_CONSUMER_KEY,
+  oauth_token: process.env.X_ACCESS_TOKEN,
+  oauth_signature_method: 'HMAC-SHA1',
+  oauth_timestamp: Math.floor(Date.now() / 1000),
+  oauth_nonce: crypto.randomBytes(16).toString('hex'),
+  oauth_version: '1.0'
+};
+console.log('OAuth Parameters:', params);
+"
+```
+
+## Security Notes
+
+### 認証情報の保護
 - **絶対にコードに直接書き込まない**
-- `.env` ファイルを使用し、`.gitignore` に追加
+- `.env` ファイルは `.gitignore` に追加済みか確認
 - 本番環境では環境変数またはシークレット管理サービスを使用
 
-### トークンの保護
-- Access Tokenは定期的に再生成
-- 不要な権限は設定しない
-- テスト環境と本番環境でトークンを分ける
+### アクセス制限
+- 必要最小限の権限のみ設定
+- 開発・テスト・本番環境で異なる認証情報を使用
+- 定期的な認証情報のローテーション
 
-## 📞 サポート
+### 監視とログ
+- API使用量の定期監視
+- 異常なアクセスパターンの検知
+- エラーログの適切な記録（認証情報は除く）
 
-### 問題が解決しない場合
-1. Developer Portal のアプリ設定を再確認
-2. API使用量の制限に達していないか確認
-3. X APIの[公式ドキュメント](https://developer.twitter.com/en/docs)を参照
-4. システム管理者またはチームメンバーに相談
+## Support
+
+### 設定に問題がある場合
+
+1. **診断スクリプトの実行**:
+   ```bash
+   npx tsx src/scripts/oauth1-test-connection.ts
+   ```
+
+2. **X API Status の確認**:
+   - [X API Status](https://api.twitterstat.us/) でサービス状況を確認
+
+3. **Developer Portal の確認**:
+   - アプリの設定と制限状況を確認
+   - API使用量の監視
+
+4. **コミュニティサポート**:
+   - [X Developer Community](https://twittercommunity.com/) で質問
+   - X APIの[公式ドキュメント](https://developer.twitter.com/en/docs/twitter-api/v1) を参照
 
 ---
 
-**重要**: API認証情報は機密情報です。適切に管理し、第三者と共有しないでください。
+**重要**: OAuth 1.0a認証情報は機密情報です。適切に管理し、第三者と共有しないでください。

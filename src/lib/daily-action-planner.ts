@@ -30,11 +30,11 @@ export class DailyActionPlanner {
   private realtimeDetector: RealtimeDetector;
   private claudeAgent: ClaudeAutonomousAgent;
   
-  constructor() {
+  constructor(claudeAgent?: ClaudeAutonomousAgent) {
     this.realtimeDetector = new RealtimeDetector();
-    this.claudeAgent = new ClaudeAutonomousAgent();
+    this.claudeAgent = claudeAgent || new ClaudeAutonomousAgent();
     this.ensureDataDirectory();
-    console.log('🧠 [自律化プランナー] 固定制約除去、Claude完全自律システム初期化完了');
+    console.log('🧠 [DailyActionPlanner] 初期化完了');
   }
   
   private ensureDataDirectory(): void {
@@ -64,7 +64,7 @@ export class DailyActionPlanner {
     const distribution = {
       remaining,
       optimal_distribution: await this.calculateAutonomousDistribution(remaining),
-      timing_recommendations: await this.getAutonomousTimingRecommendations(remaining)
+      timing_recommendations: await this.getTimingRecommendations(remaining)
     };
     
     console.log('✅ [Claude自律配分完了]', {
@@ -97,13 +97,21 @@ export class DailyActionPlanner {
       availableActionTypes: ['original_post', 'quote_tweet', 'retweet', 'reply']
     });
     
+    // original_postが必須プロパティであることを保証
+    const safeDistribution = {
+      original_post: autonomousDistribution.original_post || 0,
+      quote_tweet: autonomousDistribution.quote_tweet || 0,
+      retweet: autonomousDistribution.retweet || 0,
+      reply: autonomousDistribution.reply || 0
+    };
+    
     console.log('✅ [Claude自律配分完了]', {
       total: remaining,
-      distribution: autonomousDistribution,
+      distribution: safeDistribution,
       strategy: 'Claude完全自律判断'
     });
     
-    return autonomousDistribution;
+    return safeDistribution;
   }
   
   
@@ -209,7 +217,7 @@ export class DailyActionPlanner {
     
     for (let i = 0; i < slotsToUse; i++) {
       const slot = selectedSlots[i];
-      const actionType: ActionType = 'original_post'; // 常にoriginal_postのみ
+      const actionType: ActionType = 'original_post' as ActionType; // TypeScript型アサーション
       const priority = this.calculateSlotPriority(slot, actionType);
       
       recommendations.push({
@@ -340,17 +348,18 @@ export class DailyActionPlanner {
       
       // 目標達成チェック（成功したアクション数で判定）
       const successCount = todaysLog.executedActions.filter(action => action.success).length;
-      todaysLog.targetReached = successCount >= this.DAILY_TARGET;
+      const autonomousTarget = await this.getAutonomousTarget();
+      todaysLog.targetReached = successCount >= autonomousTarget;
       
       // 最新30日分のみ保持
       logData = logData.slice(-30);
       
       writeFileSync(this.logFile, yaml.dump(logData, { indent: 2 }));
       
-      console.log(`✅ [アクション記録完了] ${actionResult.type} (${actionResult.success ? '成功' : '失敗'}) - 本日成功${successCount}/${this.DAILY_TARGET}回 (実行済み: ${todaysLog.executedActions.length}回)`);
+      console.log(`✅ [アクション記録完了] ${actionResult.type} (${actionResult.success ? '成功' : '失敗'}) - 本日成功${successCount}/${autonomousTarget}回 (実行済み: ${todaysLog.executedActions.length}回)`);
       
       if (todaysLog.targetReached) {
-        console.log('🎯 [目標達成] 本日の投稿目標15回に到達しました！');
+        console.log(`🎯 [目標達成] 本日の投稿目標${autonomousTarget}回に到達しました！`);
       }
     } catch (error) {
       console.error('❌ [アクション記録エラー]:', error);
@@ -362,7 +371,10 @@ export class DailyActionPlanner {
     return {
       remaining: 0,
       optimal_distribution: {
-        original_post: 0
+        original_post: 0,
+        quote_tweet: 0,
+        retweet: 0,
+        reply: 0
       },
       timing_recommendations: []
     };
@@ -370,8 +382,6 @@ export class DailyActionPlanner {
   
   // 統計情報の取得
   async getActionStats(days: number = 7): Promise<any> {
-    console.log(`📊 [統計取得] 過去${days}日間のアクション統計を生成中...`);
-    
     try {
       if (!existsSync(this.logFile)) {
         return this.getEmptyStats();
@@ -413,12 +423,6 @@ export class DailyActionPlanner {
           });
         });
       }
-      
-      console.log('📊 [統計取得完了]', {
-        period: stats.period,
-        avgActions: Math.round(stats.averageActionsPerDay * 10) / 10,
-        achievementRate: Math.round(stats.targetAchievementRate * 10) / 10 + '%'
-      });
       
       return stats;
     } catch (error) {
@@ -575,7 +579,8 @@ export class DailyActionPlanner {
       return {
         ...distribution,
         optimal_distribution: {
-          original_post: Math.min(distribution.remaining + 2, this.DAILY_TARGET) // 最大2回追加
+          ...distribution.optimal_distribution,
+          original_post: Math.min((distribution.optimal_distribution.original_post || 0) + 2, 15) // 最大2回追加（デフォルト15回）
         },
         timing_recommendations: this.getHighVolatilityTiming(distribution.timing_recommendations)
       };

@@ -86,14 +86,7 @@ export class MemoryOptimizer {
    */
   private forceGarbageCollection(): void {
     if (global.gc) {
-      const beforeGC = process.memoryUsage().heapUsed;
       global.gc();
-      const afterGC = process.memoryUsage().heapUsed;
-      const freed = beforeGC - afterGC;
-      
-      if (freed > 1024 * 1024) { // 1MB以上解放された場合のみログ
-        logger.info(`GC実行: ${Math.round(freed / 1024 / 1024)}MB解放`);
-      }
     }
   }
 
@@ -104,8 +97,6 @@ export class MemoryOptimizer {
     const heapUsedMB = Math.round(usage.heapUsed / 1024 / 1024);
     
     if (heapUsedMB > 100) { // 100MB超過
-      logger.warn(`メモリ使用量高: ${heapUsedMB}MB`);
-      
       // 緊急クリーンアップ
       if (heapUsedMB > 150) {
         this.emergencyCleanup();
@@ -117,18 +108,13 @@ export class MemoryOptimizer {
    * 緊急クリーンアップ
    */
   private emergencyCleanup(): void {
-    logger.warn('緊急メモリクリーンアップ開始');
-    
     // キャッシュ全削除
-    const cacheSize = this.cache.size;
     this.cache.clear();
     
     // 強制GC
     if (global.gc) {
       global.gc();
     }
-    
-    logger.warn(`緊急クリーンアップ完了: ${cacheSize}件のキャッシュ削除`);
   }
 
   /**

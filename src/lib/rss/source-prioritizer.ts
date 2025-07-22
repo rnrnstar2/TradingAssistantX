@@ -3,7 +3,7 @@ import {
   PriorityWeight,
   PrioritizedSource,
   PriorityAdjustment,
-  PerformanceMetrics,
+  RSSPerformanceMetrics,
   MarketCondition,
   EmergencyPriorityConfig,
   InformationValue,
@@ -18,7 +18,7 @@ import {
 export class SourcePrioritizer {
   private priorityWeights: Map<string, PriorityWeight> = new Map();
   private claudeAnalyzer: ClaudeSourceAnalyzer;
-  private learningHistory: Map<string, PerformanceMetrics[]> = new Map();
+  private learningHistory: Map<string, RSSPerformanceMetrics[]> = new Map();
   private emergencyConfig: EmergencyPriorityConfig | null = null;
 
   constructor() {
@@ -58,7 +58,7 @@ export class SourcePrioritizer {
 
   async adjustPriorityDynamically(
     source: RssSource,
-    recentPerformance: PerformanceMetrics
+    recentPerformance: RSSPerformanceMetrics
   ): Promise<PriorityAdjustment> {
     const currentWeight = this.priorityWeights.get(source.id);
     const oldPriority = source.priority;
@@ -264,7 +264,7 @@ export class SourcePrioritizer {
     );
   }
 
-  private calculatePerformanceFactor(metrics: PerformanceMetrics): number {
+  private calculatePerformanceFactor(metrics: RSSPerformanceMetrics): number {
     // Factor based on recent performance (success rate and response time)
     const successFactor = metrics.successRate;
     const speedFactor = Math.max(0, 1 - (metrics.averageResponseTime / 10000)); // Penalize slow sources
@@ -284,7 +284,7 @@ export class SourcePrioritizer {
     return 0.8;                           // 20% penalty for very old
   }
 
-  private calculateReliabilityFactor(metrics: PerformanceMetrics): number {
+  private calculateReliabilityFactor(metrics: RSSPerformanceMetrics): number {
     const errorRate = metrics.errorHistory.length / 100; // Assume last 100 attempts
     return Math.max(0.5, 1 - errorRate);
   }
@@ -369,7 +369,7 @@ export class SourcePrioritizer {
     return weights?.sourceReliability || 0.7; // Default credibility
   }
 
-  private calculateMetricsFromResult(result: CollectionResult): PerformanceMetrics {
+  private calculateMetricsFromResult(result: CollectionResult): RSSPerformanceMetrics {
     return {
       averageResponseTime: result.processingTime,
       successRate: result.status === 'success' ? 1.0 : 0.0,
@@ -386,7 +386,7 @@ export class SourcePrioritizer {
     return null;
   }
 
-  private shouldAdjustPriority(metrics: PerformanceMetrics, source: RssSource): boolean {
+  private shouldAdjustPriority(metrics: RSSPerformanceMetrics, source: RssSource): boolean {
     // Adjust if significant performance change
     return metrics.successRate < 0.7 || 
            metrics.averageResponseTime > 10000 || 

@@ -1,17 +1,9 @@
 // コンテンツ収束エンジン型定義
 
-// 基本データ構造
-export interface CollectionResult {
-  id: string;
-  content: string;
-  url: string;
-  source: string;
-  timestamp: number;
-  category: 'market_trend' | 'economic_indicator' | 'expert_opinion' | 'breaking_news' | 'analysis';
-  importance: number; // 0-100
-  reliability: number; // 0-100
-  metadata?: Record<string, any>;
-}
+// Import collection types from common module
+import type { ConvergenceCollectionResult } from './collection-common';
+// Re-export for backward compatibility
+export { ConvergenceCollectionResult as CollectionResult } from './collection-common';
 
 // 時間的関連性
 export interface TimeRelevance {
@@ -511,7 +503,7 @@ export interface QualityReport {
 }
 
 // パフォーマンス指標
-export interface ConvergenceConvergencePerformanceMetrics {
+export interface ConvergencePerformanceMetrics {
   processingTime: number;
   memoryUsage: number;
   apiCalls: number;

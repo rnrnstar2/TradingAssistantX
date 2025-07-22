@@ -1,5 +1,5 @@
 import { claude } from '@instantlyeasy/claude-code-sdk-ts';
-import type { IntegratedContext, ExecutionData } from '../types/autonomous-system.js';
+import type { IntegratedContext } from '../types/autonomous-system.js';
 import type { ActionDecision, ActionType } from '../types/action-types.js';
 import type { DailyPlan } from '../types/rss-collection-types.js';
 import { ClaudeDecision } from './decision-processor.js';
@@ -62,7 +62,7 @@ export class AutonomousExecutorActionExecutor {
     }
 
     // アクション分布を分析
-    const actionDistribution = this.analyzeActionDistribution(optimizedDecisions, integratedContext);
+    const actionDistribution = this.analyzeActionDistribution(optimizedDecisions);
     console.log('📊 [拡張実行] アクション分布:', actionDistribution);
 
     // 優先度でソート
@@ -199,9 +199,9 @@ export class AutonomousExecutorActionExecutor {
 
 要求された内容: ${action.content || action.description || '一般的な投資教育'}
 コンテキスト: 
-- 市場状況: ${context.market?.trend || 'データなし'}
-- システム状況: ${context.system?.health || 'データなし'}
-- 投稿履歴: ${context.historical?.recentPosts?.length || 0}件
+- 市場状況: ${context.market?.trends?.length > 0 ? `${context.market.trends.length}件のトレンド` : 'データなし'}
+- アカウント健康度: ${context.account?.healthScore || 'データなし'}
+- 市場機会: ${context.market?.opportunities?.length || 0}件
 
 280文字以内で、教育的で価値のある内容を作成してください。`;
 
@@ -293,7 +293,7 @@ export class AutonomousExecutorActionExecutor {
     return reverseMap[newLevel] || 'medium';
   }
 
-  private analyzeActionDistribution(decisions: ActionDecision[], integratedContext: IntegratedContext): Record<string, number> {
+  private analyzeActionDistribution(decisions: ActionDecision[]): Record<string, number> {
     const distribution: Record<string, number> = {};
     
     decisions.forEach(decision => {
@@ -349,7 +349,7 @@ export class AutonomousExecutorActionExecutor {
       content: content.trim(),
       context: {
         timestamp: Date.now(),
-        systemHealth: (context as any).systemHealth || 'unknown'
+        systemHealth: context.account?.healthScore || 'unknown'
       },
       metadata: {
         generatedAt: new Date().toISOString(),
@@ -402,7 +402,7 @@ export class AutonomousExecutorActionExecutor {
     console.log(`📊 [分析] 分析結果を保存: ${filename}`);
   }
 
-  private generateFallbackContent(basicContext: any): string {
+  private generateFallbackContent(_basicContext: unknown): string {
     const contentTemplates = [
       '📊 投資の基本原則：リスクとリターンは比例します。\n\n高いリターンを求めるなら、相応のリスクを受け入れる覚悟が必要です。自分のリスク許容度を正しく理解することが、成功への第一歩です。\n\n#投資教育 #リスク管理',
       
