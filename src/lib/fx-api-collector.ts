@@ -49,30 +49,13 @@ export class FXAPICollector {
 
   constructor(config?: Partial<FXAPIConfig>) {
     this.config = { ...FXAPICollector.DEFAULT_CONFIG, ...config };
-    
-    // .env.local サポート追加
-    try {
-      require('dotenv').config({ path: '.env.local' });
-    } catch (error) {
-      console.warn('⚠️ [FXAPICollector] dotenv パッケージが見つかりません');
-    }
-    
-    // 環境変数から自動読み込み
-    this.config.alphaVantageKey = this.config.alphaVantageKey || process.env.ALPHA_VANTAGE_API_KEY;
-    this.config.finnhubKey = this.config.finnhubKey || process.env.FINNHUB_API_KEY; 
-    this.config.fmpKey = this.config.fmpKey || process.env.FMP_API_KEY;
-    
-    // APIキー設定状況をログ出力
-    console.log('🔑 [FXAPICollector] API認証情報読み込み:', {
-      alphaVantage: !!this.config.alphaVantageKey,
-      finnhub: !!this.config.finnhubKey,
-      fmp: !!this.config.fmpKey
-    });
-    
-    // 必須APIキーの検証
-    if (!this.config.alphaVantageKey) {
-      console.warn('⚠️ [FXAPICollector] ALPHA_VANTAGE_API_KEY が設定されていません');
-    }
+    this.loadAPIKeysFromEnv();
+  }
+
+  private loadAPIKeysFromEnv(): void {
+    this.config.alphaVantageKey = process.env.ALPHA_VANTAGE_API_KEY;
+    this.config.finnhubKey = process.env.FINNHUB_API_KEY; 
+    this.config.fmpKey = process.env.FMP_API_KEY;
   }
 
   /**
@@ -248,28 +231,6 @@ export class FXAPICollector {
       console.error('❌ [FMP取得エラー]:', error);
       return [];
     }
-  }
-
-  /**
-   * 為替レート収集メソッド（TrueAutonomousWorkflow用）
-   */
-  async collectForexRates(pairs: string[]): Promise<ForexRate[]> {
-    console.log(`📈 [FX為替収集] ${pairs.join(', ')} のレート取得中...`);
-    
-    const results: ForexRate[] = [];
-    
-    for (const pair of pairs) {
-      try {
-        const rateData = await this.fetchAlphaVantageRate(pair);
-        if (rateData) {
-          results.push(rateData);
-        }
-      } catch (error) {
-        console.warn(`⚠️ [為替レート取得失敗] ${pair}:`, (error as Error).message);
-      }
-    }
-    
-    return results;
   }
 
   // Alpha Vantage API implementations

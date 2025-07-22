@@ -1,8 +1,6 @@
 import 'dotenv/config';
-import { ClaudeControlledCollector } from '../lib/claude-controlled-collector.js';
-import { GrowthSystemManager } from '../lib/growth-system-manager.js';
+// Removed unused imports: ClaudeControlledCollector, GrowthSystemManager, XPerformanceAnalyzer
 import { PostingManager } from '../lib/posting-manager.js';
-import { XPerformanceAnalyzer } from '../lib/x-performance-analyzer.js';
 import { ExpandedActionExecutor } from '../lib/expanded-action-executor.js';
 import { DailyActionPlanner } from '../lib/daily-action-planner.js';
 import { SimpleXClient } from '../lib/x-client.js';
@@ -11,17 +9,14 @@ import type { ActionDecision, ActionResult } from '../types/action-types';
 import * as yaml from 'js-yaml';
 
 export class ParallelManager {
-  private collector: ClaudeControlledCollector;
-  private growthManager: GrowthSystemManager;
+  // Removed unused properties: collector, growthManager, performanceAnalyzer
   private postingManager: PostingManager;
-  private performanceAnalyzer: XPerformanceAnalyzer;
   private expandedActionExecutor: ExpandedActionExecutor;
   private dailyActionPlanner: DailyActionPlanner;
   private xClient: SimpleXClient;
 
   constructor(claudeAgent?: any) {
-    this.collector = new ClaudeControlledCollector();
-    this.growthManager = new GrowthSystemManager();
+    // Removed unused instance creation: collector, growthManager, performanceAnalyzer
     
     // Initialize X Client and PostingManager (OAuth 2.0) - using singleton
     this.xClient = SimpleXClient.getInstance();
@@ -31,8 +26,6 @@ export class ParallelManager {
     this.expandedActionExecutor = new ExpandedActionExecutor(this.xClient, this.postingManager);
     // ✅ ClaudeAutonomousAgentインスタンスを共有
     this.dailyActionPlanner = new DailyActionPlanner(claudeAgent);
-    
-    this.performanceAnalyzer = new XPerformanceAnalyzer();
   }
 
   async executeActions(actions: Action[]): Promise<Result[]> {

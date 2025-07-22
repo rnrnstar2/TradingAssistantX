@@ -890,4 +890,69 @@ ${params.remaining}件のタイミング推奨を生成してください。
     quality.score = score;
     return quality;
   }
+
+  /**
+   * 適応的情報収集のためのトピック決定
+   * 現在のコンテキストに基づいて最適なトピックを決定
+   */
+  async decideOptimalTopic(context: {
+    timestamp: string;
+    dayOfWeek: number;
+    hour: number;
+    recentTrends: string[];
+  }): Promise<{ title: string; theme: string }> {
+    console.log('🎯 [Claude] トピック決定を実行中...');
+    
+    const topicPrompt = `
+現在の状況に基づいて、X（Twitter）投資教育コンテンツの最適なトピックを決定してください。
+
+CONTEXT:
+- 時刻: ${context.timestamp}
+- 曜日: ${context.dayOfWeek} (0=日曜, 1=月曜...)
+- 時間: ${context.hour}時
+- 最近のトレンド: ${context.recentTrends.join(', ')}
+
+TOPIC DECISION REQUIREMENTS:
+1. **時事性**: 現在の時刻・曜日・市場状況に適した内容
+2. **教育的価値**: フォロワーにとって価値のある投資教育内容
+3. **エンゲージメント**: この時間帯に適したトピック選択
+4. **専門性**: 具体的で実践的な投資知識
+
+返答形式（JSON）:
+{
+  "title": "具体的なトピックタイトル",
+  "theme": "投資教育テーマ",
+  "reasoning": "このトピックを選んだ理由"
+}
+
+現在の状況に最適化されたトピックを決定してください。
+`;
+
+    try {
+      const response = await claude()
+        .withModel('sonnet')
+        .withTimeout(6000)
+        .query(topicPrompt)
+        .asText();
+
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const topic = JSON.parse(jsonMatch[0]);
+        console.log(`✅ [トピック決定完了]: ${topic.title}`);
+        return topic;
+      }
+      
+      return this.createFallbackTopic();
+    } catch (error) {
+      console.error('❌ [トピック決定エラー]:', error);
+      return this.createFallbackTopic();
+    }
+  }
+
+  private createFallbackTopic(): { title: string; theme: string } {
+    return {
+      title: '投資初心者のためのリスク管理基礎',
+      theme: 'investment_education'
+    };
+  }
 }
