@@ -63,21 +63,21 @@ export class AutonomousExecutor {
       this.getConfigPath()
     );
     
+    // 🧠 Initialize shared ClaudeAutonomousAgent instance first
+    const claudeAgent = new ClaudeAutonomousAgent();
+    
     this.decisionEngine = new DecisionEngine(actionSpecificCollector);
-    this.parallelManager = new ParallelManager();
+    this.parallelManager = new ParallelManager(claudeAgent);
     this.healthChecker = new HealthChecker();
     this.enhancedInfoCollector = new EnhancedInfoCollector();
     
     // Initialize event-capable config manager
     this.eventConfigManager = new ConfigManager();
     
-    // 🧠 Initialize shared ClaudeAutonomousAgent instance
-    const claudeAgent = new ClaudeAutonomousAgent();
-    
     const dailyActionPlanner = new DailyActionPlanner(claudeAgent);
     
-    // Initialize X Client and AccountAnalyzer (OAuth 2.0)
-    const xClient = new SimpleXClient();
+    // Initialize X Client and AccountAnalyzer (OAuth 2.0) - using singleton
+    const xClient = SimpleXClient.getInstance();
     const accountAnalyzer = new AccountAnalyzer(xClient);
     
     // Initialize other modular components

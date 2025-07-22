@@ -1,341 +1,205 @@
 #!/usr/bin/env node
 
 /**
- * TradingAssistantX パフォーマンス監視システム使用例
+ * TradingAssistantX パフォーマンス関連機能使用例
  * 
- * このファイルは、実装されたパフォーマンス監視システムの
+ * このファイルは、実装されたパフォーマンス関連機能の
  * 実際の使用方法を示すサンプルコードです。
  */
 
-import { PerformanceMonitor } from '../src/utils/performance-monitor.js';
-import { PerformanceDashboard } from '../src/scripts/performance-dashboard.js';
+import { PerformancePerfector } from '../src/lib/quality/performance-perfector.js';
+import { XPerformanceAnalyzer } from '../src/lib/x-performance-analyzer.js';
 
 /**
- * 例1: 基本的なパフォーマンス監視セッション
+ * 例1: システムパフォーマンス最適化
  */
-async function basicPerformanceMonitoring() {
-  console.log('📊 例1: 基本的なパフォーマンス監視');
+async function systemPerformanceOptimization() {
+  console.log('📊 例1: システムパフォーマンス最適化');
   console.log('═══════════════════════════════════════\n');
 
-  const monitor = new PerformanceMonitor();
+  const perfector = new PerformancePerfector();
   
-  // セッション開始
-  monitor.startSession();
-  console.log('✅ パフォーマンス監視セッション開始');
-
-  // 情報収集の模擬（実際のシステムではPlaywright等が実行）
-  const infoCollectionStart = Date.now();
-  await simulateInfoCollection();
-  const infoCollectionEnd = Date.now();
+  console.log('⚡ システムパフォーマンス最適化を開始...');
   
-  monitor.recordInfoCollectionTime(infoCollectionStart, infoCollectionEnd);
-  console.log(`📊 情報収集時間: ${infoCollectionEnd - infoCollectionStart}ms`);
-
-  // コンテンツ生成の模擬（実際のシステムではClaude API実行）
-  const contentGenerationStart = Date.now();
-  await simulateContentGeneration();
-  const contentGenerationEnd = Date.now();
-  
-  monitor.recordContentGenerationTime(contentGenerationStart, contentGenerationEnd);
-  console.log(`✨ コンテンツ生成時間: ${contentGenerationEnd - contentGenerationStart}ms`);
-
-  // メモリ使用量記録
-  monitor.recordMemoryUsage();
-  const memoryUsage = process.memoryUsage().heapUsed / 1024 / 1024;
-  console.log(`🧠 メモリ使用量: ${memoryUsage.toFixed(1)}MB`);
-
-  // 品質メトリクス記録（実際のシステムでは品質評価システムが算出）
-  monitor.recordQualityMetrics(8.5, 9.2, true);
-  console.log(`🎯 品質スコア: 8.5/10, 関連性: 9.2/10, 成功: true`);
-
-  // リソース使用量記録（実際のシステムではブラウザマネージャーが提供）
-  monitor.recordResourceUsage(2, 4, 15);
-  console.log(`🌐 リソース: ブラウザ2個, コンテキスト4個, ネットワーク要求15件`);
-
-  // セッション終了・メトリクス保存
-  const finalMetrics = await monitor.endSession();
-  console.log('✅ セッション終了・メトリクス保存完了');
-  console.log('📁 メトリクス保存場所: data/metrics-history.yaml\n');
-  
-  return finalMetrics;
-}
-
-/**
- * 例2: 自動最適化推奨システムの使用
- */
-async function optimizationRecommendationExample() {
-  console.log('⚡ 例2: 自動最適化推奨システム');
-  console.log('═══════════════════════════════════════\n');
-
-  const monitor = new PerformanceMonitor();
-  
-  // 最適化推奨事項の取得
-  const recommendations = await monitor.generateOptimizationRecommendations();
-  
-  console.log('🎯 システム最適化推奨事項:');
-  recommendations.forEach((rec, index) => {
-    const priorityIcon = rec.priority === 'high' ? '🔥' : rec.priority === 'medium' ? '⚡' : '💡';
-    console.log(`\n${index + 1}. ${priorityIcon} ${rec.title} (${rec.category})`);
-    console.log(`   📝 ${rec.description}`);
-    console.log(`   💡 期待効果: ${rec.expectedImprovement}`);
-    console.log(`   🔧 実装: ${rec.implementation}`);
-  });
-
-  console.log('\n');
-  return recommendations;
-}
-
-/**
- * 例3: 異常検知とアラートシステム
- */
-async function anomalyDetectionExample() {
-  console.log('🚨 例3: 異常検知とアラートシステム');
-  console.log('═══════════════════════════════════════\n');
-
-  const monitor = new PerformanceMonitor();
-  
-  // 異常検知実行
-  const anomalies = await monitor.detectAnomalies();
-  
-  if (anomalies.length === 0) {
-    console.log('✅ 異常は検出されませんでした。システムは正常に動作しています。');
-  } else {
-    console.log('⚠️  以下の異常が検出されました:');
-    anomalies.forEach((anomaly, index) => {
-      const severityIcon = getSeverityIcon(anomaly.severity);
-      console.log(`\n${index + 1}. ${severityIcon} ${anomaly.type.toUpperCase()}`);
-      console.log(`   📝 ${anomaly.description}`);
-      console.log(`   📊 現在値: ${formatAnomalyValue(anomaly.value, anomaly.type)}`);
-      console.log(`   ⚠️  閾値: ${formatAnomalyValue(anomaly.threshold, anomaly.type)}`);
-      console.log(`   🔥 重要度: ${anomaly.severity.toUpperCase()}`);
-    });
+  try {
+    // システム最適化実行
+    const result = await perfector.perfectSystemPerformance();
+    
+    console.log('✅ パフォーマンス最適化完了');
+    console.log(`📊 現在スコア: ${result.current_score}`);
+    console.log(`🎯 目標スコア: ${result.target_score}`);
+    console.log(`🏆 達成状況: ${result.achievement_status}`);
+    
+    if (result.performance_improvements) {
+      console.log('\n🔧 最適化結果:');
+      if (result.performance_improvements.cpu_optimization) {
+        console.log(`💻 CPU最適化: ${JSON.stringify(result.performance_improvements.cpu_optimization)}`);
+      }
+      if (result.performance_improvements.memory_optimization) {
+        console.log(`🧠 メモリ最適化: ${JSON.stringify(result.performance_improvements.memory_optimization)}`);
+      }
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('❌ パフォーマンス最適化エラー:', error);
+    throw error;
   }
-
-  console.log('\n');
-  return anomalies;
 }
 
 /**
- * 例4: パフォーマンストレンド分析
+ * 例2: Xアカウントパフォーマンス分析
  */
-async function performanceTrendExample() {
-  console.log('📈 例4: パフォーマンストレンド分析');
+async function xAccountAnalysisExample() {
+  console.log('⚡ 例2: Xアカウントパフォーマンス分析');
   console.log('═══════════════════════════════════════\n');
 
-  const monitor = new PerformanceMonitor();
+  const analyzer = new XPerformanceAnalyzer();
   
-  // トレンド分析実行
-  const trends = await monitor.analyzePerformanceTrends();
-  
-  if (trends.length === 0) {
-    console.log('📊 トレンド分析には更多くのデータが必要です。');
-    console.log('💡 システムを数回実行してデータを蓄積してください。');
-  } else {
-    console.log('📊 パフォーマンストレンド分析結果:');
-    trends.forEach(trend => {
-      const trendIcon = getTrendIcon(trend.trend);
-      const changeStr = trend.changePercent > 0 ? `+${trend.changePercent.toFixed(1)}%` : `${trend.changePercent.toFixed(1)}%`;
-      console.log(`${trendIcon} ${trend.metric}: ${trend.trend} (${changeStr}) - ${trend.period}`);
-    });
+  try {
+    console.log('🚀 X分析システム初期化中...');
+    await analyzer.initialize();
+    
+    // デモ用のユーザー名（実際の使用時は適切なユーザー名に変更）
+    const testUsername = 'example_user';
+    console.log(`📊 アカウント「${testUsername}」の分析を開始...`);
+    
+    // アカウントメトリクス分析（実際の実行では認証が必要）
+    console.log('💡 実際の実行にはX API認証が必要です');
+    console.log('📋 分析可能な項目:');
+    console.log('   - フォロワー数');
+    console.log('   - 投稿パフォーマンス');
+    console.log('   - エンゲージメント率');
+    console.log('   - リーチとインプレッション');
+    
+    return { status: 'demo_completed', analyzed_user: testUsername };
+    
+  } catch (error) {
+    console.error('❌ X分析エラー:', error);
+    return { status: 'error', error: error };
+  } finally {
+    await analyzer.cleanup();
+    console.log('✅ X分析システム終了\n');
   }
-
-  console.log('\n');
-  return trends;
 }
 
 /**
- * 例5: 総合パフォーマンスサマリー
+ * 例3: システムリソース監視
  */
-async function comprehensivePerformanceSummary() {
-  console.log('📋 例5: 総合パフォーマンスサマリー');
+async function systemResourceMonitoring() {
+  console.log('🚨 例3: システムリソース監視');
   console.log('═══════════════════════════════════════\n');
 
-  const monitor = new PerformanceMonitor();
+  console.log('💻 現在のシステムリソース状況:');
   
-  // 総合サマリー取得
-  const summary = await monitor.generatePerformanceSummary();
+  // メモリ使用量
+  const memoryUsage = process.memoryUsage();
+  console.log(`🧠 メモリ使用量:`);
+  console.log(`   - ヒープ使用量: ${(memoryUsage.heapUsed / 1024 / 1024).toFixed(1)}MB`);
+  console.log(`   - ヒープ総量: ${(memoryUsage.heapTotal / 1024 / 1024).toFixed(1)}MB`);
+  console.log(`   - RSS: ${(memoryUsage.rss / 1024 / 1024).toFixed(1)}MB`);
   
-  console.log('🏥 システムヘルススコア');
-  console.log(`📊 ${summary.healthScore}/100`);
+  // CPU情報
+  const cpuUsage = process.cpuUsage();
+  console.log(`\n⚡ CPU使用量:`);
+  console.log(`   - ユーザー: ${(cpuUsage.user / 1000).toFixed(1)}ms`);
+  console.log(`   - システム: ${(cpuUsage.system / 1000).toFixed(1)}ms`);
   
-  const barLength = 30;
-  const filledLength = Math.round((summary.healthScore / 100) * barLength);
-  const bar = '█'.repeat(filledLength) + '░'.repeat(barLength - filledLength);
-  console.log(`[${bar}] ${summary.healthScore}%`);
-
-  console.log('\n🎯 推奨事項数:', summary.recommendations.length);
-  console.log('🚨 検出異常数:', summary.anomalies.length);
-  console.log('📈 分析トレンド数:', summary.trends.length);
-
-  console.log('\n');
-  return summary;
+  // プロセス稼働時間
+  const uptime = process.uptime();
+  console.log(`\n⏱️  プロセス稼働時間: ${uptime.toFixed(1)}秒`);
+  
+  // リソース警告チェック
+  const heapUsedMB = memoryUsage.heapUsed / 1024 / 1024;
+  if (heapUsedMB > 100) {
+    console.log('\n⚠️  警告: メモリ使用量が100MBを超えています');
+  } else {
+    console.log('\n✅ メモリ使用量は正常範囲内です');
+  }
+  
+  return {
+    memory: memoryUsage,
+    cpu: cpuUsage,
+    uptime: uptime,
+    warnings: heapUsedMB > 100 ? ['high_memory_usage'] : []
+  };
 }
 
 /**
- * 例6: CLIダッシュボードの使用
+ * 例4: 利用可能なスクリプトの紹介
  */
-async function dashboardUsageExample() {
-  console.log('🖥️  例6: CLIダッシュボードの使用方法');
+async function availableScriptsExample() {
+  console.log('🖥️  例4: 利用可能なスクリプト');
   console.log('═══════════════════════════════════════\n');
 
-  console.log('💡 ダッシュボードコマンド例:');
+  console.log('💡 実行可能なメインスクリプト:');
   console.log('');
-  console.log('# メインダッシュボード表示');
-  console.log('node src/scripts/performance-dashboard.ts');
+  console.log('# 自律実行システム（単発）');
+  console.log('pnpm run dev');
+  console.log('# または');
+  console.log('tsx src/scripts/autonomous-runner-single.ts');
   console.log('');
-  console.log('# パフォーマンス履歴表示（最新20件）');
-  console.log('node src/scripts/performance-dashboard.ts history');
+  console.log('# OAuth1認証テスト');
+  console.log('tsx src/scripts/oauth1-test-connection.ts');
   console.log('');
-  console.log('# パフォーマンス履歴表示（最新50件）');
-  console.log('node src/scripts/performance-dashboard.ts history 50');
+  console.log('# OAuth1セットアップヘルパー');
+  console.log('tsx src/scripts/oauth1-setup-helper.ts');
   console.log('');
-  console.log('# アラート・異常検知のみ表示');
-  console.log('node src/scripts/performance-dashboard.ts alerts');
-  console.log('');
-  console.log('# 最適化推奨事項のみ表示');
-  console.log('node src/scripts/performance-dashboard.ts optimize');
-  console.log('');
-  console.log('# ヘルプ表示');
-  console.log('node src/scripts/performance-dashboard.ts help');
-  console.log('');
-
-  // 実際にダッシュボードを表示（デモ）
-  console.log('🚀 実際のダッシュボード表示:');
-  console.log('─────────────────────────────────────');
+  console.log('💡 パフォーマンス関連ファイル:');
+  console.log('   - src/lib/quality/performance-perfector.ts');
+  console.log('   - src/lib/x-performance-analyzer.ts');
+  console.log('   - src/lib/browser/performance-tuner.ts');
   
-  const dashboard = new PerformanceDashboard();
-  await dashboard.displayDashboard();
-}
-
-/**
- * 例7: 既存システムとの統合例
- */
-async function systemIntegrationExample() {
-  console.log('🔗 例7: 既存システムとの統合例');
-  console.log('═══════════════════════════════════════\n');
-
-  console.log('💡 AutonomousExecutorとの統合例:');
-  console.log('```typescript');
-  console.log('// 既存のAutonomousExecutorクラスに統合');
-  console.log('import { PerformanceMonitor } from "./utils/performance-monitor.js";');
-  console.log('');
-  console.log('export class AutonomousExecutor {');
-  console.log('  private performanceMonitor = new PerformanceMonitor();');
-  console.log('');
-  console.log('  async executeClaudeAutonomous(): Promise<Decision> {');
-  console.log('    // パフォーマンス監視開始');
-  console.log('    this.performanceMonitor.startSession();');
-  console.log('');
-  console.log('    try {');
-  console.log('      // 情報収集');
-  console.log('      const infoStart = Date.now();');
-  console.log('      const collectedInfo = await this.collectInformation();');
-  console.log('      this.performanceMonitor.recordInfoCollectionTime(infoStart, Date.now());');
-  console.log('');
-  console.log('      // コンテンツ生成');
-  console.log('      const contentStart = Date.now();');
-  console.log('      const decision = await this.generateDecision(collectedInfo);');
-  console.log('      this.performanceMonitor.recordContentGenerationTime(contentStart, Date.now());');
-  console.log('');
-  console.log('      // 品質評価');
-  console.log('      const quality = this.evaluateDecision(decision);');
-  console.log('      this.performanceMonitor.recordQualityMetrics(');
-  console.log('        quality.contentScore,');
-  console.log('        quality.informationRelevance,');
-  console.log('        quality.generationSuccess');
-  console.log('      );');
-  console.log('');
-  console.log('      // リソース記録');
-  console.log('      this.performanceMonitor.recordResourceUsage(');
-  console.log('        this.browserManager.getActiveBrowserCount(),');
-  console.log('        this.contextManager.getActiveContextsCount(),');
-  console.log('        this.networkTracker.getRequestCount()');
-  console.log('      );');
-  console.log('');
-  console.log('      return decision;');
-  console.log('');
-  console.log('    } finally {');
-  console.log('      // セッション終了・メトリクス保存');
-  console.log('      await this.performanceMonitor.endSession();');
-  console.log('    }');
-  console.log('  }');
-  console.log('}');
-  console.log('```');
-  console.log('');
+  return {
+    main_scripts: [
+      'autonomous-runner-single.ts',
+      'oauth1-test-connection.ts',
+      'oauth1-setup-helper.ts'
+    ],
+    performance_modules: [
+      'performance-perfector.ts',
+      'x-performance-analyzer.ts',
+      'performance-tuner.ts'
+    ]
+  };
 }
 
 // ヘルパー関数
-function getSeverityIcon(severity: string): string {
-  switch (severity) {
-    case 'critical': return '🔴';
-    case 'high': return '🟠';
-    case 'medium': return '🟡';
-    case 'low': return '🔵';
-    default: return '⚪';
-  }
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
-function getTrendIcon(trend: string): string {
-  switch (trend) {
-    case 'improving': return '📈';
-    case 'degrading': return '📉';
-    case 'stable': return '➡️';
-    default: return '❓';
-  }
-}
-
-function formatAnomalyValue(value: number, type: string): string {
-  switch (type) {
-    case 'execution_time':
-      return value < 1000 ? `${value}ms` : `${(value / 1000).toFixed(1)}s`;
-    case 'memory_usage':
-      return value < 1024 ? `${value.toFixed(1)}MB` : `${(value / 1024).toFixed(1)}GB`;
-    default:
-      return value.toFixed(1);
-  }
-}
-
-// 模擬関数
-async function simulateInfoCollection(): Promise<void> {
-  // 実際のシステムではPlaywrightでの情報収集
-  await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
-}
-
-async function simulateContentGeneration(): Promise<void> {
-  // 実際のシステムではClaude APIでのコンテンツ生成
-  await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 2000));
+// 待機用ヘルパー関数
+async function sleep(ms: number): Promise<void> {
+  await new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // メイン実行関数
 async function main() {
-  console.log('🚀 TradingAssistantX パフォーマンス監視システム使用例');
+  console.log('🚀 TradingAssistantX パフォーマンス関連機能使用例');
   console.log('═══════════════════════════════════════════════════════════\n');
 
   try {
     // 全ての使用例を順次実行
-    await basicPerformanceMonitoring();
-    await new Promise(resolve => setTimeout(resolve, 1000)); // 視認性のため待機
+    await systemPerformanceOptimization();
+    await sleep(1000); // 視認性のため待機
 
-    await optimizationRecommendationExample();
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await xAccountAnalysisExample();
+    await sleep(1000);
 
-    await anomalyDetectionExample();
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await systemResourceMonitoring();
+    await sleep(1000);
 
-    await performanceTrendExample();
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await availableScriptsExample();
 
-    await comprehensivePerformanceSummary();
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    await dashboardUsageExample();
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    await systemIntegrationExample();
-
-    console.log('✅ 全ての使用例実行完了！');
-    console.log('📁 メトリクスデータ: data/metrics-history.yaml');
-    console.log('🖥️  ダッシュボード: node src/scripts/performance-dashboard.ts');
+    console.log('\n✅ 全ての使用例実行完了！');
+    console.log('📊 実際のパフォーマンス最適化: PerformancePerfector');
+    console.log('📈 X分析機能: XPerformanceAnalyzer');
+    console.log('🚀 システム実行: pnpm run dev');
     
   } catch (error) {
     console.error('❌ 使用例実行エラー:', error);
@@ -349,11 +213,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export {
-  basicPerformanceMonitoring,
-  optimizationRecommendationExample,
-  anomalyDetectionExample,
-  performanceTrendExample,
-  comprehensivePerformanceSummary,
-  dashboardUsageExample,
-  systemIntegrationExample
+  systemPerformanceOptimization,
+  xAccountAnalysisExample,
+  systemResourceMonitoring,
+  availableScriptsExample
 };

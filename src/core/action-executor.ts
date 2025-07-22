@@ -20,8 +20,8 @@ export class AutonomousExecutorActionExecutor {
     this.contextManager = contextManager;
     this.dailyActionPlanner = dailyActionPlanner;
     
-    // X API クライアントを初期化 (OAuth 2.0)
-    this.xClient = new SimpleXClient();
+    // X API クライアントを初期化 (OAuth 2.0) - using singleton
+    this.xClient = SimpleXClient.getInstance();
   }
 
   async executeDecision(decision: ClaudeDecision): Promise<void> {
@@ -96,11 +96,19 @@ export class AutonomousExecutorActionExecutor {
 - 市場状況: ${basicContext.marketCondition}
 - システム健康: ${basicContext.systemHealth}
 
+MANDATORY CONTENT FORMAT REQUIREMENTS:
+- **ハッシュタグ必須**: 必ず3-5個のハッシュタグを含める（例：#投資教育 #資産運用 #投資初心者）
+- **エモジ使用**: 視覚的魅力のためエモジを効果的に使用
+- **改行構造**: 読みやすい改行とセクション分け
+- **具体例含有**: 具体的な数値や事例を含める
+- **CTA (行動喚起)**: フォロワーの行動を促す要素を含める
+
 要求:
 - 280文字以内
 - 投資教育に特化
 - エンゲージメントを促す
 - 専門的だが理解しやすい内容
+- **重要**: 必ずハッシュタグ3-5個、エモジ、改行構造、具体例、CTAを含めて魅力的な投稿を作成
 
 直接投稿内容のみを返答してください。`;
 
@@ -203,7 +211,15 @@ export class AutonomousExecutorActionExecutor {
 - アカウント健康度: ${context.account?.healthScore || 'データなし'}
 - 市場機会: ${context.market?.opportunities?.length || 0}件
 
-280文字以内で、教育的で価値のある内容を作成してください。`;
+MANDATORY CONTENT FORMAT REQUIREMENTS:
+- **ハッシュタグ必須**: 必ず3-5個のハッシュタグを含める（例：#投資教育 #資産運用 #投資初心者）
+- **エモジ使用**: 視覚的魅力のためエモジを効果的に使用
+- **改行構造**: 読みやすい改行とセクション分け
+- **具体例含有**: 具体的な数値や事例を含める
+- **CTA (行動喚起)**: フォロワーの行動を促す要素を含める
+
+280文字以内で、教育的で価値のある内容を作成してください。
+**重要**: 必ずハッシュタグ3-5個、エモジ、改行構造、具体例、CTAを含めて魅力的な投稿を作成してください。`;
 
     try {
       const content = await claude()
@@ -229,7 +245,15 @@ export class AutonomousExecutorActionExecutor {
 要求: ${action.content || action.description || '市場の重要な動向'}
 優先度: ${action.priority}
 
-280文字以内で、タイムリーで価値のある内容を作成してください。`;
+MANDATORY CONTENT FORMAT REQUIREMENTS:
+- **ハッシュタグ必須**: 必ず3-5個のハッシュタグを含める（例：#投資教育 #資産運用 #投資初心者）
+- **エモジ使用**: 視覚的魅力のためエモジを効果的に使用
+- **改行構造**: 読みやすい改行とセクション分け
+- **具体例含有**: 具体的な数値や事例を含める
+- **CTA (行動喚起)**: フォロワーの行動を促す要素を含める
+
+280文字以内で、タイムリーで価値のある内容を作成してください。
+**重要**: 必ずハッシュタグ3-5個、エモジ、改行構造、具体例、CTAを含めて魅力的な投稿を作成してください。`;
 
     try {
       const content = await claude()

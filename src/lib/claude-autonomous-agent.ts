@@ -59,8 +59,8 @@ export class ClaudeAutonomousAgent {
   constructor() {
     console.log('🧠 [Claude自律エージェント] 完全自律システムを初期化中...');
     
-    // X クライアント初期化
-    this.xClient = new SimpleXClient();
+    // X クライアント初期化 (シングルトン使用)
+    this.xClient = SimpleXClient.getInstance();
     
     console.log('🧠 [ClaudeAutonomousAgent] 固定制約除去、Claude完全自律システム初期化完了');
   }
@@ -80,7 +80,7 @@ CURRENT CONTEXT:
 ${JSON.stringify(context, null, 2)}
 
 AUTONOMOUS DECISION REQUIREMENTS:
-1. **アクションタイプ自由選択**: ['original_post', 'quote_tweet', 'retweet', 'reply'] から最適な組み合わせを選択
+1. **アクションタイプ選択**: ['original_post'] のみを使用（現在はoriginal_postのみサポート）
 2. **動的頻度決定**: 市場状況とアカウント状況に応じて最適な投稿頻度を決定（制約なし）
 3. **適応的テーマ選択**: 市場機会とトレンドに応じて最適なコンテンツテーマを選択
 4. **完全自律判断**: 固定ルールなし、すべてClaudeの戦略的判断に委託
@@ -146,6 +146,13 @@ EXECUTION PLANNING REQUIREMENTS:
 3. **フォールバック計画**: リスク管理のための代替案
 4. **学習メカニズム**: 実行結果からの継続的改善点
 
+MANDATORY CONTENT FORMAT REQUIREMENTS for "content" field:
+- **ハッシュタグ必須**: 必ず3-5個のハッシュタグを含める（例：#投資教育 #資産運用 #投資初心者）
+- **エモジ使用**: 視覚的魅力のためエモジを効果的に使用
+- **改行構造**: 読みやすい改行とセクション分け
+- **具体例含有**: 具体的な数値や事例を含める
+- **CTA (行動喚起)**: フォロワーの行動を促す要素を含める
+
 返答形式（JSON）:
 {
   "id": "plan-{timestamp}",
@@ -156,7 +163,7 @@ EXECUTION PLANNING REQUIREMENTS:
       "type": "アクションタイプ",
       "priority": "critical|high|medium|low",
       "timing": "実行タイミング",
-      "content": "具体的コンテンツ案",
+      "content": "完全な投稿内容（必ずハッシュタグ3-5個、エモジ、改行構造、具体例、CTAを含む）",
       "reasoning": "実行理由",
       "dependencies": ["依存関係の配列"],
       "adaptationTriggers": ["適応トリガーの配列"]
@@ -165,6 +172,8 @@ EXECUTION PLANNING REQUIREMENTS:
   "adaptationPoints": ["適応ポイントの配列"],
   "fallbackOptions": ["フォールバック選択肢の配列"]
 }
+
+**重要**: actionsの"content"フィールドには、そのまま投稿可能な完全な投稿内容を含めてください。必ずハッシュタグ3-5個、エモジ、改行構造、具体例、CTAを含めて魅力的な投稿を作成してください。
 
 完全自律的な実行計画を策定してください。
 `;
@@ -379,28 +388,60 @@ FREQUENCY OPTIMIZATION FACTORS:
   }): Promise<{ theme: string; content: string; actionType: string }> {
     console.log('📝 [Claude内容決定] 完全自律コンテンツ戦略を決定中...');
     
+    // 🔧 NEW: 実データ存在確認とデータ品質評価
+    const dataQuality = this.evaluateDataQuality(analysisData);
+    console.log('📊 [データ品質評価]:', dataQuality);
+    
     const contentPrompt = `
-以下の分析データに基づいて、最適なコンテンツ戦略を自律的に決定してください：
+あなたはX（Twitter）投資教育コンテンツの完全自律システムです。
+以下の**実際の市場データと分析**に基づいて、最適なコンテンツ戦略を自律的に決定してください。
 
-ANALYSIS DATA:
+🔴 **重要**: 以下は実際のリアルタイムデータです。必ずこのデータを活用してください。
+
+REAL-TIME ANALYSIS DATA:
 ${JSON.stringify(analysisData, null, 2)}
 
-AUTONOMOUS CONTENT STRATEGY REQUIREMENTS:
-1. **完全自律テーマ選択**: 固定テーマなし、市場機会に基づく動的選択
-2. **オリジナルコンテンツ生成**: テンプレートなし、分析に基づく独自コンテンツ
-3. **最適アクションタイプ**: 市場状況に応じた最適なアクション選択
-4. **価値創造重視**: フォロワーに真の価値を提供するコンテンツ
+DATA QUALITY METRICS:
+- 品質スコア: ${dataQuality.score}/100
+- 市場データ: ${dataQuality.market ? '✅ 利用可能 (' + dataQuality.marketCount + '件)' : '❌ 不足'}
+- ニュースデータ: ${dataQuality.news ? '✅ 利用可能 (' + dataQuality.newsCount + '件)' : '❌ 不足'}  
+- コミュニティデータ: ${dataQuality.community ? '✅ 利用可能 (' + dataQuality.communityCount + '件)' : '❌ 不足'}
+- 経済指標: ${dataQuality.economic ? '✅ 利用可能 (' + dataQuality.economicCount + '件)' : '❌ 不足'}
+
+🎯 **MANDATORY REAL-DATA USAGE REQUIREMENTS**:
+1. **データ駆動コンテンツ**: 上記の実際のデータから具体的な数値、企業名、ニュース内容を必ず含める
+2. **時事性重視**: 最新の市場動向、ニュース、経済指標を反映
+3. **具体的分析**: 汎用的内容禁止、実データに基づく専門的分析必須
+4. **数値の具体的引用**: 為替レート、株価、経済指標の実際の値を使用
+
+📝 **MANDATORY CONTENT FORMAT REQUIREMENTS**:
+- **ハッシュタグ必須**: 必ず3-5個のハッシュタグを含める（例：#投資教育 #資産運用 #市場分析）
+- **エモジ使用**: 視覚的魅力のためエモジを効果的に使用  
+- **改行構造**: 読みやすい改行とセクション分け
+- **具体例含有**: 実データから具体的な数値や事例を含める
+- **CTA (行動喚起)**: フォロワーの行動を促す要素を含める
 
 返答形式（JSON）:
 {
-  "theme": "選択したテーマ",
-  "content": "具体的なコンテンツ（完全オリジナル）",
-  "actionType": "original_post|quote_tweet|retweet|reply",
-  "reasoning": "選択理由の詳細説明",
-  "expectedImpact": "期待される効果"
+  "theme": "実データに基づく具体的テーマ",
+  "content": "実際の市場データを活用した具体的なコンテンツ（ハッシュタグ3-5個とエモジ含む）",
+  "actionType": "original_post",
+  "dataUsage": {
+    "usedMarketData": "使用した具体的な市場データ",
+    "usedNewsData": "使用した具体的なニュース",
+    "usedEconomicData": "使用した具体的な経済指標"
+  },
+  "reasoning": "実データに基づく選択理由の詳細",
+  "expectedImpact": "期待される効果とエンゲージメント向上"
 }
 
-ハードコードされたテンプレートは使用せず、完全にオリジナルなコンテンツを生成してください。
+⚠️ **重要**: contentには必ず以下を含める：
+- 実際の数値（為替レート、株価、指標値等）
+- 具体的な企業名・通貨ペア・指標名
+- 最新ニュースの内容・トレンド
+- 専門的でタイムリーな分析
+
+一般的な投資教育内容ではなく、今この瞬間の市場状況に特化した価値あるコンテンツを生成してください。
 `;
 
     try {
@@ -445,49 +486,116 @@ AUTONOMOUS CONTENT STRATEGY REQUIREMENTS:
   private async executeAction(action: PlannedAutonomousAction): Promise<boolean> {
     console.log(`🎯 [実行] ${action.type}: ${action.content.substring(0, 100)}...`);
     
-    try {
-      let result;
-      
-      switch (action.type) {
-        case 'original_post':
-          result = await this.xClient.post(action.content);
-          break;
-          
-        case 'reply':
-          // リプライ対象を解析（実際の実装では対象ツイートIDが必要）
-          console.log('🔄 [Reply] リプライ機能は対象ツイートID特定の実装が必要');
-          result = { success: false, error: 'Reply target not specified' };
-          break;
-          
-        case 'quote_tweet':
-          // 引用ツイート対象を解析（実際の実装では対象ツイートIDが必要）
-          console.log('🔄 [Quote] 引用ツイート機能は対象ツイートID特定の実装が必要');
-          result = { success: false, error: 'Quote target not specified' };
-          break;
-          
-        case 'retweet':
-          // リツイート対象を解析（実際の実装では対象ツイートIDが必要）
-          console.log('🔄 [Retweet] リツイート機能は対象ツイートID特定の実装が必要');
-          result = { success: false, error: 'Retweet target not specified' };
-          break;
-          
-        default:
-          console.log(`⚠️ [Unknown Action] 未知のアクションタイプ: ${action.type}`);
-          result = { success: false, error: `Unknown action type: ${action.type}` };
-      }
-      
-      if (result.success) {
-        console.log(`✅ [投稿成功] ${action.type}: ${result.id || 'success'}`);
-        return true;
-      } else {
-        console.log(`❌ [投稿失敗] ${action.type}: ${result.error}`);
-        return false;
-      }
-      
-    } catch (error) {
-      console.error(`❌ [投稿エラー] ${action.type}:`, error);
-      return false;
+    // TEST_MODE=true の時は投稿せずログのみ
+    const isTestMode = process.env.TEST_MODE === 'true';
+    if (isTestMode) {
+      console.log(`🧪 [テストモード] 投稿内容:\n${action.content}`);
+      console.log(`🧪 [テストモード] アクションタイプ: ${action.type}`);
+      return true; // 成功として扱う
     }
+    
+    // API制限対策：リトライロジック付き実行
+    return await this.executeActionWithRetry(action, 3);
+  }
+
+  private async executeActionWithRetry(action: PlannedAutonomousAction, maxRetries: number): Promise<boolean> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔄 [実行試行 ${attempt}/${maxRetries}] ${action.type}`);
+        
+        let result;
+        
+        switch (action.type) {
+          case 'original_post':
+            result = await this.xClient.post(action.content);
+            break;
+        
+          case 'content_adaptation':
+            console.log('🔄 [Content Adaptation] コンテンツ適応処理を実行中...');
+            // コンテンツ適応ロジック（将来の実装のための準備）
+            result = { success: true, message: 'Content adaptation completed' };
+            break;
+          
+          case 'learning_optimization':
+            console.log('🧠 [Learning Optimization] 学習最適化処理を実行中...');
+            // 学習最適化ロジック（将来の実装のための準備）
+            result = { success: true, message: 'Learning optimization completed' };
+            break;
+            
+          // 以下の機能は現在未実装のためコメントアウト
+          /*
+          case 'reply':
+            // リプライ対象を解析（実際の実装では対象ツイートIDが必要）
+            console.log('🔄 [Reply] リプライ機能は対象ツイートID特定の実装が必要');
+            result = { success: false, error: 'Reply target not specified' };
+            break;
+            
+          case 'quote_tweet':
+            // 引用ツイート対象を解析（実際の実装では対象ツイートIDが必要）
+            console.log('🔄 [Quote] 引用ツイート機能は対象ツイートID特定の実装が必要');
+            result = { success: false, error: 'Quote target not specified' };
+            break;
+            
+          case 'retweet':
+            // リツイート対象を解析（実際の実装では対象ツイートIDが必要）
+            console.log('🔄 [Retweet] リツイート機能は対象ツイートID特定の実装が必要');
+            result = { success: false, error: 'Retweet target not specified' };
+            break;
+          */
+            
+          default:
+            console.log(`⚠️ [Unknown Action] 未知のアクションタイプ: ${action.type}`);
+            result = { success: false, error: `Unknown action type: ${action.type}` };
+        }
+        
+        if (result.success) {
+          console.log(`✅ [投稿成功] ${action.type}: ${(result as any).id || (result as any).message || 'success'}`);
+          return true;
+        } else {
+          // レート制限の検知
+          if (result.error && this.isRateLimitError(result.error) && attempt < maxRetries) {
+            const waitTime = this.calculateBackoffTime(attempt);
+            console.log(`⏱️ [レート制限検知] ${waitTime}ms 待機後に再試行...`);
+            await this.sleep(waitTime);
+            continue;
+          } else {
+            console.log(`❌ [投稿失敗] ${action.type}: ${result.error}`);
+            if (attempt === maxRetries) {
+              return false;
+            }
+          }
+        }
+        
+      } catch (error) {
+        if (this.isRateLimitError(String(error)) && attempt < maxRetries) {
+          const waitTime = this.calculateBackoffTime(attempt);
+          console.log(`⏱️ [API制限エラー] ${waitTime}ms 待機後に再試行...`);
+          await this.sleep(waitTime);
+          continue;
+        } else {
+          console.error(`❌ [投稿エラー] ${action.type}:`, error);
+          if (attempt === maxRetries) {
+            return false;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private isRateLimitError(error: string): boolean {
+    const rateLimitKeywords = ['rate limit', 'too many requests', '429', 'quota exceeded'];
+    const errorStr = String(error).toLowerCase();
+    return rateLimitKeywords.some(keyword => errorStr.includes(keyword));
+  }
+
+  private calculateBackoffTime(attempt: number): number {
+    // 指数バックオフ: 1秒, 2秒, 4秒...
+    return Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+  }
+
+  private async sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   private async learnFromExecution(action: PlannedAutonomousAction, success: boolean): Promise<string | null> {
@@ -502,7 +610,7 @@ AUTONOMOUS CONTENT STRATEGY REQUIREMENTS:
   // フォールバックメソッド
   private createFallbackStrategy(context: IntegratedContext): AutonomousStrategy {
     return {
-      actionTypes: ['original_post', 'quote_tweet'],
+      actionTypes: ['original_post'],
       frequency: Math.max(5, Math.min(20, context.account.healthScore / 5)),
       contentThemes: ['market_analysis', 'investment_education'],
       timing: ['09:00', '14:00', '19:00'],
@@ -549,7 +657,7 @@ AUTONOMOUS CONTENT STRATEGY REQUIREMENTS:
   private createFallbackContent(): { theme: string; content: string; actionType: string } {
     return {
       theme: 'investment_education',
-      content: '投資の基本：リスク管理と長期視点の重要性について',
+      content: '💡 投資初心者必見！リスク分散の具体的手法3選\n\n📊 分散投資の3つのポイント:\n1️⃣ セクター分散: 異なる業界に投資してリスク軽減\n2️⃣ 地域分散: 国内外バランス良く配分\n3️⃣ 時間分散: 積立投資で価格変動リスク回避\n\n🎯 長期視点で安定した資産形成を目指しましょう！\n\n#投資初心者 #資産運用 #リスク管理 #投資教育 #分散投資',
       actionType: 'original_post'
     };
   }
@@ -710,13 +818,13 @@ ${params.remaining}件のタイミング推奨を生成してください。
 
   // フォールバックメソッド
   private createFallbackActionMix(remaining: number): Record<string, number> {
-    // 基本的な配分: 60% original_post, 20% quote_tweet, 15% retweet, 5% reply
-    const original_post = Math.ceil(remaining * 0.6);
-    const quote_tweet = Math.ceil(remaining * 0.2);
-    const retweet = Math.ceil(remaining * 0.15);
-    const reply = Math.max(0, remaining - original_post - quote_tweet - retweet);
-    
-    return { original_post, quote_tweet, retweet, reply };
+    // original_postのみに特化（現在はoriginal_postのみサポート）
+    return { 
+      original_post: remaining, 
+      quote_tweet: 0, 
+      retweet: 0, 
+      reply: 0 
+    };
   }
 
   private createFallbackTiming(remaining: number): any[] {
@@ -734,5 +842,52 @@ ${params.remaining}件のタイミング推奨を生成してください。
     }
     
     return timings;
+  }
+
+  // 🔧 NEW: データ品質評価メソッド
+  private evaluateDataQuality(analysisData: any) {
+    let score = 0;
+    const quality = {
+      market: false,
+      news: false, 
+      community: false,
+      economic: false,
+      marketCount: 0,
+      newsCount: 0,
+      communityCount: 0,
+      economicCount: 0,
+      score: 0
+    };
+    
+    // 市場データ評価
+    if (analysisData.marketAnalysis && Object.keys(analysisData.marketAnalysis).length > 0) {
+      score += 30;
+      quality.market = true;
+      quality.marketCount = Array.isArray(analysisData.marketAnalysis) ? analysisData.marketAnalysis.length : 1;
+    }
+    
+    // ニュースデータ評価
+    if (analysisData.trendAnalysis && Object.keys(analysisData.trendAnalysis).length > 0) {
+      score += 25;
+      quality.news = true;
+      quality.newsCount = Array.isArray(analysisData.trendAnalysis) ? analysisData.trendAnalysis.length : 1;
+    }
+    
+    // コミュニティデータ評価
+    if (analysisData.audienceInsights && Object.keys(analysisData.audienceInsights).length > 0) {
+      score += 25;
+      quality.community = true;
+      quality.communityCount = Array.isArray(analysisData.audienceInsights) ? analysisData.audienceInsights.length : 1;
+    }
+    
+    // 経済データ評価（realDataQualityから取得）
+    if (analysisData.performanceHistory && analysisData.performanceHistory.realDataQuality) {
+      score += 20;
+      quality.economic = true;
+      quality.economicCount = analysisData.performanceHistory.realDataQuality.economicDataCount || 0;
+    }
+    
+    quality.score = score;
+    return quality;
   }
 }

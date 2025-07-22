@@ -64,7 +64,7 @@ class OAuth1Diagnostics {
 
   constructor() {
     this.verbose = process.argv.includes('--verbose') || process.argv.includes('-v');
-    this.client = new SimpleXClient();
+    this.client = SimpleXClient.getInstance();
     this.loadOAuth1Credentials();
   }
 

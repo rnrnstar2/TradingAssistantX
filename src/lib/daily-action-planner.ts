@@ -43,75 +43,43 @@ export class DailyActionPlanner {
     }
   }
 
-  // Claude自律的配分計画策定（制約なし）
+  // 固定15回投稿システム
   async planDailyDistribution(): Promise<ActionDistribution> {
-    console.log('🧠 [Claude自律配分] 制約なしの完全自律配分計画を策定中...');
+    console.log('📊 [固定15回配分] スケジュール実行時は必ず1投稿を実行');
     
-    const currentActions = await this.getTodaysActions();
-    const successfulActions = currentActions.filter(action => action.success);
-    
-    // Claude自律的頻度決定
-    const autonomousFrequency = await this.determineAutonomousFrequency(successfulActions.length);
-    const remaining = Math.max(0, autonomousFrequency - successfulActions.length);
-    
-    console.log(`📊 [Claude自律判断] Claude決定頻度: ${autonomousFrequency}回/日, 本日成功: ${successfulActions.length}, 残り: ${remaining}`);
-    
-    if (remaining <= 0) {
-      console.log('✅ [Claude判断] 本日の最適頻度に到達済み');
-      return this.createCompletedDistribution();
-    }
+    // 固定配分: スケジュール実行時は必ず投稿
+    const remaining = 1; // スケジュール実行時は必ず1投稿
     
     const distribution = {
       remaining,
-      optimal_distribution: await this.calculateAutonomousDistribution(remaining),
-      timing_recommendations: await this.getTimingRecommendations(remaining)
+      optimal_distribution: { 
+        original_post: 1, 
+        quote_tweet: 0, 
+        retweet: 0, 
+        reply: 0 
+      },
+      timing_recommendations: [{
+        time: new Date().toTimeString().slice(0, 5), // 現在時刻
+        actionType: 'original_post' as ActionType,
+        priority: 10,
+        reasoning: '固定15回システム: スケジュール実行時必須投稿'
+      }]
     };
     
-    console.log('✅ [Claude自律配分完了]', {
-      autonomousFrequency,
-      remaining: distribution.remaining,
-      distribution: distribution.optimal_distribution,
-      timingSlots: distribution.timing_recommendations.length
-    });
-    
+    console.log('✅ [固定15回配分完了] 必ず1投稿実行', distribution);
     return distribution;
   }
   
-  // 🚨 REMOVED: Fixed 100% original_post constraint
-  // Claude自律的配分計算（全アクションタイプ利用可能）
+  // 固定配分計算（original_postのみ）
   private async calculateAutonomousDistribution(remaining: number): Promise<ActionDistribution['optimal_distribution']> {
-    console.log(`🧠 [Claude自律配分] 残り${remaining}回を全アクションタイプで最適配分中...`);
+    console.log(`📊 [固定配分] original_postのみ: ${remaining}回`);
     
-    if (remaining <= 0) {
-      return { original_post: 0, quote_tweet: 0, retweet: 0, reply: 0 };
-    }
-    
-    // Claude自律的アクション配分決定
-    const accountHealth = await this.getAccountHealth();
-    const marketConditions = this.getCurrentMarketConditions();
-    
-    const autonomousDistribution = await this.claudeAgent.determineOptimalActionMix({
-      remaining,
-      accountHealth,
-      marketConditions,
-      availableActionTypes: ['original_post', 'quote_tweet', 'retweet', 'reply']
-    });
-    
-    // original_postが必須プロパティであることを保証
-    const safeDistribution = {
-      original_post: autonomousDistribution.original_post || 0,
-      quote_tweet: autonomousDistribution.quote_tweet || 0,
-      retweet: autonomousDistribution.retweet || 0,
-      reply: autonomousDistribution.reply || 0
+    return { 
+      original_post: remaining, 
+      quote_tweet: 0, 
+      retweet: 0, 
+      reply: 0 
     };
-    
-    console.log('✅ [Claude自律配分完了]', {
-      total: remaining,
-      distribution: safeDistribution,
-      strategy: 'Claude完全自律判断'
-    });
-    
-    return safeDistribution;
   }
   
   
@@ -750,27 +718,6 @@ export class DailyActionPlanner {
     };
   }
 
-  // 🧠 NEW: Claude自律的頻度決定メソッド
-  private async determineAutonomousFrequency(currentSuccessful: number): Promise<number> {
-    try {
-      const accountHealth = await this.getAccountHealth();
-      const marketConditions = this.getCurrentMarketConditions();
-      const engagementData = await this.getEngagementData();
-      
-      const autonomousFrequency = await this.claudeAgent.determineOptimalPostingFrequency({
-        accountHealth,
-        engagement: engagementData,
-        marketConditions,
-        competitorActivity: await this.getCompetitorActivity()
-      });
-      
-      console.log(`🧠 [Claude頻度決定] 自律決定頻度: ${autonomousFrequency}回/日`);
-      return autonomousFrequency;
-    } catch (error) {
-      console.warn('⚠️ [頻度決定フォールバック]:', error);
-      return Math.max(5, Math.min(25, currentSuccessful + 8)); // フォールバック
-    }
-  }
 
   // 🧠 NEW: アカウントヘルス取得
   private async getAccountHealth(): Promise<number> {
@@ -859,14 +806,10 @@ export class DailyActionPlanner {
     return `${timeReason} - ${actionReason}`;
   }
 
-  // 🧠 NEW: 自律的目標取得
+  // 固定15回システム目標
   private async getAutonomousTarget(): Promise<number> {
-    try {
-      const autonomousFrequency = await this.determineAutonomousFrequency(0);
-      return autonomousFrequency;
-    } catch {
-      return 8; // フォールバック目標
-    }
+    // 固定15回システム
+    return 15;
   }
 
   // 🧠 NEW: 利用可能時間取得

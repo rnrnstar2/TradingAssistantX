@@ -19,7 +19,7 @@ class OAuth1TestConnection {
   private verbose: boolean;
 
   constructor() {
-    this.client = new SimpleXClient();
+    this.client = SimpleXClient.getInstance();
     this.dryRun = process.argv.includes('--dry-run');
     this.verbose = process.argv.includes('--verbose') || process.argv.includes('-v');
     this.loadOAuth1Credentials();

@@ -1,0 +1,32 @@
+sessionId: autonomous-session-1753171304964
+timestamp: '2025-07-22T08:03:20.283Z'
+autonomyScore: 63
+performanceMetrics:
+  strategicFlexibility: 40
+  adaptationRate: 50
+  learningEffectiveness: 100
+  overallAutonomy: 63
+strategy:
+  actionTypes:
+    - original_post
+  frequency: 2
+  contentThemes:
+    - 投資初心者向け基礎教育
+    - 市場動向分析と解説
+    - リスク管理手法
+    - 投資心理学とバイアス対策
+  riskLevel: medium
+execution:
+  totalActions: 2
+  successfulActions: 2
+  adaptationsMade: 0
+learning:
+  learningPoints: 8
+  optimizationAreas: 4
+  newOpportunities: 6
+nextRecommendations:
+  - '機会活用: 平日昼間（12:00-15:00）の投資家層へのリーチ拡大'
+  - '機会活用: 週末の投資学習需要への対応'
+  - '機会活用: 市場急変時のリアルタイム解説投稿'
+  - '機会活用: シリーズコンテンツによる継続的エンゲージメント'
+  - '機会活用: 投資初心者向けの基礎解説シリーズ'

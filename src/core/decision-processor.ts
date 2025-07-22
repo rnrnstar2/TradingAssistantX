@@ -148,6 +148,13 @@ export class AutonomousExecutorDecisionProcessor {
 **収集された特化情報**:
 ${JSON.stringify(collectedInfo, null, 2)}
 
+**MANDATORY CONTENT FORMAT REQUIREMENTS**:
+- **ハッシュタグ必須**: 必ず3-5個のハッシュタグを含める（例：#投資教育 #資産運用 #投資初心者）
+- **エモジ使用**: 視覚的魅力のためエモジを効果的に使用
+- **改行構造**: 読みやすい改行とセクション分け
+- **具体例含有**: 具体的な数値や事例を含める
+- **CTA (行動喚起)**: フォロワーの行動を促す要素を含める
+
 **要求**:
 投資教育に特化した価値ある投稿を作成し、以下のJSON形式で応答してください：
 
@@ -161,7 +168,8 @@ ${JSON.stringify(collectedInfo, null, 2)}
 - 投資アドバイスではなく教育的内容
 - 280文字以内
 - 専門的だが理解しやすい内容
-- エンゲージメントを促す要素を含む`;
+- エンゲージメントを促す要素を含む
+- **重要**: 必ずハッシュタグ3-5個、エモジ、改行構造、具体例、CTAを含めて魅力的な投稿を作成`;
   }
 
   parseClaudeDecision(response: string): ClaudeDecision {

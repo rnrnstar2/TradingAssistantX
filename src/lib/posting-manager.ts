@@ -22,9 +22,9 @@ export class PostingManager {
   private dataDir = 'data';
   private historyFile = 'data/posting-history.yaml';
 
-  constructor(config?: Partial<PostingManagerConfig>, xClientConfig?: Partial<XClientConfig>) {
-    this.xClient = new SimpleXClient(xClientConfig);
-    this.dailyActionPlanner = new DailyActionPlanner();
+  constructor(config?: Partial<PostingManagerConfig>, xClientConfig?: Partial<XClientConfig>, claudeAgent?: any) {
+    this.xClient = SimpleXClient.getInstance(xClientConfig);
+    this.dailyActionPlanner = new DailyActionPlanner(claudeAgent);
     this.config = {
       minIntervalMinutes: 30, // 30分間隔（ゴールデンタイム集中投稿対応）
       maxPostsPerHour: 2,     // 1時間に2回まで（30分間隔対応）

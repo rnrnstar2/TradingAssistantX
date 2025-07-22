@@ -19,17 +19,18 @@ export class ParallelManager {
   private dailyActionPlanner: DailyActionPlanner;
   private xClient: SimpleXClient;
 
-  constructor() {
+  constructor(claudeAgent?: any) {
     this.collector = new ClaudeControlledCollector();
     this.growthManager = new GrowthSystemManager();
     
-    // Initialize X Client and PostingManager (OAuth 2.0)
-    this.xClient = new SimpleXClient();
-    this.postingManager = new PostingManager();
+    // Initialize X Client and PostingManager (OAuth 2.0) - using singleton
+    this.xClient = SimpleXClient.getInstance();
+    this.postingManager = new PostingManager(undefined, undefined, claudeAgent);
     
     // Initialize expanded action components
     this.expandedActionExecutor = new ExpandedActionExecutor(this.xClient, this.postingManager);
-    this.dailyActionPlanner = new DailyActionPlanner();
+    // ✅ ClaudeAutonomousAgentインスタンスを共有
+    this.dailyActionPlanner = new DailyActionPlanner(claudeAgent);
     
     this.performanceAnalyzer = new XPerformanceAnalyzer();
   }
@@ -527,12 +528,9 @@ ${result.recommendations.map((rec: string) => `- ${rec}`).join('\n')}
     
     // 日次配分プランの確認
     const distribution = await this.dailyActionPlanner.planDailyDistribution();
-    console.log(`📋 [日次配分] 残り${distribution.remaining}/${15}回 - 最適配分:`, distribution.optimal_distribution);
+    console.log(`📋 [固定15回システム] スケジュール実行時必須投稿`);
     
-    if (distribution.remaining <= 0) {
-      console.log('✅ [配分完了] 本日の目標回数に到達済み、実行をスキップ');
-      return [];
-    }
+    // 🚨 削除: 投稿停止チェックを削除（スケジュール時は必ず実行）
     
     // 実行可能な決定を選択（残り回数を考慮）
     const executableDecisions = decisions.slice(0, distribution.remaining);
