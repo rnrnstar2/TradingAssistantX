@@ -1,0 +1,55 @@
+# 成功パターン学習データ - アーカイブデータ統合版
+version: "1.1"
+last_updated: "2025-07-22T21:30:00.000Z"
+patterns:
+  content_structures:
+    - type: "educational_format"
+      pattern: "問題提起→解説→実例→まとめ"
+      success_rate: 0.85
+      sample_posts: []
+    - type: "investment_rules"
+      pattern: "ルール提示→理由説明→具体例→注意喚起"
+      success_rate: 0.90
+      sample_posts:
+        - content_summary: "感情に左右されない投資の3つのルール"
+          success_indicators: ["実行成功", "教育的価値高"]
+          posting_time: "21:00"
+    - type: "beginner_qa"
+      pattern: "よくある質問→回答→基本原則→行動指針"
+      success_rate: 0.88
+      sample_posts:
+        - content_summary: "どの銘柄に投資すれば良いですか？への回答"
+          success_indicators: ["初心者向け", "実行成功"]
+          posting_time: "19:00"
+  timing_patterns:
+    - optimal_hours: [20, 21]
+      day_types: ["weekday"]
+      engagement_boost: 1.4
+      evidence: "実際の投稿時間で成功率高"
+    - suboptimal_hours: [18, 19]
+      day_types: ["weekday"]
+      engagement_boost: 0.9
+      evidence: "決定時間だが実投稿は異なる時間帯"
+  topic_angles:
+    - approach: "初心者向け解説"
+      effectiveness: 0.90
+      keywords: ["基礎", "入門", "わかりやすく", "初心者"]
+    - approach: "リスク管理重視"
+      effectiveness: 0.92
+      keywords: ["損切り", "分散投資", "資金管理", "2%ルール"]
+    - approach: "感情制御重視"  
+      effectiveness: 0.89
+      keywords: ["感情", "機械的", "ルール", "計画的"]
+  content_patterns:
+    - theme: "投資の基本原則"
+      frequency: "高"
+      effectiveness: 0.91
+      keywords: ["損失限定", "長期視点", "分散投資"]
+    - theme: "複利・時間の力"
+      frequency: "中"
+      effectiveness: 0.87
+      keywords: ["72の法則", "複利効果", "時間分散"]
+data_retention:
+  max_patterns: 50
+  min_success_rate: 0.70
+  auto_cleanup_days: 30

@@ -1,0 +1,18 @@
+system:
+  name: "TradingAssistantX"
+  version: "1.0.0"
+  mode: "production"
+
+execution:
+  daily_posts_limit: 15
+  retry_attempts: 3
+  timeout_seconds: 30
+
+data_management:
+  auto_cleanup: true
+  retention_days: 30
+  archive_strategy: "monthly"
+
+logging:
+  level: "info"
+  format: "yaml"

@@ -1,0 +1,59 @@
+# 高エンゲージメント投稿学習データ - アーカイブ分析版
+version: "1.1"
+last_updated: "2025-07-22T21:35:00.000Z"
+high_performing_posts:
+  engagement_threshold: 3.0  # 3%以上
+  posts:
+    - post_id: "2%rule_post_20210721"
+      content_type: "educational"
+      topic: "リスク管理"
+      success_factors: ["具体的数値例", "実践的ルール", "感情制御"]
+      posting_time: "21:00"
+      estimated_engagement: "high"
+    - post_id: "compound_interest_post_20210721"
+      content_type: "educational" 
+      topic: "複利効果"
+      success_factors: ["具体的計算例", "長期投資", "時間の重要性"]
+      posting_time: "21:00"
+      estimated_engagement: "high"
+engagement_factors:
+  content_elements:
+    - factor: "具体的な数値・データ使用"
+      impact_score: 0.90
+      evidence: "2%ルール、72の法則など数値を使った投稿が成功"
+    - factor: "質問形式での問いかけ"
+      impact_score: 0.75
+    - factor: "実践的なルール提示"
+      impact_score: 0.88
+      evidence: "3つのルール、黄金ルールなど明確なルール提示"
+    - factor: "感情制御アドバイス"
+      impact_score: 0.86
+      evidence: "感情で売買するな、計画的投資などの内容"
+    - factor: "初心者向け具体例"
+      impact_score: 0.84
+      evidence: "10万円なら2000円まで、などの親しみやすい例"
+  content_structure:
+    - structure: "問題提起→解決策→具体例→まとめ"
+      effectiveness: 0.91
+    - structure: "ルール番号付けリスト化"
+      effectiveness: 0.89
+      evidence: "①②③での番号付けリストが多用され成功"
+  visual_elements:
+    - type: "チャート・グラフ"
+      engagement_lift: 1.4
+    - type: "絵文字活用"
+      engagement_lift: 1.2
+      evidence: "📈📊✅❌💡🔥などの絵文字が効果的"
+  hashtag_patterns:
+    effective_tags: ["#投資教育", "#資産形成", "#投資初心者", "#リスク管理", "#長期投資"]
+    optimal_count: 3
+    evidence: "実投稿データから抽出した効果的タグ"
+  timing_insights:
+    peak_hours: [20, 21]
+    evidence: "実際の成功投稿時間"
+    avoid_hours: [18, 19]
+    reason: "決定時間と実投稿時間の齟齬"
+data_retention:
+  max_posts: 100
+  min_engagement_rate: 3.0
+  archive_after_days: 60

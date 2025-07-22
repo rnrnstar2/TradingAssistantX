@@ -1,0 +1,43 @@
+sources:
+  financial_major:
+    - name: "Bloomberg Japan"
+      url: "https://feeds.bloomberg.com/markets/news.rss"
+      priority: 1
+      category: "market"
+      enabled: true
+      
+    - name: "Nikkei Business"
+      url: "https://business.nikkei.com/rss/sns/nb.rdf"
+      priority: 2
+      category: "business"
+      enabled: true
+
+  educational:
+    - name: "日本株投資戦略"
+      query: "日本株 投資戦略 2025"
+      priority: 3
+      category: "investment"
+      enabled: true
+      
+    - name: "投資初心者向け情報"
+      query: "投資初心者 NISA iDeCo 資産形成"
+      priority: 4
+      category: "education"
+      enabled: true
+      
+    - name: "市場動向分析"
+      query: "日経平均 TOPIX 為替 市場分析"
+      priority: 5
+      category: "market"
+      enabled: true
+      
+    - name: "Nikkei Asia"
+      url: "https://asia.nikkei.com/rss/feed/nar"
+      priority: 6
+      category: "market"
+      enabled: true
+
+collection_settings:
+  max_items_per_source: 10
+  update_interval_minutes: 30
+  timeout_seconds: 15

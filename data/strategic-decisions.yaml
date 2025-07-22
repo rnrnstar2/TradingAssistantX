@@ -1,0 +1,20 @@
+- timestamp: '2025-07-22T16:18:05.352Z'
+  decisions:
+    - id: test-save
+      type: content_creation
+      priority: medium
+      reasoning: テスト保存
+      confidence: 0.8
+      data:
+        context:
+          environment: test
+          constraints: []
+          objectives: []
+          timeframe: test
+        factors: []
+        alternatives: []
+      timestamp: '2025-07-22T16:18:05.351Z'
+      status: pending
+      params: {}
+      dependencies: []
+      estimatedDuration: 30

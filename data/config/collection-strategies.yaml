@@ -1,0 +1,254 @@
+# ActionSpecificCollector Collection Strategies Configuration
+# 疎結合設計による動的データ収集戦略設定
+
+# ============================================================================
+# COLLECTION STRATEGIES - 状況に応じた収集戦略
+# ============================================================================
+
+strategies:
+  # RSS集中戦略 - MVP版メイン戦略
+  rss_focused:
+    enabled: true
+    priority: 1
+    description: "RSS収集に特化した高速・安定戦略"
+    conditions:
+      - engagement: low
+      - theme_consistency: < 0.8
+      - follower_growth: < 0.1
+      - market_volatility: normal
+    collectors:
+      - type: rss
+        weight: 0.9
+        timeout: 30000
+        max_concurrent: 5
+      - type: account
+        weight: 0.1
+        timeout: 60000
+        max_concurrent: 1
+    execution_mode: "parallel"
+    
+  # 複数ソース戦略 - 将来の拡張用
+  multi_source:
+    enabled: true
+    priority: 2
+    description: "複数ソースからの包括的情報収集戦略"
+    conditions:
+      - engagement: medium
+      - follower_count: > 1000
+      - market_volatility: high
+      - content_diversity: required
+    collectors:
+      - type: rss
+        weight: 0.6
+        timeout: 30000
+        max_concurrent: 3
+      - type: account
+        weight: 0.4
+        timeout: 60000
+        max_concurrent: 1
+      # 将来拡張用 (現在は無効)
+      # - type: api
+      #   weight: 0.3
+      #   timeout: 20000
+      #   max_concurrent: 2
+    execution_mode: "parallel"
+    
+  # アカウント分析戦略 - 自己分析優先
+  account_analysis:
+    enabled: true
+    priority: 3
+    description: "自アカウント分析を優先する戦略"
+    conditions:
+      - last_analysis: > 24h
+      - significant_change: true
+      - follower_anomaly: detected
+      - strategy_review: required
+    collectors:
+      - type: account
+        weight: 1.0
+        timeout: 120000
+        max_concurrent: 1
+    execution_mode: "sequential"
+
+# ============================================================================
+# FALLBACK CONFIGURATION - 障害時代替戦略
+# ============================================================================
+
+fallback_chains:
+  primary_chain:
+    - strategy: rss_focused
+      conditions:
+        - rss_available: true
+        - system_load: < 0.8
+      fallback_on:
+        - rss_error
+        - timeout
+        - rate_limit
+    - strategy: account_analysis
+      conditions:
+        - playwright_available: true
+        - browser_memory: < 500MB
+      fallback_on:
+        - browser_error
+        - authentication_failed
+    - strategy: emergency_minimal
+      conditions:
+        - any_error: true
+      fallback_on:
+        - all_collectors_failed
+
+  emergency_minimal:
+    enabled: true
+    priority: 99
+    description: "緊急時最小限収集戦略"
+    conditions:
+      - system_status: emergency
+    collectors:
+      - type: rss
+        weight: 1.0
+        timeout: 10000
+        max_concurrent: 1
+    execution_mode: "sequential"
+
+# ============================================================================
+# RESOURCE LIMITS - リソース制限設定
+# ============================================================================
+
+resource_limits:
+  # 並列実行制限
+  max_concurrent_collectors: 3
+  max_concurrent_tasks: 10
+  
+  # タイムアウト設定
+  global_timeout_seconds: 180
+  collector_timeout_seconds: 60
+  strategy_timeout_seconds: 120
+  
+  # メモリ制限
+  memory_limit_mb: 512
+  memory_warning_threshold: 0.8
+  memory_critical_threshold: 0.95
+  
+  # CPU制限
+  cpu_limit_percent: 80
+  cpu_monitoring_interval: 5000
+  
+  # 同時接続制限
+  max_connections: 20
+  connection_pool_size: 10
+
+# ============================================================================
+# PERFORMANCE OPTIMIZATION - パフォーマンス最適化
+# ============================================================================
+
+performance:
+  # キャッシュ設定
+  enable_strategy_cache: true
+  strategy_cache_ttl: 300000  # 5分
+  result_cache_ttl: 60000     # 1分
+  
+  # 遅延初期化
+  lazy_initialization: true
+  preload_priority_collectors: true
+  
+  # バッチ処理
+  enable_batch_processing: true
+  batch_size: 5
+  batch_timeout: 30000
+  
+  # 非同期最適化
+  use_promise_all_settled: true
+  parallel_execution_threshold: 2
+
+# ============================================================================
+# MONITORING & HEALTH CHECK - 監視・ヘルスチェック
+# ============================================================================
+
+monitoring:
+  # ヘルスチェック
+  enable_health_check: true
+  health_check_interval: 30000
+  health_score_threshold: 0.7
+  
+  # メトリクス収集
+  collect_performance_metrics: true
+  metrics_retention_hours: 24
+  
+  # アラート設定
+  enable_alerts: true
+  alert_thresholds:
+    error_rate: 0.1
+    response_time: 60000
+    memory_usage: 0.9
+    cpu_usage: 0.85
+
+# ============================================================================
+# QUALITY CONTROL - 品質制御
+# ============================================================================
+
+quality_control:
+  # 最小品質基準
+  min_success_rate: 0.8
+  min_data_points: 5
+  max_error_count: 3
+  
+  # 品質評価
+  enable_quality_scoring: true
+  quality_score_weights:
+    timeliness: 0.3
+    accuracy: 0.4
+    completeness: 0.3
+  
+  # データ検証
+  enable_data_validation: true
+  validation_rules:
+    - no_empty_content
+    - valid_timestamps
+    - source_attribution
+
+# ============================================================================
+# EXPERIMENTAL FEATURES - 実験的機能
+# ============================================================================
+
+experimental:
+  # 機械学習による戦略選択
+  enable_ml_strategy_selection: false
+  ml_model_path: ""
+  
+  # 予測的プリロード
+  enable_predictive_preload: false
+  prediction_window_hours: 2
+  
+  # 適応的タイムアウト
+  enable_adaptive_timeout: false
+  timeout_adaptation_factor: 0.1
+
+# ============================================================================
+# COLLECTOR TYPE DEFINITIONS - コレクター型定義
+# ============================================================================
+
+collector_types:
+  rss:
+    class_name: "RSSCollector"
+    module_path: "../collectors/rss-collector"
+    capabilities: ["bulk_collection", "real_time", "historical"]
+    data_format: "rss_feed"
+    
+  account:
+    class_name: "PlaywrightAccountCollector"
+    module_path: "../collectors/playwright-account"
+    capabilities: ["account_analysis", "engagement_metrics"]
+    data_format: "account_metrics"
+    
+  # 将来拡張用 (現在は無効)
+  # api:
+  #   class_name: "APICollector"
+  #   module_path: "../collectors/api-collector"
+  #   capabilities: ["real_time", "structured_data"]
+  #   data_format: "api_response"
+  #   
+  # community:
+  #   class_name: "CommunityCollector"
+  #   module_path: "../collectors/community-collector"
+  #   capabilities: ["social_sentiment", "trend_detection"]
+  #   data_format: "social_data"

@@ -1,0 +1,23 @@
+# アカウント・ブランディング設定
+brand_identity:
+  core_theme: "投資初心者向け基礎教育"  # 現在の核となるテーマ
+  target_audience: "投資を始めたい・始めたばかりの20-40代"
+  tone_style: "親しみやすく分かりやすい解説"
+  expertise_areas:
+    - "投資の基本概念"
+    - "リスク管理"
+    - "長期投資戦略"
+    - "初心者向け銘柄選び"
+
+growth_stage_rules:
+  stage_1: # 0-1000フォロワー
+    theme_consistency: 0.8  # 80%同一テーマ
+    allowed_themes: ["investment_basics"]
+    
+  stage_2: # 1000-5000フォロワー
+    theme_consistency: 0.6  # 60%核テーマ
+    allowed_themes: ["investment_basics", "market_analysis", "stock_selection"]
+    
+  stage_3: # 5000+フォロワー
+    theme_consistency: 0.4  # 40%核テーマ、多様化OK
+    allowed_themes: ["all"]
