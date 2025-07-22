@@ -18,8 +18,7 @@ export class DecisionEngine {
     
     // Initialize enhanced decision logger
     this.enhancedLogger = new DecisionLogger({
-      enableVisualization: true,
-      enablePerformanceMonitoring: false
+      enableVisualization: true
     });
     
     console.log('🎯 [DecisionEngine] 拡張意思決定ロギング統合完了');

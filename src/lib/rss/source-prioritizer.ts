@@ -11,9 +11,9 @@ import {
   Pattern,
   ClaudeSourceAnalyzer,
   SourceAnalysis,
-  CollectionResult,
   FeedItem,
 } from '../../types/rss-collection-types';
+import { BaseCollectionResult } from '../../types/collection-common.js';
 
 export class SourcePrioritizer {
   private priorityWeights: Map<string, PriorityWeight> = new Map();
@@ -171,7 +171,7 @@ export class SourcePrioritizer {
     };
   }
 
-  async learnFromFeedbackResults(results: CollectionResult[]): Promise<LearningResult> {
+  async learnFromFeedbackResults(results: BaseCollectionResult[]): Promise<LearningResult> {
     const adjustedSources: PriorityAdjustment[] = [];
     const newPatterns: Pattern[] = [];
     const improvementSuggestions: string[] = [];
@@ -369,7 +369,7 @@ export class SourcePrioritizer {
     return weights?.sourceReliability || 0.7; // Default credibility
   }
 
-  private calculateMetricsFromResult(result: CollectionResult): RSSPerformanceMetrics {
+  private calculateMetricsFromResult(result: BaseCollectionResult): RSSPerformanceMetrics {
     return {
       averageResponseTime: result.processingTime,
       successRate: result.status === 'success' ? 1.0 : 0.0,
@@ -393,7 +393,7 @@ export class SourcePrioritizer {
            metrics.contentQualityScore < 0.5;
   }
 
-  private identifyPerformancePatterns(results: CollectionResult[]): Pattern[] {
+  private identifyPerformancePatterns(results: BaseCollectionResult[]): Pattern[] {
     const patterns: Pattern[] = [];
     
     // Identify time-based patterns
@@ -423,7 +423,7 @@ export class SourcePrioritizer {
     return patterns;
   }
 
-  private generateImprovementSuggestions(results: CollectionResult[]): string[] {
+  private generateImprovementSuggestions(results: BaseCollectionResult[]): string[] {
     const suggestions: string[] = [];
     
     const failedSources = results.filter(r => r.status === 'failure');

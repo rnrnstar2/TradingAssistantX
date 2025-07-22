@@ -33,7 +33,7 @@ export default defineConfig({
         'dist/',
         '**/*.d.ts',
         'tasks/',
-        'scripts/'
+        'tools/'
       ],
       include: ['src/**/*.ts']
     },

@@ -3,7 +3,6 @@ import path from 'path';
 import * as yaml from 'js-yaml';
 import { loadYamlArraySafe, writeYamlAsync } from '../utils/yaml-utils';
 import { DecisionTracer } from './logging/decision-tracer.js';
-import { PerformanceMonitor } from './logging/performance-monitor.js';
 import { VisualizationFormatter } from './logging/visualization-formatter.js';
 import type {
   DecisionContext,
@@ -70,7 +69,6 @@ export class DecisionLogger {
   
   // Enhanced components
   private decisionTracer: DecisionTracer;
-  private performanceMonitor: PerformanceMonitor;
   private visualizationFormatter: VisualizationFormatter;
   
   constructor(config?: Partial<LoggerConfig>) {
@@ -82,14 +80,11 @@ export class DecisionLogger {
       sessionTimeout: 30 * 60 * 1000, // 30 minutes
       outputDirectory: 'tasks/20250722_002415_next_generation_enhancement/outputs/',
       enableVisualization: true,
-      enablePerformanceMonitoring: false,
-      performanceMonitoringInterval: 5000, // 5 seconds
       ...config
     };
     
     // Initialize enhanced components
     this.decisionTracer = new DecisionTracer();
-    this.performanceMonitor = new PerformanceMonitor();
     this.visualizationFormatter = new VisualizationFormatter();
     
     console.log('🎯 [DecisionLogger] 拡張意思決定ロギングシステム初期化完了');
@@ -345,7 +340,6 @@ export class DecisionLogger {
    * 意思決定の開始ログ
    */
   async startDecision(context: DecisionContext): Promise<string> {
-    console.log('🚀 [意思決定開始] 新しい意思決定セッションを開始...');
 
     const sessionId = this.generateSessionId();
     const session: LoggerSession = {
@@ -360,10 +354,6 @@ export class DecisionLogger {
 
     this.sessions.set(sessionId, session);
 
-    // パフォーマンス監視開始
-    if (this.config.enablePerformanceMonitoring) {
-      this.performanceMonitor.startSession(sessionId, context);
-    }
 
     console.log(`✅ [意思決定開始] セッション開始: ${sessionId}`);
     return sessionId;
@@ -399,15 +389,6 @@ export class DecisionLogger {
 
     session.steps.push(step);
 
-    // パフォーマンスメトリクス記録
-    if (this.config.enablePerformanceMonitoring) {
-      try {
-        const metrics = this.performanceMonitor.measureDecisionTime(sessionId);
-        session.performanceMetrics.push(metrics);
-      } catch (error) {
-        console.warn('⚠️ パフォーマンス測定エラー:', error);
-      }
-    }
 
     console.log(`✅ [ステップ記録完了] ${stepType}: 信頼度${step.confidenceLevel.toFixed(2)}`);
   }
@@ -420,7 +401,6 @@ export class DecisionLogger {
     finalDecision: Decision, 
     executionResult?: ExecutionResult
   ): Promise<DecisionLog> {
-    console.log(`🏁 [意思決定完了] セッション${sessionId}を完了...`);
 
     const session = this.sessions.get(sessionId);
     if (!session) {
@@ -446,10 +426,6 @@ export class DecisionLogger {
       qualityScore: executionResult ? this.decisionTracer.scoreDecisionQuality(finalDecision, executionResult) : undefined
     };
 
-    // パフォーマンス監視終了
-    if (this.config.enablePerformanceMonitoring) {
-      this.performanceMonitor.endSession(sessionId);
-    }
 
     // ログを保存
     await this.saveDecisionLog(decisionLog);
@@ -494,7 +470,7 @@ export class DecisionLogger {
     const qualityReport = this.visualizationFormatter.createQualityReport(qualityScores);
     
     // 最適化提案の生成
-    const optimizationSuggestions = this.performanceMonitor.identifyOptimizationOpportunities();
+    const optimizationSuggestions: any[] = [];
     const optimizationViz = this.visualizationFormatter.visualizeOptimizationSuggestions(optimizationSuggestions);
 
     const visualizationData: VisualizationData = {
@@ -536,7 +512,6 @@ export class DecisionLogger {
       failed: failedSessions.length,
       averageStepsPerSession: sessions.length > 0 ? 
         sessions.reduce((sum, s) => sum + s.steps.length, 0) / sessions.length : 0,
-      performanceMonitoring: this.performanceMonitor.getPerformanceStatistics(),
       tracingStatistics: this.decisionTracer.getTraceStatistics()
     };
   }

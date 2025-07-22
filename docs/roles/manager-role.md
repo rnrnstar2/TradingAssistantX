@@ -112,8 +112,8 @@
 **完了確認時**: 出力管理規則の遵守状況をレビュー
 
 #### 🔧 自動検証活用
-**事前チェック**: `scripts/output-management/validate-output-compliance.sh`
-**自動修正**: `scripts/output-management/validate-output-compliance.sh --cleanup`
+**事前チェック**: `tools/output-management/validate-output-compliance.sh`
+**自動修正**: `tools/output-management/validate-output-compliance.sh --cleanup`
 **Pre-commit Hook**: Git commit時の自動検証
 
 ### 8. 🔐 **権限制限システム - MANAGER実装作業制限**

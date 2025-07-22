@@ -55,6 +55,11 @@ export type BatchCollectionResult = BaseCollectionResult<any[], ExecutionMetadat
 export type ExecutionResult = BaseCollectionResult<any[], ExecutionMetadata>;
 
 /**
+ * 汎用CollectionResult型（後方互換性のため）
+ */
+export type CollectionResult = BaseCollectionResult<any, BaseMetadata>;
+
+/**
  * 自律システム用CollectionResult
  * autonomous-system.tsで使用される特化型
  */

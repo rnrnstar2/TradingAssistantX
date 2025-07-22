@@ -33,7 +33,7 @@ export class IntelligentResourceManager {
   private resourceAllocator: ResourceAllocator;
   private qualityMaximizer: QualityMaximizer;
   
-  private executionHistory: CollectionResult[] = [];
+  private executionHistory: BaseCollectionResult[] = [];
   private siteProfiles: Map<string, SiteProfile> = new Map();
 
   constructor() {
@@ -120,7 +120,7 @@ export class IntelligentResourceManager {
     };
   }
 
-  async evaluateAndLearn(result: CollectionResult): Promise<LearningInsight> {
+  async evaluateAndLearn(result: BaseCollectionResult): Promise<LearningInsight> {
     this.executionHistory.push(result);
     
     const siteOptimizations = this.analyzeSitePerformance(result);
@@ -393,11 +393,11 @@ export class IntelligentResourceManager {
     return []; 
   }
 
-  private analyzeSitePerformance(result: CollectionResult): any[] {
+  private analyzeSitePerformance(result: BaseCollectionResult): any[] {
     return [];
   }
 
-  private analyzeMethodEffectiveness(result: CollectionResult): any {
+  private analyzeMethodEffectiveness(result: BaseCollectionResult): any {
     return {
       method: CollectionMethod.SIMPLE_HTTP,
       successRate: 80,
@@ -407,7 +407,7 @@ export class IntelligentResourceManager {
     };
   }
 
-  private analyzeResourceAllocation(result: CollectionResult): any {
+  private analyzeResourceAllocation(result: BaseCollectionResult): any {
     return {
       optimalTimeDistribution: new Map([['high_priority', 30000], ['medium_priority', 20000]]),
       efficientConcurrency: 3,

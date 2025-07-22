@@ -83,10 +83,10 @@ rm -f tasks/temporary/*.tmp
 #### 🔧 自動検証活用
 ```bash
 # 作業前チェック
-scripts/output-management/validate-output-compliance.sh
+tools/output-management/validate-output-compliance.sh
 
 # 違反修正
-scripts/output-management/validate-output-compliance.sh --cleanup
+tools/output-management/validate-output-compliance.sh --cleanup
 ```
 
 #### ⚠️ 違反時の対応

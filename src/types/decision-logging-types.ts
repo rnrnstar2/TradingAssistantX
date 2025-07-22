@@ -321,6 +321,4 @@ export interface LoggerConfig {
   sessionTimeout: number;
   outputDirectory: string;
   enableVisualization: boolean;
-  enablePerformanceMonitoring: boolean;
-  performanceMonitoringInterval: number;
 }

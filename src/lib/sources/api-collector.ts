@@ -1,16 +1,16 @@
 import fetch from 'node-fetch';
+import { BaseCollectionResult } from '../../types/collection-common.js';
 import { 
   APIConfig, 
   APISource, 
   APIEndpoint,
   MultiSourceResult, 
-  CollectionResult, 
   CollectionError,
   DataProvider 
 } from '../../types/multi-source.js';
 
 export class APICollector {
-  private cache: Map<string, { data: CollectionResult[]; timestamp: number }> = new Map();
+  private cache: Map<string, { data: BaseCollectionResult[]; timestamp: number }> = new Map();
   private requestCounts: Map<string, number> = new Map();
   private rateLimiters: Map<string, RateLimiter> = new Map();
 
@@ -33,7 +33,7 @@ export class APICollector {
       return this.createEmptyResult('No enabled API sources found', startTime);
     }
 
-    const results: CollectionResult[] = [];
+    const results: BaseCollectionResult[] = [];
     const errors: Error[] = [];
     let requestCount = 0;
     let cacheUsed = false;

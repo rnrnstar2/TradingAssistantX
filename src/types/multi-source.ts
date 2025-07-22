@@ -1,5 +1,7 @@
 // Multi-Source Data Collection Types
 
+import { BaseCollectionResult } from './collection-common.js';
+
 export type SourceType = 'rss' | 'api' | 'community';
 export type DataProvider = 
   | 'yahoo_finance'
@@ -18,7 +20,7 @@ export type DataProvider =
 export interface MultiSourceResult {
   source: SourceType;
   provider: string;
-  data: CollectionResult[];
+  data: BaseCollectionResult[];
   timestamp: number;
   metadata: {
     requestCount: number;

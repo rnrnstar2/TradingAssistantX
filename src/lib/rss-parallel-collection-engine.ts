@@ -1,6 +1,5 @@
 import {
   RssSource,
-  CollectionResult,
   PrioritizedResult,
   EmergencyResult,
   BatchConfig,
@@ -14,6 +13,7 @@ import {
   EmergencyInformation,
   MarketMovement,
 } from '../types/rss-collection-types';
+import { BaseCollectionResult } from '../types/collection-common.js';
 
 import { ParallelProcessor } from './rss/parallel-processor';
 import { SourcePrioritizer } from './rss/source-prioritizer';
@@ -45,7 +45,7 @@ export class RssParallelCollectionEngine {
     this.initializeDefaultSources();
   }
 
-  async collectParallelFeeds(sources: RssSource[]): Promise<CollectionResult[]> {
+  async collectParallelFeeds(sources: RssSource[]): Promise<BaseCollectionResult[]> {
     const collectionStart = Date.now();
     
     try {
@@ -186,7 +186,7 @@ export class RssParallelCollectionEngine {
       
       console.log(`Processing ${batchConfig.sources.length} sources in ${loadDistribution.batches.length} batches...`);
       
-      const allResults: CollectionResult[] = [];
+      const allResults: BaseCollectionResult[] = [];
       let successful = 0;
       let failed = 0;
 
@@ -360,8 +360,8 @@ export class RssParallelCollectionEngine {
     });
   }
 
-  private async convertToCollectionResults(processingResults: any[]): Promise<CollectionResult[]> {
-    const results: CollectionResult[] = [];
+  private async convertToCollectionResults(processingResults: any[]): Promise<BaseCollectionResult[]> {
+    const results: BaseCollectionResult[] = [];
     
     for (const processingResult of processingResults) {
       const metadata = {
@@ -386,7 +386,7 @@ export class RssParallelCollectionEngine {
     return results;
   }
 
-  private async processCollectedContent(results: CollectionResult[]): Promise<void> {
+  private async processCollectedContent(results: BaseCollectionResult[]): Promise<void> {
     for (const result of results) {
       if (result.items.length > 0) {
         // Analyze content quality and relevance
@@ -404,7 +404,7 @@ export class RssParallelCollectionEngine {
     }
   }
 
-  private async checkForEmergencies(results: CollectionResult[]): Promise<EmergencyInformation[]> {
+  private async checkForEmergencies(results: BaseCollectionResult[]): Promise<EmergencyInformation[]> {
     const emergencies: EmergencyInformation[] = [];
     
     for (const result of results) {
@@ -474,7 +474,7 @@ export class RssParallelCollectionEngine {
     };
   }
 
-  private async calculateValueRealized(result: CollectionResult, prioritizedSource: any): Promise<number> {
+  private async calculateValueRealized(result: BaseCollectionResult, prioritizedSource: any): Promise<number> {
     if (result.status !== 'success') return 0;
     
     const qualityFactor = result.metadata.qualityScore;
@@ -539,7 +539,7 @@ export class RssParallelCollectionEngine {
     }
   }
 
-  private async runPerformanceTest(): Promise<CollectionResult[]> {
+  private async runPerformanceTest(): Promise<BaseCollectionResult[]> {
     // Run a small performance test
     const testSources = this.defaultSources.slice(0, 3);
     return await this.collectParallelFeeds(testSources);
@@ -554,7 +554,7 @@ export class RssParallelCollectionEngine {
     };
   }
 
-  private recordPerformance(results: CollectionResult[], totalTime: number): void {
+  private recordPerformance(results: BaseCollectionResult[], totalTime: number): void {
     const snapshot: PerformanceSnapshot = {
       timestamp: new Date(),
       averageResponseTime: totalTime / results.length,

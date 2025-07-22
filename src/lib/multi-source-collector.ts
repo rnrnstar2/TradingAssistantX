@@ -1,11 +1,11 @@
 import { RSSCollector } from './sources/rss-collector.js';
 import { APICollector } from './sources/api-collector.js';
 import { CommunityCollector } from './sources/community-collector.js';
+import { BaseCollectionResult } from '../types/collection-common.js';
 import { 
   MultiSourceCollector as IMultiSourceCollector,
   MultiSourceConfig,
   MultiSourceResult,
-  CollectionResult,
   SourceType,
   CollectionStrategy,
   MultiSourcePerformanceMetrics,
@@ -214,7 +214,7 @@ export class MultiSourceCollector implements IMultiSourceCollector {
     if (results.length === 0) return [];
 
     // Collect all unique results
-    const allResults: CollectionResult[] = [];
+    const allResults: BaseCollectionResult[] = [];
     const seenIds = new Set<string>();
     const seenTitles = new Set<string>();
 
@@ -250,7 +250,7 @@ export class MultiSourceCollector implements IMultiSourceCollector {
 
     // Group results by source type
     const groupedResults: MultiSourceResult[] = [];
-    const sourceGroups = new Map<SourceType, CollectionResult[]>();
+    const sourceGroups = new Map<SourceType, BaseCollectionResult[]>();
 
     sortedResults.forEach(item => {
       // Determine source type based on the collector
@@ -299,7 +299,7 @@ export class MultiSourceCollector implements IMultiSourceCollector {
   }
 
   // Cache Management
-  private getFromCache(key: string): CollectionResult[] | null {
+  private getFromCache(key: string): BaseCollectionResult[] | null {
     const entry = this.cache.get(key);
     if (!entry) return null;
 
@@ -311,7 +311,7 @@ export class MultiSourceCollector implements IMultiSourceCollector {
     this.performanceMetrics.cacheHitRate = 
       (this.performanceMetrics.cacheHitRate * 0.9) + (1 * 0.1);
 
-    return entry.data as CollectionResult[];
+    return entry.data as BaseCollectionResult[];
   }
 
   private storeInCache(key: string, result: MultiSourceResult, sourceType: SourceType): void {
@@ -331,7 +331,7 @@ export class MultiSourceCollector implements IMultiSourceCollector {
     this.cache.set(key, entry);
   }
 
-  private createCachedResult(sourceType: SourceType, data: CollectionResult[]): MultiSourceResult {
+  private createCachedResult(sourceType: SourceType, data: BaseCollectionResult[]): MultiSourceResult {
     return {
       source: sourceType,
       provider: 'cached',
