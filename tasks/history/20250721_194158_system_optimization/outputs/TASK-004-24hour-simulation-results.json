@@ -1,0 +1,197 @@
+[
+  {
+    "iteration": 1,
+    "timestamp": "2025-07-21T15:38:55.119Z",
+    "executionTime": -1,
+    "memoryUsage": 32.97929382324219,
+    "decisionQuality": 0,
+    "error": "Cannot read properties of undefined (reading 'loadActionCollectionConfigPath')",
+    "systemHealth": {
+      "cpuUsage": 0.1038,
+      "heapUsed": 34642584,
+      "heapTotal": 63258624
+    }
+  },
+  {
+    "iteration": 2,
+    "timestamp": "2025-07-21T15:38:55.274Z",
+    "executionTime": -1,
+    "memoryUsage": 33.106544494628906,
+    "decisionQuality": 0,
+    "error": "Cannot read properties of undefined (reading 'loadActionCollectionConfigPath')",
+    "systemHealth": {
+      "cpuUsage": 0.0674,
+      "heapUsed": 34747552,
+      "heapTotal": 63258624
+    }
+  },
+  {
+    "iteration": 3,
+    "timestamp": "2025-07-21T15:38:55.426Z",
+    "executionTime": -1,
+    "memoryUsage": 33.18550109863281,
+    "decisionQuality": 0,
+    "error": "Cannot read properties of undefined (reading 'loadActionCollectionConfigPath')",
+    "systemHealth": {
+      "cpuUsage": 0.0303,
+      "heapUsed": 34830416,
+      "heapTotal": 63258624
+    }
+  },
+  {
+    "iteration": 4,
+    "timestamp": "2025-07-21T15:38:55.581Z",
+    "executionTime": -1,
+    "memoryUsage": 33.26448059082031,
+    "decisionQuality": 0,
+    "error": "Cannot read properties of undefined (reading 'loadActionCollectionConfigPath')",
+    "systemHealth": {
+      "cpuUsage": 0.1183,
+      "heapUsed": 34913216,
+      "heapTotal": 63258624
+    }
+  },
+  {
+    "iteration": 5,
+    "timestamp": "2025-07-21T15:38:55.736Z",
+    "executionTime": -1,
+    "memoryUsage": 33.34364318847656,
+    "decisionQuality": 0,
+    "error": "Cannot read properties of undefined (reading 'loadActionCollectionConfigPath')",
+    "systemHealth": {
+      "cpuUsage": 0.0784,
+      "heapUsed": 34996384,
+      "heapTotal": 63258624
+    }
+  },
+  {
+    "iteration": 6,
+    "timestamp": "2025-07-21T15:38:55.890Z",
+    "executionTime": -1,
+    "memoryUsage": 33.423362731933594,
+    "decisionQuality": 0,
+    "error": "Cannot read properties of undefined (reading 'loadActionCollectionConfigPath')",
+    "systemHealth": {
+      "cpuUsage": 0.09380000000000001,
+      "heapUsed": 35080280,
+      "heapTotal": 63258624
+    }
+  },
+  {
+    "iteration": 7,
+    "timestamp": "2025-07-21T15:38:56.046Z",
+    "executionTime": -1,
+    "memoryUsage": 33.50304412841797,
+    "decisionQuality": 0,
+    "error": "Cannot read properties of undefined (reading 'loadActionCollectionConfigPath')",
+    "systemHealth": {
+      "cpuUsage": 0.0319,
+      "heapUsed": 35163464,
+      "heapTotal": 63258624
+    }
+  },
+  {
+    "iteration": 8,
+    "timestamp": "2025-07-21T15:38:56.201Z",
+    "executionTime": -1,
+    "memoryUsage": 33.582618713378906,
+    "decisionQuality": 0,
+    "error": "Cannot read properties of undefined (reading 'loadActionCollectionConfigPath')",
+    "systemHealth": {
+      "cpuUsage": 0.0404,
+      "heapUsed": 35246904,
+      "heapTotal": 63258624
+    }
+  },
+  {
+    "iteration": 9,
+    "timestamp": "2025-07-21T15:38:56.353Z",
+    "executionTime": -1,
+    "memoryUsage": 33.66192626953125,
+    "decisionQuality": 0,
+    "error": "Cannot read properties of undefined (reading 'loadActionCollectionConfigPath')",
+    "systemHealth": {
+      "cpuUsage": 0.023,
+      "heapUsed": 35330064,
+      "heapTotal": 63258624
+    }
+  },
+  {
+    "iteration": 10,
+    "timestamp": "2025-07-21T15:38:56.507Z",
+    "executionTime": -1,
+    "memoryUsage": 33.740966796875,
+    "decisionQuality": 0,
+    "error": "Cannot read properties of undefined (reading 'loadActionCollectionConfigPath')",
+    "systemHealth": {
+      "cpuUsage": 0.032,
+      "heapUsed": 35413000,
+      "heapTotal": 63258624
+    }
+  },
+  {
+    "iteration": 11,
+    "timestamp": "2025-07-21T15:38:56.661Z",
+    "executionTime": -1,
+    "memoryUsage": 34.04987335205078,
+    "decisionQuality": 0,
+    "error": "Cannot read properties of undefined (reading 'loadActionCollectionConfigPath')",
+    "systemHealth": {
+      "cpuUsage": 0.0385,
+      "heapUsed": 35736912,
+      "heapTotal": 63520768
+    }
+  },
+  {
+    "iteration": 12,
+    "timestamp": "2025-07-21T15:38:56.813Z",
+    "executionTime": -1,
+    "memoryUsage": 34.12889099121094,
+    "decisionQuality": 0,
+    "error": "Cannot read properties of undefined (reading 'loadActionCollectionConfigPath')",
+    "systemHealth": {
+      "cpuUsage": 0.0321,
+      "heapUsed": 35819832,
+      "heapTotal": 63520768
+    }
+  },
+  {
+    "iteration": 13,
+    "timestamp": "2025-07-21T15:38:56.969Z",
+    "executionTime": -1,
+    "memoryUsage": 34.20795440673828,
+    "decisionQuality": 0,
+    "error": "Cannot read properties of undefined (reading 'loadActionCollectionConfigPath')",
+    "systemHealth": {
+      "cpuUsage": 0.1545,
+      "heapUsed": 35902744,
+      "heapTotal": 63520768
+    }
+  },
+  {
+    "iteration": 14,
+    "timestamp": "2025-07-21T15:38:57.124Z",
+    "executionTime": -1,
+    "memoryUsage": 34.287025451660156,
+    "decisionQuality": 0,
+    "error": "Cannot read properties of undefined (reading 'loadActionCollectionConfigPath')",
+    "systemHealth": {
+      "cpuUsage": 0.0308,
+      "heapUsed": 35985536,
+      "heapTotal": 63520768
+    }
+  },
+  {
+    "iteration": 15,
+    "timestamp": "2025-07-21T15:38:57.284Z",
+    "executionTime": -1,
+    "memoryUsage": 34.366004943847656,
+    "decisionQuality": 0,
+    "error": "Cannot read properties of undefined (reading 'loadActionCollectionConfigPath')",
+    "systemHealth": {
+      "cpuUsage": 0.0786,
+      "heapUsed": 36068512,
+      "heapTotal": 63520768
+    }
+  }
+]

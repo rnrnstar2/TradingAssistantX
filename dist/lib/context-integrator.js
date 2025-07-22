@@ -1,12 +1,9 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ContextIntegrator = void 0;
-const information_evaluator_js_1 = require("./information-evaluator.js");
-const claude_code_sdk_ts_1 = require("@instantlyeasy/claude-code-sdk-ts");
-class ContextIntegrator {
+import { InformationEvaluator } from './information-evaluator.js';
+import { claude } from '@instantlyeasy/claude-code-sdk-ts';
+export class ContextIntegrator {
     informationEvaluator;
     constructor() {
-        this.informationEvaluator = new information_evaluator_js_1.InformationEvaluator();
+        this.informationEvaluator = new InformationEvaluator();
     }
     async integrateAnalysisResults(accountStatus, collectionResults) {
         console.log('🔄 [コンテキスト統合開始] アカウント分析と情報収集結果を統合中...');
@@ -121,7 +118,7 @@ Return as JSON array:
 
 Focus on value creation, education, and authentic engagement.
 `;
-            const response = await (0, claude_code_sdk_ts_1.claude)()
+            const response = await claude()
                 .withModel('sonnet')
                 .query(suggestionPrompt)
                 .asText();
@@ -265,4 +262,3 @@ Focus on value creation, education, and authentic engagement.
         return { score, strengths, improvements };
     }
 }
-exports.ContextIntegrator = ContextIntegrator;

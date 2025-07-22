@@ -2,6 +2,7 @@ import { TaskResult, IntermediateResult, AsyncTaskStatus } from '../types/index'
 import { DataCommunicationSystem } from './data-communication-system';
 import { existsSync, writeFileSync, readFileSync, readdirSync, unlinkSync } from 'fs';
 import { join } from 'path';
+import { writeYamlSafe, loadYamlSafe } from '../utils/yaml-utils';
 
 export interface ContextSnapshot {
   id: string;
@@ -103,9 +104,9 @@ export class ContextManager {
         progress
       };
 
-      const filename = `context-${taskId}-${snapshotId}.json`;
+      const filename = `context-${taskId}-${snapshotId}.yaml`;
       const filePath = join(this.contextDir, filename);
-      writeFileSync(filePath, JSON.stringify(snapshot, null, 2), 'utf8');
+      writeYamlSafe(filePath, snapshot);
     } catch (error) {
       console.error(`コンテキストスナップショット保存エラー:`, error);
       throw error;
@@ -114,8 +115,8 @@ export class ContextManager {
 
   async loadContextSnapshot(taskId: string, snapshotId?: string): Promise<ContextSnapshot | null> {
     try {
-      const pattern = snapshotId ? `context-${taskId}-${snapshotId}.json` : `context-${taskId}-`;
-      const files = readdirSync(this.contextDir).filter(f => f.startsWith(pattern));
+      const pattern = snapshotId ? `context-${taskId}-${snapshotId}.yaml` : `context-${taskId}-`;
+      const files = readdirSync(this.contextDir).filter(f => f.startsWith(pattern) && f.endsWith('.yaml'));
       
       if (files.length === 0) {
         return null;
@@ -128,8 +129,7 @@ export class ContextManager {
       }
       
       const filePath = join(this.contextDir, latestFile);
-      const content = readFileSync(filePath, 'utf8');
-      return JSON.parse(content);
+      return loadYamlSafe<ContextSnapshot>(filePath);
     } catch (error) {
       console.error(`コンテキストスナップショット読み込みエラー:`, error);
       return null;
@@ -138,9 +138,9 @@ export class ContextManager {
 
   async saveTaskStatus(status: AsyncTaskStatus): Promise<void> {
     try {
-      const filename = `status-${status.taskId}.json`;
+      const filename = `status-${status.taskId}.yaml`;
       const filePath = join(this.statusDir, filename);
-      writeFileSync(filePath, JSON.stringify(status, null, 2), 'utf8');
+      writeYamlSafe(filePath, status);
     } catch (error) {
       console.error(`タスクステータス保存エラー:`, error);
       throw error;
@@ -149,15 +149,14 @@ export class ContextManager {
 
   async loadTaskStatus(taskId: string): Promise<AsyncTaskStatus | null> {
     try {
-      const filename = `status-${taskId}.json`;
+      const filename = `status-${taskId}.yaml`;
       const filePath = join(this.statusDir, filename);
       
       if (!existsSync(filePath)) {
         return null;
       }
       
-      const content = readFileSync(filePath, 'utf8');
-      return JSON.parse(content);
+      return loadYamlSafe<AsyncTaskStatus>(filePath);
     } catch (error) {
       console.error(`タスクステータス読み込みエラー:`, error);
       return null;
@@ -238,25 +237,23 @@ export class ContextManager {
       const now = Date.now();
       
       // コンテキストファイルのクリーンアップ
-      const contextFiles = readdirSync(this.contextDir).filter(f => f.startsWith('context-'));
+      const contextFiles = readdirSync(this.contextDir).filter(f => f.startsWith('context-') && f.endsWith('.yaml'));
       for (const file of contextFiles) {
         const filePath = join(this.contextDir, file);
-        const content = readFileSync(filePath, 'utf8');
-        const context: ContextSnapshot = JSON.parse(content);
+        const context = loadYamlSafe<ContextSnapshot>(filePath);
         
-        if (now - context.timestamp > maxAgeMs) {
+        if (context && now - context.timestamp > maxAgeMs) {
           unlinkSync(filePath);
         }
       }
 
       // ステータスファイルのクリーンアップ
-      const statusFiles = readdirSync(this.statusDir).filter(f => f.startsWith('status-'));
+      const statusFiles = readdirSync(this.statusDir).filter(f => f.startsWith('status-') && f.endsWith('.yaml'));
       for (const file of statusFiles) {
         const filePath = join(this.statusDir, file);
-        const content = readFileSync(filePath, 'utf8');
-        const status: AsyncTaskStatus = JSON.parse(content);
+        const status = loadYamlSafe<AsyncTaskStatus>(filePath);
         
-        if (status.status === 'completed' || status.status === 'failed') {
+        if (status && (status.status === 'completed' || status.status === 'failed')) {
           if (now - status.startTime > maxAgeMs) {
             unlinkSync(filePath);
           }
@@ -282,15 +279,14 @@ export class ContextManager {
 
   async getAllActiveTaskStatuses(): Promise<AsyncTaskStatus[]> {
     try {
-      const statusFiles = readdirSync(this.statusDir).filter(f => f.startsWith('status-'));
+      const statusFiles = readdirSync(this.statusDir).filter(f => f.startsWith('status-') && f.endsWith('.yaml'));
       const activeStatuses: AsyncTaskStatus[] = [];
       
       for (const file of statusFiles) {
         const filePath = join(this.statusDir, file);
-        const content = readFileSync(filePath, 'utf8');
-        const status: AsyncTaskStatus = JSON.parse(content);
+        const status = loadYamlSafe<AsyncTaskStatus>(filePath);
         
-        if (status.status === 'running' || status.status === 'pending') {
+        if (status && (status.status === 'running' || status.status === 'pending')) {
           activeStatuses.push(status);
         }
       }

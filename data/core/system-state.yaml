@@ -1,0 +1,15 @@
+# システム状態専用ファイル - 15行制限
+status: operational
+mode: autonomous_posting
+uptime: "2025-07-21T16:45:00Z"
+last_error: "originalContent未定義エラー"
+performance:
+  health_score: 70
+  success_rate: 0
+  avg_response_time: 1.2
+current_load:
+  pending_tasks: 1
+  active_operations: 0
+alerts:
+  level: high
+  last_alert: "2025-07-21T19:30:00Z"

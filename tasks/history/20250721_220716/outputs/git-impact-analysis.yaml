@@ -1,0 +1,196 @@
+# Git Management Impact Analysis
+# Generated: 2025-07-21T22:07:16
+
+## Overview
+total_files_analyzed: 408
+staged_files: 27
+unstaged_files: 186
+untracked_files: 195
+
+## Impact Categories
+
+### Critical - Immediate Commit Required
+description: "Files affecting core system functionality and type safety"
+files:
+  core_systems:
+    - src/core/autonomous-executor.ts
+    - src/core/decision-engine.ts  
+    - src/core/parallel-manager.ts
+  critical_libraries:
+    - src/lib/account-analyzer.ts
+    - src/lib/daily-action-planner.ts
+    - src/lib/playwright-account-collector.ts
+    - src/lib/playwright-common-config.ts
+    - src/lib/expanded-action-executor.ts
+    - src/lib/posting-manager.ts
+    - src/lib/x-client.ts
+  type_definitions:
+    - src/types/action-types.ts
+    - src/types/autonomous-system.ts
+  utilities:
+    - src/utils/config-loader.ts
+    - src/utils/monitoring/health-check.ts
+    - src/utils/yaml-utils.ts
+  runners:
+    - src/scripts/autonomous-runner-single.ts
+    - src/scripts/autonomous-runner.ts
+  configuration:
+    - tsconfig.json
+    - vitest.config.ts
+    - package.json
+    - pnpm-lock.yaml
+impact_level: CRITICAL
+commit_priority: 1
+
+### Feature - New Functionality (Already Staged)
+description: "New features and functionality additions - already staged"
+files:
+  new_libraries:
+    - src/lib/action-specific-collector.ts
+    - src/lib/decision-logger.ts
+    - src/lib/playwright-browser-manager.ts
+  new_utilities:
+    - src/utils/config-manager.ts
+    - src/utils/error-handler.ts
+    - src/utils/performance-monitor.ts
+  integration_tests:
+    - tests/integration/action-specific-integration.test.ts
+    - tests/integration/browser-error-recovery.test.ts
+    - tests/integration/claude-autonomous-validation.test.ts
+    - tests/integration/complete-workflow-integration.test.ts
+    - tests/integration/comprehensive-optimization.test.ts
+    - tests/integration/context-compression-integration.test.ts
+    - tests/integration/context-efficiency-validation.test.ts
+    - tests/integration/documentation-efficiency.test.ts
+    - tests/integration/execution-pipeline.test.ts
+    - tests/integration/multi-source-integration.test.ts
+    - tests/integration/performance-and-error-handling.test.ts
+    - tests/integration/playwright-parallel-execution.test.ts
+  unit_tests:
+    - tests/unit/action-specific-collector-extended.test.ts
+    - tests/unit/action-specific-collector.test.ts
+    - tests/unit/autonomous-executor.test.ts
+    - tests/unit/config-manager.test.ts
+    - tests/unit/context-compression-system.test.ts
+    - tests/unit/error-handler.test.ts
+    - tests/unit/execution-control.test.ts
+    - tests/unit/multi-source-collector.test.ts
+    - tests/unit/playwright-browser-manager.test.ts
+impact_level: FEATURE
+commit_priority: 2
+status: STAGED
+
+### Configuration - Data and Settings
+description: "Application configuration and data files"
+files:
+  data_configs:
+    - data/account-config.yaml
+    - data/autonomous-config.yaml
+    - data/content-strategy.yaml
+    - data/posting-history.yaml
+  modified_tasks:
+    - tasks/20250720_194351_{docs_cleanup}/instructions/TASK-001-docs-system-cleanup.md
+    - tasks/20250720_194351_{docs_cleanup}/reports/REPORT-001-docs-system-cleanup.md
+    - tasks/20250721-122038/reports/REPORT-002-mvp-constraints-removal.md
+    - tasks/20250721_001131/outputs/TASK-003-health-log.txt
+    - tasks/20250721_123440_workflow/outputs/TASK-WF01-optimized-workflow-design.yaml
+  existing_tests:
+    - tests/integration/optimized-workflow.test.ts
+impact_level: CONFIG
+commit_priority: 3
+
+### Documentation - Docs and Guides
+description: "Documentation updates and guide modifications"  
+files:
+  guides:
+    - docs/guides/deletion-safety-rules.md
+    - docs/guides/output-management-rules.md
+    - docs/guides/yaml-driven-development.md
+  roles:
+    - docs/roles/manager-role.md
+    - docs/roles/worker-role.md
+  core_docs:
+    - CLAUDE.md
+impact_level: DOCS
+commit_priority: 4
+
+### Low Priority - Build Artifacts and Dependencies
+description: "Generated files and dependencies that should be handled carefully"
+files:
+  build_artifacts:
+    - dist/* (56 files)
+  dependency_changes:
+    - node_modules/* (113+ files)
+  deleted_legacy:
+    - data/account-analysis-results.json
+    - data/context/current-situation.json
+    - data/context/error-log.json
+    - data/context/execution-history.json
+    - data/daily-action-log.json
+    - data/expanded-action-decisions.yaml
+    - data/metrics-history/account_test_user.json
+    - data/metrics-history/followers_test_user.json
+    - data/metrics-history/posts_test_user.json
+  deleted_docs:
+    - docs/CLAUDE.md
+    - docs/architecture.md
+    - docs/setup.md
+    - docs/operations.md
+    - docs/reference.md
+impact_level: LOW
+commit_priority: 5
+
+### Untracked - New Files Requiring Review
+description: "New files that need to be evaluated for inclusion"
+count: 195
+notable_files:
+  new_documentation:
+    - docs/quick-guide.md
+    - docs/technical-docs.md
+    - docs/guides/naming-conventions.md
+  new_libraries:
+    - src/lib/claude-optimized-provider.ts
+    - src/lib/claude-summary-loader.ts  
+    - src/lib/context-compression-system.ts
+    - src/lib/memory-optimizer.ts
+    - src/lib/minimal-decision-engine.ts
+    - src/lib/minimal-logger.ts
+    - src/lib/multi-source-collector.ts
+    - src/lib/realtime-info-collector.ts
+  new_utilities:
+    - src/utils/config-integration.ts
+    - src/utils/config-templates.ts
+    - src/utils/config-validator.ts
+    - src/utils/file-size-monitor.ts
+    - src/utils/optimization-metrics.ts
+    - src/utils/test-helper.ts
+  new_data:
+    - data/account-analysis-data.yaml
+    - data/action-collection-strategies.yaml
+    - data/current-situation.yaml
+    - data/daily-action-data.yaml
+    - data/metrics-history.yaml
+impact_level: REVIEW
+commit_priority: 6
+
+## Commit Strategy Recommendations
+
+1. **Immediate Priority**: Critical files affecting system stability
+2. **Feature Commit**: Already staged new functionality (ready to commit)
+3. **Configuration Commit**: Data and settings updates
+4. **Documentation Commit**: Guide and documentation updates  
+5. **Selective Cleanup**: Review and selectively add important untracked files
+6. **Build Artifacts**: Handle dist/ and node_modules/ changes carefully
+
+## Risk Assessment
+- High risk: Core system changes without proper staging
+- Medium risk: Large number of node_modules changes
+- Low risk: Documentation and configuration changes
+- Critical: 27 files already staged need verification before commit
+
+## Next Steps
+1. Validate critical system changes
+2. Test staged functionality before commit
+3. Create strategic commits in order of priority
+4. Review untracked files for inclusion
+5. Handle build artifacts and dependencies carefully

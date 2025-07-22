@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.LongRunningTaskManager = void 0;
-class LongRunningTaskManager {
+export class LongRunningTaskManager {
     dataCommunication;
     contextManager;
     parallelManager;
@@ -306,4 +303,3 @@ class LongRunningTaskManager {
         }
     }
 }
-exports.LongRunningTaskManager = LongRunningTaskManager;

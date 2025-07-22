@@ -1,0 +1,127 @@
+[
+  {
+    "sample": 1,
+    "timestamp": "2025-07-21T16:20:10.648Z",
+    "sampleTime": 383,
+    "contextUsage": {
+      "before": 4819,
+      "after": 4819,
+      "reduction": 0
+    },
+    "executionTime": {
+      "decisionTime": 74,
+      "totalTime": 383,
+      "improvement": 99.36166666666666
+    },
+    "systemHealth": {
+      "memoryUsage": 33.666587829589844,
+      "cpuUsage": 0.2013,
+      "stability": 100
+    },
+    "qualityMetrics": {
+      "decisionAccuracy": 100,
+      "contentQuality": 65,
+      "userValue": 85
+    }
+  },
+  {
+    "sample": 2,
+    "timestamp": "2025-07-21T16:20:12.900Z",
+    "sampleTime": 241,
+    "contextUsage": {
+      "before": 4819,
+      "after": 4819,
+      "reduction": 0
+    },
+    "executionTime": {
+      "decisionTime": 6,
+      "totalTime": 241,
+      "improvement": 99.59833333333333
+    },
+    "systemHealth": {
+      "memoryUsage": 35.40906524658203,
+      "cpuUsage": 0.9961,
+      "stability": 100
+    },
+    "qualityMetrics": {
+      "decisionAccuracy": 100,
+      "contentQuality": 65,
+      "userValue": 85
+    }
+  },
+  {
+    "sample": 3,
+    "timestamp": "2025-07-21T16:20:15.234Z",
+    "sampleTime": 309,
+    "contextUsage": {
+      "before": 4819,
+      "after": 4819,
+      "reduction": 0
+    },
+    "executionTime": {
+      "decisionTime": 13,
+      "totalTime": 307,
+      "improvement": 99.48833333333333
+    },
+    "systemHealth": {
+      "memoryUsage": 37.1002197265625,
+      "cpuUsage": 0.10610000000000001,
+      "stability": 100
+    },
+    "qualityMetrics": {
+      "decisionAccuracy": 100,
+      "contentQuality": 65,
+      "userValue": 85
+    }
+  },
+  {
+    "sample": 4,
+    "timestamp": "2025-07-21T16:20:17.490Z",
+    "sampleTime": 250,
+    "contextUsage": {
+      "before": 4819,
+      "after": 4819,
+      "reduction": 0
+    },
+    "executionTime": {
+      "decisionTime": 8,
+      "totalTime": 250,
+      "improvement": 99.58333333333333
+    },
+    "systemHealth": {
+      "memoryUsage": 38.817832946777344,
+      "cpuUsage": 0.019799999999999998,
+      "stability": 100
+    },
+    "qualityMetrics": {
+      "decisionAccuracy": 100,
+      "contentQuality": 65,
+      "userValue": 85
+    }
+  },
+  {
+    "sample": 5,
+    "timestamp": "2025-07-21T16:20:19.739Z",
+    "sampleTime": 242,
+    "contextUsage": {
+      "before": 4819,
+      "after": 4819,
+      "reduction": 0
+    },
+    "executionTime": {
+      "decisionTime": 9,
+      "totalTime": 242,
+      "improvement": 99.59666666666666
+    },
+    "systemHealth": {
+      "memoryUsage": 31.105514526367188,
+      "cpuUsage": 0.3906,
+      "stability": 100
+    },
+    "qualityMetrics": {
+      "decisionAccuracy": 100,
+      "contentQuality": 65,
+      "userValue": 85
+    }
+  }
+]

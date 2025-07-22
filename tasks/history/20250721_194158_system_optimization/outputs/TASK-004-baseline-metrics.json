@@ -1,0 +1,22 @@
+{
+  "contextUsage": {
+    "before": 4819,
+    "after": 4819,
+    "reduction": 0
+  },
+  "executionTime": {
+    "decisionTime": 22,
+    "totalTime": 284.6,
+    "improvement": 99.52566666666667
+  },
+  "systemHealth": {
+    "memoryUsage": 35.219844055175784,
+    "cpuUsage": 0.34278000000000003,
+    "stability": 100
+  },
+  "qualityMetrics": {
+    "decisionAccuracy": 100,
+    "contentQuality": 65,
+    "userValue": 85
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "timestamp": "2025-07-21T14:47:39.776Z",
+  "testStatus": "completed",
+  "results": {
+    "linkEvaluatorTest": "PASSED",
+    "contentAnalyzerTest": "PASSED",
+    "explorationEngineTest": "PASSED",
+    "explorationResults": {
+      "seedUrl": "https://httpbin.org/html",
+      "totalLinksDiscovered": 0,
+      "exploredLinks": 1,
+      "contentResults": [
+        {
+          "url": "https://httpbin.org/html",
+          "depth": 0,
+          "content": {
+            "title": "Herman Melville - Moby-Dick",
+            "summary": "Herman Melville - Moby-Dick Availing himself of the mild, summer-cool weather that now reigned in these latitudes, and in preparation for the peculiarly active pursuits shortly to be anticipated, Perth, the begrimed, blistered old blacksmith, had not removed his portable forge to the hold again, after concluding his contributory work for Ahab's leg, but still retained it on deck, fast lashed to ringbolts by the foremast; being now almost incessantly invoked by the headsmen, and harpooneers, and bowsmen to do some little job for them; altering, or repairing, or new shaping their various weapons and boat furniture。 Often he would be surrounded by an eager circle, all waiting to be served; holding boat-spades, pike-heads, harpoons, and lances, and jealously watching his every sooty movement, as he toiled。",
+            "keyPoints": [],
+            "marketData": [],
+            "economicIndicators": [],
+            "expertOpinions": [],
+            "confidence": 75
+          },
+          "collectionMethod": "simple_http",
+          "explorationPath": [
+            "depth-0",
+            "httpbin.org",
+            "html"
+          ],
+          "qualityMetrics": {
+            "readability": 60,
+            "informativeness": 70,
+            "recency": 80,
+            "authorCredibility": 50,
+            "sourceReliability": 60,
+            "overallScore": 64
+          },
+          "postingValue": {
+            "engagementPotential": 50,
+            "educationalValue": 50,
+            "timelinessScore": 50,
+            "uniquenessScore": 60,
+            "overallValue": 52.5
+          }
+        }
+      ],
+      "executionTime": 5302,
+      "explorationStats": {
+        "totalRequestsMade": 1,
+        "successfulRequests": 1,
+        "failedRequests": 0,
+        "averageResponseTime": null,
+        "totalBytesDownloaded": 3739,
+        "memoryUsage": 16
+      },
+      "errors": []
+    }
+  },
+  "summary": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "failedTests": 0,
+    "implementationComplete": true
+  }
+}

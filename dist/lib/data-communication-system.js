@@ -1,30 +1,45 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.DataCommunicationSystem = void 0;
-const fs_1 = require("fs");
-const path_1 = require("path");
-class DataCommunicationSystem {
+import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync } from 'fs';
+import { join } from 'path';
+import { writeYamlSafe, loadYamlSafe } from '../utils/yaml-utils';
+export class DataCommunicationSystem {
     dataDir;
     messagesDir;
     intermediateDir;
-    constructor(dataDir = 'data') {
+    parallelSessionsDir;
+    mergedResultsDir;
+    sessionId;
+    constructor(dataDir = 'data', sessionId) {
         this.dataDir = dataDir;
-        this.messagesDir = (0, path_1.join)(dataDir, 'messages');
-        this.intermediateDir = (0, path_1.join)(dataDir, 'intermediate');
+        this.messagesDir = join(dataDir, 'messages');
+        this.intermediateDir = join(dataDir, 'intermediate');
+        this.parallelSessionsDir = join(dataDir, 'parallel_sessions');
+        this.mergedResultsDir = join(dataDir, 'merged_results');
+        this.sessionId = sessionId;
         this.ensureDirectories();
     }
     ensureDirectories() {
-        [this.dataDir, this.messagesDir, this.intermediateDir].forEach(dir => {
-            if (!(0, fs_1.existsSync)(dir)) {
-                (0, fs_1.mkdirSync)(dir, { recursive: true });
+        [this.dataDir, this.messagesDir, this.intermediateDir, this.parallelSessionsDir, this.mergedResultsDir].forEach(dir => {
+            if (!existsSync(dir)) {
+                mkdirSync(dir, { recursive: true });
             }
         });
+        // セッションID指定時は専用ディレクトリ作成
+        if (this.sessionId) {
+            const sessionDir = this.getSessionDirectory();
+            if (!existsSync(sessionDir)) {
+                mkdirSync(sessionDir, { recursive: true });
+            }
+        }
     }
     async shareData(filename, data) {
         try {
-            const filePath = (0, path_1.join)(this.dataDir, filename);
-            const content = JSON.stringify(data, null, 2);
-            (0, fs_1.writeFileSync)(filePath, content, 'utf8');
+            // セッションIDが指定されている場合は専用ディレクトリに保存
+            const filePath = this.sessionId
+                ? join(this.getSessionDirectory(), filename)
+                : join(this.dataDir, filename);
+            // YAMLファイル名に変更
+            const yamlFilePath = filePath.replace(/\.[^.]+$/, '.yaml');
+            writeYamlSafe(yamlFilePath, data);
         }
         catch (error) {
             console.error(`データ共有エラー (${filename}):`, error);
@@ -33,12 +48,21 @@ class DataCommunicationSystem {
     }
     async readSharedData(filename) {
         try {
-            const filePath = (0, path_1.join)(this.dataDir, filename);
-            if (!(0, fs_1.existsSync)(filePath)) {
-                return null;
+            // セッションIDが指定されている場合は専用ディレクトリから読み込み
+            const filePath = this.sessionId
+                ? join(this.getSessionDirectory(), filename)
+                : join(this.dataDir, filename);
+            // YAMLファイル名を試行
+            const yamlFilePath = filePath.replace(/\.[^.]+$/, '.yaml');
+            if (existsSync(yamlFilePath)) {
+                return loadYamlSafe(yamlFilePath);
             }
-            const content = (0, fs_1.readFileSync)(filePath, 'utf8');
-            return JSON.parse(content);
+            // 従来のJSONファイルもサポート（後方互換性）
+            if (existsSync(filePath)) {
+                const content = readFileSync(filePath, 'utf8');
+                return JSON.parse(content);
+            }
+            return null;
         }
         catch (error) {
             console.error(`データ読み取りエラー (${filename}):`, error);
@@ -58,9 +82,9 @@ class DataCommunicationSystem {
     }
     async sendMessage(message) {
         try {
-            const messageFile = `message-${message.id}.json`;
-            const filePath = (0, path_1.join)(this.messagesDir, messageFile);
-            (0, fs_1.writeFileSync)(filePath, JSON.stringify(message, null, 2), 'utf8');
+            const messageFile = `message-${message.id}.yaml`;
+            const filePath = join(this.messagesDir, messageFile);
+            writeYamlSafe(filePath, message);
         }
         catch (error) {
             console.error(`メッセージ送信エラー:`, error);
@@ -70,12 +94,19 @@ class DataCommunicationSystem {
     async readMessages(recipientId) {
         try {
             const messages = [];
-            const files = (0, fs_1.readdirSync)(this.messagesDir).filter(f => f.startsWith('message-'));
+            const files = readdirSync(this.messagesDir).filter(f => f.startsWith('message-'));
             for (const file of files) {
-                const filePath = (0, path_1.join)(this.messagesDir, file);
-                const content = (0, fs_1.readFileSync)(filePath, 'utf8');
-                const message = JSON.parse(content);
-                if (!recipientId || message.to === recipientId || !message.to) {
+                const filePath = join(this.messagesDir, file);
+                let message = null;
+                if (file.endsWith('.yaml')) {
+                    message = loadYamlSafe(filePath);
+                }
+                else if (file.endsWith('.json')) {
+                    // 後方互換性のためJSONも読み込み
+                    const content = readFileSync(filePath, 'utf8');
+                    message = JSON.parse(content);
+                }
+                if (message && (!recipientId || message.to === recipientId || !message.to)) {
                     messages.push(message);
                 }
             }
@@ -89,13 +120,20 @@ class DataCommunicationSystem {
     async cleanupOldMessages(maxAgeMs = 24 * 60 * 60 * 1000) {
         try {
             const now = Date.now();
-            const files = (0, fs_1.readdirSync)(this.messagesDir).filter(f => f.startsWith('message-'));
+            const files = readdirSync(this.messagesDir).filter(f => f.startsWith('message-'));
             for (const file of files) {
-                const filePath = (0, path_1.join)(this.messagesDir, file);
-                const content = (0, fs_1.readFileSync)(filePath, 'utf8');
-                const message = JSON.parse(content);
-                if (now - message.timestamp > maxAgeMs) {
-                    (0, fs_1.unlinkSync)(filePath);
+                const filePath = join(this.messagesDir, file);
+                let message = null;
+                if (file.endsWith('.yaml')) {
+                    message = loadYamlSafe(filePath);
+                }
+                else if (file.endsWith('.json')) {
+                    // 後方互換性のためJSONも読み込み
+                    const content = readFileSync(filePath, 'utf8');
+                    message = JSON.parse(content);
+                }
+                if (message && now - message.timestamp > maxAgeMs) {
+                    unlinkSync(filePath);
                 }
             }
         }
@@ -105,9 +143,9 @@ class DataCommunicationSystem {
     }
     async saveIntermediateResult(result) {
         try {
-            const filename = `intermediate-${result.taskId}-${result.id}.json`;
-            const filePath = (0, path_1.join)(this.intermediateDir, filename);
-            (0, fs_1.writeFileSync)(filePath, JSON.stringify(result, null, 2), 'utf8');
+            const filename = `intermediate-${result.taskId}-${result.id}.yaml`;
+            const filePath = join(this.intermediateDir, filename);
+            writeYamlSafe(filePath, result);
         }
         catch (error) {
             console.error(`中間結果保存エラー:`, error);
@@ -116,19 +154,25 @@ class DataCommunicationSystem {
     }
     async readIntermediateResult(taskId, resultId) {
         try {
-            const pattern = resultId ? `intermediate-${taskId}-${resultId}.json` : `intermediate-${taskId}-`;
-            const files = (0, fs_1.readdirSync)(this.intermediateDir).filter(f => f.startsWith(pattern));
+            const pattern = resultId ? `intermediate-${taskId}-${resultId}` : `intermediate-${taskId}-`;
+            const files = readdirSync(this.intermediateDir).filter(f => f.startsWith(pattern) && (f.endsWith('.yaml') || f.endsWith('.json')));
             if (files.length === 0) {
                 return null;
             }
-            // 最新の結果を返す
+            // 最新の結果を返す（YAMLを優先）
             const latestFile = files.sort().pop();
             if (!latestFile) {
                 return null;
             }
-            const filePath = (0, path_1.join)(this.intermediateDir, latestFile);
-            const content = (0, fs_1.readFileSync)(filePath, 'utf8');
-            return JSON.parse(content);
+            const filePath = join(this.intermediateDir, latestFile);
+            if (latestFile.endsWith('.yaml')) {
+                return loadYamlSafe(filePath);
+            }
+            else {
+                // 後方互換性のためJSONも読み込み
+                const content = readFileSync(filePath, 'utf8');
+                return JSON.parse(content);
+            }
         }
         catch (error) {
             console.error(`中間結果読み取りエラー:`, error);
@@ -138,13 +182,22 @@ class DataCommunicationSystem {
     async listIntermediateResults(taskId) {
         try {
             const pattern = `intermediate-${taskId}-`;
-            const files = (0, fs_1.readdirSync)(this.intermediateDir).filter(f => f.startsWith(pattern));
+            const files = readdirSync(this.intermediateDir).filter(f => f.startsWith(pattern));
             const results = [];
             for (const file of files) {
-                const filePath = (0, path_1.join)(this.intermediateDir, file);
-                const content = (0, fs_1.readFileSync)(filePath, 'utf8');
-                const result = JSON.parse(content);
-                results.push(result);
+                const filePath = join(this.intermediateDir, file);
+                let result = null;
+                if (file.endsWith('.yaml')) {
+                    result = loadYamlSafe(filePath);
+                }
+                else if (file.endsWith('.json')) {
+                    // 後方互換性のためJSONも読み込み
+                    const content = readFileSync(filePath, 'utf8');
+                    result = JSON.parse(content);
+                }
+                if (result) {
+                    results.push(result);
+                }
             }
             return results.sort((a, b) => a.timestamp - b.timestamp);
         }
@@ -156,13 +209,20 @@ class DataCommunicationSystem {
     async cleanupExpiredResults() {
         try {
             const now = Date.now();
-            const files = (0, fs_1.readdirSync)(this.intermediateDir).filter(f => f.startsWith('intermediate-'));
+            const files = readdirSync(this.intermediateDir).filter(f => f.startsWith('intermediate-'));
             for (const file of files) {
-                const filePath = (0, path_1.join)(this.intermediateDir, file);
-                const content = (0, fs_1.readFileSync)(filePath, 'utf8');
-                const result = JSON.parse(content);
-                if (result.expiresAt && now > result.expiresAt) {
-                    (0, fs_1.unlinkSync)(filePath);
+                const filePath = join(this.intermediateDir, file);
+                let result = null;
+                if (file.endsWith('.yaml')) {
+                    result = loadYamlSafe(filePath);
+                }
+                else if (file.endsWith('.json')) {
+                    // 後方互換性のためJSONも読み込み
+                    const content = readFileSync(filePath, 'utf8');
+                    result = JSON.parse(content);
+                }
+                if (result && result.expiresAt && now > result.expiresAt) {
+                    unlinkSync(filePath);
                 }
             }
         }
@@ -210,5 +270,77 @@ class DataCommunicationSystem {
     getIntermediateDirectory() {
         return this.intermediateDir;
     }
+    // 並列セッション対応メソッド
+    getSessionDirectory() {
+        if (!this.sessionId) {
+            throw new Error('SessionID is not set');
+        }
+        return join(this.parallelSessionsDir, this.sessionId);
+    }
+    getParallelSessionsDirectory() {
+        return this.parallelSessionsDir;
+    }
+    getMergedResultsDirectory() {
+        return this.mergedResultsDir;
+    }
+    async saveMergedResult(filename, data) {
+        try {
+            const yamlFilename = filename.replace(/\.[^.]+$/, '.yaml');
+            const filePath = join(this.mergedResultsDir, yamlFilename);
+            writeYamlSafe(filePath, data);
+        }
+        catch (error) {
+            console.error(`マージ結果保存エラー (${filename}):`, error);
+            throw error;
+        }
+    }
+    async getAllSessionResults(filename) {
+        try {
+            const results = [];
+            if (!existsSync(this.parallelSessionsDir)) {
+                return results;
+            }
+            const sessionDirs = readdirSync(this.parallelSessionsDir);
+            for (const sessionDir of sessionDirs) {
+                const sessionPath = join(this.parallelSessionsDir, sessionDir);
+                const filePath = join(sessionPath, filename);
+                // YAMLファイルを優先して確認
+                const yamlFilePath = filePath.replace(/\.[^.]+$/, '.yaml');
+                if (existsSync(yamlFilePath)) {
+                    const data = loadYamlSafe(yamlFilePath);
+                    if (data) {
+                        results.push({ sessionId: sessionDir, data });
+                    }
+                }
+                else if (existsSync(filePath)) {
+                    // 後方互換性のためJSONも確認
+                    const content = readFileSync(filePath, 'utf8');
+                    const data = JSON.parse(content);
+                    results.push({ sessionId: sessionDir, data });
+                }
+            }
+            return results;
+        }
+        catch (error) {
+            console.error('セッション結果収集エラー:', error);
+            return [];
+        }
+    }
+    async mergeAllSessionResults(filename, mergeFilename) {
+        try {
+            const allResults = await this.getAllSessionResults(filename);
+            const mergedData = {
+                timestamp: new Date().toISOString(),
+                totalSessions: allResults.length,
+                sessionResults: allResults,
+                mergedAt: Date.now()
+            };
+            await this.saveMergedResult(mergeFilename, mergedData);
+            console.log(`✅ [データ統合] ${allResults.length}セッションの結果を${mergeFilename}に統合完了`);
+        }
+        catch (error) {
+            console.error('セッション結果統合エラー:', error);
+            throw error;
+        }
+    }
 }
-exports.DataCommunicationSystem = DataCommunicationSystem;

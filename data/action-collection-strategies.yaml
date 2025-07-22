@@ -1,0 +1,102 @@
+version: "1.0.0"
+system:
+  maxExecutionTime: 90
+  sufficiencyThreshold: 85
+  qualityMinimum: 75
+
+# 主要戦略（アクティブ運用）
+strategies:
+  original_post:
+    priority: 60
+    focusAreas:
+      - "独自洞察発見"
+      - "市場分析情報"
+      - "教育的価値"
+      - "投稿機会特定"
+    sources:
+      # 高優先度RSS ソース
+      - name: "yahoo_finance_rss"
+        url: "https://finance.yahoo.com/rss/"
+        priority: "high"
+        type: "rss"
+        categories: ["markets", "crypto", "stocks"]
+      
+      - name: "bloomberg_markets"
+        url: "https://feeds.bloomberg.com/markets/news.rss"
+        priority: "high"
+        type: "rss"
+        categories: ["business", "markets"]
+      
+      # 高優先度API ソース
+      - name: "alpha_vantage"
+        provider: "alpha_vantage"
+        priority: "high"
+        type: "api"
+        endpoints: ["stock_prices", "forex", "crypto"]
+        
+      - name: "coingecko"
+        provider: "coingecko"
+        priority: "high"
+        type: "api"
+        endpoints: ["prices", "trends", "market_data"]
+      
+      
+      # コミュニティソース
+      - name: "reddit_investing"
+        platform: "reddit"
+        priority: "medium"
+        type: "community"
+        subreddits: ["investing", "stocks", "SecurityAnalysis"]
+        
+    collectMethods:
+      - "multi_source_analysis"
+      - "cross_source_validation"
+      - "trend_analysis"
+      - "educational_gap_identification"
+    sufficiencyTarget: 90
+
+# 基本品質基準
+qualityStandards:
+  relevanceScore: 80
+  credibilityScore: 85
+  uniquenessScore: 70
+  timelinessScore: 90
+
+# データソース選択戦略（多様情報源モード対応）
+sourceSelection:
+  original_post:
+    preferred: ["rss", "api", "community"]
+    fallback: ["community", "rss"]
+    priority: "diversity"  # options: quality, speed, diversity
+    
+  quote_tweet:
+    preferred: ["community", "rss"]
+    fallback: ["community", "rss"]
+    priority: "quality"
+    
+  reply:
+    preferred: ["twitter", "community"]
+    fallback: ["community", "rss"]  
+    priority: "speed"
+    
+  like:
+    preferred: ["twitter"]
+    fallback: ["community"]
+    priority: "speed"
+    
+  retweet:
+    preferred: ["twitter", "community"]
+    fallback: ["community"]
+    priority: "quality"
+
+  # 長期投資戦略に特化した設定
+  long_term_investment:
+    preferred: ["api", "rss", "community"]
+    fallback: ["rss", "community"]
+    priority: "quality"
+    
+  # 市場分析特化設定
+  market_analysis:
+    preferred: ["api", "rss"]
+    fallback: ["rss", "community"]
+    priority: "diversity"

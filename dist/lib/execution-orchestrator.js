@@ -1,12 +1,9 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ExecutionOrchestrator = void 0;
-const data_communication_system_1 = require("./data-communication-system");
-const context_manager_1 = require("./context-manager");
-const parallel_execution_manager_1 = require("./parallel-execution-manager");
-const long_running_task_manager_1 = require("./long-running-task-manager");
-const async_execution_manager_1 = require("./async-execution-manager");
-class ExecutionOrchestrator {
+import { DataCommunicationSystem } from './data-communication-system';
+import { ContextManager } from './context-manager';
+import { ParallelExecutionManager } from './parallel-execution-manager';
+import { LongRunningTaskManager } from './long-running-task-manager';
+import { AsyncExecutionManager } from './async-execution-manager';
+export class ExecutionOrchestrator {
     dataCommunication;
     contextManager;
     parallelManager;
@@ -14,13 +11,13 @@ class ExecutionOrchestrator {
     asyncManager;
     constructor(growthSystemManager, postingManager, claudeCollector, dataDir = 'data') {
         // データ連携システムの初期化
-        const dataCommunication = new data_communication_system_1.DataCommunicationSystem(dataDir);
-        const contextManager = new context_manager_1.ContextManager(dataCommunication);
+        const dataCommunication = new DataCommunicationSystem(dataDir);
+        const contextManager = new ContextManager(dataCommunication);
         // 並列実行管理システムの初期化
-        const parallelManager = new parallel_execution_manager_1.ParallelExecutionManager(dataCommunication, contextManager, growthSystemManager, postingManager, claudeCollector);
+        const parallelManager = new ParallelExecutionManager(dataCommunication, contextManager, growthSystemManager, postingManager, claudeCollector);
         // 実行時間管理システムの初期化
-        const longRunningManager = new long_running_task_manager_1.LongRunningTaskManager(dataCommunication, contextManager, parallelManager);
-        const asyncManager = new async_execution_manager_1.AsyncExecutionManager(dataCommunication, contextManager, parallelManager, longRunningManager);
+        const longRunningManager = new LongRunningTaskManager(dataCommunication, contextManager, parallelManager);
+        const asyncManager = new AsyncExecutionManager(dataCommunication, contextManager, parallelManager, longRunningManager);
         // readonly プロパティへの代入
         this.dataCommunication = dataCommunication;
         this.contextManager = contextManager;
@@ -191,4 +188,3 @@ class ExecutionOrchestrator {
         };
     }
 }
-exports.ExecutionOrchestrator = ExecutionOrchestrator;

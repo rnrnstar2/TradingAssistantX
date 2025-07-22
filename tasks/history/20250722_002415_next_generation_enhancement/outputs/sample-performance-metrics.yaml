@@ -1,0 +1,56 @@
+sessionId: "session-20250721-demo001"
+timestamp: "2025-01-21T15:30:45.000Z"
+decisionTime: 45000
+cpuUsage: 12.5
+memoryUsage: 180
+networkLatency: 450
+claudeApiCalls: 1
+cacheHitRate: 0.0
+resourceUsage:
+  memoryMB: 180
+  cpuPercent: 12.5
+  diskIOBytes: 0
+  networkIOBytes: 0
+  activeConnections: 1
+
+optimizationSuggestions:
+  - id: "api-response-optimization"
+    category: "performance"
+    priority: "high"
+    description: "Claude API応答時間の改善 (現在20秒)"
+    implementationComplexity: "medium"
+    expectedImpact: 0.7
+    implementationSteps:
+      - "プロンプトの最適化によるトークン数削減"
+      - "並列処理の導入検討"
+      - "キャッシュ機構の強化"
+
+  - id: "memory-efficiency"
+    category: "resource"
+    priority: "medium"
+    description: "メモリ使用量の最適化"
+    implementationComplexity: "low"
+    expectedImpact: 0.4
+    implementationSteps:
+      - "不要なオブジェクト参照のクリーンアップ"
+      - "データ構造の見直し"
+
+performanceStats:
+  totalSessions: 1
+  averageDecisionTime: 45000
+  averageMemoryUsage: 180
+  averageCpuUsage: 12.5
+  totalClaudeApiCalls: 1
+  averageCacheHitRate: 0.0
+
+trends:
+  timeWindow:
+    start: "2025-01-21T15:00:00.000Z"
+    end: "2025-01-21T16:00:00.000Z" 
+    duration: 3600000
+  performanceTrend: "stable"
+  averageDecisionTime: 45000
+  resourceUtilizationTrend: 0.05
+  recommendations:
+    - "パフォーマンスは安定しています"
+    - "より多くのデータ蓄積により、精度の高い分析が可能になります"

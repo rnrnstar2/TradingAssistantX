@@ -3,9 +3,9 @@ import path from 'path';
 import { yamlUtils } from './yaml-utils.js';
 
 /**
- * Real-time performance metrics interface as specified in Task C1
+ * Real-time system performance metrics interface as specified in Task C1
  */
-export interface PerformanceMetrics {
+export interface SystemSystemPerformanceMetrics {
   execution: {
     totalTime: number;
     infoCollectionTime: number;
@@ -52,7 +52,7 @@ export interface OptimizationRecommendation {
  * Performance trend analysis result
  */
 export interface PerformanceTrend {
-  metric: keyof PerformanceMetrics['execution'] | keyof PerformanceMetrics['quality'] | keyof PerformanceMetrics['resources'];
+  metric: keyof SystemSystemPerformanceMetrics['execution'] | keyof SystemSystemPerformanceMetrics['quality'] | keyof SystemSystemPerformanceMetrics['resources'];
   trend: 'improving' | 'stable' | 'degrading';
   changePercent: number;
   period: string;
@@ -63,9 +63,9 @@ export interface PerformanceTrend {
  * Implements Task C1: Real-time metrics collection with the specified interface
  */
 export class PerformanceMonitor {
-  private currentSession: Partial<PerformanceMetrics> = {};
+  private currentSession: Partial<SystemSystemPerformanceMetrics> = {};
   private sessionStartTime: number = 0;
-  private metricsHistory: PerformanceMetrics[] = [];
+  private metricsHistory: SystemSystemPerformanceMetrics[] = [];
   private readonly metricsFilePath: string;
   private readonly maxHistorySize = 1000;
 
@@ -150,7 +150,7 @@ export class PerformanceMonitor {
   /**
    * End the current session and save metrics
    */
-  async endSession(): Promise<PerformanceMetrics> {
+  async endSession(): Promise<SystemPerformanceMetrics> {
     const totalTime = Date.now() - this.sessionStartTime;
     
     if (this.currentSession.execution) {
@@ -162,7 +162,7 @@ export class PerformanceMonitor {
       this.recordMemoryUsage();
     }
 
-    const finalMetrics = this.currentSession as PerformanceMetrics;
+    const finalMetrics = this.currentSession as SystemPerformanceMetrics;
     await this.saveMetrics(finalMetrics);
     
     return finalMetrics;
@@ -171,7 +171,7 @@ export class PerformanceMonitor {
   /**
    * Save metrics to persistent storage
    */
-  private async saveMetrics(metrics: PerformanceMetrics): Promise<void> {
+  private async saveMetrics(metrics: SystemPerformanceMetrics): Promise<void> {
     try {
       // Load existing metrics
       await this.loadMetricsHistory();
@@ -249,7 +249,7 @@ export class PerformanceMonitor {
   /**
    * Get recent metrics for analysis
    */
-  async getRecentMetrics(count: number = 10): Promise<PerformanceMetrics[]> {
+  async getRecentMetrics(count: number = 10): Promise<SystemPerformanceMetrics[]> {
     await this.loadMetricsHistory();
     return this.metricsHistory.slice(-count);
   }
@@ -450,7 +450,7 @@ export class PerformanceMonitor {
   /**
    * Get current session metrics (for real-time monitoring)
    */
-  getCurrentSessionMetrics(): Partial<PerformanceMetrics> {
+  getCurrentSessionMetrics(): Partial<SystemPerformanceMetrics> {
     return { ...this.currentSession };
   }
 
@@ -458,7 +458,7 @@ export class PerformanceMonitor {
    * Generate performance summary for dashboard
    */
   async generatePerformanceSummary(): Promise<{
-    currentMetrics: Partial<PerformanceMetrics>;
+    currentMetrics: Partial<SystemPerformanceMetrics>;
     recommendations: OptimizationRecommendation[];
     anomalies: PerformanceAnomaly[];
     trends: PerformanceTrend[];

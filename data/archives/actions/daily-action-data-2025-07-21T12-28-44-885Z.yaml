@@ -1,0 +1,61 @@
+- timestamp: '2025-07-21T12:21:55.485Z'
+  totalActions: 0
+  successfulActions: 0
+  errors: []
+- timestamp: '2025-07-21T12:21:59.432Z'
+  action: original_post
+  params:
+    originalContent: |-
+      📈 投資の基本原則：「時間」こそ最大の武器
+
+      ✅ 複利の力を理解しよう
+      ・月1万円×10年 = 120万円
+      ・年利5%なら約155万円に成長
+
+      ✅ 感情に左右されない仕組み作り
+      ・積立投資で平均取得単価を下げる
+      ・暴落時こそチャンス
+
+      ⚠️ リスク管理が成功のカギ
+      「卵を一つのカゴに盛るな」
+
+      #投資初心者 #資産形成 #長期投資 #複利効果 #リスク管理
+    hashtags:
+      - '#投資教育'
+      - '#資産形成'
+    contentType: educational
+    riskLevel: low
+    timeOfDay: 21
+    dateGenerated: '2025-07-21'
+  content: |-
+    📈 投資の基本原則：「時間」こそ最大の武器
+
+    ✅ 複利の力を理解しよう
+    ・月1万円×10年 = 120万円
+    ・年利5%なら約155万円に成長
+
+    ✅ 感情に左右されない仕組み作り
+    ・積立投資で平均取得単価を下げる
+    ・暴落時こそチャンス
+
+    ⚠️ リスク管理が成功のカギ
+    「卵を一つのカゴに盛るな」
+
+    #投資初心者 #資産形成 #長期投資 #複利効果 #リスク管理
+  success: true
+- date: '2025-07-21'
+  totalActions: 0
+  actionBreakdown:
+    original_post: 0
+  executedActions:
+    - success: false
+      actionId: test-decision-1
+      type: original_post
+      timestamp: 1753100537129
+      error: Cannot read properties of undefined (reading 'originalContent')
+    - success: false
+      actionId: test-decision-2
+      type: quote_tweet
+      timestamp: 1753100537129
+      error: 'Unknown action type: quote_tweet'
+  targetReached: false

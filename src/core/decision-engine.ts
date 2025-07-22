@@ -4,14 +4,25 @@ import type { ActionDecision } from '../types/action-types';
 import { ActionSpecificCollector } from '../lib/action-specific-collector.js';
 import { loadYamlSafe, loadYamlArraySafe } from '../utils/yaml-utils';
 import * as yaml from 'js-yaml';
-import { logClaudeDecision, updateClaudeResponse, logClaudeError } from '../lib/decision-logger';
+import { logClaudeDecision, updateClaudeResponse, logClaudeError, DecisionLogger } from '../lib/decision-logger';
+import type { DecisionContext } from '../types/decision-logging-types.js';
+import { isDecision } from '../types/decision-types.js';
 
 export class DecisionEngine {
   private actionSpecificCollector?: ActionSpecificCollector;
+  private enhancedLogger: DecisionLogger;
 
   constructor(actionSpecificCollector?: ActionSpecificCollector) {
     // Claude Code SDK is used directly
     this.actionSpecificCollector = actionSpecificCollector;
+    
+    // Initialize enhanced decision logger
+    this.enhancedLogger = new DecisionLogger({
+      enableVisualization: true,
+      enablePerformanceMonitoring: true
+    });
+    
+    console.log('🎯 [DecisionEngine] 拡張意思決定ロギング統合完了');
   }
 
   // 新しい統合コンテキスト対応メソッド
@@ -57,6 +68,31 @@ export class DecisionEngine {
   // 統合意思決定メソッド（新しいメイン処理）
   private async makeIntegratedDecisions(integratedContext: IntegratedContext): Promise<Decision[]> {
     console.log('🧠 [統合意思決定] 統合コンテキストに基づく高度な意思決定を実行中...');
+    
+    // 拡張ログセッション開始
+    const decisionContext: DecisionContext = {
+      sessionId: '', // will be set by startDecision
+      timestamp: new Date().toISOString(),
+      accountHealth: integratedContext.account.healthScore,
+      systemStatus: 'active',
+      inputData: integratedContext,
+      marketContext: integratedContext.market,
+      actionSuggestions: integratedContext.actionSuggestions
+    };
+    
+    const sessionId = await this.enhancedLogger.startDecision(decisionContext);
+    
+    // コンテキスト分析ステップ
+    await this.enhancedLogger.logDecisionStep(
+      sessionId,
+      'context_analysis',
+      `統合コンテキスト分析: アカウント健康度${integratedContext.account.healthScore}、市場機会${integratedContext.market.opportunities.length}件`,
+      {
+        accountHealth: integratedContext.account.healthScore,
+        marketOpportunities: integratedContext.market.opportunities.length,
+        actionSuggestions: integratedContext.actionSuggestions.length
+      }
+    );
     
     const claudePrompt = `
 Based on the integrated analysis context, make strategic decisions for X (Twitter) content focused on original posts:
@@ -115,42 +151,131 @@ Limit to 3-5 decisions maximum for original posts only.
       }
     );
 
+    // 推論ステップ
+    await this.enhancedLogger.logDecisionStep(
+      sessionId,
+      'reasoning',
+      '戦略的意思決定プロセス開始: Claude APIを使用して最適な投稿戦略を生成',
+      { prompt: claudePrompt.substring(0, 200) + '...' }
+    );
+
     const startTime = Date.now();
 
     try {
       const response = await claude()
         .withModel('sonnet')
+        .withTimeout(8000) // 8秒タイムアウト
         .query(claudePrompt)
         .asText();
 
       const processingTime = Date.now() - startTime;
 
+      // 決定生成ステップ
+      await this.enhancedLogger.logDecisionStep(
+        sessionId,
+        'decision_generation',
+        `Claude APIレスポンス受信完了、決定を解析中 (${processingTime}ms)`,
+        { responseLength: response.length, processingTime }
+      );
+
       const jsonMatch = response.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         const decisions = JSON.parse(jsonMatch[0]);
         
-        // レスポンス記録
+        // レスポンス記録（従来のログも維持）
         await updateClaudeResponse(logId, response, processingTime, decisions, 'sonnet');
         
+        // バリデーションステップ
+        await this.enhancedLogger.logDecisionStep(
+          sessionId,
+          'validation',
+          `${decisions.length}件の決定を検証・強化中`,
+          { decisionsCount: decisions.length, rawDecisions: decisions }
+        );
+        
         console.log('🧠 [統合決定完了] 以下の戦略的決定を策定:');
-        decisions.forEach((decision: any, index: number) => {
+        decisions.forEach((decision: Decision, index: number) => {
           console.log(`  ${index + 1}. 【${decision.type}】(${decision.priority}優先度)`);
           console.log(`     💭 戦略理由: ${decision.reasoning}`);
           console.log(`     🎯 期待効果: ${decision.params?.expectedImpact || 'N/A'}`);
           console.log(`     ⏱️  所要時間: ${decision.estimatedDuration}分`);
         });
         
-        return this.validateAndEnhanceDecisions(decisions, integratedContext);
+        const validatedDecisions = this.validateAndEnhanceDecisions(decisions, integratedContext);
+        
+        // 拡張ログセッション完了
+        const finalDecision: Decision = {
+          id: `integrated-decision-${sessionId}`,
+          type: 'integrated_strategic_decisions',
+          priority: 'high',
+          reasoning: `統合コンテキストに基づく${validatedDecisions.length}件の戦略的決定`,
+          params: { decisionsCount: validatedDecisions.length, integratedContext },
+          dependencies: [],
+          estimatedDuration: validatedDecisions.reduce((sum, d) => sum + (d.estimatedDuration || 0), 0)
+        };
+        
+        await this.enhancedLogger.completeDecision(sessionId, finalDecision as any, {
+          success: true,
+          executionTime: processingTime,
+          output: validatedDecisions,
+          metadata: { decisionsGenerated: validatedDecisions.length }
+        });
+        
+        // 可視化データの生成
+        await this.enhancedLogger.visualizeDecisionFlow(sessionId);
+        
+        return validatedDecisions;
       }
       
       console.log('⚠️ [統合決定] JSON解析に失敗、フォールバック決定を生成');
       const fallbackDecisions = this.createFallbackDecisions(integratedContext);
       await updateClaudeResponse(logId, response, processingTime, fallbackDecisions, 'sonnet');
+      
+      // フォールバック用ログ完了
+      const fallbackDecision: Decision = {
+        id: `fallback-decision-${sessionId}`,
+        type: 'fallback_decisions',
+        priority: 'medium',
+        reasoning: 'JSON解析失敗によるフォールバック決定',
+        params: { reason: 'json_parse_failed', fallbackCount: fallbackDecisions.length },
+        dependencies: [],
+        estimatedDuration: 30
+      };
+      
+      await this.enhancedLogger.completeDecision(sessionId, fallbackDecision as any, {
+        success: false,
+        executionTime: processingTime,
+        output: fallbackDecisions,
+        errors: ['JSON parsing failed'],
+        metadata: { usedFallback: true }
+      });
+      
       return fallbackDecisions;
     } catch (error) {
       console.error('❌ [統合決定エラー]:', error);
       await logClaudeError(logId, error as Error, true);
-      return this.createFallbackDecisions(integratedContext);
+      
+      const errorDecision: Decision = {
+        id: `error-decision-${sessionId}`,
+        type: 'error_fallback',
+        priority: 'low',
+        reasoning: `エラー発生によるフォールバック: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        params: { error: error instanceof Error ? error.message : 'Unknown error' },
+        dependencies: [],
+        estimatedDuration: 15
+      };
+      
+      const fallbackDecisions = this.createFallbackDecisions(integratedContext);
+      
+      await this.enhancedLogger.completeDecision(sessionId, errorDecision as any, {
+        success: false,
+        executionTime: Date.now() - startTime,
+        output: fallbackDecisions,
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        metadata: { usedFallback: true, errorType: 'api_call_failed' }
+      });
+      
+      return fallbackDecisions;
     }
   }
 
@@ -180,7 +305,7 @@ Limit to 3-5 decisions maximum for original posts only.
 
   private async makeStrategicDecisions(
     context: Context,
-    sharedContext: any
+    sharedContext: unknown
   ): Promise<Decision[]> {
     console.log('🧠 [Claude戦略思考] 戦略的決定を検討中...');
     console.log('📈 考慮要素:');
@@ -209,6 +334,7 @@ Return as JSON array of decisions with priority levels.
     try {
       const response = await claude()
         .withModel('sonnet')
+        .withTimeout(6000) // 6秒タイムアウト
         .query(prompt)
         .asText();
 
@@ -267,6 +393,7 @@ Example: [{"id":"decision-123-abc","type":"content_generation","priority":"high"
     try {
       response = await claude()
         .withModel('sonnet')
+        .withTimeout(6000) // 6秒タイムアウト
         .query(prompt)
         .asText();
 
@@ -282,7 +409,7 @@ Example: [{"id":"decision-123-abc","type":"content_generation","priority":"high"
       await updateClaudeResponse(logId, response, processingTime, decisions, 'sonnet');
       
       console.log('🧠 [Claude判断完了] 以下の決定を下しました:');
-      decisions.forEach((decision: any, index: number) => {
+      decisions.forEach((decision: Decision, index: number) => {
         console.log(`  ${index + 1}. 【${decision.type}】(${decision.priority}優先度)`);
         console.log(`     💭 理由: ${decision.reasoning}`);
         console.log(`     ⏱️  所要時間: ${decision.estimatedDuration}分`);
@@ -381,25 +508,29 @@ Example: [{"id":"decision-123-abc","type":"content_generation","priority":"high"
   }
 
   // 決定の検証と強化
-  private validateAndEnhanceDecisions(decisions: any[], context: IntegratedContext): Decision[] {
+  private validateAndEnhanceDecisions(decisions: unknown[], context: IntegratedContext): Decision[] {
     console.log('✅ [決定検証] 決定の妥当性と戦略的整合性を検証中...');
     
     const validatedDecisions: Decision[] = [];
     
     for (const decision of decisions) {
-      // 基本的な検証
-      if (!decision.id || !decision.type || !decision.priority) {
-        console.log(`⚠️ [検証失敗] 不完全な決定をスキップ: ${JSON.stringify(decision)}`);
-        continue;
+      if (isDecision(decision)) {
+        // 基本的な検証
+        if (!decision.id || !decision.type || !decision.priority) {
+          console.log(`⚠️ [検証失敗] 不完全な決定をスキップ: ${JSON.stringify(decision)}`);
+          continue;
+        }
+        
+        // アカウントヘルスに基づく調整
+        const adjustedDecision = this.adjustDecisionForAccountHealth(decision, context.account.healthScore);
+        
+        // 市場機会との整合性チェック
+        const contextualDecision = this.alignDecisionWithMarketContext(adjustedDecision, context.market);
+        
+        validatedDecisions.push(contextualDecision);
+      } else {
+        console.log(`⚠️ [検証失敗] 無効な決定をスキップ: ${JSON.stringify(decision)}`);
       }
-      
-      // アカウントヘルスに基づく調整
-      const adjustedDecision = this.adjustDecisionForAccountHealth(decision, context.account.healthScore);
-      
-      // 市場機会との整合性チェック
-      const contextualDecision = this.alignDecisionWithMarketContext(adjustedDecision, context.market);
-      
-      validatedDecisions.push(contextualDecision);
     }
     
     console.log(`✅ [決定検証完了] ${validatedDecisions.length}/${decisions.length}件の決定を検証通過`);
@@ -407,7 +538,7 @@ Example: [{"id":"decision-123-abc","type":"content_generation","priority":"high"
   }
   
   // アカウントヘルスに基づく決定調整
-  private adjustDecisionForAccountHealth(decision: any, healthScore: number): Decision {
+  private adjustDecisionForAccountHealth(decision: Decision, healthScore: number): Decision {
     let adjustedPriority = decision.priority;
     let adjustedParams = { ...decision.params };
     
@@ -589,7 +720,7 @@ Example: [{"id":"decision-123-abc","type":"content_generation","priority":"high"
   // 拡張アクション決定の生成（ActionSpecificCollector統合版）
   async makeExpandedActionDecisions(
     context: IntegratedContext,
-    needsEvaluation?: any
+    needsEvaluation?: unknown
   ): Promise<Decision[]> {
     console.log('🧠 [拡張アクション決定] ActionSpecificCollector統合による意思決定を開始...');
     
@@ -616,7 +747,7 @@ Example: [{"id":"decision-123-abc","type":"content_generation","priority":"high"
   // 新規メソッド: 基本アクション決定生成
   private async generateBaseActionDecisions(
     context: IntegratedContext,
-    needsEvaluation?: any
+    needsEvaluation?: unknown
   ): Promise<Decision[]> {
     console.log('🧠 [基本アクション決定] 基本的なアクション戦略を策定中...');
     
@@ -670,6 +801,7 @@ Limit to 3-5 strategic decisions for original posts only.
     try {
       const response = await claude()
         .withModel('sonnet')
+        .withTimeout(6000) // 6秒タイムアウト
         .query(claudePrompt)
         .asText();
 
@@ -771,6 +903,7 @@ ${collectionResults.results.slice(0, 3).map(r =>
     try {
       const response = await claude()
         .withModel('sonnet')
+        .withTimeout(5000) // 5秒タイムアウト
         .query(enhancementPrompt)
         .asText();
 
@@ -817,32 +950,50 @@ ${collectionResults.results.slice(0, 3).map(r =>
   }
 
   // アクション決定の検証
-  private validateActionDecisions(decisions: any[]): ActionDecision[] {
+  private validateActionDecisions(decisions: unknown[]): ActionDecision[] {
     console.log('✅ [アクション決定検証] 決定の妥当性とパラメータを検証中...');
     
     const validatedDecisions: ActionDecision[] = [];
     
     for (const decision of decisions) {
-      // 基本的な検証
-      if (!decision.id || !decision.type || !decision.priority) {
-        console.log(`⚠️ [検証失敗] 不完全なアクション決定をスキップ: ${JSON.stringify(decision)}`);
-        continue;
-      }
-      
-      // original_post専用の検証
-      if (decision.type === 'original_post') {
-        // originalContentの存在確認と自動補完
-        if (!decision.params?.originalContent && !decision.content) {
-          console.log(`⚠️ [パラメータ修正] originalContentを自動補完: ${decision.id}`);
-          decision.params = decision.params || {};
-          decision.params.originalContent = decision.content || '投資教育コンテンツ';
-          decision.content = decision.params.originalContent;
+      if (this.isActionDecisionLike(decision)) {
+        // 基本的な検証
+        if (!decision.id || !decision.type || !decision.priority) {
+          console.log(`⚠️ [検証失敗] 不完全なアクション決定をスキップ: ${JSON.stringify(decision)}`);
+          continue;
         }
         
-        validatedDecisions.push(decision as ActionDecision);
+        // 🚨 REMOVED: original_post only constraint - now supports all action types
+        // 🧠 NEW: Claude自律的全アクションタイプ検証
+        if (['original_post', 'quote_tweet', 'retweet', 'reply'].includes(decision.type)) {
+          // アクションタイプ別パラメータ検証・補完
+          if (decision.type === 'original_post') {
+            if (!decision.params?.originalContent && !decision.content) {
+              console.log(`⚠️ [パラメータ修正] originalContentを自動補完: ${decision.id}`);
+              decision.params = decision.params || {};
+              decision.params.originalContent = decision.content || '投資教育コンテンツ';
+              decision.content = decision.params.originalContent;
+            }
+          } else if (decision.type === 'quote_tweet') {
+            if (!decision.params?.quoteContent) {
+              decision.params = decision.params || {};
+              decision.params.quoteContent = decision.content || 'コメント';
+            }
+          } else if (decision.type === 'reply') {
+            if (!decision.params?.replyContent) {
+              decision.params = decision.params || {};
+              decision.params.replyContent = decision.content || '返信';
+            }
+          }
+          
+          validatedDecisions.push(decision as ActionDecision);
+          console.log(`✅ [Claude自律検証] ${decision.type}アクション検証通過: ${decision.id}`);
+        } else {
+          console.log(`⚠️ [検証失敗] 未対応アクションタイプをスキップ: ${decision.type}`);
+          continue;
+        }
       } else {
-        console.log(`⚠️ [検証失敗] original_post以外のアクションタイプをスキップ: ${decision.type}`);
-        continue;
+        console.log(`⚠️ [検証失敗] 無効なアクション決定をスキップ: ${JSON.stringify(decision)}`);
       }
     }
     
@@ -873,6 +1024,7 @@ ${collectionResults.results.slice(0, 3).map(r =>
         type: 'original_post',
         priority: 'high',
         reasoning: `投稿専用モード: ${contentFocus}に関する価値ある投資情報を提供`,
+        description: `投稿専用モード: ${contentFocus}に関する価値ある投資情報を提供`,
         params: {
           originalContent: `【${currentDate} ${contentFocus}】テクニカル分析とファンダメンタル分析の組み合わせによる投資判断の重要性について。市場の短期的な変動に惑わされることなく、長期的な視点で投資戦略を組み立てることが成功への鍵となります。`,
           hashtags: ['#投資', '#資産形成', '#長期投資'],
@@ -892,6 +1044,7 @@ ${collectionResults.results.slice(0, 3).map(r =>
         type: 'original_post',
         priority: 'medium',
         reasoning: 'アカウントヘルス良好のため、追加の教育的コンテンツを提供',
+        description: 'アカウントヘルス良好のため、追加の教育的コンテンツを提供',
         params: {
           originalContent: '投資初心者の方からよくある質問：「どの銘柄に投資すれば良いですか？」に対する答えは「まず自分の投資目標とリスク許容度を明確にすること」です。個別株選択よりも、投資の基本を理解することから始めましょう。',
           hashtags: ['#投資初心者', '#投資の基本'],
@@ -917,6 +1070,7 @@ ${collectionResults.results.slice(0, 3).map(r =>
       type: 'original_post',
       priority: 'high',
       reasoning: '投稿専用モードのフォールバック: 基本的な投資教育コンテンツ',
+      description: '投稿専用モードのフォールバック: 基本的な投資教育コンテンツ',
       params: {
         originalContent: '投資の基本原則：分散投資によるリスク軽減の重要性について',
         hashtags: ['#投資基本', '#リスク管理'],
@@ -941,6 +1095,7 @@ ${collectionResults.results.slice(0, 3).map(r =>
         type: 'original_post',
         priority: 'high',
         reasoning: 'アカウントヘルス改善のための教育的コンテンツ投稿',
+        description: 'アカウントヘルス改善のための教育的コンテンツ投稿',
         params: {
           originalContent: '投資の基本：リスク管理の重要性について',
         },
@@ -954,6 +1109,7 @@ ${collectionResults.results.slice(0, 3).map(r =>
         type: 'original_post',
         priority: 'medium',
         reasoning: 'バランス型アプローチでの価値創造投稿',
+        description: 'バランス型アプローチでの価値創造投稿',
         params: {
           originalContent: '市場分析：今日の注目ポイント',
         },
@@ -1116,6 +1272,7 @@ ${collectionResults.results.slice(0, 3).map(r =>
             type: 'original_post',
             priority: decision.priority,
             reasoning: decision.reasoning || '',
+            description: decision.reasoning || '',
             params: this.convertDecisionParamsToActionParams(decision),
             content: decision.action.content || '',
             estimatedDuration: decision.estimatedDuration || 30
@@ -1129,6 +1286,7 @@ ${collectionResults.results.slice(0, 3).map(r =>
             type: 'original_post',
             priority: decision.priority,
             reasoning: decision.reasoning || '',
+            description: decision.reasoning || '',
             params: { originalContent: decision.action?.content || '投資教育コンテンツ' },
             content: decision.action?.content || '投資教育コンテンツ',
             estimatedDuration: decision.estimatedDuration || 30
@@ -1144,6 +1302,7 @@ ${collectionResults.results.slice(0, 3).map(r =>
           type: 'original_post',
           priority: 'medium',
           reasoning: '変換エラーのためのフォールバック決定',
+          description: '変換エラーのためのフォールバック決定',
           params: { originalContent: '投資の基本原則について' },
           content: '投資の基本原則について',
           estimatedDuration: 30
@@ -1186,5 +1345,14 @@ ${collectionResults.results.slice(0, 3).map(r =>
       'content_generation': 'content_creation',
       'posting_schedule': 'schedule_optimization'
     };
+  }
+
+  // ActionDecision型ガード関数
+  private isActionDecisionLike(obj: unknown): obj is ActionDecision {
+    return typeof obj === 'object'
+      && obj !== null
+      && 'id' in obj
+      && 'type' in obj
+      && 'priority' in obj;
   }
 }

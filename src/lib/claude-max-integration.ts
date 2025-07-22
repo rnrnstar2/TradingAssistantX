@@ -90,7 +90,7 @@ export class ClaudeMaxIntegration {
       return result;
     } catch (error) {
       console.error('❌ Claude Code SDKエラー:', error);
-      return this.fallbackToStandardAPI(prompt);
+      throw new Error('Claude Code SDK接続に失敗しました。ローカルのClaude Code認証を確認してください。');
     }
   }
 
@@ -166,43 +166,10 @@ export class ClaudeMaxIntegration {
         return result;
     } catch (error) {
       console.error('❌ Claude Code SDKエラー:', error);
-      
-      // フォールバック：標準APIを試行
-      console.log('🔄 フォールバック: 標準APIを試行...');
-      return this.fallbackToStandardAPI(prompt);
+      throw new Error('Claude Code SDK接続に失敗しました。ローカルのClaude Code認証を確認してください。');
     }
   }
 
-  private async fallbackToStandardAPI(prompt: string): Promise<LegacyGeneratedPost> {
-    // 標準のAnthropic APIをフォールバックとして使用
-    const { default: Anthropic } = await import('@anthropic-ai/sdk');
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
-
-    const response = await anthropic.messages.create({
-      model: 'claude-3-opus-20240229',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const content = response.content[0];
-    if (content.type === 'text') {
-      const result: LegacyGeneratedPost = {
-        content: content.text.slice(0, 280),
-        analysis: content.text,
-        timestamp: new Date().toISOString(),
-        insights: ['教育的価値', 'リスク管理', '継続学習'],
-      };
-
-      const outputPath = path.join(process.cwd(), 'data', 'generated-post.json');
-      fs.writeFileSync(outputPath, yaml.dump(result, { indent: 2 }));
-      
-      return result;
-    }
-    
-    throw new Error('All API methods failed');
-  }
 
   private createFallbackPost(text: string): Partial<LegacyGeneratedPost> {
     return {
@@ -324,5 +291,8 @@ async function main() {
 
 // 直接実行の場合
 if (require.main === module) {
-  main();
+  main().catch((error) => {
+    console.error('❌ [Claude Max統合] 実行エラー:', error);
+    process.exit(1);
+  });
 }

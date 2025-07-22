@@ -1,0 +1,28 @@
+execution:
+  type: original_post
+  timestamp: '2025-07-22T03:10:23.923Z'
+  content: |-
+    💡【投資の基本原則】💡
+
+    分散投資は「卵を一つのカゴに盛るな」の格言通り、リスク分散の王道です。
+
+    ✅ 異なる業種・地域・資産クラスに投資
+    ✅ 時間分散（積立投資）でタイミングリスクを軽減
+    ✅ 自分のリスク許容度に合わせたポートフォリオ構築
+
+    短期の値動きに惑わされず、長期的視点で資産形成を📈
+
+    #投資教育 #分散投資 #資産形成
+context:
+  systemStatus: running
+  timestamp: 1753153803310
+  postResult:
+    success: false
+    error: >-
+      X API error: 403 - Your client app is not configured with the appropriate
+      oauth1 app permissions for this endpoint.
+    timestamp: 1753153822563
+  status: posting_failed
+metadata:
+  executedAt: '2025-07-22T03:10:23.923Z'
+  executionType: autonomous

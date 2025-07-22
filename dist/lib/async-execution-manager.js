@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.AsyncExecutionManager = void 0;
-class AsyncExecutionManager {
+export class AsyncExecutionManager {
     dataCommunication;
     contextManager;
     parallelManager;
@@ -34,7 +31,9 @@ class AsyncExecutionManager {
         };
         this.runningTasks.set(taskId, handle);
         // バックグラウンドで実行状況を監視
-        this.monitorAsyncTask(taskId);
+        this.monitorAsyncTask(taskId).catch((error) => {
+            console.error(`❌ [非同期実行] タスク監視エラー (${taskId}):`, error);
+        });
         return taskId;
     }
     createAsyncExecution(task, taskId) {
@@ -82,7 +81,7 @@ class AsyncExecutionManager {
                     reject(error);
                 }
             };
-            executeTask();
+            executeTask().catch(reject);
         });
         const cancel = () => {
             cancelled = true;
@@ -294,4 +293,3 @@ class AsyncExecutionManager {
         }
     }
 }
-exports.AsyncExecutionManager = AsyncExecutionManager;

@@ -1,0 +1,21 @@
+{
+  "success": true,
+  "decision": {
+    "errorType": "rate_limit",
+    "strategy": "retry",
+    "priority": "delayed",
+    "reasoning": "エラータイプ: rate_limit, ソース: Community_API, 発生回数: 2回に基づきretry戦略を選択",
+    "codeChanges": [
+      {
+        "filePath": "src/lib/action-specific-collector.ts",
+        "oldCode": "timeout: number = this.COLLECTION_TIMEOUT",
+        "newCode": "timeout: number = this.COLLECTION_TIMEOUT,\n    retryDelay: number = 5000"
+      }
+    ]
+  },
+  "backupPath": "tasks/20250722_004919_real_error_learning_system/backups/action-specific-collector-backup-2025-07-21T15-57-38-517Z.ts",
+  "appliedChanges": [
+    "src/lib/action-specific-collector.ts: timeout: number = this.COLLECTION_TIMEOUT → timeout: number = this.COLLECTION_TIMEOUT,\n    retryDelay: number = 5000"
+  ],
+  "timestamp": "2025-07-21T15:57:38.517Z"
+}

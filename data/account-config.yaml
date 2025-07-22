@@ -27,8 +27,8 @@ growth_targets:
     viewsPerPost: 50
     impressionsPerDay: 750
 current_analysis:
-  last_analysis: '2025-07-21T13:15:24.356Z'
-  health_score: 62
+  last_analysis: '2025-07-21T15:04:44.778Z'
+  health_score: 55
   performance_trend: stable
   recommendations:
     - 投稿頻度を改善し、1日15回の目標達成を推奨
@@ -43,46 +43,46 @@ cached_account_info:
   following_count: 5
   tweet_count: 0
   listed_count: 0
-  last_updated: 1753103724302
-  cache_timestamp: 1753103724351
+  last_updated: 1753110284711
+  cache_timestamp: 1753110284770
 performance_history:
-  - timestamp: '2025-07-21T12:50:49.327Z'
-    health_score: 70
-    engagement_rate: 100
-    followers_count: 5
-  - timestamp: '2025-07-21T12:53:00.720Z'
-    health_score: 70
-    engagement_rate: 100
-    followers_count: 5
-  - timestamp: '2025-07-21T12:59:31.820Z'
-    health_score: 70
-    engagement_rate: 100
-    followers_count: 5
-  - timestamp: '2025-07-21T13:01:49.049Z'
-    health_score: 70
-    engagement_rate: 100
-    followers_count: 5
-  - timestamp: '2025-07-21T13:02:57.376Z'
-    health_score: 70
-    engagement_rate: 100
-    followers_count: 5
-  - timestamp: '2025-07-21T13:07:58.753Z'
-    health_score: 70
-    engagement_rate: 100
-    followers_count: 5
-  - timestamp: '2025-07-21T13:08:40.094Z'
-    health_score: 70
-    engagement_rate: 100
-    followers_count: 5
-  - timestamp: '2025-07-21T13:08:58.925Z'
-    health_score: 70
-    engagement_rate: 100
-    followers_count: 5
-  - timestamp: '2025-07-21T13:13:10.999Z'
-    health_score: 70
-    engagement_rate: 100
-    followers_count: 5
-  - timestamp: '2025-07-21T13:15:24.356Z'
+  - timestamp: '2025-07-21T13:23:44.638Z'
     health_score: 62
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T13:30:04.901Z'
+    health_score: 62
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T13:46:30.534Z'
+    health_score: 62
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T13:48:12.441Z'
+    health_score: 62
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T13:56:27.159Z'
+    health_score: 62
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T13:57:54.092Z'
+    health_score: 62
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T14:03:05.489Z'
+    health_score: 62
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T14:06:04.254Z'
+    health_score: 55
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T14:08:38.769Z'
+    health_score: 55
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T15:04:44.778Z'
+    health_score: 55
     engagement_rate: 100
     followers_count: 5

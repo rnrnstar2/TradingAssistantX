@@ -23,10 +23,9 @@ export class ParallelManager {
     this.collector = new ClaudeControlledCollector();
     this.growthManager = new GrowthSystemManager();
     
-    // API key configuration
-    const apiKey = process.env.X_API_KEY || '';
-    this.postingManager = new PostingManager(apiKey);
-    this.xClient = new SimpleXClient(apiKey);
+    // Initialize X Client and PostingManager (OAuth 2.0)
+    this.xClient = new SimpleXClient();
+    this.postingManager = new PostingManager();
     
     // Initialize expanded action components
     this.expandedActionExecutor = new ExpandedActionExecutor(this.xClient, this.postingManager);

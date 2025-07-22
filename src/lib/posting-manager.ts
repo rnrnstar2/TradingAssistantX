@@ -22,8 +22,8 @@ export class PostingManager {
   private dataDir = 'data';
   private historyFile = 'data/posting-history.yaml';
 
-  constructor(apiKey: string, config?: Partial<PostingManagerConfig>, xClientConfig?: Partial<XClientConfig>) {
-    this.xClient = new SimpleXClient(apiKey, xClientConfig);
+  constructor(config?: Partial<PostingManagerConfig>, xClientConfig?: Partial<XClientConfig>) {
+    this.xClient = new SimpleXClient(xClientConfig);
     this.dailyActionPlanner = new DailyActionPlanner();
     this.config = {
       minIntervalMinutes: 30, // 30分間隔（ゴールデンタイム集中投稿対応）

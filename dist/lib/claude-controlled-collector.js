@@ -1,9 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ClaudeControlledCollector = void 0;
-const playwright_1 = require("playwright");
-const claude_code_sdk_ts_1 = require("@instantlyeasy/claude-code-sdk-ts");
-class ClaudeControlledCollector {
+import { chromium } from 'playwright';
+import { claude } from '@instantlyeasy/claude-code-sdk-ts';
+export class ClaudeControlledCollector {
     browserContexts = [];
     async performParallelCollection() {
         console.log('🔍 [Claude制御収集] 並列ブラウザ操作を開始...');
@@ -27,7 +24,7 @@ class ClaudeControlledCollector {
         }
     }
     async createMultipleContexts(count) {
-        const browser = await playwright_1.chromium.launch({
+        const browser = await chromium.launch({
             headless: true,
             args: ['--no-sandbox', '--disable-dev-shm-usage']
         });
@@ -115,7 +112,7 @@ class ClaudeControlledCollector {
     async getClaudeInstructions(analysisType, params) {
         const prompt = this.buildInstructionPrompt(analysisType, params);
         try {
-            const instructions = await (0, claude_code_sdk_ts_1.claude)()
+            const instructions = await claude()
                 .withModel('sonnet')
                 .query(prompt)
                 .asText();
@@ -199,7 +196,7 @@ Extract relevant investment/financial content and return as JSON array:
 
 Return ONLY the JSON array, no markdown or explanation.
 `;
-            const response = await (0, claude_code_sdk_ts_1.claude)()
+            const response = await claude()
                 .withModel('sonnet')
                 .query(analysisPrompt)
                 .asText();
@@ -286,4 +283,3 @@ Return ONLY the JSON array, no markdown or explanation.
         }
     }
 }
-exports.ClaudeControlledCollector = ClaudeControlledCollector;

@@ -1,12 +1,26 @@
 import fetch from 'node-fetch';
-import { writeFileSync, existsSync } from 'fs';
+import { writeFileSync, existsSync, readFileSync } from 'fs';
 import { PostHistory, PostingResult, XClientConfig, AccountInfo, AccountMetrics, UserResponse, Tweet, TweetsResponse, EngagementMetrics } from '../types/index';
 import { loadYamlArraySafe } from '../utils/yaml-utils';
 import * as yaml from 'js-yaml';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
+
+// OAuth 2.0 PKCE関連の型定義
+interface PKCETokens {
+  code_verifier: string;
+  code_challenge: string;
+  state: string;
+}
+
+interface OAuth2Tokens {
+  access_token: string;
+  refresh_token?: string;
+  expires_at: number;
+  token_type: string;
+  scope: string;
+}
 
 export class SimpleXClient {
-  private apiKey: string;
   private baseUrl = 'https://api.twitter.com/2';
   private testMode: boolean;
   private rateLimitDelay: number;
@@ -14,12 +28,16 @@ export class SimpleXClient {
   private postHistory: PostHistory[] = [];
   private historyFile = 'data/posting-history.yaml';
   
-  constructor(apiKey: string, config?: Partial<XClientConfig>) {
-    this.apiKey = apiKey;
+  // OAuth 2.0 PKCE関連
+  private oauth2TokensFile = 'data/oauth2-tokens.yaml';
+  private oauth2Tokens?: OAuth2Tokens;
+  
+  constructor(config?: Partial<XClientConfig>) {
     this.testMode = process.env.X_TEST_MODE === 'true';
     this.rateLimitDelay = config?.rateLimitDelay || 1000;
     this.maxRetries = config?.maxRetries || 3;
     this.loadPostHistory();
+    this.loadOAuth2Tokens();
   }
   
   private loadPostHistory(): void {
@@ -57,12 +75,25 @@ export class SimpleXClient {
   
   private isDuplicatePost(text: string): boolean {
     const recentPosts = this.postHistory.filter(
-      post => post.timestamp > Date.now() - (24 * 60 * 60 * 1000) // 24時間以内
+      post => post.timestamp > Date.now() - (2 * 60 * 60 * 1000) && post.success // 2時間以内の成功投稿のみ
     );
     
-    return recentPosts.some(post => 
-      post.content.includes(text.slice(0, 50)) && post.success
-    );
+    return recentPosts.some(post => {
+      // 完全一致または90%以上類似の場合のみ重複とみなす
+      const similarity = this.calculateSimilarity(text, post.content);
+      return similarity > 0.9;
+    });
+  }
+  
+  private calculateSimilarity(text1: string, text2: string): number {
+    // 単純なJaccard係数で類似度計算
+    const words1 = new Set(text1.toLowerCase().split(/\s+/));
+    const words2 = new Set(text2.toLowerCase().split(/\s+/));
+    
+    const intersection = new Set(Array.from(words1).filter(x => words2.has(x)));
+    const union = new Set([...Array.from(words1), ...Array.from(words2)]);
+    
+    return intersection.size / union.size;
   }
   
   private async waitForRateLimit(): Promise<void> {
@@ -93,9 +124,9 @@ export class SimpleXClient {
       return { success: true, id: 'test-' + timestamp, timestamp };
     }
     
-    // 本番モード
-    if (!this.apiKey) {
-      const error = 'X API key not provided';
+    // 本番モード - OAuth 2.0チェック
+    if (!this.oauth2Tokens) {
+      const error = 'OAuth 2.0 tokens not available. Please complete authorization flow first.';
       console.error(error);
       this.addToHistory(text, false, error);
       return { success: false, error, timestamp };
@@ -105,7 +136,9 @@ export class SimpleXClient {
     
     try {
       const url = `${this.baseUrl}/tweets`;
-      const authHeader = this.generateOAuthHeaders('POST', url);
+      
+      // OAuth 2.0認証ヘッダーの生成
+      const authHeader = await this.generateOAuth2Headers();
       
       const response = await fetch(url, {
         method: 'POST',
@@ -162,9 +195,10 @@ export class SimpleXClient {
   // ユーザー名からアカウント情報取得
   async getUserByUsername(username: string): Promise<AccountInfo & AccountMetrics> {
     try {
+      const authHeader = await this.generateOAuth2Headers();
       const response = await fetch(`${this.baseUrl}/users/by/username/${username}?user.fields=public_metrics`, {
         headers: {
-          'Authorization': `Bearer ${process.env.X_BEARER_TOKEN}`,
+          'Authorization': authHeader,
           'Content-Type': 'application/json',
         }
       });
@@ -197,9 +231,10 @@ export class SimpleXClient {
   // 自分のアカウント情報取得
   async getMyAccountInfo(): Promise<AccountInfo & AccountMetrics> {
     try {
+      const authHeader = await this.generateOAuth2Headers();
       const response = await fetch(`${this.baseUrl}/users/me?user.fields=public_metrics`, {
         headers: {
-          'Authorization': `Bearer ${process.env.X_BEARER_TOKEN}`,
+          'Authorization': authHeader,
           'Content-Type': 'application/json',
         }
       });
@@ -232,9 +267,10 @@ export class SimpleXClient {
   // 自分のアカウント詳細情報取得（拡張版）
   async getMyAccountDetails(): Promise<UserResponse> {
     try {
+      const authHeader = await this.generateOAuth2Headers();
       const response = await fetch(`${this.baseUrl}/users/me?user.fields=public_metrics,description,location,created_at,verified,profile_image_url`, {
         headers: {
-          'Authorization': `Bearer ${process.env.X_BEARER_TOKEN}`,
+          'Authorization': authHeader,
           'Content-Type': 'application/json',
         }
       });
@@ -258,11 +294,12 @@ export class SimpleXClient {
       const userDetails = await this.getMyAccountDetails();
       const userId = userDetails.data.id;
 
+      const authHeader = await this.generateOAuth2Headers();
       const response = await fetch(
         `${this.baseUrl}/users/${userId}/tweets?max_results=${Math.min(count, 100)}&tweet.fields=public_metrics,created_at,context_annotations&expansions=author_id`, 
         {
           headers: {
-            'Authorization': `Bearer ${process.env.X_BEARER_TOKEN}`,
+            'Authorization': authHeader,
             'Content-Type': 'application/json',
           }
         }
@@ -295,6 +332,8 @@ export class SimpleXClient {
     try {
       const engagementMetrics: EngagementMetrics[] = [];
 
+      const authHeader = await this.generateOAuth2Headers();
+      
       // 各ツイートのエンゲージメント情報を取得
       for (const tweetId of tweetIds.slice(0, 10)) { // 最大10件まで
         try {
@@ -302,7 +341,7 @@ export class SimpleXClient {
             `${this.baseUrl}/tweets/${tweetId}?tweet.fields=public_metrics,created_at`,
             {
               headers: {
-                'Authorization': `Bearer ${process.env.X_BEARER_TOKEN}`,
+                'Authorization': authHeader,
                 'Content-Type': 'application/json',
               }
             }
@@ -377,9 +416,9 @@ export class SimpleXClient {
       };
     }
     
-    // 本番モード
-    if (!this.apiKey) {
-      const error = 'X API key not provided';
+    // 本番モード - OAuth 2.0チェック
+    if (!this.oauth2Tokens) {
+      const error = 'OAuth 2.0 tokens not available. Please complete authorization flow first.';
       this.addToHistory(`Quote: ${comment}`, false, error);
       return { success: false, error, timestamp };
     }
@@ -388,7 +427,9 @@ export class SimpleXClient {
     
     try {
       const url = `${this.baseUrl}/tweets`;
-      const authHeader = this.generateOAuthHeaders('POST', url);
+      
+      // OAuth 2.0認証
+      const authHeader = await this.generateOAuth2Headers();
       
       const response = await fetch(url, {
         method: 'POST',
@@ -446,9 +487,9 @@ export class SimpleXClient {
       };
     }
     
-    // 本番モード
-    if (!this.apiKey) {
-      const error = 'X API key not provided';
+    // 本番モード - OAuth 2.0チェック
+    if (!this.oauth2Tokens) {
+      const error = 'OAuth 2.0 tokens not available. Please complete authorization flow first.';
       this.addToHistory(`Retweet: ${tweetId}`, false, error);
       return { success: false, error, timestamp };
     }
@@ -461,7 +502,9 @@ export class SimpleXClient {
       const userId = userDetails.data.id;
       
       const url = `${this.baseUrl}/users/${userId}/retweets`;
-      const authHeader = this.generateOAuthHeaders('POST', url);
+      
+      // OAuth 2.0認証
+      const authHeader = await this.generateOAuth2Headers();
       
       const response = await fetch(url, {
         method: 'POST',
@@ -527,9 +570,9 @@ export class SimpleXClient {
       };
     }
     
-    // 本番モード
-    if (!this.apiKey) {
-      const error = 'X API key not provided';
+    // 本番モード - OAuth 2.0チェック
+    if (!this.oauth2Tokens) {
+      const error = 'OAuth 2.0 tokens not available. Please complete authorization flow first.';
       this.addToHistory(`Reply: ${content}`, false, error);
       return { success: false, error, timestamp };
     }
@@ -538,7 +581,9 @@ export class SimpleXClient {
     
     try {
       const url = `${this.baseUrl}/tweets`;
-      const authHeader = this.generateOAuthHeaders('POST', url);
+      
+      // OAuth 2.0認証
+      const authHeader = await this.generateOAuth2Headers();
       
       const response = await fetch(url, {
         method: 'POST',
@@ -627,78 +672,234 @@ export class SimpleXClient {
     }
   }
 
-  // OAuth 1.0a認証ヘルパーメソッド
-  private generateOAuthHeaders(method: string, url: string, params: Record<string, string> = {}): string {
-    interface OAuthParams {
-      oauth_consumer_key: string;
-      oauth_token: string;
-      oauth_signature_method: string;
-      oauth_timestamp: string;
-      oauth_nonce: string;
-      oauth_version: string;
-      oauth_signature?: string;
-      [key: string]: string | undefined;
-    }
 
-    const consumerKey = process.env.X_API_KEY || '';
-    const consumerSecret = process.env.X_API_SECRET || '';
-    const accessToken = process.env.X_ACCESS_TOKEN || '';
-    const accessTokenSecret = process.env.X_ACCESS_TOKEN_SECRET || '';
-
-    const oauthParams: OAuthParams = {
-      oauth_consumer_key: consumerKey,
-      oauth_token: accessToken,
-      oauth_signature_method: 'HMAC-SHA1',
-      oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
-      oauth_nonce: crypto.randomBytes(16).toString('hex'),
-      oauth_version: '1.0'
-    };
-
-    // パラメータをマージ
-    const allParams = { ...params, ...oauthParams };
-
-    // パラメータを文字列としてソート
-    const paramString = Object.keys(allParams)
-      .sort()
-      .map(key => {
-        const value = allParams[key];
-        return `${this.encodeRFC3986(key)}=${this.encodeRFC3986(value || '')}`;
-      })
-      .join('&');
-
-    // 署名ベース文字列を作成
-    const signatureBaseString = [
-      method.toUpperCase(),
-      this.encodeRFC3986(url),
-      this.encodeRFC3986(paramString)
-    ].join('&');
-
-    // 署名キーを作成
-    const signingKey = `${this.encodeRFC3986(consumerSecret)}&${this.encodeRFC3986(accessTokenSecret)}`;
-
-    // 署名を生成
-    const signature = crypto
-      .createHmac('sha1', signingKey)
-      .update(signatureBaseString)
-      .digest('base64');
-
-    // OAuth署名を追加
-    oauthParams.oauth_signature = signature;
-
-    // Authorization ヘッダーを生成
-    const authHeader = 'OAuth ' + Object.keys(oauthParams)
-      .sort()
-      .map(key => {
-        const value = oauthParams[key];
-        return `${this.encodeRFC3986(key)}="${this.encodeRFC3986(value || '')}"`;
-      })
-      .join(', ');
-
-    return authHeader;
+  // OAuth 2.0認証ヘッダー生成（User Context用）
+  private async generateOAuth2Headers(): Promise<string> {
+    const accessToken = await this.getValidAccessToken();
+    return `Bearer ${accessToken}`;
   }
 
-  private encodeRFC3986(str: string): string {
-    return encodeURIComponent(str)
-      .replace(/[!'()*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+
+  // OAuth 2.0 PKCE関連メソッド
+  
+  /**
+   * OAuth 2.0トークンファイルを読み込み
+   */
+  private loadOAuth2Tokens(): void {
+    try {
+      // 優先度1: 環境変数からの読み込み
+      const envAccessToken = process.env.X_OAUTH2_ACCESS_TOKEN;
+      const envRefreshToken = process.env.X_OAUTH2_REFRESH_TOKEN;
+      
+      if (envAccessToken) {
+        this.oauth2Tokens = {
+          access_token: envAccessToken,
+          refresh_token: envRefreshToken || '',
+          expires_at: parseInt(process.env.X_OAUTH2_EXPIRES_AT || '0') || (Date.now() + (2 * 60 * 60 * 1000)), // デフォルト2時間
+          token_type: 'bearer',
+          scope: process.env.X_OAUTH2_SCOPES || 'tweet.write users.read offline.access'
+        };
+        console.log('✅ [Security] OAuth2 tokens loaded from environment variables');
+        return;
+      }
+      
+      // 優先度2: YAMLファイル（警告付きフォールバック）
+      if (existsSync(this.oauth2TokensFile)) {
+        const content = readFileSync(this.oauth2TokensFile, 'utf8');
+        this.oauth2Tokens = yaml.load(content) as OAuth2Tokens;
+        console.warn('⚠️ [Security Warning] OAuth2 tokens loaded from YAML file');
+        console.warn('   Recommendation: Move tokens to environment variables for better security');
+      }
+    } catch (error) {
+      console.error('Error loading OAuth 2.0 tokens:', error);
+    }
+  }
+
+  /**
+   * OAuth 2.0トークンをファイルに保存
+   */
+  private saveOAuth2Tokens(tokens: OAuth2Tokens): void {
+    try {
+      this.oauth2Tokens = tokens;
+      writeFileSync(this.oauth2TokensFile, yaml.dump(tokens, { indent: 2 }));
+    } catch (error) {
+      console.error('Error saving OAuth 2.0 tokens:', error);
+    }
+  }
+
+  /**
+   * PKCE Code Verifierを生成
+   */
+  private generateCodeVerifier(): string {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Buffer.from(array).toString('base64url');
+  }
+
+  /**
+   * PKCE Code Challengeを生成
+   */
+  private generateCodeChallenge(verifier: string): string {
+    const hash = crypto.createHash('sha256');
+    hash.update(verifier);
+    return hash.digest('base64url');
+  }
+
+  /**
+   * OAuth 2.0認証用のstate値を生成
+   */
+  private generateState(): string {
+    return crypto.randomBytes(16).toString('hex');
+  }
+
+  /**
+   * OAuth 2.0 Authorization URLを生成
+   * User Context認証フロー用
+   */
+  public generateAuthorizationUrl(): { url: string; codeVerifier: string; state: string } {
+    const clientId = process.env.X_OAUTH2_CLIENT_ID;
+    const redirectUri = process.env.X_OAUTH2_REDIRECT_URI;
+    const scopes = process.env.X_OAUTH2_SCOPES || 'tweet.write users.read offline.access';
+    
+    if (!clientId || !redirectUri) {
+      throw new Error('OAuth 2.0 client ID and redirect URI must be configured');
+    }
+
+    const codeVerifier = this.generateCodeVerifier();
+    const codeChallenge = this.generateCodeChallenge(codeVerifier);
+    const state = this.generateState();
+
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: scopes,
+      state: state,
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256'
+    });
+
+    const authUrl = `https://twitter.com/i/oauth2/authorize?${params.toString()}`;
+    
+    return {
+      url: authUrl,
+      codeVerifier,
+      state
+    };
+  }
+
+  /**
+   * Authorization CodeからAccess Tokenを取得
+   * Authorization Code Flow with PKCE
+   */
+  public async exchangeCodeForTokens(
+    authorizationCode: string, 
+    codeVerifier: string
+  ): Promise<OAuth2Tokens> {
+    const clientId = process.env.X_OAUTH2_CLIENT_ID;
+    const clientSecret = process.env.X_OAUTH2_CLIENT_SECRET;
+    const redirectUri = process.env.X_OAUTH2_REDIRECT_URI;
+    
+    if (!clientId || !clientSecret || !redirectUri) {
+      throw new Error('OAuth 2.0 credentials not configured');
+    }
+
+    const response = await fetch('https://api.twitter.com/2/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: clientId,
+        code: authorizationCode,
+        redirect_uri: redirectUri,
+        code_verifier: codeVerifier
+      }).toString()
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Token exchange failed: ${response.status} - ${JSON.stringify(errorData)}`);
+    }
+
+    const tokenData = await response.json() as any;
+    
+    const tokens: OAuth2Tokens = {
+      access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token,
+      expires_at: Date.now() + (tokenData.expires_in * 1000),
+      token_type: tokenData.token_type,
+      scope: tokenData.scope
+    };
+
+    this.saveOAuth2Tokens(tokens);
+    return tokens;
+  }
+
+  /**
+   * Refresh Tokenを使用してAccess Tokenを更新
+   */
+  public async refreshAccessToken(): Promise<OAuth2Tokens> {
+    if (!this.oauth2Tokens?.refresh_token) {
+      throw new Error('No refresh token available');
+    }
+
+    const clientId = process.env.X_OAUTH2_CLIENT_ID;
+    const clientSecret = process.env.X_OAUTH2_CLIENT_SECRET;
+    
+    if (!clientId || !clientSecret) {
+      throw new Error('OAuth 2.0 credentials not configured');
+    }
+
+    const response = await fetch('https://api.twitter.com/2/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: this.oauth2Tokens.refresh_token,
+        client_id: clientId
+      }).toString()
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Token refresh failed: ${response.status} - ${JSON.stringify(errorData)}`);
+    }
+
+    const tokenData = await response.json() as any;
+    
+    const tokens: OAuth2Tokens = {
+      access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token || this.oauth2Tokens.refresh_token, // 新しいものがなければ既存を保持
+      expires_at: Date.now() + (tokenData.expires_in * 1000),
+      token_type: tokenData.token_type,
+      scope: tokenData.scope
+    };
+
+    this.saveOAuth2Tokens(tokens);
+    return tokens;
+  }
+
+  /**
+   * 有効なAccess Tokenを取得（必要に応じて更新）
+   */
+  public async getValidAccessToken(): Promise<string> {
+    if (!this.oauth2Tokens) {
+      throw new Error('No OAuth 2.0 tokens available. Please complete authorization flow first.');
+    }
+
+    // トークンの有効期限をチェック（5分のマージンを持つ）
+    if (this.oauth2Tokens.expires_at < Date.now() + (5 * 60 * 1000)) {
+      console.log('🔄 Access token expired, refreshing...');
+      const newTokens = await this.refreshAccessToken();
+      return newTokens.access_token;
+    }
+
+    return this.oauth2Tokens.access_token;
   }
 }

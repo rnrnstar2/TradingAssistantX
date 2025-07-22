@@ -1,0 +1,27 @@
+{
+  "success": true,
+  "decision": {
+    "errorType": "timeout",
+    "strategy": "retry",
+    "priority": "delayed",
+    "reasoning": "エラータイプ: timeout, ソース: RSS_Feed, 発生回数: 3回に基づきretry戦略を選択",
+    "codeChanges": [
+      {
+        "filePath": "src/lib/action-specific-collector.ts",
+        "oldCode": "initial: 30000,    // 初回30秒",
+        "newCode": "initial: 60000,    // 初回60秒（修正済み）"
+      },
+      {
+        "filePath": "src/lib/action-specific-collector.ts",
+        "oldCode": "retry: 30000,      // リトライ時30秒",
+        "newCode": "retry: 60000,      // リトライ時60秒（修正済み）"
+      }
+    ]
+  },
+  "backupPath": "tasks/20250722_004919_real_error_learning_system/backups/action-specific-collector-backup-2025-07-21T15-57-38-509Z.ts",
+  "appliedChanges": [
+    "src/lib/action-specific-collector.ts: initial: 30000,    // 初回30秒 → initial: 60000,    // 初回60秒（修正済み）",
+    "src/lib/action-specific-collector.ts: retry: 30000,      // リトライ時30秒 → retry: 60000,      // リトライ時60秒（修正済み）"
+  ],
+  "timestamp": "2025-07-21T15:57:38.509Z"
+}

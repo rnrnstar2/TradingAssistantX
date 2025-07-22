@@ -1,51 +1,15 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.loadYamlSafe = loadYamlSafe;
-exports.loadYamlArraySafe = loadYamlArraySafe;
-const yaml = __importStar(require("js-yaml"));
-const fs_1 = require("fs");
+import * as yaml from 'js-yaml';
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { dirname } from 'path';
 /**
  * MVP準拠: シンプルで実用的な型安全なYAML読み込み関数
  *
  * @param filePath - YAMLファイルのパス
  * @returns パースされたデータ、エラー時はnull
  */
-function loadYamlSafe(filePath) {
+export function loadYamlSafe(filePath) {
     try {
-        const data = yaml.load((0, fs_1.readFileSync)(filePath, 'utf8'));
+        const data = yaml.load(readFileSync(filePath, 'utf8'));
         return data; // 実用的アプローチ
     }
     catch (error) {
@@ -59,9 +23,9 @@ function loadYamlSafe(filePath) {
  * @param filePath - YAMLファイルのパス
  * @returns パースされた配列データ、エラー時は空配列
  */
-function loadYamlArraySafe(filePath) {
+export function loadYamlArraySafe(filePath) {
     try {
-        const data = yaml.load((0, fs_1.readFileSync)(filePath, 'utf8'));
+        const data = yaml.load(readFileSync(filePath, 'utf8'));
         if (Array.isArray(data)) {
             return data;
         }
@@ -73,3 +37,79 @@ function loadYamlArraySafe(filePath) {
         return [];
     }
 }
+/**
+ * YAML書き込み関数
+ *
+ * @param filePath - YAMLファイルのパス
+ * @param data - 書き込むデータ
+ */
+export function writeYamlSafe(filePath, data) {
+    try {
+        // ディレクトリが存在しない場合は作成
+        mkdirSync(dirname(filePath), { recursive: true });
+        const yamlString = yaml.dump(data, {
+            indent: 2,
+            lineWidth: 120,
+            quotingType: '"'
+        });
+        writeFileSync(filePath, yamlString, 'utf8');
+        return true;
+    }
+    catch (error) {
+        console.error(`YAML書き込みエラー: ${filePath}`, error);
+        return false;
+    }
+}
+/**
+ * 非同期YAML読み込み関数（loadYamlSafeの非同期版）
+ *
+ * @param filePath - YAMLファイルのパス
+ * @returns パースされたデータ、エラー時はnull
+ */
+export async function loadYamlAsync(filePath) {
+    try {
+        const fs = await import('fs/promises');
+        const content = await fs.readFile(filePath, 'utf8');
+        const data = yaml.load(content);
+        return data;
+    }
+    catch (error) {
+        console.error(`YAML読み込みエラー: ${filePath}`, error);
+        return null;
+    }
+}
+/**
+ * 非同期YAML書き込み関数
+ *
+ * @param filePath - YAMLファイルのパス
+ * @param data - 書き込むデータ
+ */
+export async function writeYamlAsync(filePath, data) {
+    try {
+        const fs = await import('fs/promises');
+        const path = await import('path');
+        // ディレクトリが存在しない場合は作成
+        await fs.mkdir(path.dirname(filePath), { recursive: true });
+        const yamlString = yaml.dump(data, {
+            indent: 2,
+            lineWidth: 120,
+            quotingType: '"'
+        });
+        await fs.writeFile(filePath, yamlString, 'utf8');
+        return true;
+    }
+    catch (error) {
+        console.error(`YAML書き込みエラー: ${filePath}`, error);
+        return false;
+    }
+}
+// 後方互換性のためのエイリアス
+export const readYamlSafe = loadYamlAsync;
+// yamlUtilsオブジェクトとしてエクスポート（後方互換性用）
+export const yamlUtils = {
+    readYaml: loadYamlAsync,
+    writeYaml: writeYamlAsync,
+    loadYaml: loadYamlSafe,
+    loadYamlArray: loadYamlArraySafe,
+    loadYamlAsync: loadYamlAsync
+};

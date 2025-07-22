@@ -1,0 +1,27 @@
+execution:
+  type: original_post
+  timestamp: '2025-07-22T03:15:41.423Z'
+  content: |-
+    📈 投資の基本原則：「時間分散」の威力
+
+    一度に全額投資するより、毎月一定額を積み立てる方が、価格変動リスクを抑えられます。
+
+    例：株価1000円時に1万円、500円時に1万円投資
+    →平均取得価格：約667円
+
+    市場の波に左右されず、長期的な資産形成を目指しましょう💡
+
+    #投資教育 #資産形成 #積立投資
+context:
+  systemStatus: running
+  timestamp: 1753154124845
+  postResult:
+    success: false
+    error: >-
+      X API error: 403 - Your client app is not configured with the appropriate
+      oauth1 app permissions for this endpoint.
+    timestamp: 1753154140124
+  status: posting_failed
+metadata:
+  executedAt: '2025-07-22T03:15:41.423Z'
+  executionType: autonomous

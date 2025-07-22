@@ -1,0 +1,381 @@
+# TASK-WF01: 最適化ワークフロー設計仕様書
+# 作成日: 2025-07-21
+# 対象: TradingAssistantX自律システム次世代ワークフロー
+
+version: "2.0.0"
+design_timestamp: "2025-07-21T12:34:40Z"
+
+## 🎯 設計概要
+design_overview:
+  objective: "現在の複雑性を削減し、真に価値ある自律性を実現"
+  principles:
+    - "並列実行による効率化"
+    - "情報収集の前倒し"
+    - "シンプルで効果的な判定ロジック"
+    - "多様な出口戦略の実現"
+  target_improvements:
+    - "実行時間50%短縮"
+    - "意思決定品質向上"
+    - "アクション多様性3倍"
+
+## 🔄 最適化された実行順序
+
+### 新しいステップ設計
+optimized_execution_order:
+  step1:
+    name: "システム起動・ヘルスチェック"
+    duration: "30秒"
+    description: "システム状態確認、Critical状態チェック"
+    changes: "既存Step1+2を統合"
+
+  step2:
+    name: "【並列】自分のアカウント状況分析"
+    duration: "60秒"
+    description: "フォロワー数、エンゲージメント、投稿パフォーマンス分析"
+    changes: "【新機能】完全新規追加"
+    parallel_with: "step3"
+
+  step3:
+    name: "【並列】Playwright情報収集"
+    duration: "90秒"
+    description: "市場情報収集、トレンド分析、競合分析"
+    changes: "Step6から移動、実行タイミング前倒し"
+    parallel_with: "step2"
+
+  step4:
+    name: "統合状況評価（簡素化）"
+    duration: "30秒"
+    description: "シンプルな投稿判定、コンテキスト統合"
+    changes: "Step3複雑ロジックを簡素化"
+
+  step5:
+    name: "Claude主導意思決定"
+    duration: "45秒"
+    description: "収集情報とアカウント状況を統合した戦略判断"
+    changes: "情報統合による判断品質向上"
+
+  step6:
+    name: "【拡張】多様な出口実行"
+    duration: "60秒"
+    description: "投稿/引用/RT/リプライから最適選択"
+    changes: "【拡張機能】post_immediateから4種類に拡張"
+
+  step7:
+    name: "次回実行時間決定"
+    duration: "15秒"
+    description: "動的待機時間決定"
+    changes: "既存Step7を維持"
+
+### 実行時間比較
+execution_time_comparison:
+  current_workflow: "420秒（7分）"
+  optimized_workflow: "330秒（5.5分）"
+  improvement: "90秒短縮（21%改善）"
+
+## 🧠 簡素化されたニーズ分析
+
+### 新しいニーズ分析ロジック
+simplified_needs_analysis:
+  core_logic: "1日15投稿目標ベースの単純判定"
+  
+  removed_complexity:
+    - item: "96分間隔計算"
+      reason: "不要な複雑性、シンプルカウントで代替可能"
+    - item: "複雑な経過時間分析"
+      reason: "基本的な時間チェックで十分"
+    - item: "過度な状況判定"
+      reason: "アクション判断は意思決定エンジンで実行"
+
+  new_approach:
+    simple_time_check:
+      description: "前回投稿からの単純時間チェック"
+      logic: "last_post_time + minimum_interval < current_time"
+      
+    post_count:
+      description: "1日投稿数カウント"
+      logic: "today_post_count < daily_target(15)"
+      
+    system_status:
+      description: "システム状態確認"
+      logic: "system.health === 'healthy' && api.available === true"
+
+### Claude プロンプト最適化
+optimized_claude_prompt:
+  current_complexity: "詳細なJSONフォーマット + 複雑な判定要求"
+  new_simplicity: "シンプルな yes/no + 理由"
+  
+  new_prompt_structure: |
+    Based on:
+    - Posts today: {count}/15
+    - Last post: {time_ago} ago
+    - Account status: {account_summary}
+    - Trend info: {trend_summary}
+    
+    Should we take action now? (yes/no)
+    If yes, what type: [post/quote/retweet/reply]
+    Reason: [brief explanation]
+
+## 🔍 自律アカウント分析機能
+
+### AccountAnalyzer設計
+autonomous_account_analysis:
+  execution_timing: "毎回実行開始時（step2で並列）"
+  
+  analysis_scope:
+    follower_metrics:
+      - "フォロワー数変化"
+      - "フォロワー増減率"
+      - "フォロー/フォロワー比率"
+      
+    engagement_metrics:
+      - "最近の投稿エンゲージメント率"
+      - "平均いいね数/RT数"
+      - "リプライ・コメント数"
+      
+    performance_metrics:
+      - "投稿頻度達成度"
+      - "ベストパフォーマンス投稿分析"
+      - "投稿時間帯最適化"
+      
+    health_indicators:
+      - "アカウント制限状況"
+      - "API制限状況"
+      - "投稿品質スコア"
+
+  output_format:
+    file: "account_status.json"
+    structure: |
+      {
+        "timestamp": "2025-07-21T12:34:40Z",
+        "followers": {
+          "current": 1250,
+          "change_24h": +15,
+          "growth_rate": "1.2%"
+        },
+        "engagement": {
+          "avg_likes": 12.5,
+          "avg_retweets": 3.2,
+          "engagement_rate": "2.1%"
+        },
+        "performance": {
+          "posts_today": 8,
+          "target_progress": "53%",
+          "best_posting_time": "09:00-11:00"
+        },
+        "health": {
+          "status": "healthy",
+          "api_limits": "normal",
+          "quality_score": 8.2
+        }
+      }
+
+  integration: "意思決定エンジンに直接統合、戦略調整に活用"
+
+## 📊 情報収集システム改善
+
+### 強化された情報収集
+enhanced_info_collection:
+  execution_timing: "実行開始時（step3でアカウント分析と並列）"
+  
+  collection_targets:
+    x_trends:
+      - "RSS/APIトレンド情報"
+      - "関連ハッシュタグ動向"
+      - "投資・金融関連トピック"
+      
+    competitor_analysis:
+      - "競合アカウント最新投稿"
+      - "エンゲージメント高投稿分析"
+      - "コンテンツ戦略調査"
+      
+    market_info:
+      - "市場関連ニュース"
+      - "株価・為替動向"
+      - "経済指標情報"
+
+  collection_optimization:
+    parallel_execution: "アカウント分析と同時実行"
+    time_limit: "90秒以内完了"
+    quality_filter: "関連性スコア7.0以上のみ収集"
+    
+  integration_timing: "意思決定前に完了、判断材料として活用"
+
+### Claude探索最適化
+claude_exploration_optimization:
+  decision_speed: "探索方針決定を30秒以内"
+  target_focus: "投資・金融・トレーディング情報に特化"
+  data_quality: "信頼性スコア付きデータ収集"
+
+## 🎯 拡張出口戦略
+
+### 多様なアクション実装
+expanded_exit_strategies:
+  available_actions:
+    original_post:
+      description: "オリジナル投稿"
+      use_case: "独自洞察、教育コンテンツ、質問投稿"
+      frequency: "40%（6回/日）"
+      
+    quote_tweet:
+      description: "引用リツイート"
+      use_case: "価値ある投稿への解説・補足・見解追加"
+      frequency: "30%（4-5回/日）"
+      
+    retweet:
+      description: "リツイート"
+      use_case: "関連情報の効率的シェア、コミュニティ参加"
+      frequency: "20%（3回/日）"
+      
+    reply:
+      description: "リプライ"
+      use_case: "エンゲージメント向上、ディスカッション参加"
+      frequency: "10%（1-2回/日）"
+
+  decision_logic:
+    情報価値判定: "収集情報の教育的価値・関連性評価"
+    アカウント状況考慮: "現在のフォロワー、エンゲージメント状況"
+    最適アクション選択: "コンテキストに基づく最適戦略選択"
+    
+  action_distribution:
+    daily_target: "15回の最適配分"
+    balance_strategy: "オリジナル重視 + 戦略的シェア・エンゲージメント"
+    adaptation: "パフォーマンスに基づく配分調整"
+
+### アクション選択アルゴリズム
+action_selection_algorithm:
+  priority_factors:
+    - "コンテンツの教育的価値"
+    - "現在のエンゲージメント状況"
+    - "1日のアクション配分バランス"
+    - "市場・トレンド関連性"
+    
+  selection_flow: |
+    1. 収集情報の価値評価
+    2. アカウント状況との適合性確認
+    3. 今日のアクション配分チェック
+    4. 最適アクション種別決定
+    5. コンテンツ生成/選択実行
+
+## 🛠️ 技術実装要件
+
+### 新規コンポーネント
+new_components:
+  AccountAnalyzer:
+    interface: |
+      interface AccountAnalyzer {
+        analyzeCurrentStatus(): Promise<AccountStatus>;
+        getPerformanceMetrics(): Promise<PerformanceMetrics>;
+        getHealthIndicators(): Promise<HealthIndicators>;
+      }
+    implementation: "X API + 履歴データ分析"
+    
+  EnhancedDecisionEngine:
+    interface: |
+      interface EnhancedDecisionEngine {
+        evaluateWithContext(
+          accountStatus: AccountStatus,
+          collectedInfo: CollectionResult[]
+        ): Promise<ActionDecision[]>;
+      }
+    implementation: "Claude統合 + 多要素判定"
+    
+  ExpandedActionExecutor:
+    interface: |
+      interface ExpandedActionExecutor {
+        executePost(content: string): Promise<PostResult>;
+        executeQuoteTweet(original: Tweet, comment: string): Promise<QuoteResult>;
+        executeRetweet(tweetId: string): Promise<RetweetResult>;
+        executeReply(tweetId: string, content: string): Promise<ReplyResult>;
+      }
+    implementation: "X API v2 フル活用"
+
+### データフロー設計
+data_flow:
+  input_sources:
+    - "account_status.json（新規）"
+    - "collection_results.yaml"
+    - "current_context.json"
+    
+  processing_pipeline:
+    1. "並列データ収集（アカウント + 情報）"
+    2. "統合状況評価"
+    3. "Claude主導意思決定"
+    4. "多様なアクション実行"
+    
+  output_actions:
+    - "投稿実行"
+    - "引用実行"
+    - "リツイート実行"
+    - "リプライ実行"
+
+### パフォーマンス要件
+performance_requirements:
+  total_execution_time: "330秒以内"
+  parallel_efficiency: "60%時間短縮"
+  decision_quality: "情報統合による判断精度向上"
+  action_diversity: "4種類のアクション対応"
+
+## 📋 実装優先度
+
+### Phase 1: 基盤改善
+phase1_foundation:
+  priority: "高"
+  items:
+    - "実行順序の並列化"
+    - "ニーズ分析の簡素化"
+    - "情報収集タイミング変更"
+  estimated_effort: "3日"
+
+### Phase 2: 新機能追加
+phase2_features:
+  priority: "高"
+  items:
+    - "AccountAnalyzer実装"
+    - "EnhancedDecisionEngine開発"
+  estimated_effort: "5日"
+
+### Phase 3: 機能拡張
+phase3_expansion:
+  priority: "中"
+  items:
+    - "ExpandedActionExecutor実装"
+    - "多様な出口戦略対応"
+  estimated_effort: "4日"
+
+## 🎯 期待される効果
+
+expected_benefits:
+  efficiency:
+    - "実行時間21%短縮"
+    - "並列処理による効率化"
+    
+  decision_quality:
+    - "リアルタイム情報活用"
+    - "アカウント状況考慮"
+    
+  action_diversity:
+    - "4種類のアクション対応"
+    - "戦略的エンゲージメント向上"
+    
+  autonomy:
+    - "真の自律判断実現"
+    - "動的戦略調整機能"
+
+## 🚫 MVP制約遵守
+
+mvp_constraints:
+  excluded_features:
+    - "高度な統計分析機能"
+    - "機械学習による自動最適化"
+    - "複雑なABテスト機能"
+    
+  focus_areas:
+    - "基本機能の確実な動作"
+    - "シンプルで効果的な改善"
+    - "価値創造に直結する機能"
+
+---
+# 設計完了
+design_status: "完了"
+next_step: "技術実装要件詳細化"
+designer: "Claude Code Design System"

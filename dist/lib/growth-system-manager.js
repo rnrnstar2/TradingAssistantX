@@ -1,44 +1,8 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.GrowthSystemManager = void 0;
-const fs_1 = require("fs");
-const path_1 = require("path");
-const yaml_utils_1 = require("../utils/yaml-utils");
-const yaml = __importStar(require("js-yaml"));
-class GrowthSystemManager {
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import { loadYamlSafe } from '../utils/yaml-utils';
+import * as yaml from 'js-yaml';
+export class GrowthSystemManager {
     dataDir;
     strategyFile;
     performanceFile;
@@ -46,20 +10,20 @@ class GrowthSystemManager {
     decisionsFile;
     constructor(dataDir = 'data') {
         this.dataDir = dataDir;
-        this.strategyFile = (0, path_1.join)(dataDir, 'account-strategy.yaml');
-        this.performanceFile = (0, path_1.join)(dataDir, 'performance-insights.yaml');
-        this.targetsFile = (0, path_1.join)(dataDir, 'growth-targets.yaml');
-        this.decisionsFile = (0, path_1.join)(dataDir, 'strategic-decisions.yaml');
+        this.strategyFile = join(dataDir, 'account-strategy.yaml');
+        this.performanceFile = join(dataDir, 'performance-insights.yaml');
+        this.targetsFile = join(dataDir, 'growth-targets.yaml');
+        this.decisionsFile = join(dataDir, 'strategic-decisions.yaml');
         this.ensureDataDirectory();
         this.initializeDefaultData();
     }
     ensureDataDirectory() {
-        if (!(0, fs_1.existsSync)(this.dataDir)) {
-            (0, fs_1.mkdirSync)(this.dataDir, { recursive: true });
+        if (!existsSync(this.dataDir)) {
+            mkdirSync(this.dataDir, { recursive: true });
         }
     }
     initializeDefaultData() {
-        if (!(0, fs_1.existsSync)(this.strategyFile)) {
+        if (!existsSync(this.strategyFile)) {
             const defaultStrategy = {
                 version: '1.0.0',
                 lastUpdated: Date.now(),
@@ -103,7 +67,7 @@ class GrowthSystemManager {
             };
             this.saveFile(this.strategyFile, defaultStrategy);
         }
-        if (!(0, fs_1.existsSync)(this.targetsFile)) {
+        if (!existsSync(this.targetsFile)) {
             const defaultTargets = {
                 version: '1.0.0',
                 lastUpdated: Date.now(),
@@ -138,15 +102,15 @@ class GrowthSystemManager {
         }
     }
     loadFile(filePath, defaultValue) {
-        if ((0, fs_1.existsSync)(filePath)) {
-            const result = (0, yaml_utils_1.loadYamlSafe)(filePath);
+        if (existsSync(filePath)) {
+            const result = loadYamlSafe(filePath);
             return result !== null ? result : defaultValue;
         }
         return defaultValue;
     }
     saveFile(filePath, data) {
         try {
-            (0, fs_1.writeFileSync)(filePath, yaml.dump(data, { indent: 2 }));
+            writeFileSync(filePath, yaml.dump(data, { indent: 2 }));
         }
         catch (error) {
             console.error(`Error saving ${filePath}:`, error);
@@ -397,4 +361,3 @@ class GrowthSystemManager {
         this.recordStrategicDecision('strategy_shift', `${updates.length}件の戦略更新を適用`, `パフォーマンス分析に基づく自動最適化`, updates.reduce((sum, u) => sum + u.confidence, 0) / updates.length);
     }
 }
-exports.GrowthSystemManager = GrowthSystemManager;

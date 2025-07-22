@@ -1,0 +1,15 @@
+execution:
+  type: original_post
+  timestamp: '2025-07-21T18:05:51.074Z'
+  content: 投資教育に関する質の高いコンテンツを生成中です。しばらくお待ちください。
+context:
+  systemStatus: running
+  timestamp: 1753121151066
+  postResult:
+    success: false
+    error: Duplicate post detected within 24 hours
+    timestamp: 1753121151067
+  status: posting_failed
+metadata:
+  executedAt: '2025-07-21T18:05:51.075Z'
+  executionType: autonomous

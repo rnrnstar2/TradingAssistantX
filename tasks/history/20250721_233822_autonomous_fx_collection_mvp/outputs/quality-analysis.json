@@ -1,0 +1,53 @@
+{
+  "assessment": {
+    "score": {
+      "overall": 84,
+      "breakdown": {
+        "factualAccuracy": 87.6,
+        "readability": 100,
+        "educationalValue": 60,
+        "uniqueness": 75,
+        "engagement": 92,
+        "timeliness": 90
+      },
+      "grade": "B"
+    },
+    "passesMinimumStandards": false,
+    "improvements": [
+      "情報源の信頼性を向上させる",
+      "学習要素と説明を追加する"
+    ],
+    "strengths": [
+      "優秀な読みやすさ",
+      "強いエンゲージメント力",
+      "優秀なタイムリー性"
+    ],
+    "weaknesses": [
+      "事実正確性の向上が必要",
+      "教育価値の強化が必要"
+    ]
+  },
+  "standards": {
+    "required": {
+      "factualAccuracy": 90,
+      "readability": 80,
+      "educationalValue": 75,
+      "uniqueness": 70,
+      "engagement": 60,
+      "timeliness": 70
+    }
+  },
+  "comparison": {
+    "meetsRequired": false,
+    "scoreBreakdown": {
+      "factualAccuracy": 87.6,
+      "readability": 100,
+      "educationalValue": 60,
+      "uniqueness": 75,
+      "engagement": 92,
+      "timeliness": 90
+    },
+    "overallGrade": "B"
+  },
+  "generatedAt": "2025-07-21T15:11:15.690Z"
+}

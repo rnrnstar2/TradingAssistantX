@@ -1,0 +1,15 @@
+execution:
+  type: original_post
+  timestamp: '2025-07-21T17:56:08.220Z'
+  content: 投資教育に関する質の高いコンテンツを生成中です。しばらくお待ちください。
+context:
+  systemStatus: running
+  timestamp: 1753120566933
+  postResult:
+    success: false
+    error: 'OAuth 2.0 token request failed: 403'
+    timestamp: 1753120566933
+  status: posting_failed
+metadata:
+  executedAt: '2025-07-21T17:56:08.222Z'
+  executionType: autonomous

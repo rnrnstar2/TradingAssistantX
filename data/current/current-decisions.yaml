@@ -1,0 +1,34 @@
+timestamp: '2025-07-21T12:44:26.530Z'
+actionDecisions:
+  - id: posting-only-1753101866515-main
+    type: original_post
+    priority: high
+    reasoning: '投稿専用モード: 市場終了後の振り返りに関する価値ある投資情報を提供'
+    params:
+      originalContent: >-
+        【2025-07-21
+        市場終了後の振り返り】テクニカル分析とファンダメンタル分析の組み合わせによる投資判断の重要性について。市場の短期的な変動に惑わされることなく、長期的な視点で投資戦略を組み立てることが成功への鍵となります。
+      hashtags:
+        - '#投資'
+        - '#資産形成'
+        - '#長期投資'
+      contentType: educational
+      timeOfDay: 21
+      dateGenerated: '2025-07-21'
+    content: >-
+      【2025-07-21
+      市場終了後の振り返り】テクニカル分析とファンダメンタル分析の組み合わせによる投資判断の重要性について。市場の短期的な変動に惑わされることなく、長期的な視点で投資戦略を組み立てることが成功への鍵となります。
+    estimatedDuration: 25
+context:
+  accountHealth: 75
+  marketOpportunities: 1
+  actionSuggestions: 1
+strategy: claude_autonomous_strategies
+# 🚨 REMOVED: Fixed dailyTarget constraint - now uses Claude autonomous determination
+autonomousMode: true
+actionBreakdown:
+  original_post: 1
+  quote_tweet: 0
+  retweet: 0
+  reply: 0
+  total: 1

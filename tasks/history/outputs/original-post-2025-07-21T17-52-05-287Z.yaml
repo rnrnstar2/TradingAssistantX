@@ -1,0 +1,17 @@
+execution:
+  type: original_post
+  timestamp: '2025-07-21T17:52:05.287Z'
+  content: '{"messages":[],"consumed":false,"generator":{},"handlers":[]}'
+context:
+  systemStatus: running
+  timestamp: 1753120323941
+  postResult:
+    success: false
+    error: >-
+      X API error: 403 - Your client app is not configured with the appropriate
+      oauth1 app permissions for this endpoint.
+    timestamp: 1753120323942
+  status: posting_failed
+metadata:
+  executedAt: '2025-07-21T17:52:05.287Z'
+  executionType: autonomous

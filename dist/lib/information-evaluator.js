@@ -1,8 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.InformationEvaluator = void 0;
-const claude_code_sdk_ts_1 = require("@instantlyeasy/claude-code-sdk-ts");
-class InformationEvaluator {
+import { claude } from '@instantlyeasy/claude-code-sdk-ts';
+export class InformationEvaluator {
     async evaluateCollectedInformation(results) {
         console.log(`🔍 [情報評価開始] ${results.length}件の収集情報を評価中...`);
         if (results.length === 0) {
@@ -36,7 +33,7 @@ Return as JSON array with this exact structure:
 Focus on investment education, market insights, and actionable information.
 Prioritize content that provides value to investors and traders.
 `;
-            const response = await (0, claude_code_sdk_ts_1.claude)()
+            const response = await claude()
                 .withModel('sonnet')
                 .query(claudePrompt)
                 .asText();
@@ -101,7 +98,7 @@ Focus on:
 
 Limit to top 10 opportunities.
 `;
-            const response = await (0, claude_code_sdk_ts_1.claude)()
+            const response = await claude()
                 .withModel('sonnet')
                 .query(opportunitiesPrompt)
                 .asText();
@@ -163,7 +160,7 @@ Return as JSON:
   "sentimentScore": -1.0 to 1.0
 }
 `;
-            const response = await (0, claude_code_sdk_ts_1.claude)()
+            const response = await claude()
                 .withModel('sonnet')
                 .query(sentimentPrompt)
                 .asText();
@@ -246,4 +243,3 @@ Return as JSON:
         }));
     }
 }
-exports.InformationEvaluator = InformationEvaluator;

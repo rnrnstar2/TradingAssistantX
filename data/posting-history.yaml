@@ -14,3 +14,251 @@
   content: 'Retweet: test-tweet-id'
   timestamp: 1753095080045
   success: true
+- id: '1753110433704'
+  content: |-
+    🚀 Claude Code SDK完全自律システム始動！
+
+    従来: 人間判断依存
+    →革新: Claude完全自律
+
+    ✅動的最適化  
+    ✅継続学習
+    ✅高品質コンテンツ自動生成
+
+    フォロワー5→∞への挑...
+  timestamp: 1753110433704
+  success: true
+- id: '1753118633805'
+  content: >-
+    {"options":{},"messageHandlers":[],"permissionManager":"{}","configLoader":{"loadedConfigs":{}},"rol...
+  timestamp: 1753118633805
+  success: false
+  error: 'X API error: 401 - Unauthorized'
+- id: '1753119566661'
+  content: >-
+    {"options":{},"messageHandlers":[],"permissionManager":"{}","configLoader":{"loadedConfigs":{}},"rol...
+  timestamp: 1753119566661
+  success: false
+  error: 'X API error: 401 - Unauthorized'
+- id: '1753119725508'
+  content: >-
+    {"options":{},"messageHandlers":[],"permissionManager":"{}","configLoader":{"loadedConfigs":{}},"rol...
+  timestamp: 1753119725508
+  success: false
+  error: 'X API error: 401 - Unauthorized'
+- id: '1753119838589'
+  content: >-
+    {"options":{},"messageHandlers":[],"permissionManager":"{}","configLoader":{"loadedConfigs":{}},"rol...
+  timestamp: 1753119838589
+  success: false
+  error: >-
+    X API error: 403 - Your client app is not configured with the appropriate
+    oauth1 app permissions for this endpoint.
+- id: '1753120325280'
+  content: '{"messages":[],"consumed":false,"generator":{},"handlers":[]}'
+  timestamp: 1753120325280
+  success: false
+  error: >-
+    X API error: 403 - Your client app is not configured with the appropriate
+    oauth1 app permissions for this endpoint.
+- id: '1753120495851'
+  content: 投資教育に関する質の高いコンテンツを生成中です。しばらくお待ちください。
+  timestamp: 1753120495851
+  success: false
+  error: 'OAuth 2.0 token request failed: 403'
+- id: '1753120568214'
+  content: 投資教育に関する質の高いコンテンツを生成中です。しばらくお待ちください。
+  timestamp: 1753120568214
+  success: false
+  error: 'OAuth 2.0 token request failed: 403'
+- id: '1753120681754'
+  content: 投資教育に関する質の高いコンテンツを生成中です。しばらくお待ちください。
+  timestamp: 1753120681754
+  success: false
+  error: 'OAuth 2.0 token request failed: 403'
+- id: '1753121074343'
+  content: 投資教育に関する質の高いコンテンツを生成中です。しばらくお待ちください。
+  timestamp: 1753121074343
+  success: true
+- id: '1753121151067'
+  content: 投資教育に関する質の高いコンテンツを生成中です。しばらくお待ちください。
+  timestamp: 1753121151067
+  success: false
+  error: Duplicate post detected within 24 hours
+- id: '1753121732835'
+  content: 投資教育に関する質の高いコンテンツを生成中です。しばらくお待ちください。
+  timestamp: 1753121732835
+  success: false
+  error: Duplicate post detected within 24 hours
+- id: '1753153823913'
+  content: |-
+    💡【投資の基本原則】💡
+
+    分散投資は「卵を一つのカゴに盛るな」の格言通り、リスク分散の王道です。
+
+    ✅ 異なる業種・地域・資産クラスに投資
+    ✅ 時間分散（積立投資）でタイミングリスクを軽減
+    ✅ 自...
+  timestamp: 1753153823913
+  success: false
+  error: >-
+    X API error: 403 - Your client app is not configured with the appropriate
+    oauth1 app permissions for this endpoint.
+- id: '1753154141411'
+  content: |-
+    📈 投資の基本原則：「時間分散」の威力
+
+    一度に全額投資するより、毎月一定額を積み立てる方が、価格変動リスクを抑えられます。
+
+    例：株価1000円時に1万円、500円時に1万円投資
+    →平均取得価格：...
+  timestamp: 1753154141411
+  success: false
+  error: >-
+    X API error: 403 - Your client app is not configured with the appropriate
+    oauth1 app permissions for this endpoint.
+- id: '1753155125252'
+  content: |-
+    💡投資の基本原則：「時間を味方につける」
+
+    1年で20%の利益を狙うより、年7%を10年続ける方が資産は約2倍に🔥
+
+    複利の力は時間と共に加速します
+    - 短期の値動きに一喜一憂せず
+    - 定期的な積...
+  timestamp: 1753155125252
+  success: false
+  error: 'OAuth 2.0 token request failed: 403'
+- id: '1753155361057'
+  content: |-
+    💡投資初心者が陥りがちな罠💡
+
+    「今日上がった株を明日も買う」
+    これ、典型的な追いかけ投資です😅
+
+    ✅正しいアプローチ：
+    ・企業の本質的価値を理解
+    ・長期的な成長性を評価
+    ・市場の感情に左右され...
+  timestamp: 1753155361057
+  success: false
+  error: 'OAuth 2.0 token request failed: 403'
+- id: '1753156728588'
+  content: >-
+    ESG投資の基礎解説：環境・社会・ガバナンスの3つの観点から投資先を評価する方法とその実践的アプローチを分かりやすく説明。初心者向けESGスコアの読み方と具体的銘柄選択の基準を提示
+  timestamp: 1753156728588
+  success: false
+  error: No OAuth 2.0 tokens available. Please complete authorization flow first.
+- id: '1753156729614'
+  content: デジタル資産入門ガイド：暗号資産を従来ポートフォリオに組み込む際の考慮点。リスク許容度に応じた配分比率と具体的な始め方の手順
+  timestamp: 1753156729614
+  success: false
+  error: No OAuth 2.0 tokens available. Please complete authorization flow first.
+- id: '1753157691985'
+  content: "【朝の投資心理チェック】高ボラティリティ相場では感情的判断が危険です。今日の相場でも「恐怖と欲望」をコントロールし、事前に決めたルールに従って行動しましょう。損切りラインを守ることが長期成功の鍵🧠\uD83D..."
+  timestamp: 1753157691985
+  success: true
+- id: '1753157692000'
+  content: >-
+    【今日の分散投資レッスン】一つのカゴに卵を盛るな -
+    でも分散しすぎも危険です。効果的なポートフォリオは：①地域分散②業種分散③時間分散の3軸で構築。今日の市場動向を踏まえた具体例も含めて解説🌍📊...
+  timestamp: 1753157692000
+  success: true
+- id: '1753157815820'
+  content: >-
+    【朝の市場分析】高ボラティリティ環境下での長期投資戦略について解説。短期の変動に惑わされず、ファンダメンタルズに基づいた投資判断の重要性をデータと共に発信。現在の市場トレンドと歴史的データの比較分析を...
+  timestamp: 1753157815820
+  success: false
+  error: 'X API error: 403 - Forbidden'
+- id: '1753157816982'
+  content: 夜間時間帯向けにデジタル資産（暗号通貨、NFT等）の基礎教育コンテンツを発信。初心者向けに分かりやすく解説し、従来の投資との比較や注意点を整理して提示。
+  timestamp: 1753157816982
+  success: false
+  error: 'X API error: 403 - Forbidden'
+- id: '1753157901487'
+  content: 🧪 OAuth 2.0 Debug Test - テストモード投稿
+  timestamp: 1753157901487
+  success: false
+  error: X API key not provided
+- id: '1753157964388'
+  content: 🧪 OAuth 2.0 Debug Test - テストモード投稿
+  timestamp: 1753157964388
+  success: false
+  error: X API key not provided
+- id: '1753158003852'
+  content: 🧪 OAuth 2.0 Debug Test - テストモード投稿
+  timestamp: 1753158003852
+  success: false
+  error: 'X API error: 403 - Forbidden'
+- id: '1753158279974'
+  content: |-
+    【朝の投資心理チェック】高ボラティリティ相場では感情管理が最重要💡
+
+    ✅ 投資前の心理状態確認
+    ✅ 目標リターンの再確認
+    ✅ 損失許容度の再設定
+
+    「相場は心理戦。準備された心が勝利への第一歩」
+
+    ...
+  timestamp: 1753158279974
+  success: false
+  error: 'X API error: 403 - Forbidden'
+- id: '1753158281157'
+  content: |-
+    デジタル資産のポートフォリオ配分の現実的アプローチ⚡
+
+    🔹 総資産の5-10%を上限に設定
+    🔹 ビットコイン70% アルトコイン30%の基本配分
+    🔹 DCAによる定期積立で価格変動を平準化
+
+    「...
+  timestamp: 1753158281157
+  success: false
+  error: 'X API error: 403 - Forbidden'
+- id: '1753158383221'
+  content: 🧪 OAuth 2.0 Debug Test - テストモード投稿
+  timestamp: 1753158383221
+  success: false
+  error: 'X API error: 403 - Forbidden'
+- id: '1753158909265'
+  content: |-
+    【朝の投資心理チェック】高ボラティリティ相場での感情管理術
+
+    ✅ 投資前の心理状態確認
+    ✅ 損失許容度の再設定
+    ✅ 長期目標との整合性確認
+
+    「相場は心理戦。準備された心が勝利の第一歩」
+
+    #投資教育...
+  timestamp: 1753158909265
+  success: false
+  error: 'X API error: 403 - Forbidden'
+- id: '1753158910428'
+  content: |-
+    【ランチタイム分散投資レッスン】
+
+    🌍 地域分散：先進国60% + 新興国40%
+    📊 業種分散：IT25% + ヘルスケア20% + 金融15%
+    ⏰ 時間分散：毎月定額積立
+
+    一つのカゴに卵を盛ら...
+  timestamp: 1753158910428
+  success: false
+  error: 'X API error: 403 - Forbidden'
+- id: '1753159021009'
+  content: 市場開始時の高ボラティリティ環境でのリスク管理実践教育コンテンツ - ポジションサイジングと損失限定戦略の具体例
+  timestamp: 1753159021009
+  success: false
+  error: 'X API error: 403 - Forbidden'
+- id: '1753159022183'
+  content: ロンドン市場時間に合わせた分散投資・ポートフォリオ最適化の実践的教育コンテンツ
+  timestamp: 1753159022183
+  success: false
+  error: 'X API error: 403 - Forbidden'
+- id: '1753159491885'
+  content: ESG投資の実践的アプローチ：長期投資戦略との融合。横ばい市場環境でのESG銘柄選定基準と、分散投資における組み入れ比率の最適化手法
+  timestamp: 1753159491885
+  success: false
+  error: 'X API error: 403 - Forbidden'

@@ -1,0 +1,190 @@
+version: "1.0.0"
+system:
+  maxExecutionTime: 90
+  sufficiencyThreshold: 85
+  qualityMinimum: 75
+  
+# 既存のX戦略（保持）
+strategies:
+  original_post:
+    priority: 60
+    focusAreas:
+      - "独自洞察発見"
+      - "市場分析情報"
+      - "教育的価値"
+      - "投稿機会特定"
+    sources:
+      # RSS ソース中心に変更
+      
+      # 新規RSS ソース
+      - name: "yahoo_finance_rss"
+        url: "https://finance.yahoo.com/rss/"
+        priority: "high"
+        type: "rss"
+        categories: ["markets", "crypto", "stocks"]
+      
+      - name: "reuters_finance"
+        url: "https://feeds.reuters.com/reuters/businessNews"
+        priority: "high"
+        type: "rss"
+        categories: ["business", "markets"]
+      
+      # 新規API ソース
+      - name: "alpha_vantage"
+        provider: "alphavantage"
+        priority: "high"
+        type: "api"
+        endpoints: ["stock_prices", "forex", "crypto"]
+        
+      - name: "coingecko"
+        provider: "coingecko"
+        priority: "high"
+        type: "api"
+        endpoints: ["prices", "trends", "market_data"]
+      
+      # コミュニティソース
+      - name: "reddit_investing"
+        platform: "reddit"
+        priority: "medium"
+        type: "community"
+        subreddits: ["investing", "stocks", "SecurityAnalysis"]
+        
+    collectMethods:
+      - "multi_source_analysis"
+      - "cross_source_validation"
+      - "trend_analysis"
+      - "educational_gap_identification"
+    sufficiencyTarget: 90
+
+  quote_tweet:
+    priority: 25
+    focusAreas:
+      - "候補ツイート検索"
+      - "付加価値分析"
+      - "エンゲージメント評価"
+      - "コミュニティ反応分析"  # 新規追加
+    sources:
+      # RSS ソース中心に変更
+        
+      # 新規RSS ソース
+      - name: "financial_news_rss"
+        url: "https://feeds.bloomberg.com/markets/news.rss"
+        priority: "high"
+        type: "rss"
+        
+      # コミュニティソース（議論の発見）
+      - name: "reddit_discussions"
+        platform: "reddit"
+        priority: "high"
+        type: "community"
+        subreddits: ["investing", "StockMarket", "financialindependence"]
+        
+    collectMethods:
+      - "candidate_tweet_search"
+      - "engagement_analysis"
+      - "value_addition_assessment"
+    sufficiencyTarget: 85
+
+  retweet:
+    priority: 10
+    focusAreas:
+      - "信頼性検証"
+      - "価値評価"
+      - "リスク分析"
+      - "公式情報確認"  # 新規追加
+    sources:
+      # 高信頼性RSS ソース中心
+      - name: "central_bank_feeds"
+        url: "https://www.federalreserve.gov/feeds/press_all.xml"
+        priority: "highest"
+        type: "rss"
+        
+      - name: "sec_news"
+        url: "https://www.sec.gov/news/pressreleases.rss"
+        priority: "highest"
+        type: "rss"
+        
+      - name: "reuters_breaking"
+        url: "https://feeds.reuters.com/reuters/topNews"
+        priority: "high"
+        type: "rss"
+        
+      # RSS ソース中心に変更
+        
+    collectMethods:
+      - "credibility_check"
+      - "value_assessment"
+      - "risk_evaluation"
+    sufficiencyTarget: 80
+
+  reply:
+    priority: 5
+    focusAreas:
+      - "エンゲージメント機会"
+      - "コミュニティ参加"
+      - "価値提供"
+      - "質問・疑問への回答"  # 新規追加
+    sources:
+      # コミュニティ中心
+      - name: "reddit_questions"
+        platform: "reddit"
+        priority: "highest"
+        type: "community"
+        subreddits: ["investing", "personalfinance", "stocks"]
+        filters: ["questions", "help", "advice"]
+        
+      - name: "hackernews_finance"
+        platform: "hackernews"
+        priority: "medium"
+        type: "community"
+        topics: ["finance", "investing", "economics"]
+        
+      # コミュニティソース中心に変更
+        
+    collectMethods:
+      - "engagement_opportunity_scan"
+      - "community_value_assessment"
+    sufficiencyTarget: 75
+
+# 新規追加：情報源選択戦略
+sourceSelection:
+  original_post:
+    preferred: ["rss", "api", "community"]
+    fallback: ["community", "rss"]
+    priority: "diversity"  # quality, speed, diversity
+    
+  quote_tweet:
+    preferred: ["community", "rss"]
+    fallback: ["community", "rss"]
+    priority: "quality"
+    
+  retweet:
+    preferred: ["rss", "api"]
+    fallback: ["community", "rss"]  
+    priority: "quality"
+    
+  reply:
+    preferred: ["community"]
+    fallback: ["rss", "community"]
+    priority: "speed"
+
+# 新規追加：品質基準
+qualityStandards:
+  relevanceScore: 80
+  credibilityScore: 85
+  uniquenessScore: 70
+  timelinessScore: 90
+  
+  # 情報源別品質重み
+  sourceWeights:
+    rss: 0.9      # 高信頼性
+    api: 0.95     # 最高品質
+    community: 0.7 # 多様性重視
+    # twitter: 0.8  # 無効化
+    
+  # 情報源別最低基準
+  sourceMinimums:
+    rss: 85
+    api: 90
+    community: 70
+    # twitter: 75  # 無効化

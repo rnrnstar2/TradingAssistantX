@@ -1,0 +1,60 @@
+PATH CORRECTION LOG - 2025-07-21
+=====================================
+
+TASK 1: 古い参照削除
+------------------
+File: tasks/20250720_194351_{docs_cleanup}/reports/REPORT-001-docs-system-cleanup.md
+Line: 23
+Action: DELETE
+Content: "9. `docs/roles/manager-issue-driven.md` - X自動化特化不足"
+Reason: 存在しないファイルへの参照
+
+File: tasks/20250720_194351_{docs_cleanup}/instructions/TASK-001-docs-system-cleanup.md  
+Line: 28
+Action: DELETE
+Content: "docs/roles/manager-issue-driven.md                 # X自動化特化不足"
+Reason: 存在しないファイルへの参照
+
+TASK 2: 絶対パス→相対パス統一
+---------------------------
+File: tasks/20250721-122038/reports/REPORT-002-mvp-constraints-removal.md
+Line: 26
+Action: REPLACE
+Before: "**ファイル**: `/Users/rnrnstar/github/TradingAssistantX/CLAUDE.md`"
+After:  "**ファイル**: `CLAUDE.md`"
+
+Line: 46  
+Action: REPLACE
+Before: "**ファイル**: `/Users/rnrnstar/github/TradingAssistantX/docs/roles/manager-role.md`"
+After:  "**ファイル**: `docs/roles/manager-role.md`"
+
+Line: 66
+Action: REPLACE  
+Before: "**ファイル**: `/Users/rnrnstar/github/TradingAssistantX/docs/roles/worker-role.md`"
+After:  "**ファイル**: `docs/roles/worker-role.md`"
+
+Line: 86
+Action: REPLACE
+Before: "**ファイル**: `/Users/rnrnstar/github/TradingAssistantX/tasks/20250721-122038/instructions/TASK-001-cleanup-system-optimization.md`" 
+After:  "**ファイル**: `tasks/20250721-122038/instructions/TASK-001-cleanup-system-optimization.md`"
+
+SUMMARY
+-------
+Total files modified: 3
+Total lines changed: 6
+Deleted references: 2
+Path conversions: 4
+Invalid references eliminated: 2
+Status: COMPLETED ✅
+
+VERIFICATION
+-----------
+✅ No references to non-existent files remain
+✅ All specified absolute paths converted to relative paths  
+✅ Only valid references to docs/roles/manager-role.md and docs/roles/worker-role.md remain
+✅ File integrity maintained
+
+Additional Discovery:
+28 files in tasks/ directory contain absolute paths (not addressed in this task)
+
+END OF LOG

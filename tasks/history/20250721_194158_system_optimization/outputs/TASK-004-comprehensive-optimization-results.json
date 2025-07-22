@@ -1,0 +1,61 @@
+{
+  "timestamp": "2025-07-21T16:20:34.011Z",
+  "baseline": {
+    "contextUsage": {
+      "before": 4819,
+      "after": 4819,
+      "reduction": 0
+    },
+    "executionTime": {
+      "decisionTime": 22,
+      "totalTime": 284.6,
+      "improvement": 99.52566666666667
+    },
+    "systemHealth": {
+      "memoryUsage": 35.219844055175784,
+      "cpuUsage": 0.34278000000000003,
+      "stability": 100
+    },
+    "qualityMetrics": {
+      "decisionAccuracy": 100,
+      "contentQuality": 65,
+      "userValue": 85
+    }
+  },
+  "optimized": {
+    "contextUsage": {
+      "before": 4819,
+      "after": 4819,
+      "reduction": 0
+    },
+    "executionTime": {
+      "decisionTime": 8,
+      "totalTime": 229,
+      "improvement": 19.53619114546733
+    },
+    "systemHealth": {
+      "memoryUsage": 31.765464782714844,
+      "cpuUsage": 0.0205,
+      "stability": 100
+    },
+    "qualityMetrics": {
+      "decisionAccuracy": 100,
+      "contentQuality": 65,
+      "userValue": 85
+    }
+  },
+  "comparison": {
+    "contextReductionImprovement": 0,
+    "executionTimeImprovement": -79.98947552119934,
+    "memoryUsageChange": -3.4543792724609403,
+    "qualityImprovement": 0
+  },
+  "optimizationScore": 80,
+  "targetAchievement": {
+    "contextReduction": false,
+    "executionImprovement": false,
+    "memoryTarget": true,
+    "qualityTarget": true,
+    "stabilityTarget": true
+  }
+}

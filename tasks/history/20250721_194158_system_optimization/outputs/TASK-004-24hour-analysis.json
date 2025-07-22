@@ -1,0 +1,9 @@
+{
+  "successRate": 0,
+  "avgExecutionTime": 0,
+  "maxMemoryUsage": 0,
+  "avgDecisionQuality": 0,
+  "recommendations": [
+    "All iterations failed - system needs investigation"
+  ]
+}

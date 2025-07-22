@@ -1,44 +1,11 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.EnhancedInfoCollector = void 0;
-class EnhancedInfoCollector {
+import { RssParallelCollectionEngine } from './rss-parallel-collection-engine';
+export class EnhancedInfoCollector {
     targets = [];
     testMode;
+    rssEngine;
     constructor() {
         this.testMode = process.env.X_TEST_MODE === 'true';
+        this.rssEngine = new RssParallelCollectionEngine();
         this.initializeTargets();
     }
     async collectInformation() {
@@ -46,6 +13,7 @@ class EnhancedInfoCollector {
         try {
             this.targets = this.defineCollectionTargets();
             const results = await Promise.all([
+                this.collectRssInformation(), // RSS並列収集を最優先実行
                 this.collectTrendInformation(),
                 this.collectCompetitorContent(),
                 this.collectMarketNews(),
@@ -60,33 +28,85 @@ class EnhancedInfoCollector {
             return [];
         }
     }
+    async collectRssInformation() {
+        console.log('📡 [RSS並列収集] RSS Parallel Collection Engineを起動中...');
+        try {
+            // RSS並列収集を実行
+            const rssResults = await this.rssEngine.collectWithDynamicPriority();
+            // 緊急情報検知
+            const emergencyInfo = await this.rssEngine.detectEmergencyInformation();
+            if (emergencyInfo.length > 0) {
+                console.warn(`🚨 [緊急情報検知] ${emergencyInfo.length}件の緊急情報を検出しました`);
+                await this.handleEmergencyInformation(emergencyInfo);
+            }
+            // RSS結果をCollectionResult形式に変換
+            const convertedResults = this.convertRssToCollectionResult(rssResults);
+            console.log(`📡 [RSS並列収集完了] ${convertedResults.length}件のRSS情報を収集`);
+            return convertedResults;
+        }
+        catch (error) {
+            console.error('❌ [RSS並列収集エラー]:', error);
+            return [];
+        }
+    }
+    convertRssToCollectionResult(rssResults) {
+        return rssResults.flatMap(result => {
+            return result.result.items.map((item, index) => ({
+                id: `rss-${result.source.id}-${Date.now()}-${index}`,
+                type: 'rss_news',
+                content: `${item.title}: ${item.description || ''}`,
+                source: `rss_${result.source.name}`,
+                relevanceScore: Math.min(result.valueRealized / 100, 1.0),
+                timestamp: Date.now(),
+                metadata: {
+                    engagement: result.priorityScore * 10,
+                    hashtags: item.category || [],
+                    rssSource: result.source.name,
+                    publishedAt: item.publishedAt,
+                    link: item.link,
+                    priorityScore: result.priorityScore,
+                    processingOrder: result.processingOrder
+                }
+            }));
+        });
+    }
+    async handleEmergencyInformation(emergencyResults) {
+        for (const emergencyResult of emergencyResults) {
+            const emergency = emergencyResult.emergency;
+            console.warn(`🚨 [緊急対応] ${emergency.classification.category}: ${emergency.classification.urgencyLevel} - ${emergency.content.substring(0, 100)}...`);
+            // 緊急情報は最高優先度でログに記録
+            if (emergency.classification.urgencyLevel === 'critical') {
+                console.error(`🔥 [CRITICAL EMERGENCY] 重大緊急事態: ${emergency.content}`);
+            }
+        }
+    }
     initializeTargets() {
         this.targets = this.defineCollectionTargets();
     }
     defineCollectionTargets() {
         return [
             {
-                type: 'trend',
-                source: 'x.com/explore',
-                priority: 'high',
+                type: 'scraping',
+                url: 'https://x.com/explore',
+                weight: 0.8,
                 searchTerms: ['投資', 'トレード', 'FX', '株式', '仮想通貨', '金融']
             },
             {
-                type: 'competitor',
-                source: 'x.com/search',
-                priority: 'medium',
+                type: 'scraping',
+                url: 'https://x.com/search',
+                weight: 0.6,
                 searchTerms: ['投資アドバイザー', 'トレーダー', '資産運用', 'ファイナンシャルアドバイザー']
             },
             {
-                type: 'news',
-                source: 'x.com/search',
-                priority: 'high',
+                type: 'scraping',
+                url: 'https://x.com/search',
+                weight: 0.7,
                 searchTerms: ['経済ニュース', '市場動向', '金融政策', '日銀', 'FRB', '株価']
             },
             {
-                type: 'hashtag',
-                source: 'x.com/hashtag',
-                priority: 'medium',
+                type: 'scraping',
+                url: 'https://x.com/hashtag',
+                weight: 0.5,
                 searchTerms: ['#投資', '#FX', '#株式投資', '#資産運用', '#投資家', '#トレード']
             }
         ];
@@ -174,7 +194,7 @@ class EnhancedInfoCollector {
     }
     async collectRealTrendData() {
         try {
-            const playwright = await Promise.resolve().then(() => __importStar(require('playwright')));
+            const playwright = await import('playwright');
             const browser = await playwright.chromium.launch({ headless: true });
             const page = await browser.newPage();
             // X.com/explore にアクセス
@@ -213,7 +233,7 @@ class EnhancedInfoCollector {
         try {
             const competitorAccounts = ['@investment_guru', '@fx_master', '@crypto_analyst'];
             const results = [];
-            const playwright = await Promise.resolve().then(() => __importStar(require('playwright')));
+            const playwright = await import('playwright');
             const browser = await playwright.chromium.launch({ headless: true });
             for (const account of competitorAccounts.slice(0, 2)) { // 制限
                 const page = await browser.newPage();
@@ -261,7 +281,7 @@ class EnhancedInfoCollector {
         try {
             const searchTerms = ['日銀', '金利政策', 'NYダウ', '株価', '為替'];
             const results = [];
-            const playwright = await Promise.resolve().then(() => __importStar(require('playwright')));
+            const playwright = await import('playwright');
             const browser = await playwright.chromium.launch({ headless: true });
             const page = await browser.newPage();
             for (const term of searchTerms.slice(0, 3)) {
@@ -306,7 +326,7 @@ class EnhancedInfoCollector {
         try {
             const hashtags = ['#投資', '#FX', '#株式投資', '#資産運用'];
             const results = [];
-            const playwright = await Promise.resolve().then(() => __importStar(require('playwright')));
+            const playwright = await import('playwright');
             const browser = await playwright.chromium.launch({ headless: true });
             const page = await browser.newPage();
             for (const hashtag of hashtags.slice(0, 2)) {
@@ -476,4 +496,3 @@ class EnhancedInfoCollector {
         ];
     }
 }
-exports.EnhancedInfoCollector = EnhancedInfoCollector;

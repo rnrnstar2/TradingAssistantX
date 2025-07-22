@@ -1,13 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.createBrowserTools = createBrowserTools;
-exports.createAnalysisTools = createAnalysisTools;
-exports.createBrowserInstance = createBrowserInstance;
-const playwright_1 = require("playwright");
-function createBrowserTools(page) {
+import { chromium } from 'playwright';
+export function createBrowserTools(page) {
     return {
         launch: async () => {
-            return await playwright_1.chromium.launch({ headless: true });
+            return await chromium.launch({ headless: true });
         },
         navigate: async (url) => {
             await page.goto(url, { waitUntil: 'domcontentloaded' });
@@ -45,7 +40,7 @@ function createBrowserTools(page) {
         }
     };
 }
-function createAnalysisTools() {
+export function createAnalysisTools() {
     return {
         assessRelevance: (content, topics) => {
             if (!content || topics.length === 0)
@@ -117,8 +112,8 @@ function createAnalysisTools() {
         }
     };
 }
-async function createBrowserInstance() {
-    const browser = await playwright_1.chromium.launch({ headless: true });
+export async function createBrowserInstance() {
+    const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
     return { browser, page };
 }

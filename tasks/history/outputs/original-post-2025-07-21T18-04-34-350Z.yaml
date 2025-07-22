@@ -1,0 +1,15 @@
+execution:
+  type: original_post
+  timestamp: '2025-07-21T18:04:34.350Z'
+  content: 投資教育に関する質の高いコンテンツを生成中です。しばらくお待ちください。
+context:
+  systemStatus: running
+  timestamp: 1753121074318
+  postResult:
+    success: true
+    id: test-1753121074318
+    timestamp: 1753121074318
+  status: posted_successfully
+metadata:
+  executedAt: '2025-07-21T18:04:34.351Z'
+  executionType: autonomous

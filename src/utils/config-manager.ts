@@ -359,7 +359,9 @@ export class ConfigManager extends EventEmitter {
     this.configCache.delete(filePath);
     const watcher = this.watchers.get(filePath);
     if (watcher) {
-      watcher.close();
+      watcher.close().catch((error) => {
+        console.error(`❌ [設定管理] ファイル監視停止エラー (${filePath}):`, error);
+      });
       this.watchers.delete(filePath);
     }
     this.emit('config:file-removed', { filePath, timestamp: Date.now() });
@@ -385,7 +387,7 @@ export class ConfigManager extends EventEmitter {
       // 同期的なクリーンアップ
       const watchers = Array.from(this.watchers.values());
       for (const watcher of watchers) {
-        watcher.close();
+        void watcher.close(); // プロセス終了時はpromiseを無視
       }
     });
   }

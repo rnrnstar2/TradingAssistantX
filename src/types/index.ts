@@ -3,6 +3,7 @@ export interface ScrapedData {
   url: string;
   timestamp: number;
   source: string;
+  metadata?: any; // 拡張メタデータ（FXデータ収集システム用）
 }
 
 export interface PostTemplate {

@@ -1,35 +1,25 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ClaudeXAgent = void 0;
-require("dotenv/config");
-const x_client_1 = require("./x-client");
-const fs_1 = require("fs");
-const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
-const yaml_utils_1 = require("../utils/yaml-utils");
-class ClaudeXAgent {
+import 'dotenv/config';
+import { SimpleXClient } from './x-client';
+import { existsSync } from 'fs';
+import { claude } from '@instantlyeasy/claude-code-sdk-ts';
+import { loadYamlArraySafe } from '../utils/yaml-utils';
+export class ClaudeXAgent {
     xClient;
-    anthropic;
+    claudeAvailable;
     testMode;
     constructor() {
-        this.xClient = new x_client_1.SimpleXClient(process.env.X_API_KEY || '');
+        this.xClient = new SimpleXClient();
         this.testMode = process.env.X_TEST_MODE === 'true';
-        // Claude APIキーがある場合のみ初期化
-        if (process.env.CLAUDE_API_KEY) {
-            this.anthropic = new sdk_1.default({
-                apiKey: process.env.CLAUDE_API_KEY,
-            });
-        }
+        // Claude Code CLI が利用可能かチェック
+        this.claudeAvailable = process.env.CLAUDE_API_KEY !== undefined || process.env.ANTHROPIC_API_KEY !== undefined;
     }
     async generateAndPost() {
         try {
-            if (!(0, fs_1.existsSync)('data/scraped.yaml')) {
+            if (!existsSync('data/scraped.yaml')) {
                 console.log('No scraped data found');
                 return;
             }
-            const data = (0, yaml_utils_1.loadYamlArraySafe)('data/scraped.yaml');
+            const data = loadYamlArraySafe('data/scraped.yaml');
             if (data.length === 0) {
                 console.log('No data to process');
                 return;
@@ -67,11 +57,11 @@ class ClaudeXAgent {
             return '最新情報: データなし';
         }
         const latestData = data.sort((a, b) => b.timestamp - a.timestamp)[0];
-        // Claude APIが利用可能な場合
-        if (this.anthropic) {
+        // Claude Code SDK が利用可能な場合
+        if (this.claudeAvailable) {
             try {
                 if (this.testMode) {
-                    console.log('\n🤖 Claude APIを使用してコンテンツ生成中...');
+                    console.log('\n🤖 Claude Code SDKを使用してコンテンツ生成中...');
                 }
                 const prompt = `
 最新の収集データ: ${latestData.content}
@@ -83,30 +73,25 @@ URL: ${latestData.url}
 - 読者に価値を提供
 - 適切なハッシュタグを含む
 - 日本語で記述`;
-                const message = await this.anthropic.messages.create({
-                    model: 'claude-3-haiku-20240307',
-                    max_tokens: 100,
-                    temperature: 0.7,
-                    messages: [{
-                            role: 'user',
-                            content: prompt
-                        }]
-                });
-                const generatedContent = message.content[0].type === 'text' ? message.content[0].text : '';
+                const response = await claude()
+                    .withModel('haiku')
+                    .withTimeout(30000)
+                    .query(prompt)
+                    .asText();
                 if (this.testMode) {
-                    console.log('✅ Claude APIレスポンス受信');
+                    console.log('✅ Claude Code SDKレスポンス受信');
                 }
-                return generatedContent.length > 280 ? generatedContent.slice(0, 277) + '...' : generatedContent;
+                return response.length > 280 ? response.slice(0, 277) + '...' : response;
             }
             catch (error) {
-                console.error('Error generating content with Claude:', error);
+                console.error('Error generating content with Claude Code SDK:', error);
                 return this.getFallbackContent(latestData);
             }
         }
         else {
-            // Claude APIが利用できない場合のフォールバック
+            // Claude が利用できない場合のフォールバック
             if (this.testMode) {
-                console.log('\n⚠️ Claude APIキーが設定されていません。フォールバックモードで動作します。');
+                console.log('\n⚠️ Claude が設定されていません。フォールバックモードで動作します。');
             }
             return this.getFallbackContent(latestData);
         }
@@ -126,8 +111,10 @@ URL: ${latestData.url}
         return this.generateContent([mockData]);
     }
 }
-exports.ClaudeXAgent = ClaudeXAgent;
 if (require.main === module) {
     const agent = new ClaudeXAgent();
-    agent.generateAndPost();
+    agent.generateAndPost().catch((error) => {
+        console.error('❌ [Claude エージェント] 実行エラー:', error);
+        process.exit(1);
+    });
 }

@@ -1,0 +1,452 @@
+# テストカバレッジマップ詳細 - TASK-005
+# Generated: 2025-07-21
+
+metadata:
+  report_id: "COVERAGE-MAP-005"
+  generation_date: "2025-07-21"
+  total_implementation_files: 32
+  total_test_files: 6
+  overall_coverage_percentage: 11
+
+# テスト設定評価
+test_configuration:
+  vitest_config:
+    status: "functional"
+    issues:
+      - "timeout_settings_insufficient"
+      - "coverage_config_missing"
+    score: 75
+  
+  typescript_config:
+    status: "inconsistent"
+    issues:
+      - "commonjs_esm_mismatch"
+    score: 60
+  
+  package_scripts:
+    status: "good"
+    available_commands:
+      - "pnpm test"
+      - "pnpm test:watch"
+    score: 90
+
+# ファイル別カバレッジマップ
+coverage_map:
+  core:
+    total_files: 3
+    tested_files: 2
+    coverage_percentage: 67
+    files:
+      autonomous-executor.ts:
+        test_file: "tests/integration/action-specific-integration.test.ts"
+        coverage_type: "partial"
+        priority: "high"
+        missing_areas:
+          - "error_handling_edge_cases"
+          - "performance_optimization_paths"
+        
+      decision-engine.ts:
+        test_file: "tests/integration/action-specific-integration.test.ts"
+        coverage_type: "partial"
+        priority: "critical"
+        missing_areas:
+          - "core_decision_logic"
+          - "fallback_mechanisms"
+          - "context_validation"
+        
+      parallel-manager.ts:
+        test_file: "tests/unit/parallel-execution.test.ts"
+        coverage_type: "basic"
+        priority: "medium"
+        missing_areas:
+          - "concurrent_execution_limits"
+          - "resource_management"
+
+  lib:
+    total_files: 27
+    tested_files: 3
+    coverage_percentage: 11
+    tested_files_detail:
+      action-specific-collector.ts:
+        test_file: "tests/unit/action-specific-collector.test.ts"
+        coverage_type: "comprehensive"
+        quality_score: 95
+        covered_areas:
+          - "all_action_types"
+          - "error_handling"
+          - "performance_limits"
+          - "configuration_loading"
+        
+      playwright-browser-manager.ts:
+        test_file: "tests/unit/playwright-browser-manager.test.ts"
+        coverage_type: "good"
+        quality_score: 80
+        covered_areas:
+          - "session_management"
+          - "resource_cleanup"
+          - "singleton_pattern"
+        
+      playwright-account-collector.ts:
+        test_file: "tests/integration/playwright-parallel-execution.test.ts"
+        coverage_type: "integration_only"
+        quality_score: 60
+        missing_areas:
+          - "unit_level_testing"
+          - "error_scenarios"
+
+    untested_files:
+      # 高優先度 (Critical)
+      claude-agent.ts:
+        priority: "critical"
+        complexity: "high"
+        risk_level: "high"
+        reasoning: "Claude API integration core logic"
+        
+      x-client.ts:
+        priority: "critical"
+        complexity: "high"
+        risk_level: "high"
+        reasoning: "X API operations and authentication"
+        
+      context-integrator.ts:
+        priority: "critical"
+        complexity: "medium"
+        risk_level: "medium"
+        reasoning: "Context merging and validation logic"
+        
+      # 中優先度 (High)
+      enhanced-info-collector.ts:
+        priority: "high"
+        complexity: "medium"
+        risk_level: "medium"
+        reasoning: "Information collection orchestration"
+        
+      daily-action-planner.ts:
+        priority: "high"
+        complexity: "medium"
+        risk_level: "medium"
+        reasoning: "Daily action distribution logic"
+        
+      expanded-action-executor.ts:
+        priority: "high"
+        complexity: "medium"
+        risk_level: "medium"
+        reasoning: "Action execution coordination"
+        
+      account-analyzer.ts:
+        priority: "high"
+        complexity: "medium"
+        risk_level: "low"
+        reasoning: "Account status analysis"
+        
+      # 低優先度 (Medium)
+      async-execution-manager.ts:
+        priority: "medium"
+        complexity: "low"
+        risk_level: "low"
+        
+      claude-controlled-collector.ts:
+        priority: "medium"
+        complexity: "low"
+        risk_level: "low"
+        
+      claude-max-integration.ts:
+        priority: "medium"
+        complexity: "low"
+        risk_level: "low"
+        
+      claude-tools.ts:
+        priority: "medium"
+        complexity: "low"
+        risk_level: "low"
+        
+      context-manager.ts:
+        priority: "medium"
+        complexity: "low"
+        risk_level: "low"
+        
+      data-communication-system.ts:
+        priority: "medium"
+        complexity: "low"
+        risk_level: "low"
+        
+      execution-orchestrator.ts:
+        priority: "medium"
+        complexity: "medium"
+        risk_level: "low"
+        
+      growth-system-manager.ts:
+        priority: "medium"
+        complexity: "low"
+        risk_level: "low"
+        
+      information-evaluator.ts:
+        priority: "medium"
+        complexity: "low"
+        risk_level: "low"
+        
+      long-running-task-manager.ts:
+        priority: "medium"
+        complexity: "low"
+        risk_level: "low"
+        
+      metrics-collector.ts:
+        priority: "medium"
+        complexity: "low"
+        risk_level: "low"
+        
+      parallel-execution-manager.ts:
+        priority: "medium"
+        complexity: "medium"
+        risk_level: "low"
+        
+      performance-report-generator.ts:
+        priority: "medium"
+        complexity: "low"
+        risk_level: "low"
+        
+      posting-manager.ts:
+        priority: "medium"
+        complexity: "medium"
+        risk_level: "medium"
+        reasoning: "Posting logic but lower priority"
+        
+      scraper.ts:
+        priority: "medium"
+        complexity: "low"
+        risk_level: "low"
+        
+      x-performance-analyzer.ts:
+        priority: "medium"
+        complexity: "low"
+        risk_level: "low"
+
+  scripts:
+    total_files: 2
+    tested_files: 0
+    coverage_percentage: 0
+    files:
+      autonomous-runner.ts:
+        priority: "low"
+        reasoning: "Entry point, mainly orchestration"
+        
+      autonomous-runner-single.ts:
+        priority: "low"
+        reasoning: "Alternative entry point"
+
+  types:
+    total_files: 9
+    tested_files: 0
+    coverage_percentage: 0
+    note: "Type definitions typically don't require unit tests"
+
+  utils:
+    total_files: 3
+    tested_files: 0
+    coverage_percentage: 0
+    files:
+      config-loader.ts:
+        priority: "medium"
+        reasoning: "Configuration loading utility"
+        
+      yaml-utils.ts:
+        priority: "medium"
+        reasoning: "YAML processing utility"
+        
+      monitoring/health-check.ts:
+        priority: "low"
+        reasoning: "Health monitoring utility"
+
+# テスト品質評価
+test_quality_assessment:
+  excellent_tests:
+    - file: "action-specific-integration.test.ts"
+      score: 95
+      strengths:
+        - "comprehensive_integration_testing"
+        - "error_handling_coverage"
+        - "performance_validation"
+        - "type_safety_checks"
+      
+    - file: "action-specific-collector.test.ts"
+      score: 95
+      strengths:
+        - "complete_feature_coverage"
+        - "quality_metrics_testing"
+        - "configuration_testing"
+        - "error_scenarios"
+
+  good_tests:
+    - file: "optimized-workflow.test.ts"
+      score: 80
+      strengths:
+        - "workflow_integration"
+        - "performance_tracking"
+      weaknesses:
+        - "timeout_issues"
+        - "flaky_external_dependencies"
+      
+    - file: "playwright-parallel-execution.test.ts"
+      score: 75
+      strengths:
+        - "concurrency_testing"
+        - "error_recovery"
+      weaknesses:
+        - "browser_resource_conflicts"
+        - "external_dependency_issues"
+      
+    - file: "playwright-browser-manager.test.ts"
+      score: 75
+      strengths:
+        - "resource_management"
+        - "singleton_testing"
+      weaknesses:
+        - "limited_error_scenarios"
+
+  needs_improvement:
+    - file: "parallel-execution.test.ts"
+      score: 60
+      issues:
+        - "basic_testing_only"
+        - "missing_edge_cases"
+        - "limited_validation"
+
+# 実行環境問題分析
+execution_environment:
+  timeout_issues:
+    affected_tests:
+      - "optimized-workflow.test.ts"
+      - "action-specific-integration.test.ts"
+    recommended_timeout: 90000  # 90 seconds
+    current_default: 5000       # 5 seconds
+    
+  playwright_conflicts:
+    issue: "Target page, context or browser has been closed"
+    affected_tests:
+      - "playwright-parallel-execution.test.ts"
+    root_cause: "concurrent_browser_session_management"
+    
+  api_dependency_issues:
+    mock_implementation: "partial"
+    external_calls: "present"
+    stability_impact: "medium"
+
+# 改善優先順位マトリックス
+improvement_priority_matrix:
+  immediate: # 1週間以内
+    - action: "fix_vitest_timeout_configuration"
+      impact: "high"
+      effort: "low"
+      
+    - action: "resolve_typescript_config_inconsistency"
+      impact: "medium"
+      effort: "low"
+
+  short_term: # 1-2週間
+    - action: "add_claude_agent_unit_tests"
+      impact: "critical"
+      effort: "medium"
+      
+    - action: "add_x_client_unit_tests"
+      impact: "critical"
+      effort: "medium"
+      
+    - action: "fix_playwright_concurrency_issues"
+      impact: "high"
+      effort: "medium"
+
+  medium_term: # 1-2ヶ月
+    - action: "complete_core_decision_engine_testing"
+      impact: "critical"
+      effort: "high"
+      
+    - action: "add_context_integrator_tests"
+      impact: "high"
+      effort: "medium"
+      
+    - action: "implement_coverage_reporting"
+      impact: "medium"
+      effort: "low"
+
+  long_term: # 3ヶ月+
+    - action: "comprehensive_lib_testing"
+      impact: "high"
+      effort: "high"
+      
+    - action: "automated_quality_gates"
+      impact: "medium"
+      effort: "medium"
+
+# CLAUDE.md準拠度詳細
+claude_md_compliance:
+  total_score: 75
+  
+  compliant_areas:
+    directory_structure:
+      score: 100
+      note: "Perfect compliance with tests/ directory unification"
+      
+    file_naming:
+      score: 100
+      note: "All *.test.ts format correctly used"
+      
+    test_framework:
+      score: 100
+      note: "Vitest correctly implemented"
+      
+    test_categorization:
+      score: 100
+      note: "unit/ and integration/ separation maintained"
+
+  partial_compliance:
+    important_logic_priority:
+      score: 50
+      note: "New features well-tested, core features lacking"
+      
+    e2e_exclusion:
+      score: 75
+      note: "Generally followed but some boundary ambiguity"
+
+  non_compliant_areas:
+    execution_efficiency:
+      score: 25
+      note: "Tests are too slow, causing timeouts"
+      issues:
+        - "2+ minute execution times"
+        - "timeout conflicts"
+        - "resource competition"
+      
+    maintenance_focus:
+      score: 50
+      note: "Tests exist but maintenance burden is high"
+      issues:
+        - "external_dependencies"
+        - "complex_setup_requirements"
+        - "flaky_test_behavior"
+
+# 推奨テスト戦略
+recommended_test_strategy:
+  approach: "incremental_priority_based"
+  
+  principles:
+    - "critical_business_logic_first"
+    - "external_dependency_isolation"
+    - "fast_feedback_loops"
+    - "maintainable_test_structure"
+  
+  implementation_phases:
+    phase_1: "core_stability"
+    phase_2: "integration_hardening" 
+    phase_3: "comprehensive_coverage"
+    phase_4: "automation_optimization"
+
+# メトリクス追跡
+metrics_tracking:
+  baseline_date: "2025-07-21"
+  next_review_date: "2025-08-21"
+  
+  target_metrics:
+    coverage_percentage: 40  # Target for next month
+    test_execution_time: 60  # Target max seconds
+    success_rate: 95         # Target percentage
+    core_coverage: 90        # Critical files coverage target

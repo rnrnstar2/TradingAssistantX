@@ -8,10 +8,9 @@ import type {
   SufficiencyEvaluation,
   CollectionStrategy,
   QualityEvaluation,
+  QualityFeedback,
   MultiSourceCollector,
-  MultiSourceResult,
   ExtendedActionCollectionConfig,
-  CrossSourceQualityEvaluation,
   SourceConfig
 } from '../types/autonomous-system.js';
 
@@ -33,13 +32,13 @@ import { join } from 'path';
 export class ActionSpecificCollector {
   private config: ActionCollectionConfig | null = null;
   private extendedConfig: ExtendedActionCollectionConfig | null = null;
-  private multiSourceConfig: any = null;
+  private multiSourceConfig: ExtendedActionCollectionConfig['multiSources'] | null = null;
   private testMode: boolean;
   private useMultipleSources: boolean;
   private multiSourceCollector: MultiSourceCollector | null = null;
   private timeoutConfig = {
-    initial: 30000,    // 初回30秒
-    retry: 30000,      // リトライ時30秒
+    initial: 60000,    // 初回60秒（修正済み）
+    retry: 60000,      // リトライ時60秒（修正済み）
     final: 30000       // 最終試行30秒
   };
   private readonly COLLECTION_TIMEOUT = 30 * 1000; // 30秒
@@ -116,7 +115,11 @@ export class ActionSpecificCollector {
           uniquenessScore: 80,
           timelinessScore: 90,
           overallScore: this.calculateTopicSufficiency(processedResults, targetSufficiency, topic),
-          feedback: [`トピック「${topic}」に関する${processedResults.length}件の情報を収集`]
+          feedback: {
+            strengths: [`トピック「${topic}」に関する${processedResults.length}件の情報を収集`],
+            improvements: [],
+            confidence: 0.8
+          }
         }
       };
     } catch (error) {
@@ -196,7 +199,11 @@ export class ActionSpecificCollector {
           uniquenessScore: 0,
           timelinessScore: 0,
           overallScore: 0,
-          feedback: ['収集処理でエラーが発生しました']
+          feedback: {
+            strengths: [],
+            improvements: ['収集処理でエラーが発生しました'],
+            confidence: 0.0
+          }
         }
       };
     }
@@ -205,7 +212,7 @@ export class ActionSpecificCollector {
   /**
    * 代替収集モード（MultiSourceCollector未初期化時）
    */
-  private async collectWithFallbackMode(actionType: string, context: IntegratedContext): Promise<CollectionResult[]> {
+  private async collectWithFallbackMode(_actionType: string, _context: IntegratedContext): Promise<CollectionResult[]> {
     // 基本的なデモ情報を返す（実際のAPI呼び出しなしで高速処理）
     return [{
       id: `fallback_${Date.now()}`,
@@ -228,7 +235,7 @@ export class ActionSpecificCollector {
   /**
    * トピック特化戦略生成
    */
-  private async generateTopicSpecificStrategy(actionType: string, topic: string): Promise<any> {
+  private async generateTopicSpecificStrategy(actionType: string, topic: string): Promise<CollectionStrategy> {
     const topicKeywords = this.getTopicKeywords(topic);
     const relevantSources = this.getRelevantSourcesForTopic(topic);
     
@@ -236,10 +243,16 @@ export class ActionSpecificCollector {
       actionType,
       topic,
       keywords: topicKeywords,
-      sources: relevantSources,
+      targets: [],
+      priority: 1,
+      expectedDuration: 120,
       searchTerms: topicKeywords,
-      priority: 'high',
-      expectedDuration: 120
+      sources: relevantSources.map(url => ({
+        type: 'rss' as const,
+        url,
+        weight: 1
+      })),
+      description: `${topic}に関する${actionType}向け情報収集戦略`
     };
   }
 
@@ -328,7 +341,7 @@ export class ActionSpecificCollector {
   /**
    * トピック特化収集実行
    */
-  private async executeTopicSpecificCollection(strategy: any, context: IntegratedContext): Promise<CollectionResult[]> {
+  private async executeTopicSpecificCollection(strategy: CollectionStrategy, context: IntegratedContext): Promise<CollectionResult[]> {
     console.log(`🔍 [段階的収集] ${strategy.topic}の情報を段階的に収集中...`);
     
     // 段階1: 動的検索URL生成
@@ -381,6 +394,23 @@ export class ActionSpecificCollector {
         priority: 'medium'
       });
     }
+
+    // API-based sources (クッキー不要で確実)
+    searchUrls.push({
+      site: 'coingecko_api',
+      keyword: 'crypto_trending',
+      url: 'https://api.coingecko.com/api/v3/search/trending',
+      searchType: 'api',
+      priority: 'high'
+    });
+
+    searchUrls.push({
+      site: 'hackernews_api',
+      keyword: 'tech_news',
+      url: 'https://hacker-news.firebaseio.com/v0/topstories.json',
+      searchType: 'api',
+      priority: 'medium'
+    });
     
     console.log(`✅ [URL生成完了] ${searchUrls.length}個の動的検索URLを生成`);
     return searchUrls;
@@ -389,7 +419,7 @@ export class ActionSpecificCollector {
   /**
    * 動的検索実行
    */
-  private async executeDynamicSearchCollection(searchUrls: DynamicSearchUrl[], strategy: any): Promise<CollectionResult[]> {
+  private async executeDynamicSearchCollection(searchUrls: DynamicSearchUrl[], strategy: CollectionStrategy): Promise<CollectionResult[]> {
     console.log(`🔍 [動的検索実行] ${searchUrls.length}サイトで並列検索開始...`);
     
     // 高優先度の検索から開始
@@ -419,7 +449,7 @@ export class ActionSpecificCollector {
   /**
    * 並列検索実行
    */
-  private async executeParallelSearch(searchUrls: DynamicSearchUrl[], strategy: any): Promise<CollectionResult[]> {
+  private async executeParallelSearch(searchUrls: DynamicSearchUrl[], strategy: CollectionStrategy): Promise<CollectionResult[]> {
     const searchPromises = searchUrls.map(async (searchUrl, index) => {
       try {
         // レート制限対策
@@ -447,7 +477,7 @@ export class ActionSpecificCollector {
   /**
    * 個別動的検索実行
    */
-  private async performDynamicSearch(searchUrl: DynamicSearchUrl, strategy: any): Promise<CollectionResult[]> {
+  private async performDynamicSearch(searchUrl: DynamicSearchUrl, strategy: CollectionStrategy): Promise<CollectionResult[]> {
     console.log(`🔍 [${searchUrl.site}] "${searchUrl.keyword}"で検索中...`);
     
     try {
@@ -458,6 +488,10 @@ export class ActionSpecificCollector {
           return await this.performBloombergSearch(searchUrl, strategy);
         case 'reddit':
           return await this.performRedditSearch(searchUrl, strategy);
+        case 'coingecko_api':
+          return await this.performCoinGeckoApiCollection(searchUrl, strategy);
+        case 'hackernews_api':
+          return await this.performHackerNewsApiCollection(searchUrl, strategy);
         default:
           return await this.performGenericSearch(searchUrl, strategy);
       }
@@ -486,7 +520,7 @@ export class ActionSpecificCollector {
   /**
    * Yahoo Finance動的検索（真の動的検索）
    */
-  private async performYahooFinanceSearch(searchUrl: DynamicSearchUrl, strategy: any): Promise<CollectionResult[]> {
+  private async performYahooFinanceSearch(searchUrl: DynamicSearchUrl, strategy: CollectionStrategy): Promise<CollectionResult[]> {
     console.log(`💰 [Yahoo Finance] "${searchUrl.keyword}"で真の動的検索を実行中...`);
     
     try {
@@ -501,40 +535,163 @@ export class ActionSpecificCollector {
       try {
         const page = await context.newPage();
         
-        // Step 1: Yahoo Financeのトップページにアクセス
+        // Step 1: Yahoo Financeのトップページにアクセス（レート制限対応）
         console.log(`🌐 [Yahoo Finance] トップページにアクセス...`);
-        await page.goto('https://finance.yahoo.com', { waitUntil: 'domcontentloaded', timeout: 15000 });
         
-        // Step 2: 検索フォームを探して入力
+        // 並列制限対応：より長いランダム遅延（2-5秒）
+        const randomDelay = Math.floor(Math.random() * 3000) + 2000;
+        await page.waitForTimeout(randomDelay);
+        
+        // より軽量な待機条件でタイムアウトを回避
+        await page.goto('https://finance.yahoo.com', { 
+          waitUntil: 'domcontentloaded', 
+          timeout: 15000 
+        });
+        
+        // ページ完全読み込み待機
+        await page.waitForTimeout(4000);
+        
+        // Step 2: 強化された検索フォーム検出
         console.log(`🔍 [Yahoo Finance] 検索フォームにキーワード "${searchUrl.keyword}" を入力中...`);
         
-        // 複数の検索フォームセレクターを試行
+        // 優先順位付きセレクター（確実性順）
         const searchSelectors = [
-          'input[name="p"]',
-          'input[placeholder*="search"]',
-          'input[type="search"]',
-          '#yfin-usr-qry',
-          '.search-input input',
-          '[data-module="Search"] input'
+          'input[name="p"]',                    // 最確実
+          '#yfin-usr-qry',                      // Yahoo Finance固有ID
+          'input[placeholder*="search"]',        // プレースホルダー検索
+          'input[type="search"]',               // 検索タイプ
+          '.search-input input',                // クラス指定
+          '[data-module="Search"] input',       // データモジュール
+          'form input[type="text"]',            // フォーム内テキスト
+          '[role="searchbox"]',                 // ARIA役割
+          'input[placeholder*="Search"]'        // 大文字S検索
         ];
         
         let searchInput = null;
-        for (const selector of searchSelectors) {
+        let foundSelector = '';
+        
+        // 段階的検索フォーム検出（強化版）
+        for (let attempt = 0; attempt < searchSelectors.length; attempt++) {
+          const selector = searchSelectors[attempt];
+          
           try {
-            await page.waitForSelector(selector, { timeout: 3000 });
-            searchInput = await page.$(selector);
-            if (searchInput) {
-              console.log(`✅ [Yahoo Finance] 検索フォーム発見: ${selector}`);
-              break;
+            console.log(`🔍 [Yahoo Finance] 検索フォーム検出試行 ${attempt + 1}/${searchSelectors.length}: ${selector}`);
+            
+            // より長い待機時間で段階的検出
+            await page.waitForSelector(selector, { 
+              timeout: 6000, 
+              state: 'visible' 
+            });
+            
+            const element = await page.$(selector);
+            if (element && await element.isVisible()) {
+              // 要素が実際に入力可能か確認
+              const isEnabled = await element.isEnabled();
+              if (isEnabled) {
+                searchInput = element;
+                foundSelector = selector;
+                console.log(`✅ [Yahoo Finance] 検索フォーム発見: ${selector}`);
+                break;
+              } else {
+                console.log(`⚠️ [Yahoo Finance] ${selector} は無効な要素`);
+              }
             }
-          } catch (error) {
-            // 次のセレクターを試行
+          } catch (_error: unknown) {
+            console.log(`⚠️ [Yahoo Finance] ${selector} で検索フォーム未発見 (${(_error as any)?.message || 'unknown error'})`);
             continue;
           }
         }
         
+        // フォールバック1：JavaScript経由での検索フォーム検出
         if (!searchInput) {
-          throw new Error('Yahoo Finance検索フォームが見つかりません');
+          console.log(`🔧 [Yahoo Finance] JavaScript経由で検索フォームを探索中...`);
+          
+          try {
+            const jsSearchInput = await page.evaluateHandle(() => {
+              const inputs = Array.from((globalThis as any).document.querySelectorAll('input'));
+              
+              // より詳細な検索パターン
+              for (const input of inputs) {
+                const element = input as any;
+                const placeholder = (element.placeholder || '').toLowerCase();
+                const name = (element.name || '').toLowerCase();
+                const type = (element.type || '').toLowerCase();
+                const id = (element.id || '').toLowerCase();
+                const className = (element.className || '').toLowerCase();
+                
+                if (placeholder.includes('search') || 
+                    name === 'p' || 
+                    name.includes('search') ||
+                    type === 'search' ||
+                    id.includes('search') ||
+                    className.includes('search')) {
+                  
+                  // 可視性と有効性をチェック
+                  const style = (globalThis as any).getComputedStyle(element);
+                  if (style.display !== 'none' && 
+                      style.visibility !== 'hidden' && 
+                      !element.disabled) {
+                    return element;
+                  }
+                }
+              }
+              return null;
+            });
+            
+            const element = await jsSearchInput.asElement();
+            if (element) {
+              searchInput = element;
+              foundSelector = 'javascript-detection';
+              console.log(`✅ [Yahoo Finance] JavaScript経由で検索フォーム発見`);
+            }
+          } catch (jsError) {
+            console.warn(`⚠️ [Yahoo Finance] JavaScript検索フォーム検出失敗:`, jsError);
+          }
+        }
+        
+        // フォールバック2：直接検索URLへのリダイレクト
+        if (!searchInput) {
+          console.log(`🔄 [Yahoo Finance] 直接検索URLにリダイレクト中...`);
+          
+          try {
+            const directSearchUrl = `https://finance.yahoo.com/search?p=${encodeURIComponent(searchUrl.keyword)}`;
+            await page.goto(directSearchUrl, { 
+              waitUntil: 'domcontentloaded', 
+              timeout: 12000 
+            });
+            await page.waitForTimeout(3000);
+            
+            // 検索結果ページで直接結果を抽出
+            const directResults = await this.extractYahooFinanceSearchResults(page, searchUrl.keyword);
+            if (directResults.length > 0) {
+              console.log(`✅ [Yahoo Finance] 直接検索で ${directResults.length}件の結果を取得`);
+              
+              const collectionResults: CollectionResult[] = directResults.map((result, index) => ({
+                id: `yahoo_direct_${searchUrl.keyword}_${Date.now()}_${index}`,
+                type: 'yahoo_finance_direct_search',
+                content: `${result.title} - ${result.snippet}`,
+                source: 'yahoo_finance',
+                relevanceScore: this.calculateSearchRelevance(result.title + ' ' + result.snippet, searchUrl.keyword),
+                timestamp: Date.now(),
+                metadata: {
+                  keyword: searchUrl.keyword,
+                  originalTitle: result.title,
+                  originalLink: result.link,
+                  snippet: result.snippet,
+                  searchType: 'direct_search',
+                  fallbackMethod: 'direct_url',
+                  topic: strategy.topic
+                }
+              }));
+              
+              await page.close();
+              return collectionResults;
+            }
+          } catch (directError) {
+            console.warn(`⚠️ [Yahoo Finance] 直接検索も失敗:`, directError);
+          }
+          
+          throw new Error(`Yahoo Finance検索：全ての方法が失敗しました`);
         }
         
         // キーワード入力
@@ -582,7 +739,7 @@ export class ActionSpecificCollector {
                 console.log(`検索結果セレクター発見: ${selector} (${elements.length}件)`);
                 
                 // @ts-ignore - ブラウザコンテキストでのDOM操作
-                Array.from(elements).forEach((element: any, index: number) => {
+                Array.from(elements).forEach((element: Element, index: number) => {
                   if (index >= 8) return; // 最大8件に制限
                   
                   const titleElement = element.querySelector('h3, h2, .title, a[data-test-locator="TitleLink"]');
@@ -604,13 +761,13 @@ export class ActionSpecificCollector {
             // フォールバック: より広範囲の検索
             if (results.length === 0) {
               // @ts-ignore - ブラウザコンテキストでのDOM操作
-              const allLinks = Array.from(document.querySelectorAll('a')).filter((link: any) => {
+              const allLinks = Array.from(document.querySelectorAll('a')).filter((link: HTMLAnchorElement) => {
                 const href = link.getAttribute('href');
                 const text = link.textContent?.trim();
                 return href && text && text.length > 10 && !href.startsWith('#');
               }).slice(0, 5);
               
-              allLinks.forEach((link: any, index: number) => {
+              allLinks.forEach((link: HTMLAnchorElement, index: number) => {
                 results.push({
                   title: link.textContent?.trim() || `関連コンテンツ ${index + 1}`,
                   link: link.getAttribute('href') || '',
@@ -653,8 +810,30 @@ export class ActionSpecificCollector {
         await browserManager.releaseContext(sessionId);
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error(`❌ [Yahoo Finance] 動的検索処理エラー:`, error);
+      
+      // タイムアウトエラーの場合は堅牢なフォールバック結果を返す
+      if (error?.name === 'TimeoutError' || error?.message?.includes('Timeout')) {
+        console.log(`🔄 [Yahoo Finance] タイムアウトによりフォールバック結果を生成中...`);
+        
+        return [{
+          id: `yahoo_fallback_${searchUrl.keyword}_${Date.now()}`,
+          type: 'yahoo_finance_fallback',
+          content: `${searchUrl.keyword}の投資関連情報 - Yahoo Finance検索（タイムアウト回復）`,
+          source: 'yahoo_finance',
+          relevanceScore: 0.3,
+          timestamp: Date.now(),
+          metadata: {
+            keyword: searchUrl.keyword,
+            searchUrl: searchUrl.url,
+            searchType: 'fallback_timeout',
+            fallbackReason: 'timeout',
+            topic: strategy.topic
+          }
+        }];
+      }
+      
       throw error;
     }
   }
@@ -759,7 +938,7 @@ export class ActionSpecificCollector {
                 console.log(`Bloomberg検索結果セレクター発見: ${selector} (${elements.length}件)`);
                 
                 // @ts-ignore - ブラウザコンテキストでのDOM操作
-                Array.from(elements).forEach((element: any, index: number) => {
+                Array.from(elements).forEach((element: Element, index: number) => {
                   if (index >= 6) return;
                   
                   const titleElement = element.querySelector('h3, h2, .headline, .title, a');
@@ -852,38 +1031,56 @@ export class ActionSpecificCollector {
   }
 
   /**
-   * Dynamic cookie consent handler for Bloomberg and other sites
+   * Enhanced dynamic cookie consent handler with Bloomberg focus
    */
-  private async handleDynamicCookieConsent(page: any, timeout: number = 10000): Promise<boolean> {
-    console.log('🍪 [Cookie Consent] Checking for consent modals...');
+  private async handleDynamicCookieConsent(page: any, timeout: number = 15000): Promise<boolean> {
+    console.log('🍪 [Cookie Consent] Enhanced consent detection starting...');
     
     const consentSelectors = {
-      // Bloomberg-specific selectors
+      // Bloomberg-specific selectors (expanded)
       bloomberg: [
         '[data-module="ConsentBanner"] button[data-tracking="Accept"]',
+        '[data-module="ConsentBanner"] button:has-text("Accept")',
         '.consent-banner .accept-button',
+        '.consent-banner button:contains("Accept")',
         'button[id*="consent"][id*="accept"]',
-        '[class*="consent"] button[class*="accept"]'
+        '[class*="consent"] button[class*="accept"]',
+        '.bb-consent-manager button[data-action="accept"]',
+        '[data-testid="accept-consent-banner"]',
+        'div[class*="consent"] button:first-child'
       ],
-      // Generic consent patterns
+      // Generic consent patterns (enhanced)
       generic: [
         'button:has-text("Accept")',
         'button:has-text("Accept All")', 
         'button:has-text("Accept Cookies")',
         'button:has-text("I Agree")',
         'button:has-text("Continue")',
+        'button:has-text("Got it")',
+        'button:has-text("Understand")',
         '[id*="accept"][type="button"]',
         '[class*="accept"][class*="button"]',
         '[data-test*="accept"]',
-        '[data-testid*="accept"]'
+        '[data-testid*="accept"]',
+        'button[aria-label*="Accept"]'
       ],
-      // GDPR compliance buttons
+      // GDPR compliance buttons (expanded)
       gdpr: [
         'button:has-text("Agree")',
         'button:has-text("Allow")', 
         'button:has-text("OK")',
+        'button:has-text("Yes")',
         '.gdpr-consent button',
-        '[class*="gdpr"] button'
+        '[class*="gdpr"] button',
+        '.privacy-notice button:first-child',
+        '[data-purpose="gdpr-accept-button"]'
+      ],
+      // Emergency fallback selectors
+      fallback: [
+        'button:first-child',
+        '.modal button:first-child',
+        '[role="dialog"] button:first-child',
+        '.overlay button:first-child'
       ]
     };
 
@@ -907,16 +1104,47 @@ export class ActionSpecificCollector {
         }
       }
       
-      // Try Bloomberg-specific patterns first
-      for (const category of ['bloomberg', 'generic', 'gdpr']) {
+      // Enhanced Bloomberg consent handling with retries
+      for (const category of ['bloomberg', 'generic', 'gdpr', 'fallback']) {
         for (const selector of consentSelectors[category as keyof typeof consentSelectors]) {
           try {
+            // Wait for element to be visible first
+            await page.waitForSelector(selector, { timeout: 3000, state: 'visible' });
             const consentButton = await page.$(selector);
             if (consentButton) {
               console.log(`✅ [Cookie Consent] Clicking consent button: ${selector}`);
-              await consentButton.click();
-              await page.waitForTimeout(2000);
-              return true;
+              
+              // Multiple click attempts for Bloomberg reliability
+              for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                  await consentButton.click({ timeout: 3000 });
+                  await page.waitForTimeout(1000);
+                  
+                  // Check if modal disappeared
+                  const modalStillVisible = await page.isVisible('[class*="modal"], [class*="consent"], [class*="banner"]');
+                  if (!modalStillVisible) {
+                    console.log(`🎉 [Cookie Consent] Modal dismissed successfully on attempt ${attempt + 1}`);
+                    await page.waitForTimeout(2000); // Wait for page to settle
+                    return true;
+                  }
+                } catch (clickError) {
+                  console.log(`⚠️ [Cookie Consent] Click attempt ${attempt + 1} failed, retrying...`);
+                  await page.waitForTimeout(500);
+                }
+              }
+              
+              // Force click with JavaScript if normal click fails
+              try {
+                await page.evaluate((sel: string) => {
+                  const element = (globalThis as any).document.querySelector(sel);
+                  if (element) element.click();
+                }, selector);
+                await page.waitForTimeout(3000);
+                console.log(`🔧 [Cookie Consent] JavaScript click executed for: ${selector}`);
+                return true;
+              } catch (jsClickError) {
+                console.log(`❌ [Cookie Consent] JavaScript click also failed`);
+              }
             }
           } catch (error) {
             continue;
@@ -924,8 +1152,8 @@ export class ActionSpecificCollector {
         }
       }
       
-      // Dynamic text-based detection as fallback
-      return await this.handleTextBasedConsent(page);
+      // Enhanced text-based detection as final fallback
+      return await this.handleEnhancedTextBasedConsent(page);
       
     } catch (error) {
       console.warn('⚠️ [Cookie Consent] Cookie consent handling failed:', error);
@@ -934,20 +1162,60 @@ export class ActionSpecificCollector {
   }
 
   /**
-   * Text-based consent detection fallback
+   * Enhanced text-based consent detection with Bloomberg focus
    */
-  private async handleTextBasedConsent(page: any): Promise<boolean> {
+  private async handleEnhancedTextBasedConsent(page: any): Promise<boolean> {
     try {
-      const consentTexts = ['Accept', 'I Agree', 'Continue', 'Allow', 'OK', 'Agree and Continue'];
+      const consentTexts = [
+        'Accept', 'Accept All', 'Accept Cookies', 'I Agree', 'Continue', 'Allow', 
+        'OK', 'Agree and Continue', 'Got it', 'Understand', 'Yes', 'Proceed',
+        'I Accept', 'Accept Terms', 'Agree & Continue'
+      ];
+      
+      console.log('📝 [Cookie Consent] Starting enhanced text-based detection...');
       
       for (const text of consentTexts) {
         try {
-          const button = await page.locator(`button:has-text("${text}")`).first();
-          if (await button.isVisible()) {
-            console.log(`📝 [Cookie Consent] Found consent button with text: ${text}`);
-            await button.click();
-            await page.waitForTimeout(2000);
-            return true;
+          // Multiple selector strategies for each text
+          const selectors = [
+            `button:has-text("${text}")`,
+            `a:has-text("${text}")`,
+            `[role="button"]:has-text("${text}")`,
+            `input[value="${text}"]`,
+            `button[title*="${text}"]`,
+            `*:has-text("${text}")[class*="button"]`,
+            `*:has-text("${text}")[class*="btn"]`
+          ];
+          
+          for (const selector of selectors) {
+            try {
+              const button = await page.locator(selector).first();
+              if (await button.isVisible({ timeout: 1000 })) {
+                console.log(`📝 [Cookie Consent] Found consent element: ${text} (${selector})`);
+                
+                // Multiple click strategies
+                try {
+                  await button.click({ timeout: 3000 });
+                } catch {
+                  // Force click with JavaScript
+                  await page.evaluate((sel: string) => {
+                    const element = (globalThis as any).document.querySelector(sel);
+                    if (element) element.click();
+                  }, selector);
+                }
+                
+                await page.waitForTimeout(3000);
+                
+                // Verify modal disappeared
+                const modalStillVisible = await page.isVisible('[class*="modal"], [class*="consent"], [class*="banner"]', { timeout: 2000 }).catch(() => false);
+                if (!modalStillVisible) {
+                  console.log(`🎉 [Cookie Consent] Successfully dismissed modal with text: ${text}`);
+                  return true;
+                }
+              }
+            } catch {
+              continue;
+            }
           }
         } catch {
           continue;
@@ -956,9 +1224,16 @@ export class ActionSpecificCollector {
       
       return false;
     } catch (error) {
-      console.warn('⚠️ [Cookie Consent] Text-based consent detection failed:', error);
+      console.warn('⚠️ [Cookie Consent] Enhanced text-based consent detection failed:', error);
       return false;
     }
+  }
+
+  /**
+   * Legacy text-based consent detection (kept for compatibility)
+   */
+  private async handleTextBasedConsent(page: any): Promise<boolean> {
+    return await this.handleEnhancedTextBasedConsent(page);
   }
 
   /**
@@ -1059,7 +1334,7 @@ export class ActionSpecificCollector {
                 console.log(`Reddit検索結果セレクター発見: ${selector} (${elements.length}件)`);
                 
                 // @ts-ignore - ブラウザコンテキストでのDOM操作
-                Array.from(elements).forEach((element: any, index: number) => {
+                Array.from(elements).forEach((element: Element, index: number) => {
                   if (index >= 5) return;
                   
                   const titleElement = element.querySelector('h3, h2, .title, [data-testid="post-content"] h3, a[data-click-id="body"]');
@@ -1743,19 +2018,37 @@ JSON形式で回答してください：
     // 基本戦略を構築
     const targets: CollectionTarget[] = actionConfig.sources.map(source => ({
       type: this.mapSourceToTargetType(source.name),
-      source: this.resolveApiSourceUrl(source),
-      priority: source.priority,
-      searchTerms: source.searchPatterns || []
+      url: this.resolveApiSourceUrl(source),
+      weight: this.mapPriorityToWeight(source.priority)
     }));
 
     return {
       actionType,
       targets,
-      priority: actionConfig.priority >= 50 ? 'high' : actionConfig.priority >= 25 ? 'medium' : 'low',
+      priority: actionConfig.priority,
       expectedDuration: Math.floor(this.config?.maxExecutionTime || 90),
       searchTerms: actionConfig.focusAreas,
-      sources: actionConfig.sources.map(s => this.resolveApiSourceUrl(s))
+      sources: actionConfig.sources.map(source => ({
+        type: this.mapSourceToTargetType(source.name),
+        url: this.resolveApiSourceUrl(source),
+        weight: this.mapPriorityToWeight(source.priority)
+      })),
+      topic: actionType,
+      keywords: actionConfig.focusAreas,
+      description: `${actionType}向け収集戦略`
     };
+  }
+
+  /**
+   * 優先度を重みに変換
+   */
+  private mapPriorityToWeight(priority: 'high' | 'medium' | 'low'): number {
+    switch (priority) {
+      case 'high': return 3;
+      case 'medium': return 2;
+      case 'low': return 1;
+      default: return 1;
+    }
   }
 
   /**
@@ -1848,7 +2141,7 @@ JSON形式で回答してください：
             
             return { success: true, results, target };
           } catch (error) {
-            console.error(`❌ [ターゲット収集エラー] ${target.source}:`, error);
+            console.error(`❌ [ターゲット収集エラー] ${target.url}:`, error);
             return { success: false, results: [], target, error };
           }
         });
@@ -1932,24 +2225,24 @@ JSON形式で回答してください：
 
     try {
       // URL妥当性の事前チェック
-      if (!target.source || typeof target.source !== 'string' || target.source.trim() === '') {
-        const errorMsg = `❌ [URL無効] ターゲット "${target.type}" のURL不正: ${target.source}`;
+      if (!target.url || typeof target.url !== 'string' || target.url.trim() === '') {
+        const errorMsg = `❌ [URL無効] ターゲット "${target.type}" のURL不正: ${target.url}`;
         console.error(errorMsg);
-        throw new Error(`Invalid URL for target ${target.type}: ${target.source}`);
+        throw new Error(`Invalid URL for target ${target.type}: ${target.url}`);
       }
 
       // URL形式の基本チェック
       try {
-        new URL(target.source);
+        new URL(target.url);
       } catch (urlError) {
-        const errorMsg = `❌ [URL形式エラー] ターゲット "${target.type}" のURL不正: ${target.source}`;
+        const errorMsg = `❌ [URL形式エラー] ターゲット "${target.type}" のURL不正: ${target.url}`;
         console.error(errorMsg);
-        throw new Error(`Malformed URL for target ${target.type}: ${target.source}`);
+        throw new Error(`Malformed URL for target ${target.type}: ${target.url}`);
       }
 
-      console.log(`🌐 [ページアクセス] ${target.type}: ${target.source}`);
+      console.log(`🌐 [ページアクセス] ${target.type}: ${target.url}`);
 
-      await page.goto(target.source, { 
+      await page.goto(target.url, { 
         waitUntil: 'networkidle',
         timeout 
       });
@@ -1961,7 +2254,7 @@ JSON形式で回答してください：
       return results;
 
     } catch (error) {
-      const errorMsg = `❌ [収集エラー] ターゲット "${target.type}" (${target.source}): ${(error as Error).message}`;
+      const errorMsg = `❌ [収集エラー] ターゲット "${target.type}" (${target.url}): ${(error as Error).message}`;
       console.error(errorMsg);
       
       // Graceful degradation - 空の結果を返す代わりにエラーを再スロー
@@ -2026,9 +2319,9 @@ JSON形式で回答してください：
 投資・トレーディング情報収集のエキスパートとして、以下の条件で収集指示を生成してください。
 
 アクション種別: ${strategy.actionType}
-ターゲット: ${target.source}
-検索用語: ${target.searchTerms.join(', ')}
-優先度: ${target.priority}
+ターゲット: ${target.url}
+検索用語: ${strategy.searchTerms.join(', ')}
+重み: ${target.weight}
 
 ${strategy.actionType}に特化した情報収集の具体的指示を生成してください。
 特に以下の点を重視：
@@ -2126,7 +2419,11 @@ JSON配列のみを返してください（マークダウンや説明不要）�
         uniquenessScore: 0,
         timelinessScore: 0,
         overallScore: 0,
-        feedback: ['収集された情報がありません']
+        feedback: {
+          strengths: [],
+          improvements: ['収集された情報がありません'],
+          confidence: 0.0
+        }
       };
     }
 
@@ -2246,40 +2543,53 @@ JSON配列のみを返してください（マークダウンや説明不要）�
   private generateMultiSourceFeedback(
     results: CollectionResult[], 
     sourceDistribution: Record<string, number>
-  ): string[] {
-    const feedback: string[] = [];
+  ): QualityFeedback {
+    const strengths: string[] = [];
+    const improvements: string[] = [];
     const totalResults = results.length;
     
     // 情報源の多様性評価
     const sourceCount = Object.keys(sourceDistribution).length;
     if (sourceCount >= 3) {
-      feedback.push(`多様な情報源（${sourceCount}種類）からバランスの取れた情報を収集`);
+      strengths.push(`多様な情報源（${sourceCount}種類）からバランスの取れた情報を収集`);
     } else if (sourceCount === 2) {
-      feedback.push(`2種類の情報源を活用、さらなる多様化が推奨されます`);
+      strengths.push(`2種類の情報源を活用`);
+      improvements.push(`さらなる多様化が推奨されます`);
     } else {
-      feedback.push(`単一情報源のみ、多様情報源の活用が必要です`);
+      improvements.push(`単一情報源のみ、多様情報源の活用が必要です`);
     }
     
     // 情報品質の評価
     const avgRelevance = results.reduce((sum, r) => sum + r.relevanceScore, 0) / results.length;
     if (avgRelevance >= 0.8) {
-      feedback.push(`高品質な情報を収集（平均関連度: ${Math.round(avgRelevance * 100)}%）`);
+      strengths.push(`高品質な情報を収集（平均関連度: ${Math.round(avgRelevance * 100)}%）`);
     } else if (avgRelevance >= 0.6) {
-      feedback.push(`中程度の品質、さらなる改善が可能`);
+      strengths.push(`中程度の品質を確保`);
+      improvements.push(`さらなる品質向上が可能`);
     } else {
-      feedback.push(`情報品質の向上が必要です`);
+      improvements.push(`情報品質の向上が必要です`);
     }
     
     // 情報量の評価
     if (totalResults >= 15) {
-      feedback.push(`十分な情報量（${totalResults}件）を確保`);
+      strengths.push(`十分な情報量（${totalResults}件）を確保`);
     } else if (totalResults >= 8) {
-      feedback.push(`適切な情報量を確保`);
+      strengths.push(`適切な情報量を確保`);
     } else {
-      feedback.push(`情報量が不足、さらなる収集が推奨されます`);
+      improvements.push(`情報量が不足、さらなる収集が推奨されます`);
     }
     
-    return feedback;
+    // 信頼度の算出
+    const confidence = Math.min(
+      0.9,
+      (avgRelevance * 0.5) + (Math.min(sourceCount, 3) / 3 * 0.3) + (Math.min(totalResults, 20) / 20 * 0.2)
+    );
+    
+    return {
+      strengths,
+      improvements,
+      confidence
+    };
   }
 
   /**
@@ -2312,7 +2622,7 @@ JSON配列のみを返してください（マークダウンや説明不要）�
 
     // multi-source-config.yamlの読み込み
     const multiSourcePath = join(process.cwd(), 'data', 'multi-source-config.yaml');
-    this.multiSourceConfig = loadYamlSafe<any>(multiSourcePath);
+    this.multiSourceConfig = loadYamlSafe<ExtendedActionCollectionConfig['multiSources']>(multiSourcePath);
     if (this.multiSourceConfig) {
       console.log('✅ [設定読み込み] multi-source-config.yaml 読み込み完了');
     } else {
@@ -2320,7 +2630,7 @@ JSON配列のみを返してください（マークダウンや説明不要）�
     }
 
     // 拡張設定が含まれているか確認
-    if (rawConfig.sourceSelection && rawConfig.qualityStandards) {
+    if (this.validateModernConfig(rawConfig)) {
       console.log('✅ [設定読み込み] 拡張設定を検出、多様情報源モードで初期化');
       
       // 拡張設定として読み込み
@@ -2359,6 +2669,25 @@ JSON配列のみを返してください（マークダウンや説明不要）�
     }
 
     console.log('✅ [設定読み込み] ActionSpecificCollector設定を読み込み完了');
+  }
+
+  /**
+   * モダン設定の妥当性を検証
+   */
+  private validateModernConfig(config: any): boolean {
+    const hasSourceSelection = config.sourceSelection && 
+      Object.keys(config.sourceSelection).length > 0;
+    const hasQualityStandards = config.qualityStandards && 
+      config.qualityStandards.relevanceScore;
+      
+    if (!hasSourceSelection) {
+      console.error('❌ [設定エラー] sourceSelection セクションが必要です');
+    }
+    if (!hasQualityStandards) {
+      console.error('❌ [設定エラー] qualityStandards セクションが必要です');
+    }
+    
+    return hasSourceSelection && hasQualityStandards;
   }
 
   private getDefaultConfig(): ActionCollectionConfig {
@@ -2405,10 +2734,11 @@ JSON配列のみを返してください（マークダウンや説明不要）�
   }
 
   private mapSourceToTargetType(sourceName: string): CollectionTarget['type'] {
-    if (sourceName.includes('trend')) return 'trend';
-    if (sourceName.includes('news')) return 'news';
-    if (sourceName.includes('hashtag')) return 'hashtag';
-    return 'trend'; // デフォルト
+    if (sourceName.includes('api')) return 'api';
+    if (sourceName.includes('rss')) return 'rss';
+    if (sourceName.includes('scraping')) return 'scraping';
+    // デフォルトではAPIとして扱う
+    return 'api';
   }
 
   private async extractRelevantContent(page: any): Promise<string> {
@@ -2978,10 +3308,12 @@ JSON配列のみを返してください（マークダウンや説明不要）�
       strategyUsed: {
         actionType,
         targets: [],
-        priority: 'medium' as const,
+        priority: 2,
         expectedDuration: 30,
         searchTerms: ['投資', 'トレード'],
-        sources: []
+        sources: [],
+        topic: actionType,
+        keywords: ['投資', 'トレード']
       },
       qualityMetrics: {
         relevanceScore: 0.7,
@@ -2989,7 +3321,11 @@ JSON配列のみを返してください（マークダウンや説明不要）�
         uniquenessScore: 0.5,
         timelinessScore: 0.8,
         overallScore: 0.65,
-        feedback: ['フォールバックデータを使用']
+        feedback: {
+          strengths: [],
+          improvements: ['フォールバックデータを使用'],
+          confidence: 0.5
+        }
       }
     };
   }
@@ -3559,10 +3895,16 @@ JSON配列のみを返してください（マークダウンや説明不要）�
       strategyUsed: {
         actionType,
         targets: [],
-        priority: 'high' as const,
+        priority: 3,
         expectedDuration: 45,
         searchTerms: ['投資', 'トレード', '市場分析'],
-        sources: ['fallback-generator']
+        sources: [{
+          type: 'api',
+          url: 'fallback-generator',
+          weight: 3
+        }],
+        topic: actionType,
+        keywords: ['投資', 'トレード', '市場分析']
       },
       qualityMetrics: {
         relevanceScore: 0.90,
@@ -3570,7 +3912,11 @@ JSON配列のみを返してください（マークダウンや説明不要）�
         uniquenessScore: 0.80,
         timelinessScore: 0.95,
         overallScore: 0.88,
-        feedback: ['高品質フォールバックデータを使用', '日付情報を含む時事的なコンテンツ']
+        feedback: {
+          strengths: ['高品質フォールバックデータを使用', '日付情報を含む時事的なコンテンツ'],
+          improvements: [],
+          confidence: 0.9
+        }
       }
     };
   }
@@ -3600,6 +3946,275 @@ JSON配列のみを返してください（マークダウンや説明不要）�
         timestamp: Date.now(),
         metadata: { mode: 'minimal', quality: 'basic' }
       }];
+    }
+  }
+
+  /**
+   * CoinGecko API - 仮想通貨データ収集（クッキー不要の確実なソース）
+   */
+  private async performCoinGeckoApiCollection(searchUrl: DynamicSearchUrl, strategy: any): Promise<CollectionResult[]> {
+    console.log(`🪙 [CoinGecko API] "${searchUrl.keyword}"の仮想通貨データ収集中...`);
+    
+    try {
+      const results: CollectionResult[] = [];
+      
+      // 1. トレンディング仮想通貨取得
+      const trendingResponse = await fetch('https://api.coingecko.com/api/v3/search/trending', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (trendingResponse.ok) {
+        const trendingData: any = await trendingResponse.json();
+        
+        if (trendingData?.coins && Array.isArray(trendingData.coins)) {
+          trendingData.coins.slice(0, 3).forEach((coin: any, index: number) => {
+            results.push({
+              id: `coingecko_trending_${Date.now()}_${index}`,
+              type: 'crypto_trending',
+              content: `トレンド仮想通貨: ${coin.item.name} (${coin.item.symbol}) - 市場ランク #${coin.item.market_cap_rank || 'N/A'}`,
+              source: 'coingecko_api',
+              relevanceScore: 0.9 - (index * 0.1),
+              timestamp: Date.now(),
+              metadata: {
+                keyword: searchUrl.keyword,
+                coinId: coin.item.id,
+                symbol: coin.item.symbol,
+                marketCapRank: coin.item.market_cap_rank,
+                topic: strategy.topic,
+                apiSource: 'coingecko'
+              }
+            });
+          });
+        }
+      }
+      
+      // 2. 主要仮想通貨の価格データ
+      const priceResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin&vs_currencies=usd&include_24hr_change=true', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (priceResponse.ok) {
+        const priceData: any = await priceResponse.json();
+        
+        if (priceData && typeof priceData === 'object') {
+          Object.entries(priceData).forEach(([coinId, data]: [string, any], index: number) => {
+            const change24h = data.usd_24h_change || 0;
+            const changeDirection = change24h >= 0 ? '📈' : '📉';
+            
+            results.push({
+              id: `coingecko_price_${Date.now()}_${index}`,
+              type: 'crypto_price',
+              content: `${coinId.toUpperCase()}: $${data.usd} ${changeDirection} ${change24h.toFixed(2)}% (24h)`,
+              source: 'coingecko_api',
+              relevanceScore: 0.8,
+              timestamp: Date.now(),
+              metadata: {
+                keyword: searchUrl.keyword,
+                coinId: coinId,
+                price: data.usd,
+                change24h: change24h,
+                topic: strategy.topic,
+                apiSource: 'coingecko'
+              }
+            });
+          });
+        }
+      }
+      
+      console.log(`✅ [CoinGecko API] ${results.length}件の仮想通貨データを取得`);
+      return results;
+      
+    } catch (error) {
+      console.error(`❌ [CoinGecko API] データ取得エラー:`, error);
+      return [{
+        id: `coingecko_error_${Date.now()}`,
+        type: 'api_error',
+        content: 'CoinGecko APIからのデータ取得でエラーが発生',
+        source: 'coingecko_api',
+        relevanceScore: 0,
+        timestamp: Date.now(),
+        metadata: { error: 'API request failed' }
+      }];
+    }
+  }
+
+  /**
+   * Yahoo Finance検索結果抽出（直接検索用）
+   */
+  private async extractYahooFinanceSearchResults(page: any, keyword: string): Promise<Array<{title: string, link: string, snippet: string}>> {
+    console.log(`📊 [Yahoo Finance] 検索結果を抽出中...`);
+    
+    return await page.evaluate((searchKeyword: string) => {
+      const results: Array<{title: string, link: string, snippet: string}> = [];
+      
+      try {
+        // Yahoo Financeの検索結果セレクター（更新版）
+        const resultSelectors = [
+          '[data-module="SearchResults"] li',
+          '.search-result-item',
+          '.search-item', 
+          '.js-stream-item',
+          '.search-results .result',
+          'li[data-test-locator="SearchResult"]',
+          '.list-res li',
+          '.js-result-list li',
+          '[data-testid="search-result"]',
+          '.search-results-container .result'
+        ];
+        
+        for (const selector of resultSelectors) {
+          const elements = (globalThis as any).document.querySelectorAll(selector);
+          if (elements.length > 0) {
+            console.log(`検索結果セレクター発見: ${selector} (${elements.length}件)`);
+            
+            Array.from(elements).forEach((element: any, index: number) => {
+              if (index >= 6) return; // 最大6件に制限
+              
+              // より詳細なタイトル検索
+              const titleSelectors = ['h3', 'h2', '.title', 'a[data-test-locator="TitleLink"]', '.headline', '.title-link', 'strong'];
+              let titleElement = null;
+              for (const titleSel of titleSelectors) {
+                titleElement = element.querySelector(titleSel);
+                if (titleElement) break;
+              }
+              
+              const linkElement = element.querySelector('a') || titleElement?.closest('a');
+              
+              // より詳細なスニペット検索
+              const snippetSelectors = ['p', '.summary', '.description', '.body', '.snippet', '.abstract'];
+              let snippetElement = null;
+              for (const snippetSel of snippetSelectors) {
+                snippetElement = element.querySelector(snippetSel);
+                if (snippetElement && snippetElement.textContent?.trim()) break;
+              }
+              
+              if (titleElement && linkElement) {
+                const title = titleElement.textContent?.trim() || `検索結果 ${index + 1}`;
+                const href = linkElement.getAttribute('href') || linkElement.href || '';
+                const snippet = snippetElement?.textContent?.trim() || 'Yahoo Finance検索結果';
+                
+                // キーワード関連性の簡単なフィルタリング
+                const combinedText = (title + ' ' + snippet).toLowerCase();
+                const keywordLower = searchKeyword.toLowerCase();
+                
+                if (combinedText.includes(keywordLower) || 
+                    title.toLowerCase().includes(keywordLower) ||
+                    keywordLower.split(' ').some(word => combinedText.includes(word))) {
+                  
+                  results.push({
+                    title: title,
+                    link: href,
+                    snippet: snippet
+                  });
+                }
+              }
+            });
+            
+            if (results.length > 0) break; // 結果が見つかったらループを抜ける
+          }
+        }
+        
+        // フォールバック: より広範囲の検索（キーワード関連性重視）
+        if (results.length === 0) {
+          console.log('フォールバック検索を実行中...');
+          
+          const allLinks = Array.from((globalThis as any).document.querySelectorAll('a')).filter((link: any) => {
+            const text = link.textContent?.trim() || '';
+            const href = link.getAttribute('href') || '';
+            
+            return text.length > 15 && 
+                   text.length < 200 && 
+                   href && 
+                   !href.startsWith('#') &&
+                   (text.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+                    searchKeyword.toLowerCase().split(' ').some(word => text.toLowerCase().includes(word)));
+          }).slice(0, 4);
+          
+          allLinks.forEach((link: any, index: number) => {
+            const title = link.textContent?.trim() || `関連コンテンツ ${index + 1}`;
+            const href = link.getAttribute('href') || '';
+            const snippet = `${searchKeyword}に関連するYahoo Financeコンテンツ`;
+            
+            results.push({
+              title: title,
+              link: href,
+              snippet: snippet
+            });
+          });
+        }
+        
+      } catch (error) {
+        console.error('Yahoo Finance検索結果の抽出エラー:', error);
+      }
+      
+      return results;
+    }, keyword);
+  }
+
+  /**
+   * Hacker News API - テックニュース収集（完全無料・クッキー不要）
+   */
+  private async performHackerNewsApiCollection(searchUrl: DynamicSearchUrl, strategy: any): Promise<CollectionResult[]> {
+    console.log(`🔥 [Hacker News API] テックニュース収集中...`);
+    
+    try {
+      const results: CollectionResult[] = [];
+      
+      // トップストーリー取得
+      const topStoriesResponse = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (topStoriesResponse.ok) {
+        const storyIds: any = await topStoriesResponse.json();
+        
+        if (Array.isArray(storyIds)) {
+          // 上位3件のストーリー詳細を取得
+          for (let i = 0; i < Math.min(3, storyIds.length); i++) {
+            try {
+              const storyResponse = await fetch(`https://hacker-news.firebaseio.com/v0/item/${storyIds[i]}.json`, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' }
+              });
+              
+              if (storyResponse.ok) {
+                const story: any = await storyResponse.json();
+                
+                if (story && story.title) {
+                  results.push({
+                    id: `hackernews_${story.id}`,
+                    type: 'tech_news',
+                    content: `${story.title} - ${story.score || 0}ポイント`,
+                    source: 'hackernews_api',
+                    relevanceScore: 0.7,
+                    timestamp: Date.now(),
+                    metadata: {
+                      keyword: searchUrl.keyword,
+                      hnId: story.id,
+                      score: story.score,
+                      url: story.url,
+                      topic: strategy.topic,
+                      apiSource: 'hackernews'
+                    }
+                  });
+                }
+              }
+            } catch (storyError) {
+              continue;
+            }
+          }
+        }
+      }
+      
+      console.log(`✅ [Hacker News API] ${results.length}件のニュースを取得`);
+      return results;
+      
+    } catch (error) {
+      console.error(`❌ [Hacker News API] データ取得エラー:`, error);
+      return [];
     }
   }
 

@@ -28,7 +28,7 @@ interface LegacyAccountStatus {
 // 新しいAccountStatus型へのマッピング用ヘルパー
 export { AccountStatus };
 
-export interface PerformanceMetrics {
+export interface AccountPerformanceMetrics {
   engagementRate: number;
   averageLikes: number;
   averageRetweets: number;
@@ -60,7 +60,7 @@ export class AccountAnalyzer {
       const accountInfo = await this.getAccountInfoWithFallback();
       
       // パフォーマンス指標を取得
-      const performanceMetrics = await this.getPerformanceMetrics();
+      const performanceMetrics = await this.getAccountPerformanceMetrics();
       
       // ヘルスチェック
       const healthScore = await this.calculateHealthScore();
@@ -101,7 +101,7 @@ export class AccountAnalyzer {
     }
   }
 
-  async getPerformanceMetrics(): Promise<PerformanceMetrics> {
+  async getAccountPerformanceMetrics(): Promise<AccountPerformanceMetrics> {
     try {
       const postHistory = this.xClient.getPostHistory();
       const recentPosts = postHistory.filter(
@@ -235,7 +235,7 @@ export class AccountAnalyzer {
 
   private generateRecommendations(
     accountInfo: AccountInfo & AccountMetrics,
-    performanceMetrics: PerformanceMetrics,
+    performanceMetrics: AccountPerformanceMetrics,
     healthScore: number
   ): string[] {
     const recommendations: string[] = [];

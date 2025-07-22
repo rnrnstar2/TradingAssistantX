@@ -1,5 +1,7 @@
 import type { CollectionTarget, CollectionResult } from '../types/autonomous-system.js';
 import { claude } from '@instantlyeasy/claude-code-sdk-ts';
+import { RssParallelCollectionEngine } from './rss-parallel-collection-engine';
+import type { EmergencyResult } from '../types/rss-collection-types';
 
 // Playwright evaluate環境でのDOM型宣言
 declare global {
@@ -11,9 +13,11 @@ declare global {
 export class EnhancedInfoCollector {
   private targets: CollectionTarget[] = [];
   private testMode: boolean;
+  private rssEngine: RssParallelCollectionEngine;
 
   constructor() {
     this.testMode = process.env.X_TEST_MODE === 'true';
+    this.rssEngine = new RssParallelCollectionEngine();
     this.initializeTargets();
   }
 
@@ -24,6 +28,7 @@ export class EnhancedInfoCollector {
       this.targets = this.defineCollectionTargets();
       
       const results = await Promise.all([
+        this.collectRssInformation(), // RSS並列収集を最優先実行
         this.collectTrendInformation(),
         this.collectCompetitorContent(),
         this.collectMarketNews(),
@@ -41,6 +46,67 @@ export class EnhancedInfoCollector {
     }
   }
 
+  private async collectRssInformation(): Promise<CollectionResult[]> {
+    console.log('📡 [RSS並列収集] RSS Parallel Collection Engineを起動中...');
+    
+    try {
+      // RSS並列収集を実行
+      const rssResults = await this.rssEngine.collectWithDynamicPriority();
+      
+      // 緊急情報検知
+      const emergencyInfo = await this.rssEngine.detectEmergencyInformation();
+      
+      if (emergencyInfo.length > 0) {
+        console.warn(`🚨 [緊急情報検知] ${emergencyInfo.length}件の緊急情報を検出しました`);
+        await this.handleEmergencyInformation(emergencyInfo);
+      }
+      
+      // RSS結果をCollectionResult形式に変換
+      const convertedResults = this.convertRssToCollectionResult(rssResults);
+      
+      console.log(`📡 [RSS並列収集完了] ${convertedResults.length}件のRSS情報を収集`);
+      
+      return convertedResults;
+    } catch (error) {
+      console.error('❌ [RSS並列収集エラー]:', error);
+      return [];
+    }
+  }
+
+  private convertRssToCollectionResult(rssResults: any[]): CollectionResult[] {
+    return rssResults.flatMap(result => {
+      return result.result.items.map((item: any, index: number) => ({
+        id: `rss-${result.source.id}-${Date.now()}-${index}`,
+        type: 'rss_news' as any,
+        content: `${item.title}: ${item.description || ''}`,
+        source: `rss_${result.source.name}`,
+        relevanceScore: Math.min(result.valueRealized / 100, 1.0),
+        timestamp: Date.now(),
+        metadata: {
+          engagement: result.priorityScore * 10,
+          hashtags: item.category || [],
+          rssSource: result.source.name,
+          publishedAt: item.publishedAt,
+          link: item.link,
+          priorityScore: result.priorityScore,
+          processingOrder: result.processingOrder
+        }
+      }));
+    });
+  }
+
+  private async handleEmergencyInformation(emergencyResults: EmergencyResult[]): Promise<void> {
+    for (const emergencyResult of emergencyResults) {
+      const emergency = emergencyResult.emergency;
+      console.warn(`🚨 [緊急対応] ${emergency.classification.category}: ${emergency.classification.urgencyLevel} - ${emergency.content.substring(0, 100)}...`);
+      
+      // 緊急情報は最高優先度でログに記録
+      if (emergency.classification.urgencyLevel === 'critical') {
+        console.error(`🔥 [CRITICAL EMERGENCY] 重大緊急事態: ${emergency.content}`);
+      }
+    }
+  }
+
   private initializeTargets(): void {
     this.targets = this.defineCollectionTargets();
   }
@@ -48,27 +114,27 @@ export class EnhancedInfoCollector {
   private defineCollectionTargets(): CollectionTarget[] {
     return [
       {
-        type: 'trend',
-        source: 'x.com/explore',
-        priority: 'high',
+        type: 'scraping',
+        url: 'https://x.com/explore',
+        weight: 0.8,
         searchTerms: ['投資', 'トレード', 'FX', '株式', '仮想通貨', '金融']
       },
       {
-        type: 'competitor',
-        source: 'x.com/search',
-        priority: 'medium',
+        type: 'scraping',
+        url: 'https://x.com/search',
+        weight: 0.6,
         searchTerms: ['投資アドバイザー', 'トレーダー', '資産運用', 'ファイナンシャルアドバイザー']
       },
       {
-        type: 'news',
-        source: 'x.com/search',
-        priority: 'high',
+        type: 'scraping',
+        url: 'https://x.com/search',
+        weight: 0.7,
         searchTerms: ['経済ニュース', '市場動向', '金融政策', '日銀', 'FRB', '株価']
       },
       {
-        type: 'hashtag',
-        source: 'x.com/hashtag',
-        priority: 'medium',
+        type: 'scraping',
+        url: 'https://x.com/hashtag',
+        weight: 0.5,
         searchTerms: ['#投資', '#FX', '#株式投資', '#資産運用', '#投資家', '#トレード']
       }
     ];

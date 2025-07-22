@@ -1,0 +1,35 @@
+sessionId: autonomous-session-1753156001773
+timestamp: '2025-07-22T03:49:46.539Z'
+autonomyScore: 80
+performanceMetrics:
+  strategicFlexibility: 90
+  adaptationRate: 50
+  learningEffectiveness: 100
+  overallAutonomy: 80
+strategy:
+  actionTypes:
+    - original_post
+    - reply
+    - quote_tweet
+  frequency: 4
+  contentThemes:
+    - 長期投資戦略と複利効果
+    - ESG投資の実践的アプローチ
+    - デジタル資産の基礎知識
+    - 分散投資のポートフォリオ設計
+    - 市場横ばい期の投資機会
+  riskLevel: medium
+execution:
+  totalActions: 4
+  successfulActions: 4
+  adaptationsMade: 0
+learning:
+  learningPoints: 10
+  optimizationAreas: 5
+  newOpportunities: 5
+nextRecommendations:
+  - '機会活用: 朝夕のoriginal_post差別化による専門性向上機会'
+  - '機会活用: 13:00 replyの高効果を活用したコミュニティ育成機会'
+  - '機会活用: 20:00 quote_tweetでの影響力拡大機会'
+  - '機会活用: 4時間間隔での最適リズム確立による持続的エンゲージメント機会'
+  - '機会活用: 成功時間帯での複数戦略テスト機会'

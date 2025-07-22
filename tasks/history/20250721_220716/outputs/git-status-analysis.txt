@@ -1,0 +1,407 @@
+ M CLAUDE.md
+ D data/account-analysis-results.json
+ M data/account-config.yaml
+ M data/autonomous-config.yaml
+ M data/content-strategy.yaml
+ D data/context/current-situation.json
+ D data/context/error-log.json
+ D data/context/execution-history.json
+ D data/daily-action-log.json
+ D data/expanded-action-decisions.yaml
+ D data/metrics-history/account_test_user.json
+ D data/metrics-history/followers_test_user.json
+ D data/metrics-history/posts_test_user.json
+ M data/posting-history.yaml
+ M dist/core/autonomous-executor.js
+ M dist/core/decision-engine.js
+ M dist/core/parallel-manager.js
+ M dist/lib/account-analyzer.js
+ M dist/lib/async-execution-manager.js
+ M dist/lib/claude-agent.js
+ M dist/lib/claude-controlled-collector.js
+ M dist/lib/claude-max-integration.js
+ M dist/lib/claude-tools.js
+ M dist/lib/context-integrator.js
+ M dist/lib/context-manager.js
+ M dist/lib/daily-action-planner.js
+ M dist/lib/data-communication-system.js
+ M dist/lib/enhanced-info-collector.js
+ M dist/lib/execution-orchestrator.js
+ M dist/lib/expanded-action-executor.js
+ M dist/lib/growth-system-manager.js
+ M dist/lib/information-evaluator.js
+ M dist/lib/long-running-task-manager.js
+ M dist/lib/metrics-collector.js
+ M dist/lib/parallel-execution-manager.js
+ M dist/lib/performance-report-generator.js
+ M dist/lib/playwright-account-collector.js
+ M dist/lib/playwright-common-config.js
+ M dist/lib/posting-manager.js
+ M dist/lib/scraper.js
+ M dist/lib/x-client.js
+ M dist/lib/x-performance-analyzer.js
+ M dist/scripts/autonomous-runner-single.js
+ M dist/scripts/autonomous-runner.js
+ M dist/types/account-config.js
+ M dist/types/action-types.js
+ M dist/types/autonomous-config.js
+ M dist/types/autonomous-system.js
+ M dist/types/claude-tools.js
+ M dist/types/content-strategy.js
+ M dist/types/index.js
+ M dist/types/posting-data.js
+ M dist/types/workflow-types.js
+ M dist/utils/config-loader.js
+ M dist/utils/monitoring/health-check.js
+ M dist/utils/yaml-utils.js
+ D docs/CLAUDE.md
+ D docs/architecture.md
+ D docs/common/naming-conventions.md
+ D docs/guides/README.md
+ D docs/guides/autonomous-system-workflow.md
+ D docs/guides/claude-notification-guide.md
+ M docs/guides/deletion-safety-rules.md
+ D docs/guides/optimized-workflow-operations.md
+ M docs/guides/output-management-rules.md
+ M docs/guides/yaml-driven-development.md
+ D docs/operations.md
+ D docs/reference.md
+ M docs/roles/manager-role.md
+ M docs/roles/worker-role.md
+ D docs/setup.md
+ M node_modules/.bin/node-which
+ M node_modules/.modules.yaml
+ M node_modules/.pnpm/lock.yaml
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/LICENSE
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/README.md
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/index.d.ts
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/index.d.ts.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/index.js
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/index.js.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/options.d.ts
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/options.d.ts.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/options.js
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/options.js.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/package.json
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/posix.d.ts
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/posix.d.ts.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/posix.js
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/posix.js.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/win32.d.ts
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/win32.d.ts.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/win32.js
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/cjs/win32.js.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/index.d.ts
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/index.d.ts.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/index.js
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/index.js.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/options.d.ts
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/options.d.ts.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/options.js
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/options.js.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/package.json
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/posix.d.ts
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/posix.d.ts.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/posix.js
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/posix.js.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/win32.d.ts
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/win32.d.ts.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/win32.js
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/dist/mjs/win32.js.map
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/isexe/package.json
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/which/LICENSE
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/which/README.md
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/which/bin/which.js
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/which/lib/index.js
+ D node_modules/@instantlyeasy/claude-code-sdk-ts/node_modules/which/package.json
+ D node_modules/chalk/index.d.ts
+ M node_modules/chalk/license
+ M node_modules/chalk/package.json
+ M node_modules/chalk/readme.md
+ M node_modules/chalk/source/index.js
+ D node_modules/chalk/source/templates.js
+ D node_modules/chalk/source/util.js
+ M node_modules/iconv-lite/Changelog.md
+ M node_modules/iconv-lite/README.md
+ M node_modules/iconv-lite/encodings/dbcs-codec.js
+ M node_modules/iconv-lite/encodings/dbcs-data.js
+ M node_modules/iconv-lite/encodings/index.js
+ M node_modules/iconv-lite/encodings/internal.js
+ M node_modules/iconv-lite/encodings/sbcs-data.js
+ M node_modules/iconv-lite/encodings/tables/gbk-added.json
+ M node_modules/iconv-lite/encodings/utf16.js
+ M node_modules/iconv-lite/encodings/utf7.js
+ D node_modules/iconv-lite/lib/extend-node.js
+ M node_modules/iconv-lite/lib/index.d.ts
+ M node_modules/iconv-lite/lib/index.js
+ M node_modules/iconv-lite/lib/streams.js
+ M node_modules/iconv-lite/package.json
+ D node_modules/isexe/.npmignore
+ M node_modules/isexe/LICENSE
+ M node_modules/isexe/README.md
+ D node_modules/isexe/index.js
+ D node_modules/isexe/mode.js
+ M node_modules/isexe/package.json
+ D node_modules/isexe/test/basic.js
+ D node_modules/isexe/windows.js
+ D node_modules/npm-run-path/node_modules/path-key/index.d.ts
+ D node_modules/npm-run-path/node_modules/path-key/index.js
+ D node_modules/npm-run-path/node_modules/path-key/license
+ D node_modules/npm-run-path/node_modules/path-key/package.json
+ D node_modules/npm-run-path/node_modules/path-key/readme.md
+ M node_modules/path-key/index.d.ts
+ M node_modules/path-key/index.js
+ M node_modules/path-key/license
+ M node_modules/path-key/package.json
+ M node_modules/path-key/readme.md
+ D node_modules/which/CHANGELOG.md
+ M node_modules/which/README.md
+ D node_modules/which/bin/node-which
+ M node_modules/which/package.json
+ D node_modules/which/which.js
+M  package.json
+ M pnpm-lock.yaml
+M  src/core/autonomous-executor.ts
+ M src/core/decision-engine.ts
+ M src/core/parallel-manager.ts
+ M src/lib/account-analyzer.ts
+AM src/lib/action-specific-collector.ts
+ M src/lib/claude-max-integration.ts
+ M src/lib/daily-action-planner.ts
+A  src/lib/decision-logger.ts
+ M src/lib/expanded-action-executor.ts
+ M src/lib/playwright-account-collector.ts
+AM src/lib/playwright-browser-manager.ts
+ M src/lib/playwright-common-config.ts
+ M src/lib/posting-manager.ts
+ M src/lib/x-client.ts
+MM src/scripts/autonomous-runner-single.ts
+ M src/scripts/autonomous-runner.ts
+ M src/types/action-types.ts
+ M src/types/autonomous-system.ts
+ M src/utils/config-loader.ts
+A  src/utils/config-manager.ts
+A  src/utils/error-handler.ts
+ M src/utils/monitoring/health-check.ts
+A  src/utils/performance-monitor.ts
+ M src/utils/yaml-utils.ts
+ M tasks/20250720_194351_{docs_cleanup}/instructions/TASK-001-docs-system-cleanup.md
+ M tasks/20250720_194351_{docs_cleanup}/reports/REPORT-001-docs-system-cleanup.md
+ M tasks/20250721-122038/reports/REPORT-002-mvp-constraints-removal.md
+ M tasks/20250721_001131/outputs/TASK-003-health-log.txt
+ M tasks/20250721_123440_workflow/outputs/TASK-WF01-optimized-workflow-design.yaml
+A  tests/integration/action-specific-integration.test.ts
+A  tests/integration/browser-error-recovery.test.ts
+A  tests/integration/claude-autonomous-validation.test.ts
+A  tests/integration/complete-workflow-integration.test.ts
+A  tests/integration/comprehensive-optimization.test.ts
+A  tests/integration/context-compression-integration.test.ts
+A  tests/integration/context-efficiency-validation.test.ts
+A  tests/integration/documentation-efficiency.test.ts
+A  tests/integration/execution-pipeline.test.ts
+A  tests/integration/multi-source-integration.test.ts
+M  tests/integration/optimized-workflow.test.ts
+A  tests/integration/performance-and-error-handling.test.ts
+A  tests/integration/playwright-parallel-execution.test.ts
+A  tests/unit/action-specific-collector-extended.test.ts
+A  tests/unit/action-specific-collector.test.ts
+A  tests/unit/autonomous-executor.test.ts
+A  tests/unit/config-manager.test.ts
+A  tests/unit/context-compression-system.test.ts
+A  tests/unit/error-handler.test.ts
+A  tests/unit/execution-control.test.ts
+A  tests/unit/multi-source-collector.test.ts
+A  tests/unit/playwright-browser-manager.test.ts
+ M tsconfig.json
+ M vitest.config.ts
+?? .env.example
+?? ESSENTIALS.md
+?? cron-schedule-template.txt
+?? data/account-analysis-data.yaml
+?? data/action-collection-strategies.yaml
+?? data/archives/
+?? data/claude-summary.yaml
+?? data/context/error-log-archive.yaml
+?? data/context/error-log.yaml
+?? data/context/execution-history.yaml
+?? data/core/
+?? data/current-situation.yaml
+?? data/current/
+?? data/daily-action-data.yaml
+?? data/metrics-history.yaml
+?? data/multi-source-config.yaml
+?? data/source-credentials.yaml.template
+?? dist/lib/action-specific-collector.js
+?? dist/lib/claude-optimized-provider.js
+?? dist/lib/claude-summary-loader.js
+?? dist/lib/context-compression-system.js
+?? dist/lib/decision-logger.js
+?? dist/lib/memory-optimizer.js
+?? dist/lib/minimal-decision-engine.js
+?? dist/lib/minimal-logger.js
+?? dist/lib/multi-source-collector.js
+?? dist/lib/playwright-browser-manager.js
+?? dist/lib/realtime-info-collector.js
+?? dist/lib/sources/
+?? dist/scripts/baseline-measurement.js
+?? dist/scripts/config-system-demo.js
+?? dist/scripts/decision-log-helper.js
+?? dist/scripts/decision-log-viewer.js
+?? dist/scripts/performance-dashboard.js
+?? dist/types/context-compression.js
+?? dist/types/multi-source.js
+?? dist/utils/config-integration.js
+?? dist/utils/config-manager.js
+?? dist/utils/config-templates.js
+?? dist/utils/config-validator.js
+?? dist/utils/error-handler.js
+?? dist/utils/file-size-monitor.js
+?? dist/utils/optimization-metrics.js
+?? dist/utils/performance-monitor.js
+?? dist/utils/test-helper.js
+?? docs/guides/naming-conventions.md
+?? docs/quick-guide.md
+?? docs/technical-docs.md
+?? examples/
+?? execution-time.log
+?? memo.md
+?? node_modules/.bin/glob
+?? node_modules/.bin/parser
+?? node_modules/.bin/semver
+?? node_modules/.vite/
+?? node_modules/@ampproject/
+?? node_modules/@babel/
+?? node_modules/@bcoe/
+?? node_modules/@inquirer/checkbox/node_modules/
+?? node_modules/@inquirer/confirm/node_modules/
+?? node_modules/@inquirer/core/node_modules/
+?? node_modules/@inquirer/editor/node_modules/
+?? node_modules/@inquirer/expand/node_modules/
+?? node_modules/@inquirer/input/node_modules/
+?? node_modules/@inquirer/password/node_modules/
+?? node_modules/@inquirer/rawlist/node_modules/
+?? node_modules/@inquirer/select/node_modules/
+?? node_modules/@isaacs/
+?? node_modules/@istanbuljs/
+?? node_modules/@jridgewell/gen-mapping/
+?? node_modules/@jridgewell/resolve-uri/
+?? node_modules/@jridgewell/trace-mapping/
+?? node_modules/@pkgjs/
+?? node_modules/@types/cheerio/
+?? node_modules/@types/chokidar/
+?? node_modules/@vitest/coverage-v8/
+?? node_modules/ast-v8-to-istanbul/
+?? node_modules/balanced-match/
+?? node_modules/boolbase/
+?? node_modules/brace-expansion/
+?? node_modules/chalk/source/index.d.ts
+?? node_modules/chalk/source/utilities.js
+?? node_modules/chalk/source/vendor/
+?? node_modules/cheerio-select/
+?? node_modules/cheerio/
+?? node_modules/chokidar/
+?? node_modules/commander/
+?? node_modules/cross-spawn/node_modules/
+?? node_modules/css-select/
+?? node_modules/css-what/
+?? node_modules/date-fns/
+?? node_modules/dom-serializer/
+?? node_modules/domelementtype/
+?? node_modules/domhandler/
+?? node_modules/domutils/
+?? node_modules/eastasianwidth/
+?? node_modules/encoding-sniffer/
+?? node_modules/entities/
+?? node_modules/external-editor/node_modules/
+?? node_modules/foreground-child/
+?? node_modules/glob/
+?? node_modules/html-escaper/
+?? node_modules/htmlparser2/
+?? node_modules/iconv-lite/.github/
+?? node_modules/iconv-lite/.idea/
+?? node_modules/iconv-lite/encodings/utf32.js
+?? node_modules/isexe/dist/
+?? node_modules/istanbul-lib-coverage/
+?? node_modules/istanbul-lib-report/
+?? node_modules/istanbul-lib-source-maps/
+?? node_modules/istanbul-reports/
+?? node_modules/jackspeak/
+?? node_modules/lru-cache/
+?? node_modules/magicast/
+?? node_modules/make-dir/
+?? node_modules/minimatch/
+?? node_modules/minipass/
+?? node_modules/nth-check/
+?? node_modules/package-json-from-dist/
+?? node_modules/parse5-htmlparser2-tree-adapter/
+?? node_modules/parse5-parser-stream/
+?? node_modules/parse5/
+?? node_modules/path-scurry/
+?? node_modules/readdirp/
+?? node_modules/rss-parser/
+?? node_modules/sax/
+?? node_modules/semver/
+?? node_modules/string-width-cjs/
+?? node_modules/strip-ansi-cjs/
+?? node_modules/test-exclude/
+?? node_modules/undici/
+?? node_modules/whatwg-encoding/
+?? node_modules/whatwg-mimetype/
+?? node_modules/which/bin/which.js
+?? node_modules/which/lib/
+?? node_modules/wrap-ansi-cjs/
+?? node_modules/xml2js/
+?? node_modules/xmlbuilder/
+?? scripts/quality-check.sh
+?? src/lib/claude-optimized-provider.ts
+?? src/lib/claude-summary-loader.ts
+?? src/lib/context-compression-system.ts
+?? src/lib/memory-optimizer.ts
+?? src/lib/minimal-decision-engine.ts
+?? src/lib/minimal-logger.ts
+?? src/lib/multi-source-collector.ts
+?? src/lib/realtime-info-collector.ts
+?? src/lib/sources/
+?? src/scripts/baseline-measurement.ts
+?? src/scripts/config-system-demo.ts
+?? src/scripts/decision-log-helper.ts
+?? src/scripts/decision-log-viewer.ts
+?? src/scripts/performance-dashboard.ts
+?? src/types/context-compression.ts
+?? src/types/multi-source.ts
+?? src/utils/config-integration.ts
+?? src/utils/config-templates.ts
+?? src/utils/config-validator.ts
+?? src/utils/file-size-monitor.ts
+?? src/utils/optimization-metrics.ts
+?? src/utils/test-helper.ts
+?? tasks/20250721-151324/
+?? tasks/20250721-152119/
+?? tasks/20250721-154644/
+?? tasks/20250721-210028/
+?? tasks/20250721_150345/
+?? tasks/20250721_150926/
+?? tasks/20250721_150933/
+?? tasks/20250721_153850_actionspecific_implementation/
+?? tasks/20250721_154700_actionspecific_testing/
+?? tasks/20250721_154706_actionspecific_refinement/
+?? tasks/20250721_155226/
+?? tasks/20250721_155746_es_module_fix/
+?? tasks/20250721_160207_final_adjustments/
+?? tasks/20250721_161105/
+?? tasks/20250721_172849_emergency_fixes/
+?? tasks/20250721_175205_legacy_json_cleanup/
+?? tasks/20250721_175459_browser_optimization/
+?? tasks/20250721_181007/
+?? tasks/20250721_190718_information_source_expansion/
+?? tasks/20250721_192121_doc_optimization/
+?? tasks/20250721_194158_system_optimization/
+?? tasks/20250721_194608/
+?? tasks/20250721_195256_data_optimization/
+?? tasks/20250721_204728/
+?? tasks/20250721_211123_error_fixes/
+?? tasks/20250721_220716/
+?? tasks/completed-projects/
+?? tasks/outputs/
+?? tests/e2e/
+?? vitest.setup.ts

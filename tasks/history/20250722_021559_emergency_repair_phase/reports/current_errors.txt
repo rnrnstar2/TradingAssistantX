@@ -1,0 +1,20 @@
+src/lib/action-specific-collector.ts(2855,25): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type 'APISources'.
+src/lib/action-specific-collector.ts(2863,30): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type 'CommunitySources'.
+src/lib/action-specific-collector.ts(2876,22): error TS2339: Property 'base_url' does not exist on type '{ name: string; url: string; priority: "high" | "medium" | "low"; refreshInterval?: number | undefined; filters?: string[] | undefined; }'.
+src/lib/action-specific-collector.ts(2877,26): error TS2339: Property 'base_url' does not exist on type '{ name: string; url: string; priority: "high" | "medium" | "low"; refreshInterval?: number | undefined; filters?: string[] | undefined; }'.
+src/lib/convergence/narrative-builder.ts(225,26): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ immediate: number; daily: number; weekly: number; timeless: number; }'.
+src/lib/decision/collection-strategy-selector.ts(375,46): error TS2339: Property 'overall' does not exist on type 'QualityMetrics'.
+src/lib/decision/execution-monitor.ts(4,3): error TS2724: '"../../types/decision-types.js"' has no exported member named 'DecisionDecisionPerformanceMetrics'. Did you mean 'DecisionPerformanceMetrics'?
+src/lib/decision/execution-monitor.ts(43,62): error TS2304: Cannot find name 'DecisionPerformanceMetrics'.
+src/lib/decision/execution-monitor.ts(58,38): error TS2304: Cannot find name 'DecisionPerformanceMetrics'.
+src/lib/decision/execution-monitor.ts(158,41): error TS2304: Cannot find name 'DecisionPerformanceMetrics'.
+src/lib/decision/execution-monitor.ts(177,32): error TS2304: Cannot find name 'DecisionPerformanceMetrics'.
+src/lib/decision/execution-monitor.ts(219,41): error TS2304: Cannot find name 'DecisionPerformanceMetrics'.
+src/lib/decision/quality-maximizer.ts(4,3): error TS2305: Module '"../../types/decision-types.js"' has no exported member 'DataSource'.
+src/lib/decision/quality-maximizer.ts(327,24): error TS2339: Property 'overall' does not exist on type 'QualityMetrics'.
+src/lib/enhanced-info-collector.ts(9,5): error TS2687: All declarations of 'document' must have identical modifiers.
+src/lib/enhanced-info-collector.ts(9,5): error TS2717: Subsequent property declarations must have the same type.  Property 'document' must be of type 'Document', but here has type 'any'.
+src/lib/enhanced-info-collector.ts(120,9): error TS2353: Object literal may only specify known properties, and 'searchTerms' does not exist in type 'CollectionTarget'.
+src/lib/enhanced-info-collector.ts(126,9): error TS2353: Object literal may only specify known properties, and 'searchTerms' does not exist in type 'CollectionTarget'.
+src/lib/enhanced-info-collector.ts(132,9): error TS2353: Object literal may only specify known properties, and 'searchTerms' does not exist in type 'CollectionTarget'.
+src/lib/enhanced-info-collector.ts(138,9): error TS2353: Object literal may only specify known properties, and 'searchTerms' does not exist in type 'CollectionTarget'.

@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ParallelExecutionManager = void 0;
-class ParallelExecutionManager {
+export class ParallelExecutionManager {
     dataCommunication;
     contextManager;
     growthSystemManager;
@@ -287,4 +284,3 @@ class ParallelExecutionManager {
         };
     }
 }
-exports.ParallelExecutionManager = ParallelExecutionManager;

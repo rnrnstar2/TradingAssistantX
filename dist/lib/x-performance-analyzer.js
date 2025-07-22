@@ -1,12 +1,9 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.XPerformanceAnalyzer = void 0;
-const playwright_1 = require("playwright");
-class XPerformanceAnalyzer {
+import { chromium } from 'playwright';
+export class XPerformanceAnalyzer {
     browser = null;
     page = null;
     async initialize() {
-        this.browser = await playwright_1.chromium.launch({ headless: true });
+        this.browser = await chromium.launch({ headless: true });
         this.page = await this.browser.newPage();
         // Set user agent to avoid detection
         await this.page.setExtraHTTPHeaders({
@@ -306,4 +303,3 @@ class XPerformanceAnalyzer {
         return recommendations;
     }
 }
-exports.XPerformanceAnalyzer = XPerformanceAnalyzer;

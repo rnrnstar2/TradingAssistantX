@@ -4,6 +4,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { errorHandler } from '../error-handler';
 
 const execAsync = promisify(exec);
 
@@ -22,10 +23,29 @@ interface DiskSpaceInfo {
 class HealthChecker {
   private readonly outputDir = 'tasks/20250721_001131/outputs';
   private readonly requiredDataFiles = [
+    // 新構造での最重要ファイル
+    'data/claude-summary.yaml',
     'data/account-config.yaml',
     'data/autonomous-config.yaml',
+    
+    // 新ディレクトリ構造ファイル
+    'data/core/system-state.yaml',
+    'data/core/decision-context.yaml',
+    'data/current/current-analysis.yaml',
+    
+    // 既存戦略ファイル（保持）
     'data/content-strategy.yaml',
     'data/posting-data.yaml'
+  ];
+  
+  private readonly optionalDataFiles = [
+    // アーカイブファイル（オプション）
+    'data/archives/posting-history-archive.yaml',
+    'data/archives/error-log-archive.yaml',
+    
+    // 履歴ファイル（オプション）
+    'data/metrics-history.yaml',
+    'data/current-situation.yaml'
   ];
 
   async checkHealth(verbose: boolean = false): Promise<HealthStatus> {
@@ -73,6 +93,7 @@ class HealthChecker {
 
     } catch (error) {
       console.error('ヘルスチェック実行エラー:', error);
+      await errorHandler.logError(error instanceof Error ? error : new Error(String(error)));
       health.overall = 'critical';
       return health;
     }
@@ -113,12 +134,17 @@ class HealthChecker {
       return { availableGB, status };
     } catch (error) {
       console.error('ディスク容量チェック失敗:', error);
+      await errorHandler.logError(error instanceof Error ? error : new Error(String(error)));
       return { availableGB: 0, status: 'critical' };
     }
   }
 
   private async checkDataFiles(): Promise<'ok' | 'missing' | 'corrupted'> {
     try {
+      let missingRequired = 0;
+      let corruptedFiles = 0;
+      
+      // 必須ファイルのチェック
       for (const filePath of this.requiredDataFiles) {
         const fullPath = join(process.cwd(), filePath);
         
@@ -128,16 +154,56 @@ class HealthChecker {
           // 基本的な読み取りテスト
           const content = await fs.readFile(fullPath, 'utf-8');
           if (content.length === 0) {
-            return 'corrupted';
+            console.warn(`⚠️ [ファイル破損] ${filePath} が空です`);
+            corruptedFiles++;
           }
         } catch {
-          return 'missing';
+          console.warn(`⚠️ [ファイル欠失] ${filePath} が存在しません`);
+          missingRequired++;
         }
+      }
+      
+      // オプションファイルのチェック（エラーではない）
+      let optionalMissing = 0;
+      for (const filePath of this.optionalDataFiles) {
+        const fullPath = join(process.cwd(), filePath);
+        
+        try {
+          await fs.access(fullPath);
+        } catch {
+          optionalMissing++;
+        }
+      }
+      
+      if (optionalMissing > 0) {
+        console.log(`📝 [オプションファイル] ${optionalMissing}件のオプションファイルが欠失（正常）`);
+      }
+      
+      // 判定ロジック
+      if (corruptedFiles > 0) {
+        return 'corrupted';
+      }
+      
+      // claude-summary.yamlが必須、それ以外は許容
+      const claudeSummaryPath = join(process.cwd(), 'data/claude-summary.yaml');
+      try {
+        await fs.access(claudeSummaryPath);
+        console.log('✅ [最重要] claude-summary.yaml の存在を確認');
+      } catch {
+        console.error('❌ [致命的] claude-summary.yaml が存在しません');
+        return 'missing';
+      }
+      
+      // その他の必須ファイルの50%以上が欠失した場合はmissing
+      const otherRequiredFiles = this.requiredDataFiles.length - 1; // claude-summary.yamlを除く
+      if (missingRequired > otherRequiredFiles * 0.5) {
+        return 'missing';
       }
       
       return 'ok';
     } catch (error) {
       console.error('データファイルチェック失敗:', error);
+      await errorHandler.logError(error instanceof Error ? error : new Error(String(error)));
       return 'corrupted';
     }
   }
@@ -181,6 +247,7 @@ class HealthChecker {
       await fs.appendFile(logPath, logLine);
     } catch (error) {
       console.error('ログ出力失敗:', error);
+      await errorHandler.logError(error instanceof Error ? error : new Error(String(error)));
     }
   }
 
@@ -226,7 +293,5 @@ async function main() {
 // Export for programmatic use
 export { HealthChecker, type HealthStatus };
 
-// Run if called directly
-if (require.main === module) {
-  main();
-}
+// Export main for CLI use
+export { main };

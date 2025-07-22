@@ -1,3 +1,43 @@
+import { ActionType } from './action-types';
+import { PerformanceMetrics } from './decision-types';
+
+// ExecutionData型定義
+export interface ExecutionData {
+  actionType: ActionType;
+  content?: string;
+  targetAudience?: string[];
+  timing?: ExecutionTiming;
+  metadata?: ExecutionMetadata;
+  result?: ExecutionResult;
+}
+
+export interface ExecutionTiming {
+  scheduledTime?: string;
+  executedTime?: string;
+  timeZone?: string;
+}
+
+export interface ExecutionMetadata {
+  priority: number;
+  tags: string[];
+  category: string;
+  estimatedDuration: number;
+}
+
+export interface ExecutionResult {
+  success: boolean;
+  message?: string;
+  metrics?: PerformanceMetrics;
+  errors?: ExecutionError[];
+}
+
+export interface ExecutionError {
+  code: string;
+  message: string;
+  timestamp: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+}
+
 // Core context and state types
 export interface Context {
   timestamp: string;
@@ -134,10 +174,9 @@ export interface Recommendation {
 
 // Information Collection types
 export interface CollectionTarget {
-  type: 'trend' | 'competitor' | 'hashtag' | 'news';
-  source: string;
-  priority: 'high' | 'medium' | 'low';
-  searchTerms: string[];
+  type: 'rss' | 'api' | 'scraping';
+  url: string;
+  weight: number;
 }
 
 export interface CollectionResult {
@@ -201,6 +240,13 @@ export interface AccountStatus {
   };
   recommendations: string[];
   healthScore: number;
+  recent_trends?: TrendData[];  // オプショナルプロパティ追加
+}
+
+interface TrendData {
+  keyword: string;
+  count: number;
+  timestamp: string;
 }
 
 // Integrated Context types
@@ -306,10 +352,45 @@ export interface SufficiencyEvaluation {
 export interface CollectionStrategy {
   actionType: string;
   targets: CollectionTarget[];
-  priority: 'high' | 'medium' | 'low';
-  expectedDuration: number;
-  searchTerms: string[];
-  sources: string[];
+  priority: number;              // 必須プロパティ追加
+  expectedDuration: number;      // 必須プロパティ追加  
+  searchTerms: string[];         // 必須プロパティ追加
+  sources: DataSource[];         // 必須プロパティ追加
+  
+  // 🚨 緊急追加必須プロパティ
+  topic: string;                 // 必須追加
+  keywords: string[];            // 必須追加
+  
+  // オプションプロパティ
+  description?: string;
+  category?: string;
+  weight?: number;
+  
+  // 設定オブジェクト用プロパティ
+  apis?: ApiConfiguration[];     // 設定用
+  community?: CommunityConfiguration[]; // 設定用
+}
+
+export interface DataSource {
+  type: 'rss' | 'api' | 'scraping';
+  url: string;
+  weight: number;
+}
+
+// 新規支援型定義
+export interface ApiConfiguration {
+  name: string;
+  endpoint: string;
+  apiKey?: string;
+  rateLimit: number;
+  timeout: number;
+}
+
+export interface CommunityConfiguration {
+  platform: string;
+  channels: string[];
+  priority: number;
+  collectTypes: string[];
 }
 
 export interface QualityEvaluation {
@@ -318,7 +399,13 @@ export interface QualityEvaluation {
   uniquenessScore: number;
   timelinessScore: number;
   overallScore: number;
-  feedback: string[];
+  feedback: QualityFeedback;     // 必須プロパティ追加
+}
+
+export interface QualityFeedback {
+  strengths: string[];
+  improvements: string[];
+  confidence: number;
 }
 
 // ActionSpecific統合関連の型定義

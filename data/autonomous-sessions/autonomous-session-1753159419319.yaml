@@ -1,0 +1,34 @@
+sessionId: autonomous-session-1753159419319
+timestamp: '2025-07-22T04:45:53.983Z'
+autonomyScore: 60
+performanceMetrics:
+  strategicFlexibility: 80
+  adaptationRate: 0
+  learningEffectiveness: 100
+  overallAutonomy: 60
+strategy:
+  actionTypes:
+    - original_post
+    - market_analysis
+    - engagement
+  frequency: 3
+  contentThemes:
+    - 高ボラティリティ環境でのリスク管理教育
+    - 横ばい市場での長期投資戦略
+    - ESG投資の実践的アプローチ
+    - 分散投資による資産保護
+  riskLevel: medium
+execution:
+  totalActions: 3
+  successfulActions: 0
+  adaptationsMade: 0
+learning:
+  learningPoints: 10
+  optimizationAreas: 6
+  newOpportunities: 6
+nextRecommendations:
+  - '機会活用: 認証失敗時のローカル投稿ドラフト機能'
+  - '機会活用: 投稿品質スコアリングによる自動選別'
+  - '機会活用: エンゲージメント予測機能の追加'
+  - '機会活用: リアルタイム市場データ連携強化'
+  - '機会活用: A/Bテストによるコンテンツ最適化'

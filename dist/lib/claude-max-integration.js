@@ -1,51 +1,11 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ClaudeMaxIntegration = void 0;
-exports.executeAutonomousCollection = executeAutonomousCollection;
-const claude_code_sdk_ts_1 = require("@instantlyeasy/claude-code-sdk-ts");
-const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
-const yaml_utils_1 = require("../utils/yaml-utils");
-const yaml = __importStar(require("js-yaml"));
-const playwright_1 = require("playwright");
-const claude_tools_1 = require("./claude-tools");
-class ClaudeMaxIntegration {
+import { claude } from '@instantlyeasy/claude-code-sdk-ts';
+import fs from 'fs';
+import path from 'path';
+import { loadYamlArraySafe } from '../utils/yaml-utils';
+import * as yaml from 'js-yaml';
+import { chromium } from 'playwright';
+import { createBrowserTools, createAnalysisTools } from './claude-tools';
+export class ClaudeMaxIntegration {
     constructor() {
         // Claude Code SDKはCLIと自動的に連携
         // Claude MaxサブスクリプションがCLI経由で利用される
@@ -79,7 +39,7 @@ class ClaudeMaxIntegration {
     `;
         try {
             console.log('🔄 Claude Code SDKで分析開始...');
-            const response = await (0, claude_code_sdk_ts_1.claude)()
+            const response = await claude()
                 .withModel('opus')
                 .query(prompt)
                 .asText();
@@ -104,13 +64,13 @@ class ClaudeMaxIntegration {
                 timestamp: generatedData.timestamp || new Date().toISOString(),
                 insights: generatedData.insights || ['教育的価値', 'リスク管理', '継続学習'],
             };
-            const outputPath = path_1.default.join(process.cwd(), 'data', 'generated-post.json');
-            fs_1.default.writeFileSync(outputPath, yaml.dump(result, { indent: 2 }));
+            const outputPath = path.join(process.cwd(), 'data', 'generated-post.json');
+            fs.writeFileSync(outputPath, yaml.dump(result, { indent: 2 }));
             return result;
         }
         catch (error) {
             console.error('❌ Claude Code SDKエラー:', error);
-            return this.fallbackToStandardAPI(prompt);
+            throw new Error('Claude Code SDK接続に失敗しました。ローカルのClaude Code認証を確認してください。');
         }
     }
     /**
@@ -146,7 +106,7 @@ class ClaudeMaxIntegration {
         try {
             console.log('🔄 Claude Code SDKで分析開始...');
             // Claude Code SDKを使用してメッセージを送信
-            const response = await (0, claude_code_sdk_ts_1.claude)()
+            const response = await claude()
                 .withModel('opus')
                 .query(prompt)
                 .asText();
@@ -174,41 +134,14 @@ class ClaudeMaxIntegration {
                 insights: generatedData.insights || ['教育的価値', 'リスク管理', '継続学習'],
             };
             // data/generated-post.yamlに保存
-            const outputPath = path_1.default.join(process.cwd(), 'data', 'generated-post.json');
-            fs_1.default.writeFileSync(outputPath, yaml.dump(result, { indent: 2 }));
+            const outputPath = path.join(process.cwd(), 'data', 'generated-post.json');
+            fs.writeFileSync(outputPath, yaml.dump(result, { indent: 2 }));
             return result;
         }
         catch (error) {
             console.error('❌ Claude Code SDKエラー:', error);
-            // フォールバック：標準APIを試行
-            console.log('🔄 フォールバック: 標準APIを試行...');
-            return this.fallbackToStandardAPI(prompt);
+            throw new Error('Claude Code SDK接続に失敗しました。ローカルのClaude Code認証を確認してください。');
         }
-    }
-    async fallbackToStandardAPI(prompt) {
-        // 標準のAnthropic APIをフォールバックとして使用
-        const { default: Anthropic } = await Promise.resolve().then(() => __importStar(require('@anthropic-ai/sdk')));
-        const anthropic = new Anthropic({
-            apiKey: process.env.ANTHROPIC_API_KEY,
-        });
-        const response = await anthropic.messages.create({
-            model: 'claude-3-opus-20240229',
-            max_tokens: 1000,
-            messages: [{ role: 'user', content: prompt }],
-        });
-        const content = response.content[0];
-        if (content.type === 'text') {
-            const result = {
-                content: content.text.slice(0, 280),
-                analysis: content.text,
-                timestamp: new Date().toISOString(),
-                insights: ['教育的価値', 'リスク管理', '継続学習'],
-            };
-            const outputPath = path_1.default.join(process.cwd(), 'data', 'generated-post.json');
-            fs_1.default.writeFileSync(outputPath, yaml.dump(result, { indent: 2 }));
-            return result;
-        }
-        throw new Error('All API methods failed');
     }
     createFallbackPost(text) {
         return {
@@ -219,20 +152,19 @@ class ClaudeMaxIntegration {
         };
     }
     loadPostHistory() {
-        const historyPath = path_1.default.join(process.cwd(), 'data', 'posting-history.yaml');
-        return (0, yaml_utils_1.loadYamlArraySafe)(historyPath);
+        const historyPath = path.join(process.cwd(), 'data', 'posting-history.yaml');
+        return loadYamlArraySafe(historyPath);
     }
 }
-exports.ClaudeMaxIntegration = ClaudeMaxIntegration;
 // 新しいツールシステムとの統合
-async function executeAutonomousCollection(instruction) {
-    const browser = await playwright_1.chromium.launch({ headless: true });
+export async function executeAutonomousCollection(instruction) {
+    const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
     try {
-        (0, claude_tools_1.createBrowserTools)(page);
-        (0, claude_tools_1.createAnalysisTools)();
+        createBrowserTools(page);
+        createAnalysisTools();
         const systemPrompt = generateSystemPrompt(instruction);
-        const response = await (0, claude_code_sdk_ts_1.claude)()
+        const response = await claude()
             .withModel('opus')
             .query(`${systemPrompt}\n\n${instruction.goal}`)
             .asText();
@@ -315,5 +247,8 @@ async function main() {
 }
 // 直接実行の場合
 if (require.main === module) {
-    main();
+    main().catch((error) => {
+        console.error('❌ [Claude Max統合] 実行エラー:', error);
+        process.exit(1);
+    });
 }

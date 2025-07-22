@@ -1,0 +1,202 @@
+- timestamp: '2025-07-21T09:44:50.777Z'
+  error: history.push is not a function
+  stack: |-
+    TypeError: history.push is not a function
+        at AutonomousExecutor.saveExecutionResults (/Users/rnrnstar/github/TradingAssistantX/src/core/autonomous-executor.ts:705:13)
+        at AutonomousExecutor.executeAutonomously (/Users/rnrnstar/github/TradingAssistantX/src/core/autonomous-executor.ts:96:7)
+        at main (/Users/rnrnstar/github/TradingAssistantX/src/scripts/autonomous-runner-single.ts:12:5)
+- timestamp: '2025-07-21T09:45:53.188Z'
+  error: history.push is not a function
+  stack: |-
+    TypeError: history.push is not a function
+        at AutonomousExecutor.saveExecutionResults (/Users/rnrnstar/github/TradingAssistantX/src/core/autonomous-executor.ts:705:13)
+        at AutonomousExecutor.executeAutonomously (/Users/rnrnstar/github/TradingAssistantX/src/core/autonomous-executor.ts:96:7)
+        at main (/Users/rnrnstar/github/TradingAssistantX/src/scripts/autonomous-runner-single.ts:12:5)
+- timestamp: '2025-07-21T10:54:30.832Z'
+  error: Claude Code CLI exited with code 1
+  stack: |-
+    ProcessError: Claude Code CLI exited with code 1
+        at SubprocessCLITransport.receiveMessages (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@instantlyeasy/claude-code-sdk-ts/src/_internal/transport/subprocess-cli.ts:290:17)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+        at InternalClient.processQuery (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@instantlyeasy/claude-code-sdk-ts/src/_internal/client.ts:25:24)
+        at query (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@instantlyeasy/claude-code-sdk-ts/src/index.ts:44:3)
+        at ResponseParser.consume (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@instantlyeasy/claude-code-sdk-ts/src/parser.ts:276:22)
+        at ResponseParser.asText (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@instantlyeasy/claude-code-sdk-ts/src/parser.ts:41:5)
+        at AutonomousExecutor.requestClaudeDecision (/Users/rnrnstar/github/TradingAssistantX/src/core/autonomous-executor.ts:126:22)
+        at AutonomousExecutor.executeClaudeAutonomous (/Users/rnrnstar/github/TradingAssistantX/src/core/autonomous-executor.ts:84:30)
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/optimized-workflow.test.ts:361:9
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20
+- timestamp: '2025-07-21T12:39:49.015Z'
+  error: Execution timeout
+  stack: |-
+    Error: Execution timeout
+        at Timeout._onTimeout (/Users/rnrnstar/github/TradingAssistantX/src/core/autonomous-executor.ts:126:18)
+        at listOnTimeout (node:internal/timers:573:17)
+        at process.processTimers (node:internal/timers:514:7)
+- timestamp: '2025-07-21T12:42:33.444Z'
+  error: 'ENOSPC: no space left on device'
+  stack: |-
+    Error: ENOSPC: no space left on device
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:198:9
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20
+        at new Promise (<anonymous>)
+        at runWithTimeout (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)
+        at runTest (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+- timestamp: '2025-07-21T12:42:33.455Z'
+  error: 'EMFILE: too many open files'
+  stack: |-
+    Error: EMFILE: too many open files
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:199:9
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20
+        at new Promise (<anonymous>)
+        at runWithTimeout (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)
+        at runTest (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+- timestamp: '2025-07-21T12:42:33.459Z'
+  error: 'MODULE_NOT_FOUND: Cannot find module'
+  stack: |-
+    Error: MODULE_NOT_FOUND: Cannot find module
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:200:9
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20
+        at new Promise (<anonymous>)
+        at runWithTimeout (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)
+        at runTest (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+- timestamp: '2025-07-21T12:42:33.465Z'
+  error: Network timeout
+  stack: |-
+    Error: Network timeout
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:232:23
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20
+        at new Promise (<anonymous>)
+        at runWithTimeout (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)
+        at runTest (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+- timestamp: '2025-07-21T12:42:33.468Z'
+  error: Browser crashed
+  stack: |-
+    Error: Browser crashed
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:232:23
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20
+- timestamp: '2025-07-21T12:42:33.469Z'
+  error: Memory allocation failed
+  stack: |-
+    Error: Memory allocation failed
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:232:23
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20
+- timestamp: '2025-07-21T12:42:33.470Z'
+  error: File system error
+  stack: |-
+    Error: File system error
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:232:23
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20
+- timestamp: '2025-07-21T12:42:33.471Z'
+  error: API rate limit exceeded
+  stack: |-
+    Error: API rate limit exceeded
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:232:23
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20
+- timestamp: '2025-07-21T12:46:12.659Z'
+  error: Execution timeout
+  stack: |-
+    Error: Execution timeout
+        at Timeout._onTimeout (/Users/rnrnstar/github/TradingAssistantX/src/core/autonomous-executor.ts:126:18)
+        at listOnTimeout (node:internal/timers:573:17)
+        at processTimers (node:internal/timers:514:7)
+- timestamp: '2025-07-21T15:40:18.655Z'
+  error: 'ENOSPC: no space left on device'
+  stack: |-
+    Error: ENOSPC: no space left on device
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:198:9
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20
+        at new Promise (<anonymous>)
+        at runWithTimeout (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)
+        at runTest (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+- timestamp: '2025-07-21T15:40:18.667Z'
+  error: 'EMFILE: too many open files'
+  stack: |-
+    Error: EMFILE: too many open files
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:199:9
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20
+        at new Promise (<anonymous>)
+        at runWithTimeout (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)
+        at runTest (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+- timestamp: '2025-07-21T15:40:18.672Z'
+  error: 'MODULE_NOT_FOUND: Cannot find module'
+  stack: |-
+    Error: MODULE_NOT_FOUND: Cannot find module
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:200:9
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20
+        at new Promise (<anonymous>)
+        at runWithTimeout (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)
+        at runTest (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+- timestamp: '2025-07-21T15:40:18.677Z'
+  error: Network timeout
+  stack: |-
+    Error: Network timeout
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:232:23
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20
+        at new Promise (<anonymous>)
+        at runWithTimeout (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)
+        at runTest (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+        at runSuite (file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)
+- timestamp: '2025-07-21T15:40:18.679Z'
+  error: Browser crashed
+  stack: |-
+    Error: Browser crashed
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:232:23
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20
+- timestamp: '2025-07-21T15:40:18.680Z'
+  error: Memory allocation failed
+  stack: |-
+    Error: Memory allocation failed
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:232:23
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20
+- timestamp: '2025-07-21T15:40:18.682Z'
+  error: File system error
+  stack: |-
+    Error: File system error
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:232:23
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20
+- timestamp: '2025-07-21T15:40:18.685Z'
+  error: API rate limit exceeded
+  stack: |-
+    Error: API rate limit exceeded
+        at /Users/rnrnstar/github/TradingAssistantX/tests/integration/browser-error-recovery.test.ts:232:23
+        at file:///Users/rnrnstar/github/TradingAssistantX/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20

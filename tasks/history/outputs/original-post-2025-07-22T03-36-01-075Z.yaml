@@ -1,0 +1,30 @@
+execution:
+  type: original_post
+  timestamp: '2025-07-22T03:36:01.073Z'
+  content: |-
+    💡投資初心者が陥りがちな罠💡
+
+    「今日上がった株を明日も買う」
+    これ、典型的な追いかけ投資です😅
+
+    ✅正しいアプローチ：
+    ・企業の本質的価値を理解
+    ・長期的な成長性を評価
+    ・市場の感情に左右されない
+
+    株価の動きに一喜一憂するより、投資先企業の「未来」を見極める目を養いましょう📈
+
+    あなたの投資判断基準は何ですか？
+
+    #投資教育 #株式投資 #長期投資
+context:
+  systemStatus: running
+  timestamp: 1753155339604
+  postResult:
+    success: false
+    error: 'OAuth 2.0 token request failed: 403'
+    timestamp: 1753155359757
+  status: posting_failed
+metadata:
+  executedAt: '2025-07-22T03:36:01.075Z'
+  executionType: autonomous

@@ -57,7 +57,9 @@ export class AsyncExecutionManager {
     this.runningTasks.set(taskId, handle);
     
     // バックグラウンドで実行状況を監視
-    this.monitorAsyncTask(taskId);
+    this.monitorAsyncTask(taskId).catch((error) => {
+      console.error(`❌ [非同期実行] タスク監視エラー (${taskId}):`, error);
+    });
 
     return taskId;
   }
@@ -118,7 +120,7 @@ export class AsyncExecutionManager {
         }
       };
 
-      executeTask();
+      executeTask().catch(reject);
     });
 
     const cancel = () => {

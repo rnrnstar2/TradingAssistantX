@@ -1,5 +1,6 @@
 import { Page, Browser, BrowserContext } from 'playwright';
 import { PlaywrightCommonSetup } from './playwright-common-config';
+import { PlaywrightBrowserManager } from './playwright-browser-manager';
 import type { AccountInfo, AccountMetrics } from '../types/index';
 
 export interface PlaywrightAccountInfo extends AccountInfo, AccountMetrics {
@@ -20,8 +21,7 @@ export interface PostInfo {
 }
 
 export class PlaywrightAccountCollector {
-  private browser: Browser | null = null;
-  private context: BrowserContext | null = null;
+  private browserManager: PlaywrightBrowserManager;
   private config = {
     timeout: 30000,
     maxRetries: 3,
@@ -29,20 +29,26 @@ export class PlaywrightAccountCollector {
     testMode: process.env.X_TEST_MODE === 'true'
   };
 
-  constructor() {}
+  constructor() {
+    this.browserManager = PlaywrightBrowserManager.getInstance(this.config);
+  }
 
-  async collectAccountInfo(username?: string): Promise<PlaywrightAccountInfo> {
-    console.log('🎭 [Playwright収集開始] アカウント情報を収集中...');
+  async collectAccountInfo(username?: string, contextOverride?: BrowserContext): Promise<PlaywrightAccountInfo> {
+    const sessionId = `account_collector_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`🎭 [Playwright収集開始] セッション: ${sessionId}`);
+    
+    let page: Page | null = null;
     
     try {
-      await this.initializeBrowser();
+      // ブラウザマネージャーからコンテキストを取得（またはオーバーライド使用）
+      const context = contextOverride || await this.browserManager.acquireContext(sessionId);
       
       const targetUsername = username || await this.getCurrentUsername();
       const profileUrl = `https://x.com/${targetUsername}`;
       
       console.log(`🔍 [プロフィールアクセス] ${profileUrl}`);
       
-      const page = await this.context!.newPage();
+      page = await context.newPage();
       await page.goto(profileUrl, { 
         waitUntil: 'networkidle',
         timeout: this.config.timeout 
@@ -51,14 +57,21 @@ export class PlaywrightAccountCollector {
       // ページの読み込み完了を待機
       await this.waitForPageLoad(page);
 
-      // 基本プロフィール情報を抽出
-      const basicInfo = await this.extractBasicInfo(page, targetUsername);
-      
-      // フォロワー統計を抽出
-      const stats = await this.extractFollowerStats(page);
-      
-      // 最近の投稿情報を取得
-      const recentPostTime = await this.extractLastTweetTime(page);
+      // セッション情報をログ出力（デバッグ用）
+      const stats = this.browserManager.getSessionStats();
+      console.log(`📊 [セッション統計] アクティブ: ${stats.activeSessions}/${stats.totalSessions}`);
+
+      // 基本プロフィール情報、フォロワー統計、最近の投稿情報を並列取得（エラーハンドリング強化）
+      const [basicInfoResult, followerStatsResult, recentPostTimeResult] = 
+        await Promise.allSettled([
+          this.extractBasicInfoSafe(page, targetUsername),
+          this.extractFollowerStatsSafe(page),
+          this.extractLastTweetTimeSafe(page)
+        ]);
+
+      const basicInfo = basicInfoResult.status === 'fulfilled' ? basicInfoResult.value : { user_id: targetUsername, display_name: '', bio: '', verified: false };
+      const followerStats = followerStatsResult.status === 'fulfilled' ? followerStatsResult.value : { followers: 0, following: 0, tweets: 0 };
+      const recentPostTime = recentPostTimeResult.status === 'fulfilled' ? recentPostTimeResult.value : undefined;
 
       const accountInfo: PlaywrightAccountInfo = {
         username: targetUsername,
@@ -66,37 +79,52 @@ export class PlaywrightAccountCollector {
         display_name: basicInfo.display_name,
         bio: basicInfo.bio,
         verified: basicInfo.verified,
-        followers_count: stats.followers,
-        following_count: stats.following,
-        tweet_count: stats.tweets,
+        followers_count: followerStats.followers,
+        following_count: followerStats.following,
+        tweet_count: followerStats.tweets,
         listed_count: 0, // X.comでは通常表示されない
         last_updated: Date.now(),
         last_tweet_time: recentPostTime,
       };
 
-      console.log(`📊 [統計抽出] フォロワー: ${stats.followers.toLocaleString()}、フォロー: ${stats.following.toLocaleString()}、ツイート: ${stats.tweets.toLocaleString()}`);
+      console.log(`📊 [統計抽出] フォロワー: ${followerStats.followers.toLocaleString()}、フォロー: ${followerStats.following.toLocaleString()}、ツイート: ${followerStats.tweets.toLocaleString()}`);
       console.log('✅ [収集完了] アカウント情報を正常に取得');
 
-      await page.close();
       return accountInfo;
     } catch (error) {
-      console.error('❌ [Playwright収集エラー]:', error);
+      console.error(`❌ [Playwright収集エラー] セッション: ${sessionId}:`, error);
       throw error;
     } finally {
-      await this.cleanup();
+      // ページクリーンアップ
+      if (page) {
+        try {
+          await page.close();
+        } catch (pageError) {
+          console.warn('⚠️ [ページ終了エラー]:', pageError);
+        }
+      }
+      
+      // セッション解放（コンテキストオーバーライドがない場合のみ）
+      if (!contextOverride) {
+        await this.browserManager.releaseContext(sessionId);
+      }
     }
   }
 
-  async collectRecentPosts(username?: string, limit: number = 10): Promise<PostInfo[]> {
-    console.log(`📝 [投稿収集] 最近の投稿${limit}件を収集中...`);
+  async collectRecentPosts(username?: string, limit: number = 10, contextOverride?: BrowserContext): Promise<PostInfo[]> {
+    const sessionId = `posts_collector_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`📝 [投稿収集開始] ${limit}件を収集 - セッション: ${sessionId}`);
+    
+    let page: Page | null = null;
     
     try {
-      await this.initializeBrowser();
+      // ブラウザマネージャーからコンテキストを取得
+      const context = contextOverride || await this.browserManager.acquireContext(sessionId);
       
       const targetUsername = username || await this.getCurrentUsername();
       const profileUrl = `https://x.com/${targetUsername}`;
       
-      const page = await this.context!.newPage();
+      page = await context.newPage();
       await page.goto(profileUrl, { 
         waitUntil: 'networkidle',
         timeout: this.config.timeout 
@@ -112,23 +140,29 @@ export class PlaywrightAccountCollector {
 
       console.log(`📝 [投稿収集完了] ${posts.length}件の投稿を収集`);
 
-      await page.close();
       return posts;
     } catch (error) {
-      console.error('❌ [投稿収集エラー]:', error);
+      console.error(`❌ [投稿収集エラー] セッション: ${sessionId}:`, error);
       return [];
     } finally {
-      await this.cleanup();
+      // ページクリーンアップ
+      if (page) {
+        try {
+          await page.close();
+        } catch (pageError) {
+          console.warn('⚠️ [ページ終了エラー]:', pageError);
+        }
+      }
+      
+      // セッション解放
+      if (!contextOverride) {
+        await this.browserManager.releaseContext(sessionId);
+      }
     }
   }
 
-  private async initializeBrowser(): Promise<void> {
-    if (this.browser && this.context) return;
-
-    const environment = await PlaywrightCommonSetup.createPlaywrightEnvironment(this.config);
-    this.browser = environment.browser;
-    this.context = environment.context;
-  }
+  // ブラウザマネージャーに移行したため、このメソッドは不要
+  // private async initializeBrowser(): Promise<void> { ... }
 
   private async waitForPageLoad(page: Page): Promise<void> {
     const selectors = [
@@ -139,15 +173,37 @@ export class PlaywrightAccountCollector {
     await PlaywrightCommonSetup.waitForPageLoad(page, selectors, this.config.timeout);
   }
 
+  // 元のメソッド（後方互換性のために残す）
   private async extractBasicInfo(page: Page, username: string): Promise<{
     user_id: string;
     display_name: string;
     bio: string;
     verified: boolean;
   }> {
+    return this.extractBasicInfoSafe(page, username);
+  }
+
+  // エラーハンドリング強化版（164行目のエラー対応）
+  private async extractBasicInfoSafe(page: Page, username: string): Promise<{
+    user_id: string;
+    display_name: string;
+    bio: string;
+    verified: boolean;
+  }> {
     try {
+      // ページが閉じられていないかチェック
+      if (page.isClosed()) {
+        throw new Error('ページが既に閉じられています');
+      }
+
+      // タイムアウト付きで要素の存在を確認
+      await page.waitForSelector('[data-testid="primaryColumn"]', { 
+        timeout: this.config.timeout,
+        state: 'attached'
+      });
+
       // 表示名を取得（複数のセレクターパターンを試行）
-      const displayName = await this.tryMultipleSelectors(page, [
+      const displayName = await this.tryMultipleSelectorsSafe(page, [
         '[data-testid="UserName"] div[dir="ltr"] span',
         '[data-testid="UserName"] span[role="heading"]',
         'h1[role="heading"]',
@@ -155,15 +211,23 @@ export class PlaywrightAccountCollector {
       ]) || username;
 
       // プロフィールバイオを取得
-      const bio = await this.tryMultipleSelectors(page, [
+      const bio = await this.tryMultipleSelectorsSafe(page, [
         '[data-testid="UserDescription"]',
         '[data-testid="UserBio"]'
       ]) || '';
 
-      // 認証バッジをチェック
-      const verifiedBadge = await page.$('[data-testid="verifiedBadge"]');
-      const verified = verifiedBadge !== null;
+      // 認証バッジをチェック（タイムアウト設定）
+      let verified = false;
+      try {
+        const verifiedBadge = await page.$('[data-testid="verifiedBadge"]');
+        verified = verifiedBadge !== null;
+      } catch (badgeError) {
+        console.debug('🔍 [認証バッジ確認] 認証バッジが見つかりません');
+        verified = false;
+      }
 
+      console.log(`✅ [基本情報抽出成功] ${username}: ${displayName}`);
+      
       return {
         user_id: username,
         display_name: displayName,
@@ -171,7 +235,7 @@ export class PlaywrightAccountCollector {
         verified: verified
       };
     } catch (error) {
-      console.warn('⚠️ [基本情報抽出エラー]:', error);
+      console.warn(`⚠️ [基本情報抽出エラー] ${username}:`, error);
       return {
         user_id: username,
         display_name: username,
@@ -181,61 +245,99 @@ export class PlaywrightAccountCollector {
     }
   }
 
+  // 元のメソッド（後方互換性のために残す）
   private async extractFollowerStats(page: Page): Promise<{
     followers: number;
     following: number;
     tweets: number;
   }> {
+    return this.extractFollowerStatsSafe(page);
+  }
+
+  // エラーハンドリング強化版（205行目のエラー対応）
+  private async extractFollowerStatsSafe(page: Page): Promise<{
+    followers: number;
+    following: number;
+    tweets: number;
+  }> {
     try {
-      // フォロワー数を取得（複数のセレクターパターンを試行）
-      const followersText = await this.tryMultipleSelectors(page, [
-        'a[href*="/followers"] span[data-testid="UserName"] span',
-        'a[href*="/followers"] span:not([dir])',
-        '[data-testid="primaryColumn"] a[href*="/followers"] span'
-      ]);
+      // ページが閉じられていないかチェック
+      if (page.isClosed()) {
+        throw new Error('ページが既に閉じられています');
+      }
 
-      // フォロー数を取得
-      const followingText = await this.tryMultipleSelectors(page, [
-        'a[href*="/following"] span[data-testid="UserName"] span',
-        'a[href*="/following"] span:not([dir])',
-        '[data-testid="primaryColumn"] a[href*="/following"] span'
-      ]);
+      // プロフィール情報エリアの読み込み待機
+      await page.waitForSelector('[data-testid="primaryColumn"]', { 
+        timeout: this.config.timeout,
+        state: 'attached'
+      });
 
-      // より汎用的なアプローチでプロフィール統計を取得
-      const statsElements = await page.$$('[role="link"] span');
       let followers = 0, following = 0, tweets = 0;
 
-      for (const element of statsElements) {
-        const text = await element.textContent();
-        if (text) {
-          // 数値を含むテキストを探す
-          const numberMatch = text.match(/[\d,]+/);
-          if (numberMatch) {
-            const number = this.parseNumber(numberMatch[0]);
-            
-            // 前後のテキストでタイプを判定
-            const parent = await element.evaluateHandle(el => el.parentElement);
-            const parentText = await parent.evaluate(el => el.textContent?.toLowerCase() || '');
-            
-            if (parentText.includes('followers') || parentText.includes('フォロワー')) {
-              followers = number;
-            } else if (parentText.includes('following') || parentText.includes('フォロー')) {
-              following = number;
-            } else if (parentText.includes('posts') || parentText.includes('tweets') || parentText.includes('ツイート')) {
-              tweets = number;
+      // Method 1: より安全なアプローチで統計を取得
+      try {
+        const statsElements = await page.$$('[role="link"] span');
+        
+        for (const element of statsElements) {
+          if (page.isClosed()) break; // 処理中にページが閉じられた場合の対策
+          
+          const text = await element.textContent();
+          if (text) {
+            const numberMatch = text.match(/[\d,]+/);
+            if (numberMatch) {
+              const number = this.parseNumber(numberMatch[0]);
+              
+              // 前後のテキストでタイプを判定（タイムアウト付き）
+              try {
+                const parent = await element.evaluateHandle(el => el.parentElement);
+                const parentText = await parent.evaluate(el => el.textContent?.toLowerCase() || '');
+                
+                if (parentText.includes('followers') || parentText.includes('フォロワー')) {
+                  followers = number;
+                } else if (parentText.includes('following') || parentText.includes('フォロー')) {
+                  following = number;
+                } else if (parentText.includes('posts') || parentText.includes('tweets') || parentText.includes('ツイート')) {
+                  tweets = number;
+                }
+              } catch (evalError) {
+                console.debug('🔍 [要素評価エラー] 統計要素の評価をスキップ:', evalError);
+                continue;
+              }
             }
           }
         }
+      } catch (method1Error) {
+        console.debug('🔍 [Method 1失敗] フォールバック方法を試行:', method1Error);
       }
 
-      // フォールバック：テキストベースでの抽出
-      if (followers === 0 && followersText) {
-        followers = this.parseNumber(followersText);
-      }
-      if (following === 0 && followingText) {
-        following = this.parseNumber(followingText);
+      // Method 2: フォールバック - 直接セレクター指定
+      if (followers === 0 || following === 0) {
+        try {
+          const followersText = await this.tryMultipleSelectorsSafe(page, [
+            'a[href*="/followers"] span[data-testid="UserName"] span',
+            'a[href*="/followers"] span:not([dir])',
+            '[data-testid="primaryColumn"] a[href*="/followers"] span'
+          ]);
+
+          const followingText = await this.tryMultipleSelectorsSafe(page, [
+            'a[href*="/following"] span[data-testid="UserName"] span',
+            'a[href*="/following"] span:not([dir])',
+            '[data-testid="primaryColumn"] a[href*="/following"] span'
+          ]);
+
+          if (followers === 0 && followersText) {
+            followers = this.parseNumber(followersText);
+          }
+          if (following === 0 && followingText) {
+            following = this.parseNumber(followingText);
+          }
+        } catch (method2Error) {
+          console.debug('🔍 [Method 2失敗] デフォルト値を使用:', method2Error);
+        }
       }
 
+      console.log(`✅ [統計抽出成功] フォロワー: ${followers}, フォロー: ${following}, ツイート: ${tweets}`);
+      
       return { followers, following, tweets };
     } catch (error) {
       console.warn('⚠️ [統計抽出エラー]:', error);
@@ -243,18 +345,62 @@ export class PlaywrightAccountCollector {
     }
   }
 
+  // 元のメソッド（後方互換性のために残す）
   private async extractLastTweetTime(page: Page): Promise<number> {
+    return this.extractLastTweetTimeSafe(page);
+  }
+
+  // エラーハンドリング強化版（249行目のエラー対応）
+  private async extractLastTweetTimeSafe(page: Page): Promise<number> {
     try {
-      // 最初のツイートのタイムスタンプを取得
-      const timeElements = await page.$$('[data-testid="tweet"] time');
-      if (timeElements.length > 0) {
-        const datetime = await timeElements[0].getAttribute('datetime');
-        if (datetime) {
-          return new Date(datetime).getTime();
+      // ページが閉じられていないかチェック
+      if (page.isClosed()) {
+        throw new Error('ページが既に閉じられています');
+      }
+
+      // 投稿が存在するかチェック（短時間待機）
+      const hasTweets = await page.locator('[data-testid="tweet"]').count() > 0;
+      if (!hasTweets) {
+        // 短時間待機してもう一度確認
+        try {
+          await page.waitForSelector('[data-testid="tweet"]', { 
+            timeout: 5000,
+            state: 'attached'
+          });
+        } catch (timeoutError) {
+          console.log('📝 [投稿なし] アカウントに投稿が存在しません - デフォルト値を使用');
+          return Date.now() - (24 * 60 * 60 * 1000); // 24時間前
         }
       }
-      
-      return Date.now() - (24 * 60 * 60 * 1000); // 24時間前をデフォルト
+
+      let lastTweetTime = Date.now() - (24 * 60 * 60 * 1000); // デフォルト: 24時間前
+
+      try {
+        // タイムアウト付きで時間要素を取得
+        const timeElements = await page.$$('[data-testid="tweet"] time');
+        
+        if (timeElements.length > 0) {
+          // 最初のツイートのタイムスタンプを取得
+          const firstTimeElement = timeElements[0];
+          
+          if (firstTimeElement && !page.isClosed()) {
+            const datetime = await firstTimeElement.getAttribute('datetime');
+            if (datetime) {
+              const parsedTime = new Date(datetime).getTime();
+              if (!isNaN(parsedTime) && parsedTime > 0) {
+                lastTweetTime = parsedTime;
+                console.log(`✅ [最新投稿時間取得成功] ${new Date(parsedTime).toISOString()}`);
+              }
+            }
+          }
+        } else {
+          console.debug('🔍 [投稿時間取得] ツイート要素が見つかりませんでした');
+        }
+      } catch (timeError) {
+        console.debug('🔍 [投稿時間取得エラー] フォールバック値を使用:', timeError);
+      }
+
+      return lastTweetTime;
     } catch (error) {
       console.warn('⚠️ [最新投稿時間取得エラー]:', error);
       return Date.now() - (24 * 60 * 60 * 1000);
@@ -326,7 +472,33 @@ export class PlaywrightAccountCollector {
   }
 
   private async tryMultipleSelectors(page: Page, selectors: string[]): Promise<string | null> {
-    return PlaywrightCommonSetup.tryMultipleSelectors(page, selectors);
+    return this.tryMultipleSelectorsSafe(page, selectors);
+  }
+
+  // エラーハンドリング強化版のセレクター試行
+  private async tryMultipleSelectorsSafe(page: Page, selectors: string[]): Promise<string | null> {
+    for (const selector of selectors) {
+      try {
+        // ページが閉じられていないかチェック
+        if (page.isClosed()) {
+          console.debug('🔍 [セレクター試行] ページが閉じられているため中断');
+          return null;
+        }
+
+        const element = await page.$(selector);
+        if (element) {
+          const text = await element.textContent();
+          if (text && text.trim()) {
+            return text.trim();
+          }
+        }
+      } catch (error) {
+        console.debug(`🔍 [セレクター試行] ${selector} 失敗:`, error);
+        // 次のセレクターを試行
+        continue;
+      }
+    }
+    return null;
   }
 
   private parseNumber(text: string): number {
@@ -366,9 +538,94 @@ export class PlaywrightAccountCollector {
     }
   }
 
-  private async cleanup(): Promise<void> {
-    await PlaywrightCommonSetup.cleanup(this.browser || undefined, this.context || undefined);
-    this.browser = null;
-    this.context = null;
+  // ブラウザマネージャーを使用した新しいクリーンアップ
+  async cleanup(): Promise<void> {
+    console.log('🧹 [PlaywrightAccountCollector] クリーンアップ中...');
+    await this.browserManager.cleanupInactiveSessions();
+  }
+
+  // 完全クリーンアップ（システム終了時）
+  async cleanupAll(): Promise<void> {
+    console.log('🧹 [PlaywrightAccountCollector] 完全クリーンアップ中...');
+    await this.browserManager.cleanupAll();
+  }
+
+  // ブラウザマネージャーの統計情報取得（デバッグ用）
+  getSessionStats(): {
+    totalSessions: number;
+    activeSessions: number;
+    totalBrowsers: number;
+    activeBrowsers: number;
+  } {
+    return this.browserManager.getSessionStats();
+  }
+
+  /**
+   * 外部から提供されたコンテキストを使用して収集実行
+   */
+  async collectWithContext(context: BrowserContext): Promise<PlaywrightAccountInfo> {
+    console.log('🎭 [アカウント情報取得] 提供されたコンテキストで実行中...');
+    
+    try {
+      const username = await this.getCurrentUsername();
+      const profileUrl = `https://x.com/${username}`;
+      
+      const page = await context.newPage();
+      await page.goto(profileUrl, { waitUntil: 'networkidle' });
+      
+      // 既存の収集ロジックを実行
+      const accountInfo = await this.extractAccountInfo(page, username);
+      
+      await page.close();
+      return accountInfo;
+      
+    } catch (error) {
+      console.error('❌ [コンテキスト使用収集エラー]:', error);
+      throw error;
+    }
+  }
+
+  // 並列実行用の専用メソッド（contextを受け取る）
+  async analyzeCurrentStatus(context?: BrowserContext): Promise<PlaywrightAccountInfo> {
+    return this.collectAccountInfo(undefined, context);
+  }
+
+  /**
+   * アカウント情報抽出の統合メソッド（既存ロジックの統合）
+   */
+  private async extractAccountInfo(page: Page, username: string): Promise<PlaywrightAccountInfo> {
+    // ページの読み込み完了を待機
+    await this.waitForPageLoad(page);
+
+    // 基本プロフィール情報、フォロワー統計、最近の投稿情報を並列取得（エラーハンドリング強化）
+    const [basicInfoResult, followerStatsResult, recentPostTimeResult] = 
+      await Promise.allSettled([
+        this.extractBasicInfoSafe(page, username),
+        this.extractFollowerStatsSafe(page),
+        this.extractLastTweetTimeSafe(page)
+      ]);
+
+    const basicInfo = basicInfoResult.status === 'fulfilled' ? basicInfoResult.value : { user_id: username, display_name: '', bio: '', verified: false };
+    const followerStats = followerStatsResult.status === 'fulfilled' ? followerStatsResult.value : { followers: 0, following: 0, tweets: 0 };
+    const recentPostTime = recentPostTimeResult.status === 'fulfilled' ? recentPostTimeResult.value : undefined;
+
+    const accountInfo: PlaywrightAccountInfo = {
+      username: username,
+      user_id: basicInfo.user_id || username,
+      display_name: basicInfo.display_name,
+      bio: basicInfo.bio,
+      verified: basicInfo.verified,
+      followers_count: followerStats.followers,
+      following_count: followerStats.following,
+      tweet_count: followerStats.tweets,
+      listed_count: 0, // X.comでは通常表示されない
+      last_updated: Date.now(),
+      last_tweet_time: recentPostTime,
+    };
+
+    console.log(`📊 [統計抽出] フォロワー: ${followerStats.followers.toLocaleString()}、フォロー: ${followerStats.following.toLocaleString()}、ツイート: ${followerStats.tweets.toLocaleString()}`);
+    console.log('✅ [収集完了] アカウント情報を正常に取得');
+
+    return accountInfo;
   }
 }

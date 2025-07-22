@@ -1,49 +1,13 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ParallelManager = void 0;
-require("dotenv/config");
-const claude_controlled_collector_js_1 = require("../lib/claude-controlled-collector.js");
-const growth_system_manager_js_1 = require("../lib/growth-system-manager.js");
-const posting_manager_js_1 = require("../lib/posting-manager.js");
-const x_performance_analyzer_js_1 = require("../lib/x-performance-analyzer.js");
-const expanded_action_executor_js_1 = require("../lib/expanded-action-executor.js");
-const daily_action_planner_js_1 = require("../lib/daily-action-planner.js");
-const x_client_js_1 = require("../lib/x-client.js");
-const yaml = __importStar(require("js-yaml"));
-class ParallelManager {
+import 'dotenv/config';
+import { ClaudeControlledCollector } from '../lib/claude-controlled-collector.js';
+import { GrowthSystemManager } from '../lib/growth-system-manager.js';
+import { PostingManager } from '../lib/posting-manager.js';
+import { XPerformanceAnalyzer } from '../lib/x-performance-analyzer.js';
+import { ExpandedActionExecutor } from '../lib/expanded-action-executor.js';
+import { DailyActionPlanner } from '../lib/daily-action-planner.js';
+import { SimpleXClient } from '../lib/x-client.js';
+import * as yaml from 'js-yaml';
+export class ParallelManager {
     collector;
     growthManager;
     postingManager;
@@ -52,16 +16,15 @@ class ParallelManager {
     dailyActionPlanner;
     xClient;
     constructor() {
-        this.collector = new claude_controlled_collector_js_1.ClaudeControlledCollector();
-        this.growthManager = new growth_system_manager_js_1.GrowthSystemManager();
-        // API key configuration
-        const apiKey = process.env.X_API_KEY || '';
-        this.postingManager = new posting_manager_js_1.PostingManager(apiKey);
-        this.xClient = new x_client_js_1.SimpleXClient(apiKey);
+        this.collector = new ClaudeControlledCollector();
+        this.growthManager = new GrowthSystemManager();
+        // Initialize X Client and PostingManager (OAuth 2.0)
+        this.xClient = new SimpleXClient();
+        this.postingManager = new PostingManager();
         // Initialize expanded action components
-        this.expandedActionExecutor = new expanded_action_executor_js_1.ExpandedActionExecutor(this.xClient, this.postingManager);
-        this.dailyActionPlanner = new daily_action_planner_js_1.DailyActionPlanner();
-        this.performanceAnalyzer = new x_performance_analyzer_js_1.XPerformanceAnalyzer();
+        this.expandedActionExecutor = new ExpandedActionExecutor(this.xClient, this.postingManager);
+        this.dailyActionPlanner = new DailyActionPlanner();
+        this.performanceAnalyzer = new XPerformanceAnalyzer();
     }
     async executeActions(actions) {
         console.log(`🚀 [アクション実行開始] ${actions.length}件のアクションを処理開始`);
@@ -132,7 +95,7 @@ Write in Japanese.
 Adapt the content style to match the account's theme and target audience.
 `;
         try {
-            const { claude } = await Promise.resolve().then(() => __importStar(require('@instantlyeasy/claude-code-sdk-ts')));
+            const { claude } = await import('@instantlyeasy/claude-code-sdk-ts');
             const content = await claude()
                 .withModel('sonnet')
                 .query(prompt)
@@ -162,7 +125,7 @@ Write in Japanese.
 Adapt the content style to match the account's theme and target audience.
 `;
             try {
-                const { claude } = await Promise.resolve().then(() => __importStar(require('@instantlyeasy/claude-code-sdk-ts')));
+                const { claude } = await import('@instantlyeasy/claude-code-sdk-ts');
                 content = await claude()
                     .withModel('sonnet')
                     .query(prompt)
@@ -264,12 +227,12 @@ Adapt the content style to match the account's theme and target audience.
     }
     async executeDataCleanup(action) {
         console.log('🧹 [データクリーンアップ開始] 古いデータファイルを整理中...');
-        const fs = (await Promise.resolve().then(() => __importStar(require('fs/promises')))).default;
-        const path = (await Promise.resolve().then(() => __importStar(require('path')))).default;
+        const fs = (await import('fs/promises')).default;
+        const path = (await import('path')).default;
         const dataDir = path.join(process.cwd(), 'data');
         const maxAge = action.params?.maxAgeHours || 24;
         const cleanupTargets = [
-            'context/execution-history.json',
+            'context/execution-history.yaml',
             'strategic-decisions.yaml',
             'communication/claude-to-claude.json'
         ];
@@ -303,8 +266,8 @@ Adapt the content style to match the account's theme and target audience.
         return { cleaned: cleanedCount, targets: cleanupTargets.length };
     }
     async executeWithDataSharing(task) {
-        const fs = (await Promise.resolve().then(() => __importStar(require('fs/promises')))).default;
-        const path = (await Promise.resolve().then(() => __importStar(require('path')))).default;
+        const fs = (await import('fs/promises')).default;
+        const path = (await import('path')).default;
         const statusPath = path.join(process.cwd(), 'data', 'communication', 'execution-status.json');
         try {
             const statusData = {
@@ -382,8 +345,8 @@ Adapt the content style to match the account's theme and target audience.
         });
     }
     async initializeDataSharing(tasks) {
-        const fs = (await Promise.resolve().then(() => __importStar(require('fs/promises')))).default;
-        const path = (await Promise.resolve().then(() => __importStar(require('path')))).default;
+        const fs = (await import('fs/promises')).default;
+        const path = (await import('path')).default;
         const communicationPath = path.join(process.cwd(), 'data', 'communication', 'claude-to-claude.json');
         const initData = {
             sessionId: `session-${Date.now()}`,
@@ -421,8 +384,8 @@ Adapt the content style to match the account's theme and target audience.
         return result;
     }
     async savePerformanceReport(result) {
-        const fs = (await Promise.resolve().then(() => __importStar(require('fs/promises')))).default;
-        const path = (await Promise.resolve().then(() => __importStar(require('path')))).default;
+        const fs = (await import('fs/promises')).default;
+        const path = (await import('path')).default;
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const reportPath = path.join(process.cwd(), 'data', 'performance-reports', `performance-${timestamp}.md`);
         const reportContent = `# X アカウント パフォーマンス分析報告書
@@ -536,12 +499,6 @@ ${result.recommendations.map((rec) => `- ${rec}`).join('\n')}
                 switch (decision.type) {
                     case 'original_post':
                         return await this.executeExpandedPost(decision);
-                    case 'quote_tweet':
-                        return await this.executeExpandedQuoteTweet(decision);
-                    case 'retweet':
-                        return await this.executeExpandedRetweet(decision);
-                    case 'reply':
-                        return await this.executeExpandedReply(decision);
                     default:
                         throw new Error(`Unknown action type: ${decision.type}`);
                 }
@@ -580,28 +537,10 @@ ${result.recommendations.map((rec) => `- ${rec}`).join('\n')}
         console.log('📝 [拡張投稿実行] オリジナルコンテンツ投稿を実行中...');
         return await this.expandedActionExecutor.executeAction(decision);
     }
-    // 拡張引用ツイート実行
-    async executeExpandedQuoteTweet(decision) {
-        console.log('💬 [拡張引用実行] 引用ツイートを実行中...');
-        return await this.expandedActionExecutor.executeAction(decision);
-    }
-    // 拡張リツイート実行
-    async executeExpandedRetweet(decision) {
-        console.log('🔄 [拡張RT実行] リツイートを実行中...');
-        return await this.expandedActionExecutor.executeAction(decision);
-    }
-    // 拡張リプライ実行
-    async executeExpandedReply(decision) {
-        console.log('💭 [拡張リプライ実行] リプライを実行中...');
-        return await this.expandedActionExecutor.executeAction(decision);
-    }
     // アクション配分の計算
     calculateActionBreakdown(results) {
         const breakdown = {
-            original_post: { success: 0, failure: 0 },
-            quote_tweet: { success: 0, failure: 0 },
-            retweet: { success: 0, failure: 0 },
-            reply: { success: 0, failure: 0 }
+            original_post: { success: 0, failure: 0 }
         };
         results.forEach(result => {
             if (breakdown.hasOwnProperty(result.type)) {
@@ -624,4 +563,3 @@ ${result.recommendations.map((rec) => `- ${rec}`).join('\n')}
         };
     }
 }
-exports.ParallelManager = ParallelManager;
