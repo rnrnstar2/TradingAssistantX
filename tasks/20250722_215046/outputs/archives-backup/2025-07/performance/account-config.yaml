@@ -1,0 +1,88 @@
+version: 1.0.0
+lastUpdated: 1752845992796
+account:
+  username: rnrnstar
+  user_id: ''
+  display_name: ''
+  verified: false
+current_metrics:
+  followers_count: 5
+  following_count: 5
+  tweet_count: 0
+  listed_count: 0
+  last_updated: 1753095610929
+growth_targets:
+  followers:
+    current: 5
+    daily: 2
+    weekly: 14
+    monthly: 60
+    quarterly: 180
+  engagement:
+    likesPerPost: 5
+    retweetsPerPost: 1
+    repliesPerPost: 1
+    engagementRate: 3
+  reach:
+    viewsPerPost: 50
+    impressionsPerDay: 750
+current_analysis:
+  last_analysis: '2025-07-21T15:04:44.778Z'
+  health_score: 55
+  performance_trend: stable
+  recommendations:
+    - 投稿頻度を改善し、1日15回の目標達成を推奨
+    - エンゲージメント重視のコンテンツで認知度向上を図る
+    - 定期的な投稿スケジュールの確立を推奨
+cached_account_info:
+  username: rnrnstar
+  user_id: rnrnstar
+  display_name: rnrnstar
+  verified: false
+  followers_count: 5
+  following_count: 5
+  tweet_count: 0
+  listed_count: 0
+  last_updated: 1753110284711
+  cache_timestamp: 1753110284770
+performance_history:
+  - timestamp: '2025-07-21T13:23:44.638Z'
+    health_score: 62
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T13:30:04.901Z'
+    health_score: 62
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T13:46:30.534Z'
+    health_score: 62
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T13:48:12.441Z'
+    health_score: 62
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T13:56:27.159Z'
+    health_score: 62
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T13:57:54.092Z'
+    health_score: 62
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T14:03:05.489Z'
+    health_score: 62
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T14:06:04.254Z'
+    health_score: 55
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T14:08:38.769Z'
+    health_score: 55
+    engagement_rate: 100
+    followers_count: 5
+  - timestamp: '2025-07-21T15:04:44.778Z'
+    health_score: 55
+    engagement_rate: 100
+    followers_count: 5

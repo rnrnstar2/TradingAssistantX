@@ -1,0 +1,23 @@
+timestamp: '2025-07-22T11:59:21.600Z'
+mode: development_single_execution
+command: pnpm dev
+purpose: development_testing_debugging
+system:
+  node_version: v22.14.0
+  platform: darwin
+  architecture: arm64
+  working_directory: /Users/rnrnstar/github/TradingAssistantX
+  environment: development
+configuration:
+  execution_mode: single_run
+  monitoring_enabled: true
+  metrics_enabled: true
+  logging_level: debug
+  development_features: true
+expectations:
+  execution_count: 1
+  timeout: 15 minutes
+  output_files:
+    - execution results
+    - metrics
+    - logs

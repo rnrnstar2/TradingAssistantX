@@ -1,9 +1,177 @@
+/**
+ * Main Types Export Hub
+ * 
+ * This file exports all types from the optimized consolidated type files.
+ * Maintains backward compatibility while providing access to the new organized structure.
+ */
+
+// ============================================================================
+// PRIMARY EXPORTS (conflict-free)
+// ============================================================================
+export * from './collection-types';
+export * from './system-types';
+
+// ============================================================================  
+// SELECTIVE RE-EXPORTS (conflict resolution)
+// ============================================================================
+
+// Decision types - selective exports to avoid conflicts
+export type {
+  DecisionQualityScore,
+  DecisionCollectionStrategy,
+  DecisionExecutionPlan,
+  DecisionExecutionResult,
+  Decision,
+  CollectionMethod,
+  SiteProfile,
+  QuickProfile,
+  CollectionMethodDecision,
+  DecisionContext,
+  DecisionStep,
+  DecisionLog,
+  ClaudeReasoning,
+  ReasoningTrace,
+  ReasoningStep,
+  DecisionChain,
+  DecisionBranch,
+  BranchAnalysis,
+  DecisionLoggingPerformanceMetrics,
+  TrendAnalysis,
+  OptimizationSuggestion,
+  VisualFlow,
+  FlowNode,
+  FlowEdge,
+  Dashboard,
+  DashboardSection,
+  VisualizationConfig,
+  DashboardAlert,
+  QualityReport as DecisionQualityReport,
+  QualityTrend,
+  ImprovementArea,
+  OptimizationViz,
+  PriorityMatrix,
+  ImplementationStep,
+  VisualizationData,
+  LoggerSession,
+  LoggerConfig
+} from './decision-types';
+
+// Integration types - selective exports to avoid conflicts  
+export type {
+  IntegrationQualityScore,
+  BrowserTools,
+  AnalysisTools,
+  InstructionContext,
+  GeneratedPost,
+  BrowserSession,
+  BrowserResourceUsage,
+  BrowserConfig,
+  NavigationOptions,
+  SelectorOptions,
+  ContentAnalysisRequest,
+  AnalysisOptions,
+  ContentAnalysisResult,
+  InsightExtractionResult,
+  ExtractedInsight,
+  APIIntegrationConfig,
+  APIRequest,
+  APIResponse,
+  RateLimitStatus,
+  WebhookConfig,
+  WebhookAuth,
+  WebhookPayload,
+  WebhookResult,
+  NotificationChannel,
+  NotificationChannelConfig,
+  NotificationMessage,
+  NotificationResult,
+  LoggingConfig,
+  LogDestination,
+  LogDestinationConfig,
+  LogEntry,
+  MonitoringConfig,
+  MonitoringMetric,
+  MetricValue,
+  AlertRule,
+  Alert,
+  IntegrationStatus,
+  IntegrationHealth,
+  IntegrationTest
+} from './integration-types';
+
+// Content types - selective exports to avoid conflicts
+export type {
+  QualityScore as ContentQualityScore,
+  QualityMetrics,
+  QualityAssessment,
+  QualityStandards,
+  ContentExecutionPlan,
+  TimeRelevance,
+  CoreInsight,
+  InformationPattern,
+  SynthesizedInsight,
+  ConflictingData,
+  ResolvedInsight,
+  ConnectionInsight,
+  MainPoint,
+  SupportingDetail,
+  PostStructure,
+  NarrativeFlow,
+  EnhancedContent,
+  EngagingContent,
+  EducationallyEnhanced,
+  PracticallyEnhanced,
+  UniqueContent,
+  MarketContext,
+  TimelyContent,
+  ImportanceScoring,
+  RankedInformation,
+  SynergyAnalysis,
+  InformationCluster,
+  IntegratedInformation,
+  IntegrationQuality,
+  StorytellingTemplate,
+  CompletedStory,
+  NaturalLanguagePost,
+  PostFormat,
+  PostRequirements,
+  AdaptedContent,
+  EnhancedPost,
+  FactCheckResult,
+  ReadabilityScore,
+  ValueMetrics,
+  WeakArea,
+  ImprovementSuggestion,
+  ImprovedPost,
+  ProcessedData,
+  ResourceConstraints,
+  ConstrainedExecution,
+  PostingInstruction,
+  AdaptedPost,
+  UserReaction,
+  LearningUpdate,
+  PostHistory as ContentPostHistory,
+  QualityImprovementPlan,
+  ConvergedPost,
+  PostCategory,
+  AlternativePost,
+  QualityBreakdown,
+  QualityComparison,
+  QualityReport as ContentQualityReport,
+  ConvergencePerformanceMetrics,
+  SystemHealth
+} from './content-types';
+
+// ============================================================================
+// LEGACY TYPES (maintained for backward compatibility)
+// ============================================================================
+
 export interface ScrapedData {
   content: string;
   url: string;
   timestamp: number;
   source: string;
-  metadata?: any; // 拡張メタデータ（FXデータ収集システム用）
+  metadata?: any;
 }
 
 export interface PostTemplate {
@@ -27,7 +195,8 @@ export interface ScrapeTarget {
   selector: string;
 }
 
-export interface PostHistory {
+// PostHistory moved to content-types.ts - using legacy interface for backward compatibility  
+export interface LegacyPostHistory {
   id: string;
   content: string;
   timestamp: number;
@@ -44,6 +213,9 @@ export interface PostHistory {
   qualityScore?: number;
   engagementRate?: number;
 }
+
+// Re-export as PostHistory for backward compatibility
+export type PostHistory = LegacyPostHistory;
 
 export interface PostingResult {
   success: boolean;
@@ -223,14 +395,71 @@ export interface TweetsResponse {
   };
 }
 
-// New YAML structure types
-export * from './account-config';
-export * from './content-strategy';
-export * from './posting-data';
+// ============================================================================
+// TYPE RE-EXPORTS FOR CONVENIENCE
+// ============================================================================
 
-// Collection common types
-export * from './collection-common';
+// ============================================================================
+// CONVENIENCE RE-EXPORTS (most commonly used types)
+// ============================================================================
 
-// Expanded action types
-export * from './action-types';
+// Collection types
+export type {
+  BaseCollectionResult,
+  CollectionResult,
+  AutonomousCollectionResult,
+  MultiSourceResult,
+  CollectionExecutionResult
+} from './collection-types';
 
+// System types  
+export type {
+  ActionType,
+  ActionDecision,
+  ActionResult,
+  IntegratedContext,
+  SystemDecision,
+  SystemExecutionResult,
+  ExecutionMetadata,
+  DecisionPerformanceMetrics,
+  ResourceUsage
+} from './system-types';
+
+// ============================================================================
+// UTILITY TYPE EXPORTS
+// ============================================================================
+
+// Export type guards and utility functions from collection types
+export {
+  isBaseCollectionResult,
+  isAutonomousCollectionResult,
+  isConvergenceCollectionResult,
+  createCollectionResult,
+  createAutonomousResult,
+  createConvergenceResult
+} from './collection-types';
+
+// Export type guards and utility functions from system types
+export {
+  isDecision,
+  isExecutionData,
+  isActionDecision
+} from './system-types';
+
+// Export type guards and utility functions from content types
+export {
+  calculateOverallQuality,
+  getQualityGrade
+} from './content-types';
+
+// Export type guards and utility functions from integration types
+export {
+  isQualityScore,
+  isAPIResponse
+} from './integration-types';
+
+// Export type guards and utility functions from decision types
+export {
+  isDecision as isDecisionLogging,
+  isExecutionData as isExecutionDataLogging
+} from './decision-types';

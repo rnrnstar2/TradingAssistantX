@@ -1,0 +1,33 @@
+sessionId: autonomous-session-1753170447874
+timestamp: '2025-07-22T07:48:55.167Z'
+autonomyScore: 59
+performanceMetrics:
+  strategicFlexibility: 40
+  adaptationRate: 38
+  learningEffectiveness: 100
+  overallAutonomy: 59
+strategy:
+  actionTypes:
+    - original_post
+  frequency: 2
+  contentThemes:
+    - 投資基礎教育
+    - リスク管理戦略
+    - 市場心理学
+    - 長期投資のメリット
+    - 初心者向け投資ガイド
+  riskLevel: medium
+execution:
+  totalActions: 4
+  successfulActions: 1
+  adaptationsMade: 1
+learning:
+  learningPoints: 9
+  optimizationAreas: 4
+  newOpportunities: 4
+nextRecommendations:
+  - '機会活用: 09:00時間帯の効果を他時間帯でも検証'
+  - '機会活用: 成功したoriginal_postの手法を他アクションに横展開'
+  - '機会活用: 失敗パターンからの学習データ蓄積活用'
+  - '機会活用: 時間帯別最適化による効率向上'
+  - '改善重点: 実行時間帯最適化'

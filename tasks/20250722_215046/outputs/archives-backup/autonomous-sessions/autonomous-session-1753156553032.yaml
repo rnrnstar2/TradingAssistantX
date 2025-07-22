@@ -1,0 +1,35 @@
+sessionId: autonomous-session-1753156553032
+timestamp: '2025-07-22T03:58:04.128Z'
+autonomyScore: 68
+performanceMetrics:
+  strategicFlexibility: 80
+  adaptationRate: 25
+  learningEffectiveness: 100
+  overallAutonomy: 68
+strategy:
+  actionTypes:
+    - original_post
+    - market_analysis
+    - engagement
+  frequency: 4
+  contentThemes:
+    - 投資基礎教育
+    - 分散投資戦略
+    - 長期投資の重要性
+    - ESG投資入門
+    - 市場動向の読み方
+  riskLevel: low
+execution:
+  totalActions: 4
+  successfulActions: 2
+  adaptationsMade: 0
+learning:
+  learningPoints: 9
+  optimizationAreas: 4
+  newOpportunities: 4
+nextRecommendations:
+  - '機会活用: 09:00/15:00以外の最適投稿時間帯の探索'
+  - '機会活用: 成功したoriginal_postのパターン分析による投稿テンプレート化'
+  - '機会活用: market_analysis失敗要因を活用した逆張り戦略'
+  - '機会活用: engagement失敗データからの回避すべき行動パターンの特定'
+  - '改善重点: market_analysis実行方法'

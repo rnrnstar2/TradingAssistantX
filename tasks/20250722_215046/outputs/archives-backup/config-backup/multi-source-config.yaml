@@ -1,0 +1,112 @@
+version: "1.0.0"
+
+rss:
+  sources:
+    yahoo_finance:
+      enabled: true
+      base_url: "https://finance.yahoo.com/rss/"
+      feeds:
+        - path: "topstories"
+          category: "general"
+        - path: "crypto"
+          category: "cryptocurrency"
+        - path: "stocks"
+          category: "stocks"
+      refresh_interval: 300  # 5分
+      timeout: 10000
+      
+    reuters:
+      enabled: true
+      base_url: "https://feeds.reuters.com"
+      feeds:
+        - path: "/reuters/businessNews"
+          category: "business"
+        - path: "/reuters/technologyNews"  
+          category: "technology"
+      refresh_interval: 600  # 10分
+      timeout: 10000
+      
+    bloomberg:
+      enabled: true
+      base_url: "https://feeds.bloomberg.com"
+      feeds:
+        - path: "/markets/news.rss"
+          category: "markets"
+      refresh_interval: 600
+      timeout: 10000
+
+apis:
+  alpha_vantage:
+    base_url: "https://www.alphavantage.co"
+    endpoints:
+      stock_quote: "/query?function=GLOBAL_QUOTE"
+      forex: "/query?function=FX_DAILY"
+      crypto: "/query?function=DIGITAL_CURRENCY_DAILY"
+    rate_limit: 5  # requests per minute
+    timeout: 15000
+    
+  coingecko:
+    base_url: "https://api.coingecko.com/api/v3"
+    endpoints:
+      prices: "/simple/price"
+      trending: "/search/trending"
+      market_data: "/coins/markets"
+    rate_limit: 50  # requests per minute
+    timeout: 10000
+    
+  fred:
+    base_url: "https://api.stlouisfed.org/fred"
+    endpoints:
+      series: "/series/observations"
+      categories: "/category/series"
+    rate_limit: 120  # requests per minute
+    timeout: 15000
+
+community:
+  reddit:
+    base_url: "https://www.reddit.com"
+    subreddits:
+      investing:
+        path: "/r/investing"
+        sort: "hot"
+        limit: 25
+        filters: ["discussion", "dd", "analysis"]
+      stocks:
+        path: "/r/stocks"
+        sort: "hot"
+        limit: 20
+      personalfinance:
+        path: "/r/personalfinance"
+        sort: "hot"
+        limit: 15
+        filters: ["help", "advice"]
+    rate_limit: 60  # requests per minute
+    timeout: 10000
+    
+  hackernews:
+    base_url: "https://hacker-news.firebaseio.com/v0"
+    endpoints:
+      topstories: "/topstories.json"
+      item: "/item/{id}.json"
+    rate_limit: 30
+    timeout: 8000
+
+# レート制限・エラーハンドリング
+rateLimiting:
+  global:
+    max_concurrent: 10
+    backoff_strategy: "exponential"
+    max_retries: 3
+    
+  per_source:
+    rss: 5
+    api: 3  
+    community: 4
+
+caching:
+  enabled: true
+  ttl:
+    rss: 300      # 5分
+    api: 180      # 3分
+    community: 600 # 10分
+  max_size: 100   # MB

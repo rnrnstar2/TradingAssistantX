@@ -1,8 +1,129 @@
 # TradingAssistantX 技術ガイド
 
-## 1. ディレクトリ構造
+## 1. システムビジョンと理想像
 
-### /src ディレクトリ詳細
+### Claude Code SDK中心の完全自律システム
+
+**革新的中心技術**: Claude Code SDKによる意思決定の完全委託
+
+TradingAssistantXは、Claude Code SDKを中心とした完全自律システムです：
+- 🎯 **自律的テーマ決定**: Claudeが市場分析して最適テーマを決定
+- 📊 **自律的データ収集**: 必要データを自動収集・分析
+- ✍️ **自律的投稿作成**: Claude Code SDKが全意思決定を担当し最適投稿を生成
+- 🔄 **継続的最適化**: 実行結果から学習し品質向上
+
+### 自律的成長エンジン
+
+- **1日15回の定時実行**で最適投稿時間に自律実行
+- **アカウント現状把握**と次の成長要素を自己分析
+- **フォロワー反応やトレンド学習**による投稿戦略自動更新
+- **失敗からの学習**による継続的品質改善
+
+### インテリジェントな意思決定
+
+- **AI駆動の全自動プロセス**（人間の指示待ち不要）
+- **状況に応じた適応的戦略切替**
+- **人間では気づかない成長機会**の自動発見
+
+## 2. システムアーキテクチャ
+
+### 完全疎結合設計の重要性
+
+**データソース独立性と意思決定分岐の容易性確保**
+
+TradingAssistantXの中核となる設計原則です：
+- 🔗 **データソース疎結合**: 各収集源（RSS/API/Community）は完全独立動作
+- 📊 **統一インターフェース**: CollectionResult型でデータ統合、ソース固有性保持
+- ⚡ **動的戦略切替**: ActionSpecificCollectorによる動的データ収集戦略
+- 🎛️ **設定駆動制御**: YAML設定によるソース選択・優先度制御
+
+```
+意思決定層 (core/): アカウント状況分析・戦略選択
+     ↓ 戦略指示
+データ収集層 (collectors/): RSS・API・Community (独立)
+     ↓ 構造化データ  
+コンテンツ創造層 (services/): 投稿生成・品質確保・投稿実行
+     ↓ 実行結果
+学習・最適化層 (data/): 結果分析・戦略更新・階層管理
+```
+
+## 3. MVP構成とYAML駆動開発
+
+### RSS Collector中心の段階的実装
+
+**Phase 1 (MVP)**: RSS Collectorのみで投資教育コンテンツを収集・生成
+**将来拡張**: API、Community、Webスクレイピングなど多様なデータソースを段階的に追加
+
+### RSS Collectorの特徴
+
+- **主要金融メディア**のRSSフィードから効率収集
+- **構造化データ**で安定した情報品質確保
+- **動的クエリ対応**: Google News検索と連携、テーマに応じた柔軟な情報収集
+  - 固定URLとクエリベースの両方式をサポート
+  - YAMLで「query」フィールドを指定すると自動的に検索URLを生成
+  - Claude Code SDKが自律的に最適な検索条件を選択可能
+
+### アカウント分析の特別扱い
+
+- **Playwright使用**: 自アカウントの分析（フォロワー数、エンゲージメント率）のみPlaywrightを使用
+- **分析と収集の分離**: アカウント分析（Playwright）と情報収集（RSS）は完全に独立
+- **認証対応**: X APIの制限を回避し、確実に自アカウントデータを取得
+- **最小限の利用**: ブラウザ自動化は自アカウント分析に限定し、一般的な情報収集にはRSSを使用
+
+## 4. Claude Code SDK意思決定カタログ
+
+### 利用可能なアクション・カタログ
+
+#### データ収集戦略
+- **RSS集中収集** (`collectors/rss-collector.ts`): 安定情報収集、API制限回避
+- **アカウント分析** (`collectors/playwright-account.ts`): 自己状況把握、戦略調整
+- **複合データ収集** (将来拡張): 多角的情報、独自性高コンテンツ
+
+#### コンテンツ生成戦略
+- **教育重視型**: フォロワー初心者中心、信頼性向上
+- **トレンド対応型**: 話題性重視、短期エンゲージメント向上
+- **分析特化型**: 市場複雑時、権威性向上
+
+#### 投稿タイミング戦略
+- **定時投稿**: 安定習慣形成、継続エンゲージメント
+- **機会的投稿**: 重要ニュース時、注目度最大化
+- **最適化投稿**: データ分析後、ROI最大化
+
+### アカウント成長段階別戦略
+
+1. **集中特化段階**: 投資基礎教育特化（エンゲージメント低・テーマ分散時）
+2. **段階的拡張段階**: 核テーマ60% + 関連テーマ40%（安定エンゲージメント時）
+3. **多様化展開段階**: 動的戦略適用（高エンゲージメント・複数実績時）
+
+### 3次元判断マトリクス
+
+**優先順位**: 外部環境 > エンゲージメント状態 > 成長段階
+
+```
+[外部環境] 緊急対応 → 分析特化型 + 機会的投稿
+[通常環境] → [エンゲージメント判断]
+  ├── 低エンゲージメント → 集中特化段階強制 + トレンド対応強化
+  ├── 安定エンゲージメント → 成長段階適用
+  │   ├── 集中特化段階 → RSS集中 + 教育重視 + 定時投稿
+  │   ├── 段階的拡張段階 → 複合収集 + バランス型 + 最適化投稿
+  │   └── 多様化展開段階 → 戦略的収集 + 分析特化 + 機会的投稿
+  └── 高エンゲージメント → 現在戦略維持 + 質的向上集中
+```
+
+### 自律実行フロー
+
+```
+[1] 現在状況分析 (account-status.yaml・active-strategy.yaml読み込み)
+[2] アカウント成長段階判定 + 戦略選択
+[3] データ収集実行 (選択されたCollector起動)
+[4] コンテンツ生成 (選択された戦略でcontent-creator実行)
+[5] 品質確認・投稿実行 (x-poster.ts)
+[6] 結果記録・学習データ更新 (data/learning/)
+```
+
+## 5. ディレクトリ構造
+
+### /src ディレクトリ詳細（最新構造）
 
 ```
 src/
@@ -13,34 +134,36 @@ src/
 │   │                               # 収集データを基に最適な戦略を選択
 │   └── loop-manager.ts           # ループ実行管理
 │                                   # 1日15回の定時実行を制御
-├── collectors/             # データ収集
-│   ├── rss-collector.ts          # RSS収集（MVP）
-│   │                               # 主要金融メディアからRSSフィードを収集
-│   ├── playwright-account.ts     # アカウント分析専用
-│   │                               # 自アカウントの状態を分析（フォロワー数等）
+├── collectors/             # データ収集（疎結合設計）
+│   ├── rss-collector.ts          # RSS収集（MVP・動的クエリ対応）
+│   │                               # 固定URLとGoogle News検索の両方対応
+│   │                               # 主要金融メディア + 動的検索クエリ
+│   ├── playwright-account.ts     # アカウント分析専用（Playwright使用）
+│   │                               # X API制限回避、自アカウント状態分析のみ
 │   └── base-collector.ts         # 基底クラス（疎結合設計）
 │                                   # CollectionResult型による統一インターフェース
 ├── services/               # ビジネスロジック
 │   ├── content-creator.ts        # 投稿コンテンツ生成
-│   │                               # Claude SDKを使用して教育的価値の高いコンテンツを生成
-│   ├── data-optimizer.ts         # データ最適化・クレンジング
-│   │                               # 古いデータの削除と最適化処理
-│   └── x-poster.ts              # X API投稿
+│   │                               # Claude Code SDK中心の教育的コンテンツ生成
+│   ├── data-hierarchy-manager.ts # 階層データ管理（3層構造）
+│   │                               # current→learning→archives自動移行
+│   ├── performance-analyzer.ts   # 分析・評価
+│   │                               # エンゲージメント分析・成功パターン抽出
+│   └── x-poster.ts              # X投稿
 │                                   # 生成コンテンツをX（Twitter）に投稿
-├── utils/                  # ユーティリティ
-│   ├── yaml-manager.ts          # YAML読み書き
-│   │                               # data/ディレクトリのYAMLファイル管理
-│   ├── context-compressor.ts    # コンテキスト圧縮
-│   │                               # Claude SDK向けのコンテキスト最適化
-│   └── integrity-checker.ts     # 整合性検証（必須）
-│                                   # 要件定義との整合性を常に保証
+├── utils/                  # ユーティリティ（最適化済み）
+│   ├── yaml-manager.ts         # YAML高度操作
+│   ├── yaml-utils.ts           # YAML基本操作
+│   ├── context-compressor.ts   # コンテキスト圧縮
+│   │                               # Claude Code SDK向けコンテキスト最適化
+│   ├── error-handler.ts        # エラーハンドリング
+│   ├── file-size-monitor.ts    # ファイルサイズ監視
+│   └── monitoring/
+│       └── health-check.ts     # システムヘルスチェック
 └── scripts/                # 実行スクリプト
-    ├── main.ts                  # ループ実行（pnpm start）
-    │                               # core-runnerを1日15回実行
-    ├── dev.ts                   # 単一実行（pnpm dev）
-    │                               # core-runnerを1回だけ実行（開発用）
-    └── core-runner.ts           # 共通実行ロジック
-                                    # アカウント分析→投稿作成の中核処理
+    ├── main.ts      # ループ実行（pnpm start）
+    ├── dev.ts       # 単一実行（pnpm dev）
+    └── core-runner.ts # 共通実行ロジック
 ```
 
 ### /data ディレクトリ詳細（最重要）
@@ -57,27 +180,31 @@ data/
 │   └── brand-strategy.yaml      # ブランド戦略設定
 │       └── フォロワー数に応じたコンテンツ戦略を定義
 │
-├── current/                # 現在の状態（常に最新・最小限）
+├── current/                # ホットデータ層（直近7日分・最大1MB）
 │   ├── account-status.yaml      # アカウント状態
 │   │   └── フォロワー数、エンゲージメント率等
 │   ├── active-strategy.yaml     # アクティブな戦略
 │   │   └── 現在適用中のコンテンツ戦略
 │   ├── today-posts.yaml         # 本日の投稿記録
 │   │   └── 当日の投稿内容と結果
+│   ├── weekly-summary.yaml      # 週次サマリー
+│   │   └── 直近7日間の成果とインサイト
 │   └── execution-log.yaml       # 実行ログ（整合性監査用）
 │       └── ファイル作成・更新・削除の記録
 │
-├── learning/               # 学習データ（定期的にクレンジング）
-│   ├── success-patterns.yaml    # 成功パターン
-│   │   └── 高エンゲージメントを獲得した投稿パターン
-│   ├── high-engagement.yaml     # 高エンゲージメント投稿
-│   │   └── 反響の大きかった投稿の詳細記録
-│   └── effective-topics.yaml    # 効果的なトピック
-│       └── フォロワー増加に貢献したトピック一覧
+├── learning/               # ウォームデータ層（90日分の分析済みデータ・最大10MB）
+│   ├── post-insights.yaml       # 投稿分析結果（必須）
+│   │   └── エンゲージメント分析、成功パターンの抽出
+│   └── engagement-patterns.yaml # エンゲージメントパターン（必須）
+│       └── 時間帯・トピック別の反応傾向
 │
-└── archives/               # アーカイブ（古いデータは自動移動）
-    └── 2024-01/                # 月別アーカイブ
-        └── 過去の投稿データ、学習結果等を保存
+└── archives/               # コールドデータ層（永続保存・容量無制限）
+    ├── posts/                   # 全投稿の生データ
+    │   └── 2025-01/            # 月別ディレクトリ
+    │       └── 投稿の完全なアーカイブ
+    └── insights/               # 古い分析結果
+        └── 2024-Q4/            # 四半期別アーカイブ
+            └── 過去の学習データとインサイト
 ```
 
 ### /tasks ディレクトリ
@@ -95,7 +222,7 @@ tasks/
 └── temporary/             # 共通一時ファイル置き場
 ```
 
-## 2. データフロー設計
+## 6. データフロー設計
 
 ### 実行フロー
 
@@ -106,9 +233,13 @@ tasks/
          ↓
 [3] integrity-checker.ts による事前検証
          ↓
-[4] account-status.yaml 読み込み（現在状態把握）
+[4] account-status.yaml 読み込み（現在状況分析）
          ↓
-[5] decision-engine.ts による戦略選択
+[5] ブランド一貫性チェック + 戦略選択
+     ├── フォロワー数 < 1000 → 投資基礎教育特化（80%統一）
+     ├── フォロワー数 1000-5000 → 核テーマ（60%）+ 関連テーマ（40%）
+     ├── フォロワー数 > 5000 → 動的戦略適用
+     └── 緊急時（重要ニュース）→ 分析特化型（全段階共通）
          ↓
 [6] ActionSpecificCollector による情報収集
          ↓
@@ -116,11 +247,11 @@ tasks/
          ↓
 [8] x-poster.ts による投稿実行
          ↓
-[9] 結果をdata/current/に記録
+[9] 結果を階層データに記録（current → learning → archives）
          ↓
-[10] integrity-checker.ts による事後検証
+[10] data-optimizer.ts による階層データ管理・自動移行
          ↓
-[11] data-optimizer.ts によるデータ最適化
+[11] integrity-checker.ts による事後検証
 ```
 
 ### データの流れ
@@ -143,7 +274,7 @@ tasks/
   投稿結果 → data/learning/*.yaml → 次回実行時に活用
 ```
 
-## 3. 疎結合Collector設計
+## 7. 疎結合Collector設計
 
 ### 設計原則
 
@@ -230,7 +361,7 @@ export class NewSourceCollector extends BaseCollector {
 }
 ```
 
-## 4. YAML仕様
+## 8. YAML仕様
 
 ### 設定ファイル仕様
 
@@ -286,37 +417,89 @@ schedule:
       reason: "深夜帯・低エンゲージメント"
 ```
 
-#### rss-sources.yaml
+#### rss-sources.yaml（動的クエリ対応版）
+
+**特徴**: Claude Code SDKが状況に応じて最適なクエリを選択できる革新的設計
 
 ```yaml
 version: "1.0"
 sources:
   financial_news:
+    # 固定URL方式（安定ソース）
     - name: "日経電子版"
       url: "https://www.nikkei.com/rss/news.rdf"
       category: "general_market"
       priority: "high"
+      reliability: 0.95
       
     - name: "ブルームバーグ日本"
       url: "https://www.bloomberg.co.jp/rss/news.rdf"
       category: "global_market"
       priority: "high"
+      reliability: 0.90
       
+    # 動的クエリ方式（Google News検索連携）
+    - name: "投資基礎教育_インテリジェント"
+      query: "投資 初心者 基礎 解説"
+      category: "educational_content"
+      priority: "high"
+      search_type: "google_news"
+      adaptive: true  # Claudeがクエリを動的に調整可能
+      context_aware: true  # アカウント状況に応じて適応
+      
+    - name: "市場緊急_アダプティブ"
+      query: "株価急落 OR 市場暴落 OR 金利急上昇 OR 経済ショック"
+      category: "emergency_news"
+      priority: "urgent"
+      search_type: "google_news"
+      trigger_conditions: ["market_volatility", "breaking_news"]
+      adaptive: true
+      
+    # コンテキストアウェアクエリ（Claudeが自動生成）
+    - name: "アダプティブ_コンテンツ"
+      query_template: "{{theme}} {{skill_level}} {{market_condition}}"
+      category: "dynamic_content"
+      priority: "medium"
+      search_type: "google_news"
+      claude_controlled: true  # Claudeが完全に制御
+      variables:
+        theme: ["投資", "資産運用", "ポートフォリオ"]
+        skill_level: ["初心者", "中級者", "上級者"]
+        market_condition: ["上昇相場", "下落相場", "横ばい"]
+      
+  market_analysis:
     - name: "ロイター日本"
       url: "https://jp.reuters.com/rss/topNews.rdf"
       category: "breaking_news"
       priority: "medium"
+      reliability: 0.85
       
-  market_analysis:
-    - name: "投資の森"
-      url: "https://www.toushin.com/rss/"
-      category: "investment_education"
-      priority: "medium"
-      
+# インテリジェント設定
 settings:
-  fetch_limit_per_source: 10  # 各ソースから取得する最大記事数
-  cache_duration_minutes: 60  # キャッシュ有効期間
+  fetch_limit_per_source: 10
+  cache_duration_minutes: 60
+  
+  # 動的クエリ機能
+  dynamic_query_enabled: true
+  google_news_base_url: "https://news.google.com/rss/search"
+  
+  # Claude Code SDK連携設定
+  claude_query_optimization: true    # Claudeがクエリを最適化
+  context_integration: true         # アカウント状況をクエリに反映
+  real_time_adaptation: true        # リアルタイムでクエリ調整
+  
+  # 品質管理
+  min_content_quality: 0.7         # 最低コンテンツ品質闾値
+  duplicate_detection: true        # 重複コンテンツ検出
+  relevance_threshold: 0.6         # 関連性闾値
 ```
+
+#### 動的クエリの仕組み
+
+1. **固定URL**: 安定した情報ソースから基本情報を収集
+2. **簡単クエリ**: 事前定義されたキーワードで検索
+3. **アダプティブクエリ**: Claudeが状況に応じてクエリを修正
+4. **コンテキストアウェア**: アカウント状態や市場状況を考慮した検索
 
 #### account-status.yaml
 
@@ -378,7 +561,7 @@ strategies:
     tone: "権威的かつ親近感のある"
 ```
 
-## 5. ハルシネーション防止機構
+## 9. ハルシネーション防止機構
 
 ### 整合性検証システム
 
@@ -456,11 +639,15 @@ class IntegrityChecker {
 
 1. **構造検証**: 要件定義のディレクトリ構造と完全一致
 2. **ファイル数制限**: data/current/は最大10ファイル
-3. **サイズ制限**: 各YAMLは最大100KB、data/全体で10MB上限
+3. **階層別サイズ制限**: 
+   - current/: 最大1MB（ホットデータ）
+   - learning/: 最大10MB（ウォームデータ）
+   - archives/: 無制限（コールドデータ）
 4. **命名規則**: 要件定義に記載されたファイル名のみ使用可
 5. **書き込み権限**: 許可されたディレクトリのみ書き込み可能
+6. **自動階層移動**: 古いデータは自動的に下位層へ移動し、分析結果のみ保持
 
-## 6. 拡張ポイント
+## 10. 拡張ポイント
 
 ### 新機能追加時の考慮事項
 
@@ -495,6 +682,77 @@ class IntegrityChecker {
 ```
 
 この設計により、システムの中核を変更することなく、新しい機能を安全に追加できます。
+
+## 11. 階層型データ管理システム（3層構造）
+
+### 設計思想
+
+Claude Code SDK向けに必要最小限の高品質データのみを保持し、継続的成長を実現する階層型アーキテクチャ。
+
+### 3層構造の詳細
+
+#### ホットデータ層（data/current/）
+- **保持期間**: 直近7日分
+- **容量制限**: 最大1MB
+- **目的**: 即座の意思決定用
+- **特徴**: 
+  - 実行時に常に参照される最重要データ
+  - Claude Code SDKが高速アクセス可能
+  - リアルタイムの状況把握に特化
+
+#### ウォームデータ層（data/learning/）
+- **保持期間**: 90日分の分析済みインサイト
+- **容量制限**: 最大10MB
+- **目的**: 学習とパターン認識
+- **特徴**:
+  - 生データではなく分析結果のみ保持
+  - 成功パターンとエンゲージメント傾向を蓄積
+  - 戦略最適化の根拠データを提供
+
+#### コールドデータ層（data/archives/）
+- **保持期間**: 永続保存
+- **容量制限**: 無制限
+- **目的**: 完全なデータ保全
+- **特徴**:
+  - 全投稿の生データを月別・四半期別で整理
+  - 長期的な傾向分析とデータ監査に活用
+  - 通常の実行では参照されない
+
+### 自動データ移行プロセス
+
+```
+実行時データ生成
+     ↓
+[current/] 即座の意思決定に活用
+     ↓ (7日後)
+分析処理 → インサイト抽出
+     ↓
+[learning/] パターン学習に活用
+     ↓ (90日後)
+[archives/] 永続保存（月別/四半期別）
+```
+
+### data-optimizer.tsの責務
+
+1. **日次移行処理**:
+   - 投稿生データをarchives/posts/へ自動移行
+   - currentディレクトリの容量監視・クリーンアップ
+
+2. **週次分析処理**:
+   - currentデータからインサイトを抽出
+   - 分析結果をlearningディレクトリに保存
+   - 古いcurrentデータの削除
+
+3. **月次アーカイブ処理**:
+   - 古いlearningデータをarchives/insights/へ移行
+   - 四半期別の統計サマリー生成
+
+### Claude Code SDK最適化効果
+
+- **コンテキスト軽量化**: 必要最小限のデータのみ読み込み
+- **高速意思決定**: ホットデータへの瞬時アクセス
+- **学習効率化**: 整理されたインサイトによる素早い学習
+- **長期記憶保持**: 重要な知見の永続化
 
 ---
 

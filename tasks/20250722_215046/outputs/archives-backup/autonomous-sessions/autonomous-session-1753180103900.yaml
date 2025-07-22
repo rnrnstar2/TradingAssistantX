@@ -1,0 +1,31 @@
+sessionId: autonomous-session-1753180103900
+timestamp: '2025-07-22T10:31:04.153Z'
+autonomyScore: 47
+performanceMetrics:
+  strategicFlexibility: 40
+  adaptationRate: 0
+  learningEffectiveness: 100
+  overallAutonomy: 47
+strategy:
+  actionTypes:
+    - original_post
+  frequency: 1
+  contentThemes:
+    - 火曜日市場振り返り
+    - リスク管理教育
+    - 実践的投資指導
+  riskLevel: low
+execution:
+  totalActions: 1
+  successfulActions: 0
+  adaptationsMade: 0
+learning:
+  learningPoints: 5
+  optimizationAreas: 4
+  newOpportunities: 4
+nextRecommendations:
+  - '機会活用: 実行失敗パターンからの学習データベース構築'
+  - '機会活用: 予測的実行成功率算出機能'
+  - '機会活用: 動的実行パラメータ調整システム'
+  - '機会活用: マルチステップ実行での部分成功活用'
+  - '改善重点: original_post実行メカニズム'

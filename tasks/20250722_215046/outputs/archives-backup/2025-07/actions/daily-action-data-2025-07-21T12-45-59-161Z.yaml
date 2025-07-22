@@ -1,0 +1,257 @@
+- timestamp: '2025-07-21T12:45:04.702Z'
+  totalActions: 0
+  successfulActions: 0
+  errors: []
+- timestamp: '2025-07-21T12:45:07.359Z'
+  action: original_post
+  params:
+    originalContent: |-
+      📈 投資初心者の方へ：
+      「毎日少しずつ」が成功の秘訣です。
+
+      ✅ 1日10分の学習時間確保
+      ✅ 小額から始めて経験を積む
+      ✅ 感情に左右されない冷静な判断
+      ✅ 分散投資でリスク軽減
+
+      完璧を求めず、継続することが最も重要。今日から始めましょう！
+
+      #投資初心者 #資産形成 #投資教育 #長期投資 #マネーリテラシー
+    hashtags:
+      - '#投資教育'
+      - '#資産形成'
+    contentType: educational
+    riskLevel: low
+    timeOfDay: 21
+    dateGenerated: '2025-07-21'
+  content: |-
+    📈 投資初心者の方へ：
+    「毎日少しずつ」が成功の秘訣です。
+
+    ✅ 1日10分の学習時間確保
+    ✅ 小額から始めて経験を積む
+    ✅ 感情に左右されない冷静な判断
+    ✅ 分散投資でリスク軽減
+
+    完璧を求めず、継続することが最も重要。今日から始めましょう！
+
+    #投資初心者 #資産形成 #投資教育 #長期投資 #マネーリテラシー
+  success: true
+- timestamp: '2025-07-21T12:45:13.811Z'
+  action: original_post
+  params:
+    originalContent: |-
+      💡 **投資の基本原則：長期視点の重要性**
+
+      短期的な値動きに惑わされず、企業の本質的価値を見極めることが投資成功の鍵。
+
+      📈 チェックポイント：
+      ✓ 財務健全性
+      ✓ 事業の成長性  
+      ✓ 競合優位性
+      ✓ 経営陣の質
+
+      感情ではなく、データに基づく判断を心がけましょう。一時的な下落も長期目線では成長への布石となることが多いです。
+
+      #投資教育 #長期投資 #資産運用 #投資初心者 #株式投資
+    hashtags:
+      - '#投資教育'
+      - '#資産形成'
+    contentType: educational
+    riskLevel: low
+    timeOfDay: 21
+    dateGenerated: '2025-07-21'
+  content: |-
+    💡 **投資の基本原則：長期視点の重要性**
+
+    短期的な値動きに惑わされず、企業の本質的価値を見極めることが投資成功の鍵。
+
+    📈 チェックポイント：
+    ✓ 財務健全性
+    ✓ 事業の成長性  
+    ✓ 競合優位性
+    ✓ 経営陣の質
+
+    感情ではなく、データに基づく判断を心がけましょう。一時的な下落も長期目線では成長への布石となることが多いです。
+
+    #投資教育 #長期投資 #資産運用 #投資初心者 #株式投資
+  success: true
+- timestamp: '2025-07-21T12:45:16.975Z'
+  action: original_post
+  params:
+    originalContent: |-
+      📈 **投資の基本原則：感情に左右されない資産形成**
+
+      市場が不安定な今こそ、冷静な判断が重要です💡
+
+      ✅ 分散投資でリスクを分散
+      ✅ 定期積立で時間分散効果を活用  
+      ✅ 短期の値動きに一喜一憂しない
+      ✅ 投資は余裕資金で行う
+
+      「時間」は最強の投資パートナー🚀
+      焦らず、着実に、自分のペースで資産形成を続けましょう
+
+      #投資教育 #資産形成 #分散投資 #長期投資 #投資初心者 #マネリテ
+    hashtags:
+      - '#投資教育'
+      - '#資産形成'
+    contentType: educational
+    riskLevel: low
+    timeOfDay: 21
+    dateGenerated: '2025-07-21'
+  content: |-
+    📈 **投資の基本原則：感情に左右されない資産形成**
+
+    市場が不安定な今こそ、冷静な判断が重要です💡
+
+    ✅ 分散投資でリスクを分散
+    ✅ 定期積立で時間分散効果を活用  
+    ✅ 短期の値動きに一喜一憂しない
+    ✅ 投資は余裕資金で行う
+
+    「時間」は最強の投資パートナー🚀
+    焦らず、着実に、自分のペースで資産形成を続けましょう
+
+    #投資教育 #資産形成 #分散投資 #長期投資 #投資初心者 #マネリテ
+  success: true
+- date: '2025-07-21'
+  totalActions: 0
+  actionBreakdown:
+    original_post: 0
+  executedActions:
+    - success: false
+      actionId: test-0
+      type: original_post
+      timestamp: 1753101916995
+      error: Cannot read properties of undefined (reading 'originalContent')
+    - success: false
+      actionId: test-1
+      type: original_post
+      timestamp: 1753101916995
+      error: Cannot read properties of undefined (reading 'originalContent')
+    - success: false
+      actionId: test-2
+      type: original_post
+      timestamp: 1753101916995
+      error: Cannot read properties of undefined (reading 'originalContent')
+    - success: false
+      actionId: test-3
+      type: original_post
+      timestamp: 1753101920003
+      error: Cannot read properties of undefined (reading 'originalContent')
+    - success: false
+      actionId: test-4
+      type: original_post
+      timestamp: 1753101920004
+      error: Cannot read properties of undefined (reading 'originalContent')
+  targetReached: false
+- timestamp: '2025-07-21T12:45:33.914Z'
+  action: original_post
+  params:
+    originalContent: |-
+      📈 投資初心者が最初に覚えるべき「3つの黄金ルール」
+
+      1️⃣ 感情で売買しない（恐怖・欲望は最大の敵）
+      2️⃣ 余剰資金のみで投資（生活費には絶対に手を出さない）
+      3️⃣ 分散投資でリスク管理（一点集中は危険）
+
+      知識より先に「投資マインド」を身につけよう💡
+
+      #投資初心者 #資産運用 #投資教育 #リスク管理 #投資の心構え
+    hashtags:
+      - '#投資教育'
+      - '#資産形成'
+    contentType: educational
+    riskLevel: low
+    timeOfDay: 21
+    dateGenerated: '2025-07-21'
+  content: |-
+    📈 投資初心者が最初に覚えるべき「3つの黄金ルール」
+
+    1️⃣ 感情で売買しない（恐怖・欲望は最大の敵）
+    2️⃣ 余剰資金のみで投資（生活費には絶対に手を出さない）
+    3️⃣ 分散投資でリスク管理（一点集中は危険）
+
+    知識より先に「投資マインド」を身につけよう💡
+
+    #投資初心者 #資産運用 #投資教育 #リスク管理 #投資の心構え
+  success: true
+- timestamp: '2025-07-21T12:45:51.220Z'
+  action: original_post
+  params:
+    originalContent: |-
+      📊 **投資の基本原則**
+
+      成功するトレーダーの3つの習慣：
+
+      ①リスク管理最優先
+      →1回の取引で資金の2%以上は絶対にリスクしない
+
+      ②感情をデータで制御
+      →損切りラインを事前設定、感情に左右されない
+
+      ③継続学習を怠らない
+      →毎日市場を観察し、失敗から学ぶ
+
+      投資は一攫千金ではなく、堅実な資産形成の手段です🎯
+
+      #投資初心者 #トレーディング教育 #リスク管理 #資産形成
+    hashtags:
+      - '#投資教育'
+      - '#資産形成'
+    contentType: educational
+    riskLevel: low
+    timeOfDay: 21
+    dateGenerated: '2025-07-21'
+  content: |-
+    📊 **投資の基本原則**
+
+    成功するトレーダーの3つの習慣：
+
+    ①リスク管理最優先
+    →1回の取引で資金の2%以上は絶対にリスクしない
+
+    ②感情をデータで制御
+    →損切りラインを事前設定、感情に左右されない
+
+    ③継続学習を怠らない
+    →毎日市場を観察し、失敗から学ぶ
+
+    投資は一攫千金ではなく、堅実な資産形成の手段です🎯
+
+    #投資初心者 #トレーディング教育 #リスク管理 #資産形成
+  success: true
+- timestamp: '2025-07-21T12:45:57.135Z'
+  action: original_post
+  params:
+    originalContent: |-
+      権限確認を実行します：
+      📈 投資初心者が最初に覚えるべき「3つの黄金ルール」
+
+      1️⃣ 分散投資：卵は一つのカゴに盛るな
+      2️⃣ 長期視点：時間が最大の武器
+      3️⃣ 感情制御：恐怖と欲望に負けない
+
+      市場は上下を繰り返します。一喜一憂せず、自分なりの投資方針を持つことが成功への第一歩です🚀
+
+      #投資初心者 #資産形成 #長期投資 #分散投資 #投資教育
+    hashtags:
+      - '#投資教育'
+      - '#資産形成'
+    contentType: educational
+    riskLevel: low
+    timeOfDay: 21
+    dateGenerated: '2025-07-21'
+  content: |-
+    権限確認を実行します：
+    📈 投資初心者が最初に覚えるべき「3つの黄金ルール」
+
+    1️⃣ 分散投資：卵は一つのカゴに盛るな
+    2️⃣ 長期視点：時間が最大の武器
+    3️⃣ 感情制御：恐怖と欲望に負けない
+
+    市場は上下を繰り返します。一喜一憂せず、自分なりの投資方針を持つことが成功への第一歩です🚀
+
+    #投資初心者 #資産形成 #長期投資 #分散投資 #投資教育
+  success: true

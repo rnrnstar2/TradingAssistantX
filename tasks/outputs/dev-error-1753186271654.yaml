@@ -1,0 +1,35 @@
+startup_timestamp: '2025-07-22T12:11:11.649Z'
+error_timestamp: '2025-07-22T12:11:11.654Z'
+mode: development_single_execution
+command: pnpm dev
+result: error
+error:
+  message: RSS sources configuration is required and must be a non-empty array
+  stack: |-
+    Error: RSS sources configuration is required and must be a non-empty array
+        at RSSCollector.validateConfig (/Users/rnrnstar/github/TradingAssistantX/src/collectors/rss-collector.ts:445:13)
+        at new RSSCollector (/Users/rnrnstar/github/TradingAssistantX/src/collectors/rss-collector.ts:52:10)
+        at new DailyActionPlanner (/Users/rnrnstar/github/TradingAssistantX/src/managers/daily-action-planner.ts:34:25)
+        at new AutonomousExecutor (/Users/rnrnstar/github/TradingAssistantX/src/core/autonomous-executor.ts:103:31)
+        at new CoreRunner (/Users/rnrnstar/github/TradingAssistantX/src/scripts/core-runner.ts:31:31)
+        at dev (/Users/rnrnstar/github/TradingAssistantX/src/scripts/dev.ts:20:24)
+  type: Error
+system:
+  node_version: v22.14.0
+  platform: darwin
+  working_directory: /Users/rnrnstar/github/TradingAssistantX
+  environment: development
+debugging:
+  error_location: development execution
+  possible_causes:
+    - Configuration file issues
+    - Network connectivity problems
+    - TypeScript compilation errors
+    - Missing dependencies
+    - API authentication issues
+  troubleshooting_steps:
+    - Check TypeScript compilation
+    - Verify configuration files
+    - Test network connectivity
+    - Validate API credentials
+    - Review system logs

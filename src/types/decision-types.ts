@@ -1,3 +1,19 @@
+/**
+ * Consolidated Decision Types
+ * 
+ * This file consolidates decision and decision logging types:
+ * - Core decision types (from original decision-types.ts)
+ * - Decision logging types (from decision-logging-types.ts)
+ * - Performance monitoring and visualization types
+ */
+
+import type { ActionType, DecisionPerformanceMetrics, ResourceUsage } from './system-types';
+import type { BaseCollectionResult } from './collection-types';
+
+// ============================================================================
+// CORE DECISION TYPES
+// ============================================================================
+
 export enum CollectionMethod {
   SIMPLE_HTTP = 'http',
   PLAYWRIGHT_STEALTH = 'stealth',
@@ -34,7 +50,7 @@ export interface CollectionMethodDecision {
   primaryMethod: CollectionMethod;
   fallbackMethods: CollectionMethod[];
   estimatedCost: ResourceCost;
-  expectedQuality: QualityScore;
+  expectedQuality: DecisionQualityScore;
   confidenceLevel: number;
 }
 
@@ -44,7 +60,8 @@ export interface ResourceCost {
   cpuUnits: number;
 }
 
-export interface QualityScore {
+// Renamed to avoid collision with content-types and integration-types QualityScore
+export interface DecisionQualityScore {
   accuracy: number;
   completeness: number;
   timeliness: number;
@@ -59,9 +76,10 @@ export interface CollectionContext {
   targetSites: string[];
 }
 
-export interface CollectionStrategy {
+// Renamed to avoid collision with collection-types and system-types CollectionStrategy
+export interface DecisionCollectionStrategy {
   sites: SiteMethodPair[];
-  executionPlan: ExecutionPlan;
+  executionPlan: DecisionExecutionPlan;
   expectedOutcome: PredictedOutcome;
   resourceBudget: ResourceBudget;
 }
@@ -73,7 +91,8 @@ export interface SiteMethodPair {
   timeAllocation: number;
 }
 
-export interface ExecutionPlan {
+// Renamed to avoid collision with content-types ExecutionPlan
+export interface DecisionExecutionPlan {
   parallelTasks: CollectionTask[];
   sequentialTasks: CollectionTask[];
   criticalPath: string[];
@@ -102,476 +121,10 @@ export interface ResourceBudget {
   concurrentRequests: number;
 }
 
-export interface TimeBudget {
-  totalTime: number;
-  taskAllocations: Map<string, number>;
-  bufferTime: number;
-  criticalPath: string[];
-}
+// DecisionPerformanceMetrics and ResourceUsage moved to system-types.ts to avoid duplication
+// They will be re-imported from system-types.ts
 
-export interface ExecutionConstraints {
-  maxTotalTime: number;
-  maxMemoryUsage: number;
-  maxConcurrentRequests: number;
-  qualityThreshold: number;
-}
-
-export interface OptimizationPlan {
-  taskPriorities: Map<string, number>;
-  resourceAllocation: ResourceAllocation;
-  qualityTargets: QualityTargets;
-  fallbackStrategies: FallbackStrategy[];
-}
-
-export interface ResourceAllocation {
-  timeDistribution: Map<string, number>;
-  memoryDistribution: Map<string, number>;
-  concurrencyLimits: Map<string, number>;
-}
-
-export interface QualityTargets {
-  minimum: number;
-  target: number;
-  maximum: number;
-}
-
-export interface FallbackStrategy {
-  trigger: string;
-  action: string;
-  alternativeMethod: CollectionMethod;
-  resourceAdjustment: ResourceCost;
-}
-
-export interface CollectionExecution {
-  id: string;
-  strategy: CollectionStrategy;
-  status: 'running' | 'paused' | 'completed' | 'failed';
-  progress: ExecutionProgress;
-  currentTasks: CollectionTask[];
-  startTime: number;
-}
-
-export interface ExecutionProgress {
-  completedTasks: number;
-  totalTasks: number;
-  dataCollected: number;
-  timeElapsed: number;
-  resourcesUsed: ResourceUsage;
-}
-
-export interface ResourceUsage {
-  timeMs: number;
-  memoryMb: number;
-  cpuPercent: number;
-  networkRequests: number;
-}
-
-export interface AdjustmentDecision {
-  action: 'continue' | 'adjust' | 'abort';
-  adjustments: ExecutionAdjustment[];
-  reasoning: string[];
-}
-
-export interface ExecutionAdjustment {
-  type: 'priority' | 'method' | 'resource' | 'timeout';
-  targetTask: string;
-  newValue: any;
-  impact: string;
-}
-
-export interface CollectionCandidate {
-  siteUrl: string;
-  method: CollectionMethod;
-  estimatedValue: number;
-  estimatedCost: ResourceCost;
-  confidenceLevel: number;
-}
-
-export interface OptimalPlan {
-  selectedCandidates: CollectionCandidate[];
-  totalValue: number;
-  totalCost: ResourceCost;
-  riskLevel: number;
-  alternativePlans: OptimalPlan[];
-}
-
-// CollectionResult removed - use BaseCollectionResult from collection-common.ts if needed
-import type { BaseCollectionResult } from './collection-common';
-
-export interface LearningInsight {
-  siteSpecificOptimizations: SiteOptimization[];
-  methodEffectivenessUpdate: MethodEffectiveness;
-  resourceAllocationImprovement: AllocationImprovement;
-}
-
-export interface SiteOptimization {
-  siteUrl: string;
-  recommendedMethod: CollectionMethod;
-  optimalTiming: TimeWindow;
-  qualityFactors: string[];
-}
-
-export interface MethodEffectiveness {
-  method: CollectionMethod;
-  successRate: number;
-  averageQuality: number;
-  averageTime: number;
-  recommendedUsage: string[];
-}
-
-export interface AllocationImprovement {
-  optimalTimeDistribution: Map<string, number>;
-  efficientConcurrency: number;
-  qualityThresholds: Map<string, number>;
-}
-
-export interface ExecutionState {
-  currentTasks: CollectionTask[];
-  completedTasks: CollectionTask[];
-  failedTasks: CollectionTask[];
-  resourcesUsed: ResourceUsage;
-  timeRemaining: number;
-  qualityAchieved: number;
-}
-
-export interface PriorityPlan {
-  highPriority: CollectionTask[];
-  mediumPriority: CollectionTask[];
-  lowPriority: CollectionTask[];
-  executionOrder: string[];
-}
-
-export interface StrategyAdjustment {
-  adjustmentType: 'method' | 'priority' | 'resource' | 'timing';
-  affectedTasks: string[];
-  newStrategy: Partial<CollectionStrategy>;
-  expectedImprovement: number;
-}
-
-export interface ReallocationPlan {
-  taskReassignments: Map<string, number>;
-  methodChanges: Map<string, CollectionMethod>;
-  priorityAdjustments: Map<string, number>;
-}
-
-export interface FilteredSources {
-  approved: string[];
-  rejected: string[];
-  conditional: ConditionalSource[];
-}
-
-export interface ConditionalSource {
-  siteUrl: string;
-  conditions: string[];
-  fallbackMethod: CollectionMethod;
-}
-
-export interface ImprovementPlan {
-  qualityEnhancements: QualityEnhancement[];
-  resourceOptimizations: ResourceOptimization[];
-  methodUpgrades: MethodUpgrade[];
-}
-
-export interface QualityEnhancement {
-  target: string;
-  improvement: string;
-  estimatedGain: number;
-  cost: ResourceCost;
-}
-
-export interface ResourceOptimization {
-  resourceType: 'time' | 'memory' | 'cpu';
-  optimization: string;
-  estimatedSaving: number;
-}
-
-export interface MethodUpgrade {
-  currentMethod: CollectionMethod;
-  upgradedMethod: CollectionMethod;
-  benefits: string[];
-  migrationCost: ResourceCost;
-}
-
-export interface MethodDecision {
-  selectedMethod: CollectionMethod;
-  reasoning: string[];
-  confidence: number;
-  fallbacks: CollectionMethod[];
-}
-
-export interface FallbackPlan {
-  primaryFallback: CollectionMethod;
-  secondaryFallbacks: CollectionMethod[];
-  escalationThreshold: number;
-}
-
-export interface MethodComparison {
-  method1: CollectionMethod;
-  method2: CollectionMethod;
-  winner: CollectionMethod;
-  metrics: ComparisonMetrics;
-}
-
-export interface ComparisonMetrics {
-  qualityDifference: number;
-  speedDifference: number;
-  reliabilityDifference: number;
-  overall: number;
-}
-
-export interface ParetoSolution {
-  candidate: CollectionCandidate;
-  qualityScore: number;
-  efficiencyScore: number;
-  dominatedBy: CollectionCandidate[];
-}
-
-export interface UtilityScore {
-  marginalValue: number;
-  marginalCost: number;
-  ratio: number;
-  recommendation: string;
-}
-
-export interface ResourceUnit {
-  type: 'time' | 'memory' | 'cpu';
-  amount: number;
-  allocatedTo: string;
-}
-
-export interface PriorityAdjustment {
-  taskId: string;
-  oldPriority: number;
-  newPriority: number;
-  reasoning: string;
-}
-
-export interface QualityMetrics {
-  accuracy: number;
-  completeness: number;
-  timeliness: number;
-  consistency: number;
-  reliability: number;
-}
-
-export interface SiteReliability {
-  uptime: number;
-  contentConsistency: number;
-  responseStability: number;
-  botFriendliness: number;
-}
-
-export interface AccessHistory {
-  attempts: number;
-  successes: number;
-  failures: string[];
-  averageResponseTime: number;
-  lastAccessed: number;
-}
-
-export interface AvailabilityPrediction {
-  probability: number;
-  timeWindow: TimeWindow;
-  confidence: number;
-  factors: string[];
-}
-
-export interface ExecutionContext {
-  timeConstraints: ExecutionConstraints;
-  qualityRequirements: QualityMetrics;
-  availableResources: ResourceBudget;
-  priorityLevel: 'low' | 'medium' | 'high';
-}
-
-export interface MonitoringSession {
-  id: string;
-  execution: CollectionExecution;
-  metrics: DecisionPerformanceMetrics;
-  alerts: Alert[];
-  status: 'active' | 'paused' | 'completed';
-}
-
-export interface DecisionPerformanceMetrics {
-  responseTime: number;
-  successRate: number;
-  dataQuality: number;
-  resourceUsage: ResourceUsage;
-  throughput: number;
-}
-
-export interface Alert {
-  type: 'warning' | 'error' | 'info';
-  message: string;
-  timestamp: number;
-  severity: number;
-}
-
-export interface BottleneckAnalysis {
-  bottlenecks: Bottleneck[];
-  criticalPath: string[];
-  recommendations: string[];
-}
-
-export interface Bottleneck {
-  taskId: string;
-  type: 'cpu' | 'memory' | 'network' | 'time';
-  severity: number;
-  impact: string;
-}
-
-export interface ErrorState {
-  errorType: string;
-  affectedTasks: string[];
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  timestamp: number;
-}
-
-export interface RecoveryPlan {
-  actions: RecoveryAction[];
-  estimatedRecoveryTime: number;
-  fallbackExecution: CollectionStrategy;
-}
-
-export interface RecoveryAction {
-  type: 'retry' | 'skip' | 'fallback' | 'restart';
-  target: string;
-  parameters: any;
-}
-
-export interface SuccessfulExecution extends BaseCollectionResult {
-  successFactors: string[];
-  optimalSettings: any;
-}
-
-export interface FailedExecution extends BaseCollectionResult {
-  failureReasons: string[];
-  lessonsLearned: string[];
-}
-
-export interface ExecutionHistory {
-  executions: BaseCollectionResult[];
-  patterns: ExecutionPattern[];
-  improvements: string[];
-}
-
-export interface ExecutionPattern {
-  pattern: string;
-  frequency: number;
-  outcomes: string[];
-  recommendations: string[];
-}
-
-export interface LearningUpdate {
-  newInsights: string[];
-  updatedStrategies: CollectionStrategy[];
-  confidenceChanges: Map<string, number>;
-}
-
-export interface FailureInsight {
-  commonFailures: string[];
-  preventionStrategies: string[];
-  recoveryMethods: string[];
-}
-
-export interface BestPracticeUpdate {
-  practices: BestPractice[];
-  deprecatedPractices: string[];
-  newRecommendations: string[];
-}
-
-export interface BestPractice {
-  practice: string;
-  applicableScenarios: string[];
-  expectedBenefit: string;
-  implementation: string;
-}
-
-export interface StrategyReport {
-  selectedStrategy: CollectionStrategy;
-  reasoning: string[];
-  expectedOutcomes: PredictedOutcome[];
-  resourceAllocation: ResourcePlan;
-  riskAssessment: RiskAnalysis;
-  fallbackPlans: FallbackStrategy[];
-}
-
-export interface ResourcePlan {
-  timeAllocation: Map<string, number>;
-  memoryAllocation: Map<string, number>;
-  concurrencyPlan: Map<string, number>;
-}
-
-export interface RiskAnalysis {
-  risks: Risk[];
-  overallRisk: number;
-  mitigationStrategies: string[];
-}
-
-export interface Risk {
-  type: string;
-  probability: number;
-  impact: number;
-  severity: number;
-  mitigation: string;
-}
-
-export interface PerformanceReport {
-  executionMetrics: ExecutionMetrics;
-  efficiencyScore: number;
-  qualityAchieved: number;
-  resourceUtilization: ResourceUtilization;
-  improvementRecommendations: Recommendation[];
-}
-
-export interface ExecutionMetrics {
-  totalTime: number;
-  tasksCompleted: number;
-  successRate: number;
-  averageQuality: number;
-  resourceEfficiency: number;
-}
-
-export interface ResourceUtilization {
-  timeUtilization: number;
-  memoryUtilization: number;
-  cpuUtilization: number;
-  concurrencyUtilization: number;
-}
-
-export interface Recommendation {
-  type: string;
-  priority: 'low' | 'medium' | 'high';
-  description: string;
-  expectedBenefit: string;
-  implementationCost: ResourceCost;
-}
-
-export interface ValueScore {
-  informationValue: number;
-  timeliness: number;
-  uniqueness: number;
-  relevance: number;
-  overall: number;
-}
-
-export interface ExplorationResult {
-  discoveredSources: string[];
-  qualityAssessment: QualityScore;
-  collectibilityScore: number;
-  valueScore: ValueScore;
-}
-
-export interface ExplorationDecision {
-  shouldExplore: boolean;
-  explorationTargets: string[];
-  allocatedResources: ResourceBudget;
-  expectedValue: number;
-}
-
-// 主要なDecision型定義とtype guard functions
-import { ActionType } from './action-types';
-import { ExecutionData } from './autonomous-system';
-
+// Main Decision interface
 export interface Decision {
   id: string;
   type: ActionType;
@@ -587,12 +140,12 @@ export interface Decision {
 }
 
 export interface DecisionData {
-  context: DecisionContext;
+  context: DecisionContextCore;
   factors: DecisionFactor[];
   alternatives: Alternative[];
 }
 
-export interface DecisionContext {
+export interface DecisionContextCore {
   environment: string;
   constraints: string[];
   objectives: string[];
@@ -616,7 +169,289 @@ export interface Alternative {
 
 export type DecisionStatus = 'pending' | 'approved' | 'executing' | 'completed' | 'failed';
 
-// 型ガード関数
+// ============================================================================
+// DECISION LOGGING TYPES (from decision-logging-types.ts)
+// ============================================================================
+
+export interface DecisionContext {
+  sessionId: string;
+  timestamp: string;
+  accountHealth: number;
+  systemStatus: string;
+  inputData: any;
+  marketContext?: any;
+  actionSuggestions?: any[];
+}
+
+export interface DecisionStep {
+  id: string;
+  sessionId: string;
+  stepType: 'context_analysis' | 'reasoning' | 'decision_generation' | 'validation' | 'execution';
+  timestamp: string;
+  reasoning: string;
+  data: any;
+  confidenceLevel: number;
+  executionTime: number;
+}
+
+// Renamed to avoid collision with system-types ExecutionResult
+export interface DecisionExecutionResult {
+  success: boolean;
+  executionTime: number;
+  output: any;
+  errors?: string[];
+  warnings?: string[];
+  metadata?: any;
+}
+
+export interface DecisionLog {
+  sessionId: string;
+  startTime: string;
+  endTime: string;
+  totalExecutionTime: number;
+  context: DecisionContext;
+  steps: DecisionStep[];
+  finalDecision: Decision;
+  executionResult?: DecisionExecutionResult;
+  qualityScore?: DecisionQualityScore;
+}
+
+// Decision Tracer Types
+export interface ClaudeReasoning {
+  prompt: string;
+  context: any;
+  modelUsed: string;
+  reasoning: string;
+  confidence: number;
+}
+
+export interface ReasoningTrace {
+  reasoningSteps: ReasoningStep[];
+  confidenceLevel: number;
+  alternativesConsidered: Alternative[];
+  finalJustification: string;
+  executionTime: number;
+}
+
+export interface ReasoningStep {
+  id: string;
+  stepNumber: number;
+  description: string;
+  reasoning: string;
+  confidence: number;
+  data: any;
+  timestamp: string;
+}
+
+export interface DecisionChain {
+  sessionId: string;
+  steps: DecisionStep[];
+  branches: DecisionBranch[];
+  totalExecutionTime: number;
+  qualityScore: number;
+}
+
+export interface DecisionBranch {
+  id: string;
+  parentStepId: string;
+  branchType: 'alternative' | 'fallback' | 'conditional';
+  condition: string;
+  reasoning: string;
+  chosen: boolean;
+}
+
+export interface BranchAnalysis {
+  totalBranches: number;
+  branchesExplored: number;
+  optimalPathTaken: boolean;
+  improvementSuggestions: string[];
+}
+
+// Performance Monitor Types
+export interface DecisionLoggingPerformanceMetrics {
+  sessionId: string;
+  timestamp: string;
+  decisionTime: number;
+  cpuUsage: number;
+  memoryUsage: number;
+  networkLatency: number;
+  claudeApiCalls: number;
+  cacheHitRate: number;
+  resourceUsage: ResourceUsage;
+}
+
+export interface TrendAnalysis {
+  timeWindow: TimeWindow;
+  performanceTrend: 'improving' | 'stable' | 'degrading';
+  averageDecisionTime: number;
+  resourceUtilizationTrend: number;
+  recommendations: string[];
+}
+
+export interface OptimizationSuggestion {
+  id: string;
+  category: 'performance' | 'resource' | 'decision_quality' | 'system';
+  priority: 'high' | 'medium' | 'low';
+  description: string;
+  implementationComplexity: 'low' | 'medium' | 'high';
+  expectedImpact: number; // 0.0-1.0
+  implementationSteps: string[];
+}
+
+// Visualization Types
+export interface VisualFlow {
+  sessionId: string;
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+  metadata: {
+    totalNodes: number;
+    totalEdges: number;
+    executionPath: string[];
+    criticalPath: string[];
+  };
+}
+
+export interface FlowNode {
+  id: string;
+  type: 'start' | 'decision' | 'action' | 'branch' | 'end';
+  label: string;
+  data: any;
+  position: { x: number; y: number };
+  metadata: {
+    executionTime: number;
+    confidence: number;
+    status: 'completed' | 'in_progress' | 'failed';
+  };
+}
+
+export interface FlowEdge {
+  id: string;
+  source: string;
+  target: string;
+  type: 'flow' | 'fallback' | 'conditional';
+  label?: string;
+  metadata: {
+    weight: number;
+    traversed: boolean;
+  };
+}
+
+export interface Dashboard {
+  id: string;
+  timestamp: string;
+  timeRange: TimeWindow;
+  sections: DashboardSection[];
+  overallHealth: number;
+  alerts: DashboardAlert[];
+}
+
+export interface DashboardSection {
+  id: string;
+  title: string;
+  type: 'metrics' | 'chart' | 'table' | 'summary';
+  data: any;
+  visualization: VisualizationConfig;
+}
+
+export interface VisualizationConfig {
+  chartType: 'line' | 'bar' | 'pie' | 'scatter' | 'heatmap';
+  xAxis: string;
+  yAxis: string;
+  colors: string[];
+  options: any;
+}
+
+export interface DashboardAlert {
+  id: string;
+  severity: 'critical' | 'warning' | 'info';
+  message: string;
+  timestamp: string;
+  resolved: boolean;
+}
+
+export interface QualityReport {
+  id: string;
+  timestamp: string;
+  timeRange: TimeWindow;
+  overallQuality: number;
+  qualityTrends: QualityTrend[];
+  improvementAreas: ImprovementArea[];
+  recommendations: string[];
+}
+
+export interface QualityTrend {
+  metric: string;
+  trend: 'improving' | 'stable' | 'declining';
+  currentValue: number;
+  previousValue: number;
+  changePercent: number;
+}
+
+export interface ImprovementArea {
+  area: string;
+  currentScore: number;
+  targetScore: number;
+  priority: 'high' | 'medium' | 'low';
+  actionItems: string[];
+}
+
+export interface OptimizationViz {
+  id: string;
+  timestamp: string;
+  suggestions: OptimizationSuggestion[];
+  priorityMatrix: PriorityMatrix;
+  implementationRoadmap: ImplementationStep[];
+}
+
+export interface PriorityMatrix {
+  highImpactLowComplexity: OptimizationSuggestion[];
+  highImpactHighComplexity: OptimizationSuggestion[];
+  lowImpactLowComplexity: OptimizationSuggestion[];
+  lowImpactHighComplexity: OptimizationSuggestion[];
+}
+
+export interface ImplementationStep {
+  id: string;
+  phase: number;
+  description: string;
+  suggestions: string[];
+  estimatedDuration: number;
+  dependencies: string[];
+}
+
+// Output Types for Task Requirements
+export interface VisualizationData {
+  sessionId: string;
+  decisionFlow: VisualFlow;
+  performanceDashboard: Dashboard;
+  qualityReport: QualityReport;
+  optimizationViz: OptimizationViz;
+  timestamp: string;
+}
+
+// Logger Session Management
+export interface LoggerSession {
+  sessionId: string;
+  startTime: string;
+  endTime?: string;
+  active: boolean;
+  context: DecisionContext;
+  steps: DecisionStep[];
+  performanceMetrics: DecisionLoggingPerformanceMetrics[];
+  status: 'active' | 'completed' | 'failed' | 'timeout';
+}
+
+export interface LoggerConfig {
+  maxSessions: number;
+  sessionTimeout: number;
+  outputDirectory: string;
+  enableVisualization: boolean;
+}
+
+// ============================================================================
+// TYPE GUARDS AND UTILITIES
+// ============================================================================
+
 export function isDecision(obj: unknown): obj is Decision {
   return typeof obj === 'object' 
     && obj !== null
@@ -626,7 +461,7 @@ export function isDecision(obj: unknown): obj is Decision {
     && 'confidence' in obj;
 }
 
-export function isExecutionData(obj: unknown): obj is ExecutionData {
+export function isExecutionData(obj: unknown): obj is any {
   return typeof obj === 'object'
     && obj !== null
     && 'actionType' in obj;

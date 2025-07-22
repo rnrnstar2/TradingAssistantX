@@ -1,0 +1,15 @@
+timestamp: '2025-07-21T11:19:46.925Z'
+followers:
+  current: 5
+  change_24h: 0
+  growth_rate: 0.0%
+engagement:
+  avg_likes: 0
+  avg_retweets: 0
+  engagement_rate: 100.0%
+performance:
+  posts_today: 0
+  target_progress: 0%
+health:
+  status: healthy
+  quality_score: 70

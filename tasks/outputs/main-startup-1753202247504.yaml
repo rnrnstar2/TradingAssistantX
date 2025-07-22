@@ -1,0 +1,49 @@
+timestamp: '2025-07-22T16:37:27.488Z'
+mode: scheduled_autonomous_loop
+command: pnpm start
+phase: Phase4_Complete_Autonomous_System
+status: fully_operational
+system:
+  node_version: v22.14.0
+  platform: darwin
+  architecture: arm64
+  working_directory: /Users/rnrnstar/github/TradingAssistantX
+schedule_configuration:
+  timezone: Asia/Tokyo
+  auto_schedule: true
+  total_daily_posts: 15
+  posting_times:
+    morning:
+      - '07:00'
+      - '07:30'
+      - '08:00'
+    midday:
+      - '12:00'
+      - '12:30'
+    afternoon:
+      - '15:00'
+      - '15:30'
+    evening:
+      - '18:00'
+      - '18:30'
+      - '19:00'
+    night:
+      - '21:00'
+      - '21:30'
+      - '22:00'
+      - '22:30'
+      - '23:00'
+active_capabilities:
+  scheduled_posting: operational
+  emergency_execution: active
+  error_recovery: enabled
+  autonomous_loop: running
+  schedule_management: active
+implemented_features:
+  - 1日15回の定時実行システム
+  - YAML設定ベーススケジュール管理
+  - 次回実行時刻自動計算
+  - 実行タイマー・待機機能
+  - 緊急実行対応機能
+  - エラー回復・リトライ機能
+  - 安全なシャットダウン機能

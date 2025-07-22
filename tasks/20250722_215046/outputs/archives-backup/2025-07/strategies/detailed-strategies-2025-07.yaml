@@ -1,0 +1,153 @@
+# 詳細・実験的戦略アーカイブ (2025-07)
+# メインファイルから除外された詳細設定とセカンダリ戦略
+
+# 保管日時: 2025-07-21
+# 元ファイル: action-collection-strategies.yaml (v1.0.0)
+
+# セカンダリ戦略（低頻度利用）
+detailedStrategies:
+  quote_tweet:
+    priority: 25
+    focusAreas:
+      - "候補ツイート検索"
+      - "付加価値分析"
+      - "エンゲージメント評価"
+      - "コミュニティ反応分析"  # 新規追加
+    sources:
+      # RSS ソース中心に変更
+        
+      # 新規RSS ソース
+      - name: "financial_news_rss"
+        url: "https://feeds.bloomberg.com/markets/news.rss"
+        priority: "high"
+        type: "rss"
+        
+      # コミュニティソース（議論の発見）
+      - name: "reddit_discussions"
+        platform: "reddit"
+        priority: "high"
+        type: "community"
+        subreddits: ["investing", "StockMarket", "financialindependence"]
+        
+    collectMethods:
+      - "candidate_tweet_search"
+      - "engagement_analysis"
+      - "value_addition_assessment"
+    sufficiencyTarget: 85
+
+  retweet:
+    priority: 10
+    focusAreas:
+      - "信頼性検証"
+      - "価値評価"
+      - "リスク分析"
+      - "公式情報確認"  # 新規追加
+    sources:
+      # 高信頼性RSS ソース中心
+      - name: "central_bank_feeds"
+        url: "https://www.federalreserve.gov/feeds/press_all.xml"
+        priority: "highest"
+        type: "rss"
+        
+      - name: "sec_news"
+        url: "https://www.sec.gov/news/pressreleases.rss"
+        priority: "highest"
+        type: "rss"
+        
+      - name: "reuters_breaking"
+        url: "https://feeds.reuters.com/reuters/topNews"
+        priority: "high"
+        type: "rss"
+        
+      # 高品質ソース中心に変更
+        
+    collectMethods:
+      - "credibility_check"
+      - "value_assessment"
+      - "risk_evaluation"
+    sufficiencyTarget: 80
+
+  reply:
+    priority: 5
+    focusAreas:
+      - "エンゲージメント機会"
+      - "コミュニティ参加"
+      - "価値提供"
+      - "質問・疑問への回答"  # 新規追加
+    sources:
+      # コミュニティ中心
+      - name: "reddit_questions"
+        platform: "reddit"
+        priority: "highest"
+        type: "community"
+        subreddits: ["investing", "personalfinance", "stocks"]
+        filters: ["questions", "help", "advice"]
+        
+      - name: "hackernews_finance"
+        platform: "hackernews"
+        priority: "medium"
+        type: "community"
+        topics: ["finance", "investing", "economics"]
+        
+      # コミュニティソース中心に変更
+        
+    collectMethods:
+      - "engagement_opportunity_scan"
+      - "community_value_assessment"
+    sufficiencyTarget: 75
+
+# 拡張ソース設定（original_post用）
+expandedSources:
+  educational_content:
+    url: "https://www.investopedia.com/rss.xml"
+    priority: "medium"
+    type: "rss"
+    categories: ["trading basics", "investment strategy", "market analysis", "DeFi", "technical analysis"]
+
+# 実験的設定
+experimentalConfig:
+  # 情報源選択戦略
+  sourceSelection:
+    original_post:
+      preferred: ["rss", "api", "community"]
+      fallback: ["community", "rss"]
+      priority: "diversity"  # quality, speed, diversity
+      
+    quote_tweet:
+      preferred: ["community", "rss"]
+      fallback: ["community", "rss"]
+      priority: "quality"
+      
+    retweet:
+      preferred: ["rss", "api"]
+      fallback: ["community", "rss"]  
+      priority: "quality"
+      
+    reply:
+      preferred: ["community"]
+      fallback: ["rss", "community"]
+      priority: "speed"
+
+  # 詳細品質基準
+  extendedQualityStandards:
+    # 情報源別品質重み
+    sourceWeights:
+      rss: 0.9      # 高信頼性
+      api: 0.95     # 最高品質
+      community: 0.7 # 多様性重視
+      # twitter: 0.8  # 無効化
+      
+    # 情報源別最低基準
+    sourceMinimums:
+      rss: 85
+      api: 90
+      community: 70
+      # twitter: 75  # 無効化
+
+# メタデータ
+archiveInfo:
+  archived_date: "2025-07-21"
+  reason: "メインファイル最適化・アクティブ戦略集中化"
+  restoration_note: "必要時にメインファイルに復元可能"
+  line_count_original: 225
+  line_count_archived: 153

@@ -1,0 +1,34 @@
+sessionId: autonomous-session-1753164999923
+timestamp: '2025-07-22T06:18:11.997Z'
+autonomyScore: 60
+performanceMetrics:
+  strategicFlexibility: 80
+  adaptationRate: 0
+  learningEffectiveness: 100
+  overallAutonomy: 60
+strategy:
+  actionTypes:
+    - original_post
+    - quote_tweet
+    - reply
+  frequency: 4
+  contentThemes:
+    - 高ボラティリティ市場でのリスク管理
+    - 長期投資戦略とポートフォリオ構築
+    - ESG投資の基礎知識
+    - デジタル資産と分散投資
+  riskLevel: medium
+execution:
+  totalActions: 1
+  successfulActions: 0
+  adaptationsMade: 0
+learning:
+  learningPoints: 6
+  optimizationAreas: 5
+  newOpportunities: 4
+nextRecommendations:
+  - '機会活用: 実行失敗パターンのデータベース化による予防システム構築'
+  - '機会活用: Claude Code SDK実行パターンの最適化研究'
+  - '機会活用: エラー状況からの自動回復アルゴリズム開発'
+  - '機会活用: 投稿生成プロセスのモジュール化による部分実行対応'
+  - '改善重点: original_post実行メカニズム'

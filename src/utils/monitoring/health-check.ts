@@ -210,7 +210,7 @@ class HealthChecker {
 
   private async checkProcesses(): Promise<'running' | 'stopped'> {
     try {
-      const { stdout } = await execAsync('ps aux | grep "autonomous-runner" | grep -v grep');
+      const { stdout } = await execAsync('ps aux | grep "main\\.ts\\|dev\\.ts" | grep -v grep');
       return stdout.trim().length > 0 ? 'running' : 'stopped';
     } catch {
       return 'stopped';

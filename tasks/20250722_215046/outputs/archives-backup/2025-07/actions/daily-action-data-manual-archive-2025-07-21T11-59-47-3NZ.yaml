@@ -1,0 +1,228 @@
+- date: '2025-07-21'
+  totalActions: 0
+  actionBreakdown:
+    original_post: 0
+  executedActions:
+    - success: false
+      actionId: test-decision-1
+      type: original_post
+      timestamp: 1753098797388
+      error: Cannot read properties of undefined (reading 'originalContent')
+    - success: false
+      actionId: test-decision-2
+      type: quote_tweet
+      timestamp: 1753098797388
+      error: >-
+        Cannot destructure property 'quotedTweetId' of 'decision.params' as it
+        is undefined.
+  targetReached: false
+- timestamp: '2025-07-21T11:52:16.867Z'
+  action: original_post
+  params:
+    originalContent: |-
+      📊投資の鉄則：「感情で売買するな」
+
+      株価が暴落すると慌てて売り、急騰すると飛び乗りたくなる。これが人間の本能です。
+
+      ✅成功する投資家の共通点：
+      ・事前にルールを決める
+      ・機械的に実行する
+      ・短期の値動きに惑わされない
+
+      感情は最大の敵。冷静な判断こそが資産を守る最強の武器です💪
+
+      #投資教育 #リスク管理 #投資心理 #資産運用 #初心者投資
+    hashtags:
+      - '#投資教育'
+      - '#資産形成'
+    contentType: educational
+    riskLevel: low
+    timeOfDay: 20
+    dateGenerated: '2025-07-21'
+  content: |-
+    📊投資の鉄則：「感情で売買するな」
+
+    株価が暴落すると慌てて売り、急騰すると飛び乗りたくなる。これが人間の本能です。
+
+    ✅成功する投資家の共通点：
+    ・事前にルールを決める
+    ・機械的に実行する
+    ・短期の値動きに惑わされない
+
+    感情は最大の敵。冷静な判断こそが資産を守る最強の武器です💪
+
+    #投資教育 #リスク管理 #投資心理 #資産運用 #初心者投資
+  success: true
+- timestamp: '2025-07-21T11:52:25.315Z'
+  action: original_post
+  params:
+    originalContent: |-
+      📊 投資の基本「リスクとリターン」を理解しよう
+
+      高いリターンを求めるほど、リスクも高くなるのが投資の鉄則です。
+
+      ✅ 低リスク：定期預金・国債
+      ⚡ 中リスク：インデックスファンド
+      🔥 高リスク：個別株・仮想通貨
+
+      まずは自分のリスク許容度を知ることから始めましょう。無理は禁物！
+
+      #投資初心者 #リスク管理 #資産運用 #投資教育
+    hashtags:
+      - '#投資教育'
+      - '#資産形成'
+    contentType: educational
+    riskLevel: low
+    timeOfDay: 20
+    dateGenerated: '2025-07-21'
+  content: |-
+    📊 投資の基本「リスクとリターン」を理解しよう
+
+    高いリターンを求めるほど、リスクも高くなるのが投資の鉄則です。
+
+    ✅ 低リスク：定期預金・国債
+    ⚡ 中リスク：インデックスファンド
+    🔥 高リスク：個別株・仮想通貨
+
+    まずは自分のリスク許容度を知ることから始めましょう。無理は禁物！
+
+    #投資初心者 #リスク管理 #資産運用 #投資教育
+  success: true
+- timestamp: '2025-07-21T11:52:35.667Z'
+  action: original_post
+  params:
+    originalContent: |-
+      📊 **投資の基本原則** 📊
+
+      投資で最も大切なのは「損失を限定すること」です。
+
+      ✅ 投資資金は余剰資金のみ
+      ✅ 一つの銘柄に集中投資しない
+      ✅ 感情的な売買は避ける
+      ✅ 長期的な視点を持つ
+
+      「稼ぐ」より「守る」が成功の鍵。小さな利益を積み重ねることで、大きな資産を築けます💪
+
+      #投資初心者 #リスク管理 #資産形成 #投資教育
+    hashtags:
+      - '#投資教育'
+      - '#資産形成'
+    contentType: educational
+    riskLevel: low
+    timeOfDay: 20
+    dateGenerated: '2025-07-21'
+  content: |-
+    📊 **投資の基本原則** 📊
+
+    投資で最も大切なのは「損失を限定すること」です。
+
+    ✅ 投資資金は余剰資金のみ
+    ✅ 一つの銘柄に集中投資しない
+    ✅ 感情的な売買は避ける
+    ✅ 長期的な視点を持つ
+
+    「稼ぐ」より「守る」が成功の鍵。小さな利益を積み重ねることで、大きな資産を築けます💪
+
+    #投資初心者 #リスク管理 #資産形成 #投資教育
+  success: true
+- timestamp: '2025-07-21T11:53:01.452Z'
+  action: original_post
+  params:
+    originalContent: |-
+      📊 投資の基本原則「2％ルール」
+
+      1回の取引で全資金の2％以上のリスクを取らない。これが資産を守る黄金ルールです。
+
+      例：100万円の資金なら1回の損失は2万円まで
+      ✅ 10回連続で負けても80万円残る
+      ❌ 10％リスクなら3回で資金激減
+
+      感情に流されず、数学的に勝つ。これが長期成功の鍵🔑
+
+      #投資初心者 #リスク管理 #投資教育 #資産形成 #トレーディング
+    hashtags:
+      - '#投資教育'
+      - '#資産形成'
+    contentType: educational
+    riskLevel: low
+    timeOfDay: 20
+    dateGenerated: '2025-07-21'
+  content: |-
+    📊 投資の基本原則「2％ルール」
+
+    1回の取引で全資金の2％以上のリスクを取らない。これが資産を守る黄金ルールです。
+
+    例：100万円の資金なら1回の損失は2万円まで
+    ✅ 10回連続で負けても80万円残る
+    ❌ 10％リスクなら3回で資金激減
+
+    感情に流されず、数学的に勝つ。これが長期成功の鍵🔑
+
+    #投資初心者 #リスク管理 #投資教育 #資産形成 #トレーディング
+  success: true
+- timestamp: '2025-07-21T11:53:01.840Z'
+  action: original_post
+  params:
+    originalContent: |-
+      📚 投資の基本「72の法則」をご存知ですか？
+
+      年利率で72を割ると、投資元本が2倍になるまでの年数がわかります。
+
+      例：年利6% → 72÷6 = 12年で倍増
+      年利8% → 72÷8 = 9年で倍増
+
+      複利の力を理解することで、長期投資の重要性が見えてきます💡
+
+      #投資教育 #複利の力 #資産形成 #初心者投資 #マネーリテラシー
+    hashtags:
+      - '#投資教育'
+      - '#資産形成'
+    contentType: educational
+    riskLevel: low
+    timeOfDay: 20
+    dateGenerated: '2025-07-21'
+  content: |-
+    📚 投資の基本「72の法則」をご存知ですか？
+
+    年利率で72を割ると、投資元本が2倍になるまでの年数がわかります。
+
+    例：年利6% → 72÷6 = 12年で倍増
+    年利8% → 72÷8 = 9年で倍増
+
+    複利の力を理解することで、長期投資の重要性が見えてきます💡
+
+    #投資教育 #複利の力 #資産形成 #初心者投資 #マネーリテラシー
+  success: true
+- timestamp: '2025-07-21T11:53:07.466Z'
+  action: original_post
+  params:
+    originalContent: |-
+      🔍 投資の基本原則「時間分散」
+
+      一度に全額投資せず、定期的に少額ずつ投資する「ドルコスト平均法」で価格変動リスクを軽減💡
+
+      📊 例：毎月1万円×12ヶ月
+      → 高値でも安値でも平均購入価格で取得
+
+      初心者こそ活用したい手法です
+
+      #投資初心者 #資産運用 #ドルコスト平均法 #投資教育
+    hashtags:
+      - '#投資教育'
+      - '#資産形成'
+    contentType: educational
+    riskLevel: low
+    timeOfDay: 20
+    dateGenerated: '2025-07-21'
+  content: |-
+    🔍 投資の基本原則「時間分散」
+
+    一度に全額投資せず、定期的に少額ずつ投資する「ドルコスト平均法」で価格変動リスクを軽減💡
+
+    📊 例：毎月1万円×12ヶ月
+    → 高値でも安値でも平均購入価格で取得
+
+    初心者こそ活用したい手法です
+
+    #投資初心者 #資産運用 #ドルコスト平均法 #投資教育
+  success: true
