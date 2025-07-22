@@ -310,6 +310,11 @@ export interface BaseCollectionStrategy {
   fallbackSources?: SourceType[];
 }
 
+// ActionSpecificCollector specific strategy type
+export interface CollectionStrategy extends BaseCollectionStrategy {
+  collectionStrategy: string;
+}
+
 // ============================================================================
 // RSS COLLECTION TYPES (from rss-collection-types.ts)
 // ============================================================================
