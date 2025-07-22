@@ -1,29 +1,31 @@
-# X (Twitter) API Authentication Setup
+# TradingAssistantX クイックスタート
 
-## Overview
+## 1. 環境セットアップ
+
+### 前提条件
+- Node.js 18以上
+- pnpm
+- X（Twitter）アカウント
+
+### インストール手順
+
+```bash
+# リポジトリのクローン
+git clone https://github.com/your-username/TradingAssistantX.git
+cd TradingAssistantX
+
+# 依存関係のインストール
+pnpm install
+```
+
+## 2. X API認証設定
+
+### OAuth 1.0a認証の設定
 
 TradingAssistantXはOAuth 1.0aを使用してX APIに接続します。OAuth 1.0aは安定した認証プロトコルで、Xの投稿API（v1.1）に最適な認証方式です。
 
-## Prerequisites
-
-- X Developer Account
-- Approved X App with Read/Write permissions
-- Node.js環境（TradingAssistantX実行用）
-
-## OAuth 1.0a について
-
-OAuth 1.0aは署名ベースの認証プロトコルです。主な特徴：
-
-- **署名認証**: リクエストごとに署名を生成して認証
-- **トークンベース**: Consumer Key/Secret と Access Token/Secret の組み合わせ
-- **安定性**: 長期利用に適した安定したプロトコル
-- **X API v1.1対応**: 投稿機能に最適
-
-## Setup Steps
-
-### 1. X Developer Portal Configuration
-
 #### アプリケーション作成
+
 1. [X Developer Portal](https://developer.x.com/en/portal/dashboard) にアクセス
 2. 「Create Project」をクリック（プロジェクト > アプリの順で作成）
 3. プロジェクト名を設定（例：TradingAssistantX-Project）
@@ -32,12 +34,14 @@ OAuth 1.0aは署名ベースの認証プロトコルです。主な特徴：
 6. 利用規約に同意してアプリを作成
 
 #### Consumer Key/Secret取得
+
 1. 作成したアプリの「Keys and Tokens」タブに移動
 2. **Consumer Keys**セクションで以下を取得：
    - **API Key (Consumer Key)**: アプリケーションを識別
    - **API Key Secret (Consumer Secret)**: アプリケーション認証用シークレット
 
 #### Access Token/Secret生成
+
 1. 同じ「Keys and Tokens」タブの**Authentication Tokens**セクションで：
 2. 「Generate」をクリックしてAccess Token/Secret を生成
 3. 以下の情報を記録：
@@ -45,13 +49,14 @@ OAuth 1.0aは署名ベースの認証プロトコルです。主な特徴：
    - **Access Token Secret**: ユーザー認証シークレット
 
 #### アプリ権限設定
+
 1. 「Settings」タブに移動
 2. 「App permissions」セクションで「Edit」をクリック  
 3. **Read and Write**を選択（投稿機能に必要）
 4. 必要に応じて**Direct Messages**も選択
 5. 変更を保存
 
-### 2. Environment Variables
+### 環境変数の設定
 
 以下の環境変数を設定してください：
 
@@ -84,9 +89,7 @@ export X_ACCESS_TOKEN=your_access_token_here
 export X_ACCESS_TOKEN_SECRET=your_access_token_secret_here
 ```
 
-### 3. Quick Setup
-
-OAuth 1.0a認証設定の簡単セットアップには、以下のヘルパースクリプトを使用できます：
+### 認証設定のテスト
 
 #### セットアップヘルパーの実行
 ```bash
@@ -119,36 +122,13 @@ npx tsx src/scripts/oauth1-setup-helper.ts
 🎉 OAuth 1.0a設定完了！
 ```
 
-### 4. Testing Your Configuration
-
-認証設定をテストするには、接続テストスクリプトを使用します：
-
+#### 接続テストの実行
 ```bash
 # OAuth 1.0a接続テスト
 npx tsx src/scripts/oauth1-test-connection.ts
 ```
 
-#### テスト内容
-1. **環境変数検証**: 必要な認証情報の存在確認
-2. **署名生成テスト**: OAuth 1.0a署名の正確性確認
-3. **API接続テスト**: 実際のX APIへの接続確認
-4. **ユーザー情報取得**: 認証ユーザーの情報取得テスト
-
-#### 成功時の出力
-```
-🧪 OAuth 1.0a Connection Test
-✅ 環境変数: 全て設定済み
-✅ OAuth署名: 生成成功
-✅ API接続: 成功
-👤 ユーザー: @your_username (User ID: 123456789)
-🔐 認証スコープ: read, write
-
-✨ OAuth 1.0a認証設定完了！
-```
-
-## Troubleshooting
-
-### よくあるエラーと解決策
+### トラブルシューティング
 
 #### 401 Unauthorized
 **症状**: 
@@ -218,73 +198,152 @@ Error: Invalid signature - OAuth signature verification failed
    source .env
    ```
 
-### 診断ツールの使用方法
+### セキュリティ対策
 
-#### 詳細診断の実行
-```bash
-# 詳細診断ツールを実行（デバッグ情報付き）
-DEBUG=oauth1a npx tsx src/scripts/oauth1-test-connection.ts
-```
-
-#### ログ出力での確認
-```bash
-# 認証プロセスの詳細ログを確認
-X_DEBUG=true npx tsx src/scripts/oauth1-setup-helper.ts
-```
-
-#### 手動署名検証
-```bash
-# OAuth 1.0a署名を手動で検証
-npx tsx -e "
-const crypto = require('crypto');
-const params = {
-  oauth_consumer_key: process.env.X_CONSUMER_KEY,
-  oauth_token: process.env.X_ACCESS_TOKEN,
-  oauth_signature_method: 'HMAC-SHA1',
-  oauth_timestamp: Math.floor(Date.now() / 1000),
-  oauth_nonce: crypto.randomBytes(16).toString('hex'),
-  oauth_version: '1.0'
-};
-console.log('OAuth Parameters:', params);
-"
-```
-
-## Security Notes
-
-### 認証情報の保護
+#### 認証情報の保護
 - **絶対にコードに直接書き込まない**
 - `.env` ファイルは `.gitignore` に追加済みか確認
 - 本番環境では環境変数またはシークレット管理サービスを使用
 
-### アクセス制限
+#### アクセス制限
 - 必要最小限の権限のみ設定
 - 開発・テスト・本番環境で異なる認証情報を使用
 - 定期的な認証情報のローテーション
 
-### 監視とログ
+#### 監視とログ
 - API使用量の定期監視
 - 異常なアクセスパターンの検知
 - エラーログの適切な記録（認証情報は除く）
 
-## Support
+## 3. 初回実行
 
-### 設定に問題がある場合
+### 権限確認
 
-1. **診断スクリプトの実行**:
+実行前に必ず権限を確認してください：
+
+```bash
+echo "ROLE: $ROLE" && git branch --show-current
+```
+
+権限に応じて以下のドキュメントを参照：
+- Manager権限: `docs/roles/manager-role.md`
+- Worker権限: `docs/roles/worker-role.md`
+
+### 実行コマンド
+
+#### 開発実行（単一実行）
+```bash
+pnpm dev
+```
+- 1回だけ実行して終了
+- 開発・デバッグ用
+- すぐに結果を確認したい場合
+
+#### 本番実行（ループ実行）
+```bash
+pnpm start
+```
+- 1日15回の定時実行
+- 最適投稿時間に自動実行
+- 継続的な運用向け
+
+## 4. 必須概念の理解
+
+### Claude Code SDK中心の自律システム
+
+TradingAssistantXは、Claude Code SDKが完全に自律的に意思決定を行うシステムです：
+
+- **自律的テーマ決定**: 市場分析して最適テーマを決定
+- **自律的データ収集**: 必要データを自動収集・分析
+- **自律的投稿作成**: 最適な投稿内容を生成
+- **継続的最適化**: 実行結果から学習し品質向上
+
+### YAMLドリブン設定
+
+`data/`ディレクトリ配下のYAMLファイルでシステムの動作を制御：
+
+```
+data/
+├── config/         # システム設定
+├── current/        # 現在の状態
+├── learning/       # 学習データ
+└── archives/       # アーカイブ
+```
+
+## 5. 動作確認
+
+### 正常動作の確認方法
+
+1. **初回実行の確認**
    ```bash
-   npx tsx src/scripts/oauth1-test-connection.ts
+   # 開発モードで実行
+   pnpm dev
    ```
 
-2. **X API Status の確認**:
-   - [X API Status](https://api.twitterstat.us/) でサービス状況を確認
+2. **ログ確認**
+   ```bash
+   # 実行ログを確認
+   cat data/current/execution-log.yaml
+   ```
 
-3. **Developer Portal の確認**:
-   - アプリの設定と制限状況を確認
-   - API使用量の監視
+3. **投稿結果の確認**
+   ```bash
+   # 本日の投稿記録を確認
+   cat data/current/today-posts.yaml
+   ```
 
-4. **コミュニティサポート**:
-   - [X Developer Community](https://twittercommunity.com/) で質問
-   - X APIの[公式ドキュメント](https://developer.twitter.com/en/docs/twitter-api/v1) を参照
+4. **アカウント状態の確認**
+   ```bash
+   # 現在のアカウント状態を確認
+   cat data/current/account-status.yaml
+   ```
+
+### よくあるエラーと対処法
+
+#### API認証エラー
+```
+Error: X API authentication failed
+```
+**対処法**: 環境変数の設定を確認し、接続テストを再実行
+
+#### データ収集エラー
+```
+Error: Failed to collect RSS data
+```
+**対処法**: インターネット接続を確認し、RSSソースの設定を確認
+
+#### 投稿制限エラー
+```
+Error: Rate limit exceeded
+```
+**対処法**: しばらく待機後、再実行（15分程度）
+
+#### YAMLパースエラー
+```
+Error: Failed to parse YAML file
+```
+**対処法**: YAMLファイルの構文を確認（インデント、コロンなど）
+
+### 診断ツールの使用
+
+問題が解決しない場合は、診断ツールを使用：
+
+```bash
+# 詳細診断の実行
+DEBUG=oauth1a npx tsx src/scripts/oauth1-test-connection.ts
+
+# 認証プロセスの詳細ログ
+X_DEBUG=true npx tsx src/scripts/oauth1-setup-helper.ts
+```
+
+### サポート
+
+設定に問題がある場合：
+
+1. **診断スクリプトの実行**
+2. **X API Status の確認**: [X API Status](https://api.twitterstat.us/)
+3. **Developer Portal の確認**: アプリの設定と制限状況
+4. **コミュニティサポート**: [X Developer Community](https://twittercommunity.com/)
 
 ---
 
