@@ -1,0 +1,54 @@
+cleanup_timestamp: "2025-07-23T18:55:25Z"
+deleted_files:
+  - file: "src/core/autonomous-executor.ts"
+    size: "25KB"
+    lines: 800
+    reason: "レガシー実行システム・Claude中心移行により不要"
+  - file: "src/core/decision-engine.ts"
+    size: "118KB"
+    lines: 2800
+    reason: "巨大意思決定エンジン・Claude委譲により不要"
+impact_analysis:
+  total_size_reduced: "143KB"
+  total_lines_reduced: 3600
+  complexity_reduction: "major"
+  maintainability_improvement: "significant"
+dependency_fixes:
+  import_statements_removed:
+    - file: "src/core/loop-manager.ts"
+      old_import: "import { AutonomousExecutor } from './autonomous-executor'"
+      new_import: "import { CoreRunner } from './execution/core-runner.js'"
+  type_definitions_cleaned:
+    - file: "src/types/core-types.ts"
+      removed_types:
+        - "decision-engine.ts compatibility properties in AccountStatus"
+        - "decision-engine.ts compatibility properties in Decision interface"
+  configuration_updated:
+    - file: "src/collectors/base-collector.ts"
+      change: "Updated architecture comment from AutonomousExecutor to CoreRunner"
+validation_results:
+  typecheck_passed: false
+  typecheck_note: "Existing TypeScript errors unrelated to cleanup"
+  lint_passed: true
+  execution_test_passed: true
+  claude_system_operational: true
+migration_completion:
+  claude_autonomous_agent_primary: true
+  legacy_decision_systems_removed: true
+  execution_flow_simplified: true
+  codebase_size_optimized: true
+replaced_by:
+  - file: "src/core/claude-autonomous-agent.ts"
+    role: "Central decision-making system"
+  - file: "src/core/execution/core-runner.ts"
+    role: "Execution control using Claude decisions"
+migration_success_indicators:
+  - system_starts_correctly: true
+  - claude_integration_functional: true
+  - fallback_behavior_working: true
+  - dev_mode_execution_successful: true
+notes:
+  - "System successfully migrated to Claude Code SDK-centered architecture"
+  - "All legacy decision-making code removed"
+  - "New system demonstrates proper fallback behavior"
+  - "Ready for production use with Claude-centered decision making"

@@ -1,303 +1,187 @@
 /**
- * Main Types Export Hub
+ * MVP Types Export Hub - Data Structure Simplification
  * 
- * This file exports all types from the optimized consolidated type files.
- * Maintains backward compatibility while providing access to the new organized structure.
+ * Simplified type exports for TradingAssistantX MVP functionality
+ * Includes backward compatibility stubs for existing code
  */
 
 // ============================================================================
-// PRIMARY EXPORTS (conflict-free)
+// MVP CORE EXPORTS
 // ============================================================================
-export * from './collection-types';
-export * from './system-types';
-
-// ============================================================================  
-// SELECTIVE RE-EXPORTS (conflict resolution)
-// ============================================================================
-
-// Decision types - selective exports to avoid conflicts
 export type {
-  DecisionQualityScore,
-  DecisionCollectionStrategy,
-  DecisionExecutionPlan,
-  DecisionExecutionResult,
-  Decision,
-  CollectionMethod,
-  SiteProfile,
-  QuickProfile,
-  CollectionMethodDecision,
-  DecisionContext,
-  DecisionStep,
-  DecisionLog,
-  ClaudeReasoning,
-  ReasoningTrace,
-  ReasoningStep,
-  DecisionChain,
-  DecisionBranch,
-  BranchAnalysis,
-  DecisionLoggingPerformanceMetrics,
-  TrendAnalysis,
-  OptimizationSuggestion,
-  VisualFlow,
-  FlowNode,
-  FlowEdge,
-  Dashboard,
-  DashboardSection,
-  VisualizationConfig,
-  DashboardAlert,
-  QualityReport as DecisionQualityReport,
-  QualityTrend,
-  ImprovementArea,
-  OptimizationViz,
-  PriorityMatrix,
-  ImplementationStep,
-  VisualizationData,
-  LoggerSession,
-  LoggerConfig
-} from './decision-types';
+  SystemContext,
+  ClaudeActionType,
+  ClaudeDecision,
+  AccountStatus,
+  SystemState,
+  ExecutionResult,
+  ActionParams,
+  ActionMetadata,
+  ExecutionMetadata,
+  Context,
+  Decision
+} from './core-types';
 
-// Integration types - selective exports to avoid conflicts  
-export type {
-  IntegrationQualityScore,
-  BrowserTools,
-  AnalysisTools,
-  InstructionContext,
-  GeneratedPost,
-  BrowserSession,
-  BrowserResourceUsage,
-  BrowserConfig,
-  NavigationOptions,
-  SelectorOptions,
-  ContentAnalysisRequest,
-  AnalysisOptions,
-  ContentAnalysisResult,
-  InsightExtractionResult,
-  ExtractedInsight,
-  APIIntegrationConfig,
-  APIRequest,
-  APIResponse,
-  RateLimitStatus,
-  WebhookConfig,
-  WebhookAuth,
-  WebhookPayload,
-  WebhookResult,
-  NotificationChannel,
-  NotificationChannelConfig,
-  NotificationMessage,
-  NotificationResult,
-  LoggingConfig,
-  LogDestination,
-  LogDestinationConfig,
-  LogEntry,
-  MonitoringConfig,
-  MonitoringMetric,
-  MetricValue,
-  AlertRule,
-  Alert,
-  IntegrationStatus,
-  IntegrationHealth,
-  IntegrationTest
-} from './integration-types';
-
-// Content types - selective exports to avoid conflicts
-export type {
-  QualityScore as ContentQualityScore,
-  QualityMetrics,
-  QualityAssessment,
-  QualityStandards,
-  ContentExecutionPlan,
-  TimeRelevance,
-  CoreInsight,
-  InformationPattern,
-  SynthesizedInsight,
-  ConflictingData,
-  ResolvedInsight,
-  ConnectionInsight,
-  MainPoint,
-  SupportingDetail,
-  PostStructure,
-  NarrativeFlow,
-  EnhancedContent,
-  EngagingContent,
-  EducationallyEnhanced,
-  PracticallyEnhanced,
-  UniqueContent,
-  MarketContext,
-  TimelyContent,
-  ImportanceScoring,
-  RankedInformation,
-  SynergyAnalysis,
-  InformationCluster,
-  IntegratedInformation,
-  IntegrationQuality,
-  StorytellingTemplate,
-  CompletedStory,
-  NaturalLanguagePost,
-  PostFormat,
-  PostRequirements,
-  AdaptedContent,
-  EnhancedPost,
-  FactCheckResult,
-  ReadabilityScore,
-  ValueMetrics,
-  WeakArea,
-  ImprovementSuggestion,
-  ImprovedPost,
-  ProcessedData,
-  ResourceConstraints,
-  ConstrainedExecution,
-  PostingInstruction,
-  AdaptedPost,
-  UserReaction,
-  LearningUpdate,
-  PostHistory as ContentPostHistory,
-  QualityImprovementPlan,
-  ConvergedPost,
-  PostCategory,
-  AlternativePost,
-  QualityBreakdown,
-  QualityComparison,
-  QualityReport as ContentQualityReport,
-  ConvergencePerformanceMetrics,
-  SystemHealth
-} from './content-types';
+export {
+  isClaudeDecision,
+  isSystemContext
+} from './core-types';
 
 // ============================================================================
-// LEGACY TYPES (maintained for backward compatibility)
+// MVP POST EXPORTS
+// ============================================================================
+export type {
+  PostData,
+  EngagementData,
+  TopicData
+} from './post-types';
+
+export {
+  isPostData,
+  isEngagementData
+} from './post-types';
+
+// ============================================================================
+// DATA TYPES EXPORTS
+// ============================================================================
+export type {
+  CollectionResult,
+  BaseCollectionResult,
+  BaseMetadata,
+  DataItem,
+  EngagementMetrics,
+  MarketCondition,
+  LegacyCollectionResult
+} from './data-types';
+
+export {
+  createCollectionResult,
+  toLegacyResult
+} from './data-types';
+
+// ============================================================================
+// X API V2 TYPES EXPORTS
+// ============================================================================
+export type {
+  XTweetV2,
+  XUserV2,
+  XMediaV2,
+  XErrorV2,
+  XCreateTweetRequestV2,
+  XCreateTweetResponseV2,
+  XPaginationV2,
+  XRateLimitV2,
+  XResponseV2,
+  XFieldsV2,
+  XSearchParamsV2
+} from './x-api-types';
+
+// ============================================================================
+// BACKWARD COMPATIBILITY TYPES (MINIMAL STUBS)
 // ============================================================================
 
-export interface ScrapedData {
+// Core compatibility types
+export type ClaudeAction = ClaudeActionType;
+export const isClaudeAction = isClaudeDecision;
+
+// Fix missing export
+export { ClaudeActionType } from './core-types';
+
+export interface MultiSourceCollectionResult extends CollectionResult {
+  title: string;
+  url: string;
+  status?: string;
+  errors?: string[];
+}
+
+export interface AutonomousCollectionResult extends CollectionResult {
+  title: string;
+  url: string;
+}
+export interface ConvergenceCollectionResult extends CollectionResult {
+  title: string;
+  url: string;
+}
+
+// Configuration types
+export interface RSSSourceConfig {
+  url: string;
+  enabled: boolean;
+  timeout: number;
+}
+
+export interface RSSItem {
+  title: string;
   content: string;
   url: string;
   timestamp: number;
+}
+
+export interface RSSFeedResult {
+  items: RSSItem[];
   source: string;
-  metadata?: any;
+  status: string;
 }
 
-export interface PostTemplate {
+export interface RssYamlSettings {
+  sources: Record<string, any[]>;
+  collection_settings: {
+    timeout_seconds: number;
+    max_items_per_source: number;
+  };
+}
+
+export interface RSSSource {
   id: string;
-  content: string;
-  hashtags: string[];
-  category: string;
-  type: string;
-  format: string;
-  maxLength: number;
-}
-
-export interface Config {
-  targets: ScrapeTarget[];
-  templates: PostTemplate[];
-}
-
-export interface ScrapeTarget {
   name: string;
   url: string;
-  selector: string;
+  enabled: boolean;
+  timeout: number;
+  maxItems: number;
+  provider?: string;
+  priority?: number;
+  categories?: string[];
+  successRate?: number;
 }
 
-// PostHistory moved to content-types.ts - using legacy interface for backward compatibility  
-export interface LegacyPostHistory {
-  id: string;
-  content: string;
-  timestamp: number;
-  success: boolean;
-  error?: string;
-  // エンゲージメントデータ
-  likes?: number;
-  retweets?: number;
-  replies?: number;
-  views?: number;
-  impressions?: number;
-  // 分析データ
-  themes?: string[];
-  qualityScore?: number;
-  engagementRate?: number;
+// Action and execution types
+export interface ActionParams {
+  originalContent?: string;
+  hashtags?: string[];
+  contentType?: string;
 }
 
-// Re-export as PostHistory for backward compatibility
-export type PostHistory = LegacyPostHistory;
-
-export interface PostingResult {
-  success: boolean;
-  id?: string;
-  error?: string;
-  timestamp: number;
-  postId?: string;
-}
-
-export interface XClientConfig {
-  apiKey: string;
-  testMode: boolean;
-  rateLimitDelay: number;
-  maxRetries: number;
-}
-
-// 並列実行とデータ連携システムの型定義
-export interface Task {
-  id: string;
-  name: string;
-  type: 'collect' | 'analyze' | 'post' | 'strategy' | 'custom';
-  priority: 'high' | 'medium' | 'low';
-  dependencies?: string[];
-  config?: Record<string, any>;
-  timeout?: number;
-  maxRetries?: number;
-}
-
-export interface TaskResult {
-  taskId: string;
-  success: boolean;
-  data?: unknown;
-  error?: string;
-  timestamp: number;
-  duration: number;
-}
-
-export interface ParallelTaskGroup {
-  id: string;
-  tasks: Task[];
-  strategy: 'all' | 'race' | 'settled';
-  timeout?: number;
-}
-
-export interface IntermediateResult {
-  id: string;
-  taskId: string;
-  data: unknown;
-  timestamp: number;
-  expiresAt?: number;
-}
-
-export interface AsyncTaskStatus {
-  id: string;
-  taskId: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
-  progress?: number;
-  startTime: number;
-  endTime?: number;
-  error?: string;
-}
-
-export interface DataCommunicationMessage {
-  id: string;
-  type: 'status' | 'result' | 'error' | 'progress';
-  from: string;
-  to?: string;
-  data: unknown;
-  timestamp: number;
-}
-
-export interface LongTask extends Task {
-  subtasks?: Task[];
-  checkpoints?: string[];
+export interface ActionMetadata {
+  urgency?: string;
   estimatedDuration?: number;
 }
 
-// Xアカウント情報管理関連の型定義
+export interface ExecutionMetadata {
+  startTime: number;
+  endTime?: number;
+  status?: string;
+}
+
+// Context and decision types
+export interface Context {
+  currentTime: number;
+  accountStatus: AccountStatus;
+  systemState: SystemState;
+}
+
+export interface Decision {
+  type: string;
+  confidence: number;
+  reasoning: string;
+}
+
+// Account and metrics types
 export interface AccountInfo {
   username: string;
-  user_id: string;
   display_name: string;
+  followers_count: number;
+  following_count: number;
+  tweet_count: number;
   verified: boolean;
 }
 
@@ -305,161 +189,90 @@ export interface AccountMetrics {
   followers_count: number;
   following_count: number;
   tweet_count: number;
-  listed_count: number;
-  last_updated: number;
+  avg_engagement_rate: number;
 }
 
-export interface UserResponse {
-  data: {
-    id: string;
-    username: string;
-    name: string;
-    verified: boolean;
-    public_metrics: {
-      followers_count: number;
-      following_count: number;
-      tweet_count: number;
-      listed_count: number;
-    };
-  };
-}
-
-// Performance Analysis Types
-export interface PostMetrics {
-  postId: string;
-  content: string;
-  timestamp: string;
-  likes: number;
-  retweets: number;
-  replies: number;
-  views: number;
-  engagementRate: number;
-}
-
-export interface EngagementMetrics {
-  tweetId?: string;
-  likes?: number;
-  retweets?: number;
-  replies?: number;
-  quotes?: number;
-  impressions?: number;
-  engagementRate?: number;
-  timestamp?: string;
-  // 旧形式との互換性
-  averageEngagementRate?: number;
-  bestPerformingPost?: PostMetrics;
-  engagementTrend?: 'increasing' | 'stable' | 'decreasing';
-  optimalPostingTimes?: string[];
-}
-
-export interface FollowerMetrics {
-  currentCount: number;
-  growthRate: number;
-  growthTrend: 'increasing' | 'stable' | 'decreasing';
-  engagementQuality: number;
-}
-
-export interface PerformanceAnalysisResult {
-  accountMetrics: AccountMetrics;
-  recentPosts: PostMetrics[];
-  engagement: EngagementMetrics;
-  followerMetrics: FollowerMetrics;
-  analysisTimestamp: string;
-  recommendations: string[];
-}
-
-// Tweet and Twitter API response types
 export interface Tweet {
   id: string;
   text: string;
   created_at?: string;
-  author_id?: string;
   public_metrics?: {
     like_count?: number;
     retweet_count?: number;
-    reply_count?: number;
-    quote_count?: number;
-    impression_count?: number;
-  };
-  context_annotations?: any[];
-}
-
-export interface TweetsResponse {
-  data?: Tweet[];
-  includes?: {
-    users?: any[];
-  };
-  meta?: {
-    result_count?: number;
-    next_token?: string;
   };
 }
 
-// ============================================================================
-// TYPE RE-EXPORTS FOR CONVENIENCE
-// ============================================================================
+export interface EngagementMetrics {
+  likes?: number;
+  retweets?: number;
+  replies?: number;
+  engagementRate?: number;
+}
+
+// Data and content types
+export interface DataItem {
+  content: string;
+  timestamp: string;
+  [key: string]: any;
+}
+
+export interface ContentMetadata {
+  topic?: string;
+  category?: string;
+  quality_score?: number;
+}
+
+// Utility functions (stubs)
+export function createCollectionResult(data: any): CollectionResult {
+  return {
+    id: Date.now().toString(),
+    content: data,
+    source: 'unknown',
+    timestamp: Date.now(),
+    metadata: {}
+  };
+}
+
+export function createAutonomousResult(data: any): AutonomousCollectionResult {
+  return createCollectionResult(data);
+}
+
+export function calculateBasicQuality(content: string): number {
+  return content.length > 100 ? 0.8 : 0.5;
+}
+
+export function isBaseCollectionResult(obj: any): obj is BaseCollectionResult {
+  return obj && typeof obj.id === 'string' && typeof obj.source === 'string';
+}
+
+export function isAutonomousCollectionResult(obj: any): obj is AutonomousCollectionResult {
+  return isBaseCollectionResult(obj);
+}
+
+export function isConvergenceCollectionResult(obj: any): obj is ConvergenceCollectionResult {
+  return isBaseCollectionResult(obj);
+}
 
 // ============================================================================
-// CONVENIENCE RE-EXPORTS (most commonly used types)
+// ESSENTIAL DATA STRUCTURES FOR MVP
 // ============================================================================
 
-// Collection types
-export type {
-  BaseCollectionResult,
-  CollectionResult,
-  AutonomousCollectionResult,
-  MultiSourceResult,
-  CollectionExecutionResult
-} from './collection-types';
+export interface AccountStatusData {
+  username: string;
+  followers_count: number;
+  last_updated: string;
+  is_active: boolean;
+}
 
-// System types  
-export type {
-  ActionType,
-  ActionDecision,
-  ActionResult,
-  IntegratedContext,
-  SystemDecision,
-  SystemExecutionResult,
-  ExecutionMetadata,
-  DecisionPerformanceMetrics,
-  ResourceUsage
-} from './system-types';
+export interface ActiveStrategyData {
+  current_action: string;
+  reason: string;
+  timestamp: string;
+}
 
-// ============================================================================
-// UTILITY TYPE EXPORTS
-// ============================================================================
-
-// Export type guards and utility functions from collection types
-export {
-  isBaseCollectionResult,
-  isAutonomousCollectionResult,
-  isConvergenceCollectionResult,
-  createCollectionResult,
-  createAutonomousResult,
-  createConvergenceResult
-} from './collection-types';
-
-// Export type guards and utility functions from system types
-export {
-  isDecision,
-  isExecutionData,
-  isActionDecision
-} from './system-types';
-
-// Export type guards and utility functions from content types
-export {
-  calculateOverallQuality,
-  getQualityGrade
-} from './content-types';
-
-// Export type guards and utility functions from integration types
-export {
-  isQualityScore,
-  isAPIResponse
-} from './integration-types';
-
-// Export type guards and utility functions from decision types
-export {
-  isDecision as isDecisionLogging,
-  isExecutionData as isExecutionDataLogging
-} from './decision-types';
+export interface PostingData {
+  content: string;
+  timestamp: string;
+  success: boolean;
+  follower_count: number;
+}

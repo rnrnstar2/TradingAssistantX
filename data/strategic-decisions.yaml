@@ -1,4 +1,4 @@
-- timestamp: '2025-07-22T16:18:05.352Z'
+- timestamp: '2025-07-23T03:55:36.091Z'
   decisions:
     - id: test-save
       type: content_creation
@@ -13,7 +13,228 @@
           timeframe: test
         factors: []
         alternatives: []
-      timestamp: '2025-07-22T16:18:05.351Z'
+      timestamp: '2025-07-23T03:55:36.090Z'
+      status: pending
+      params: {}
+      dependencies: []
+      estimatedDuration: 30
+- timestamp: '2025-07-23T03:56:15.884Z'
+  decisions:
+    - id: decision-1753242943105-basic
+      type: content_generation
+      priority: medium
+      reasoning: >-
+        No recent actions detected, system status running - initiating basic
+        educational content generation to maintain posting schedule and provide
+        value to followers
+      params:
+        actionType: original_post
+        originalContent: >-
+          Investment fundamentals education focusing on risk management
+          principles for beginner investors
+      dependencies: []
+      estimatedDuration: 30
+- timestamp: '2025-07-23T03:57:02.621Z'
+  decisions:
+    - id: decision-1753242996641-basic
+      type: content_generation
+      priority: medium
+      reasoning: >-
+        System is running with no recent actions - time for basic content
+        generation to maintain activity
+      params:
+        actionType: original_post
+        originalContent: >-
+          Educational investment content focusing on market analysis
+          fundamentals
+      dependencies: []
+      estimatedDuration: 30
+- timestamp: '2025-07-23T03:59:19.503Z'
+  decisions:
+    - id: decision-1753243148904-basic
+      type: content_generation
+      priority: medium
+      reasoning: Basic content generation
+      params:
+        actionType: original_post
+        originalContent: Educational investment content
+      dependencies: []
+      estimatedDuration: 30
+- timestamp: '2025-07-23T06:40:37.479Z'
+  decisions:
+    - id: decision-1753252826592-basic
+      type: content_generation
+      priority: medium
+      reasoning: Basic content generation
+      params:
+        actionType: original_post
+        originalContent: Educational investment content
+      dependencies: []
+      estimatedDuration: 30
+- timestamp: '2025-07-23T06:41:31.777Z'
+  decisions:
+    - id: decision-1753252855739-basic
+      type: content_generation
+      priority: medium
+      reasoning: >-
+        Account in focused specialization stage (0 followers, 16 total posts)
+        requires consistent educational content to build foundation. Current
+        educational strategy showing 72% effectiveness with room for
+        improvement. No recent actions indicates optimal timing for content
+        creation.
+      params:
+        actionType: original_post
+        originalContent: Investment basics education - NISA/iDeCo fundamentals for beginners
+        collection_strategy: rss_focused
+        content_focus: investment_basics
+        target_complexity: beginner_friendly
+        educational_value_threshold: 0.7
+      dependencies: []
+      estimatedDuration: 30
+- timestamp: '2025-07-23T06:41:43.517Z'
+  decisions:
+    - id: decision-1753252889849-basic
+      type: content_generation
+      priority: medium
+      reasoning: >-
+        Generate educational investment content based on current market context
+        and recent data analysis
+      params:
+        actionType: original_post
+        originalContent: >-
+          Educational investment content focusing on market analysis and trading
+          strategies
+      dependencies: []
+      estimatedDuration: 30
+- timestamp: '2025-07-23T07:00:43.719Z'
+  decisions:
+    - id: decision-1753254018258-basic
+      type: content_generation
+      priority: medium
+      reasoning: Basic content generation
+      params:
+        actionType: original_post
+        originalContent: Educational investment content
+      dependencies: []
+      estimatedDuration: 30
+- timestamp: '2025-07-23T10:04:37.628Z'
+  decisions:
+    - id: strategy-decision-1753265077626
+      type: content_creation
+      priority: medium
+      reasoning: >-
+        学習データパターン分析: 最適時間1:00,11:00,12:00、ベストトピック - educational戦略を適用
+        (ブランドガイドライン適用: 投資初心者向け基礎教育)
+      confidence: 0.8
+      data:
+        context:
+          environment: strategic_decision
+          constraints: []
+          objectives:
+            - brand_consistency
+            - educational_value
+          timeframe: scheduled
+        factors:
+          - name: account_health
+            weight: 0.7
+            value: 75
+            reasoning: アカウント健康度による戦略調整
+          - name: market_condition
+            weight: 0.5
+            value: 60
+            reasoning: 市場状況に基づく内容選択
+        alternatives: []
+      timestamp: '2025-07-23T10:04:37.626Z'
+      status: pending
+      params:
+        actionType: original_post
+        originalContent: 【投資基礎】投資初心者が知っておくべき基本原則について。リスク管理の重要性と、長期的な視点での資産形成のポイントを解説します。
+        contentType: educational
+        timing: '1:00'
+        themes: []
+        brandTone: 親しみやすく分かりやすい解説
+        targetAudience: 投資を始めたい・始めたばかりの20-40代
+        coreTheme: 投資初心者向け基礎教育
+        brandEnhanced: true
+      dependencies: []
+      estimatedDuration: 30
+- timestamp: '2025-07-23T10:04:37.648Z'
+  decisions:
+    - id: test-save
+      type: content_creation
+      priority: medium
+      reasoning: テスト保存
+      confidence: 0.8
+      data:
+        context:
+          environment: test
+          constraints: []
+          objectives: []
+          timeframe: test
+        factors: []
+        alternatives: []
+      timestamp: '2025-07-23T10:04:37.647Z'
+      status: pending
+      params: {}
+      dependencies: []
+      estimatedDuration: 30
+- timestamp: '2025-07-23T10:10:49.766Z'
+  decisions:
+    - id: strategy-decision-1753265449763
+      type: content_creation
+      priority: medium
+      reasoning: >-
+        学習データパターン分析: 最適時間1:00,11:00,12:00、ベストトピック - educational戦略を適用
+        (ブランドガイドライン適用: 投資初心者向け基礎教育)
+      confidence: 0.8
+      data:
+        context:
+          environment: strategic_decision
+          constraints: []
+          objectives:
+            - brand_consistency
+            - educational_value
+          timeframe: scheduled
+        factors:
+          - name: account_health
+            weight: 0.7
+            value: 70
+            reasoning: アカウント健康度による戦略調整
+          - name: market_condition
+            weight: 0.5
+            value: 60
+            reasoning: 市場状況に基づく内容選択
+        alternatives: []
+      timestamp: '2025-07-23T10:10:49.764Z'
+      status: pending
+      params:
+        actionType: original_post
+        originalContent: 【投資基礎】投資初心者が知っておくべき基本原則について。リスク管理の重要性と、長期的な視点での資産形成のポイントを解説します。
+        contentType: educational
+        timing: '1:00'
+        themes: []
+        brandTone: 親しみやすく分かりやすい解説
+        targetAudience: 投資を始めたい・始めたばかりの20-40代
+        coreTheme: 投資初心者向け基礎教育
+        brandEnhanced: true
+      dependencies: []
+      estimatedDuration: 30
+- timestamp: '2025-07-23T10:10:49.852Z'
+  decisions:
+    - id: test-save
+      type: content_creation
+      priority: medium
+      reasoning: テスト保存
+      confidence: 0.8
+      data:
+        context:
+          environment: test
+          constraints: []
+          objectives: []
+          timeframe: test
+        factors: []
+        alternatives: []
+      timestamp: '2025-07-23T10:10:49.823Z'
       status: pending
       params: {}
       dependencies: []

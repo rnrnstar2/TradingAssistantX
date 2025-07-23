@@ -1,0 +1,83 @@
+utility_layer_status:
+  error_handler:
+    exists: true
+    completion_rate: 60
+    implemented_features:
+      - エラーログ記録: 基本的なエラーログ記録機能実装済み（YAMLファイル形式）
+      - 重要エラー判定: criticalKeywordsによる基本判定機能実装済み
+      - エラーハンドリングラッパー: withErrorHandling関数による基本的なラッパー実装済み
+    missing_features:
+      - リトライロジック: 実装されていない（MVP制約により意図的に省略）
+      - ロールバック機能: 実装されていない（integrity-checker.tsに一部実装あり）
+      - エラー通知機構: 実装されていない（コンソール出力のみ）
+    requirements_compliance: 一部準拠
+
+  health_check:
+    exists: true
+    completion_rate: 75
+    monitoring_capabilities:
+      system_health: true
+      resource_usage: false  # CPU/メモリ監視未実装
+      data_hierarchy: false  # 基本的なファイル存在確認のみ
+      execution_logs: true
+    implemented_features:
+      - ディスク容量チェック: macOS対応のdf -hコマンドによる実装
+      - データファイル整合性: 必須/オプションファイルの存在確認
+      - プロセス状態確認: psコマンドによる実行状態チェック
+      - 総合ヘルス判定: critical/warning/healthyの3段階評価
+      - ログ出力機能: タスク出力ディレクトリへのログ記録
+    missing_features:
+      - CPUメモリ監視: システムリソースの詳細監視未実装
+      - データ階層詳細監視: current/learning/archivesの詳細な状態監視未実装
+      - 異常検出アラート: 基本的なコンソール出力のみでアラート機能なし
+    requirements_compliance: 一部準拠
+
+  integrity_checker:
+    exists: true
+    completion_rate: 95
+    planned: false  # 既に実装済み
+    design_notes: "REQUIREMENTS.mdのハルシネーション防止機構を完全実装"
+    implemented_features:
+      - 構造検証機能: 要件定義との整合性チェック実装済み
+      - ファイル数・サイズ制限チェック: data/current/とdata/learning/の制限監視
+      - 書き込み権限チェック: 許可/禁止パスの厳格な制御
+      - 実行前後検証: validateBeforeExecution/validateAfterExecution実装
+      - ロールバック機能: ファイル変更の履歴管理とロールバック実装
+      - 違反アクション実行: severity別の対応（block/rollback/warn/allow）
+    expected_features:
+      - 命名規則検証: インターフェース定義はあるが実装が不完全
+    requirements_compliance: 準拠
+
+  additional_utilities:
+    - filename: logger.ts
+      purpose: 構造化されたログ出力ユーティリティ
+      completion_rate: 100
+      requirements_listed: false  # REQUIREMENTS.mdに記載なし
+      features:
+        - ログレベル別出力: info/warn/error/success/debug
+        - モジュール名コンテキスト: コンストラクタでcontext設定
+        - データ付きログ: 追加データの構造化出力
+
+    - filename: x-auth-helper.ts
+      purpose: X.com認証補助ユーティリティ
+      completion_rate: 80
+      requirements_listed: false  # REQUIREMENTS.mdに記載なし
+      features:
+        - 追加認証フロー検出: email/2FA/phone/unusual_activity
+        - 認証タイプ別処理: 各認証タイプに対応したハンドラー
+        - Playwright統合: Pageオブジェクトを使用した自動化
+
+  overall_assessment:
+    completion_rate: 75
+    optimization_status: 良
+    hallucination_prevention_ready: true
+    critical_issues:
+      - "REQUIREMENTS.mdに記載のないファイル（logger.ts、x-auth-helper.ts）が存在"
+      - "error-handler.tsにリトライ・通知機能が未実装（MVP制約による）"
+      - "health-check.tsにリソース監視・データ階層詳細監視が未実装"
+    recommendations:
+      - "logger.tsとx-auth-helper.tsをREQUIREMENTS.mdに追記するか削除を検討"
+      - "health-check.tsにCPU/メモリ監視機能を追加"
+      - "error-handler.tsの通知機能実装（Slack/Discord連携など）"
+      - "データ階層（current/learning/archives）の詳細監視機能追加"
+      - "integrity-checker.tsの命名規則検証機能の完全実装"

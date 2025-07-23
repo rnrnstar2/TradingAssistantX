@@ -8,9 +8,10 @@
  * - グレースフルシャットダウン
  */
 
-import { AutonomousExecutor } from './autonomous-executor';
-import { YamlManager } from '../utils/yaml-manager';
-import { Logger } from '../logging/logger';
+import { CoreRunner } from './execution/core-runner.js';
+import * as yaml from 'js-yaml';
+import { readFile, writeFile } from 'fs/promises';
+import { Logger } from '../utils/logger';
 import { format } from 'date-fns-tz';
 import { parseISO, differenceInMinutes, addMinutes } from 'date-fns';
 
@@ -61,9 +62,8 @@ interface ExecutionHistory {
  * ループ管理クラス
  */
 export class LoopManager {
-  private executor: AutonomousExecutor;
+  private executor: CoreRunner;
   private logger: Logger;
-  private yamlManager: YamlManager;
   private isRunning: boolean = false;
   private checkInterval: NodeJS.Timeout | null = null;
   private executionHistory: ExecutionHistory;
@@ -79,9 +79,8 @@ export class LoopManager {
   };
   
   constructor() {
-    this.executor = new AutonomousExecutor();
+    this.executor = new CoreRunner({ enableLogging: true });
     this.logger = new Logger('LoopManager');
-    this.yamlManager = new YamlManager();
     this.executionHistory = this.loadExecutionHistory();
   }
   
@@ -116,7 +115,7 @@ export class LoopManager {
           
           try {
             // 自律実行
-            await this.executor.executeAutonomously();
+            await this.executor.runAutonomousFlow();
             
             // 実行成功を記録
             const duration = (Date.now() - startTime) / 1000;
@@ -326,7 +325,7 @@ export class LoopManager {
   private loadExecutionHistory(): ExecutionHistory {
     try {
       // 同期的に読み込むため、非同期メソッドをPromiseで包んで即座に解決
-      const loadPromise = this.yamlManager.loadConfig<ExecutionHistory>('data/current/execution-history.yaml');
+      const loadPromise = this.loadExecutionHistoryFromFile();
       let history: ExecutionHistory | null = null;
       
       // 初期化時は同期的に処理する必要があるため、ファイル読み込みをスキップ
@@ -362,13 +361,28 @@ export class LoopManager {
   }
   
   /**
+   * 実行履歴をファイルから読み込み
+   */
+  private async loadExecutionHistoryFromFile(): Promise<{success: boolean, data?: ExecutionHistory}> {
+    try {
+      const content = await readFile('data/current/execution-history.yaml', 'utf-8');
+      const data = yaml.load(content) as ExecutionHistory;
+      return { success: true, data };
+    } catch (error) {
+      return { success: false };
+    }
+  }
+  
+  /**
    * 実行履歴の保存
    */
   private async saveExecutionHistory(): Promise<void> {
     try {
-      const result = await this.yamlManager.saveConfig('data/current/execution-history.yaml', this.executionHistory);
-      if (!result.success) {
-        this.logger.error(`Failed to save execution history: ${result.error}`);
+      try {
+        const yamlStr = yaml.dump(this.executionHistory);
+        await writeFile('data/current/execution-history.yaml', yamlStr, 'utf-8');
+      } catch (error) {
+        this.logger.error(`Failed to save execution history: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     } catch (error) {
       this.logger.error(`Failed to save execution history: ${error instanceof Error ? error.message : 'Unknown error'}`);

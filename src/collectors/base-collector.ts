@@ -3,18 +3,19 @@
  * データソース独立性と意思決定分岐容易性を確保
  */
 
-// 統一結果型
-export interface CollectionResult {
-  source: string;
-  data: any[];
-  metadata: CollectionMetadata;
-  success: boolean;
-  error?: string;
-}
+// Import unified collection types from new type structure
+import type { 
+  CollectionResult, 
+  BaseCollectionResult,
+  BaseMetadata
+} from '../types/data-types';
+import type { SystemConfig } from '../types/config-types';
+import { createCollectionResult } from '../types/data-types';
 
-// メタデータ型定義
-export interface CollectionMetadata {
+// Legacy metadata type for backward compatibility
+export interface CollectionMetadata extends BaseMetadata {
   timestamp: string;
+  source: string;
   count: number;
   sourceType: string;
   processingTime: number;
@@ -66,18 +67,23 @@ export abstract class BaseCollector implements DecisionBranching {
   
   protected handleError(error: Error, source: string): CollectionResult {
     console.error(`[${source}] Collection error:`, error);
-    return {
-      source,
-      data: [],
-      metadata: this.createMetadata(source, 0),
-      success: false,
-      error: error.message
-    };
+    return createCollectionResult(
+      false,
+      error.message,
+      {
+        ...this.createMetadata(source, 0),
+        error: error.message
+      },
+      `${source}-${Date.now()}`,
+      [],
+      source
+    ) as CollectionResult;
   }
   
   protected createMetadata(sourceType: string, count: number, processingTime?: number): CollectionMetadata {
     return {
       timestamp: new Date().toISOString(),
+      source: sourceType,
       count,
       sourceType,
       processingTime: processingTime || 0,
@@ -147,7 +153,7 @@ export abstract class BaseCollector implements DecisionBranching {
  *      ↓ (構造化データ)
  * 意思決定層: DecisionEngine
  *      ↓ (実行指示)
- * 実行層: AutonomousExecutor
+ * 実行層: CoreRunner
  */
 export interface CollectorRegistration {
   name: string;

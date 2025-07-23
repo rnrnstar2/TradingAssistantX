@@ -2,11 +2,16 @@ patterns:
   high_performing:
     times:
       - "1:00"
+      - "11:00"
+      - "12:00"
     formats:
       - standard
+      - long-form
   low_performing:
     times:
       - "1:00"
+      - "11:00"
     formats:
       - standard
-  updated_at: "2025-07-22T16:31:38.888Z"
+      - long-form
+  updated_at: "2025-07-23T03:55:38.272Z"

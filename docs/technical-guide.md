@@ -224,28 +224,32 @@ tasks/
 
 ## 6. データフロー設計
 
-### 実行フロー
+### Claude Code SDK中心の実行フロー
 
 ```
 [1] 自律実行開始 (main.ts / dev.ts)
          ↓
-[2] core-runner.ts 起動
+[2] core/execution/core-runner.ts 起動
          ↓
-[3] integrity-checker.ts による事前検証
+[3] 現在のシステム状態を収集
+     - account-status.yaml（アカウント状態）
+     - 市場データ（RSS等から取得）
+     - システムヘルス情報
          ↓
-[4] account-status.yaml 読み込み（現在状況分析）
+[4] claude-autonomous-agent.ts 経由でClaude Code SDKに問い合わせ
+     「現在の状況で何をすべきか？」
          ↓
-[5] ブランド一貫性チェック + 戦略選択
-     ├── フォロワー数 < 1000 → 投資基礎教育特化（80%統一）
-     ├── フォロワー数 1000-5000 → 核テーマ（60%）+ 関連テーマ（40%）
-     ├── フォロワー数 > 5000 → 動的戦略適用
-     └── 緊急時（重要ニュース）→ 分析特化型（全段階共通）
+[5] Claudeが次の行動を決定
+     ├── データ収集 → 収集対象とCollectorを指定
+     ├── 投稿作成 → 内容とテーマを生成
+     ├── 分析 → 分析対象と方法を指定
+     └── 待機 → 理由と待機時間を指定
          ↓
-[6] ActionSpecificCollector による情報収集
+[6] Claudeの決定に基づいて実行
          ↓
-[7] content-creator.ts によるコンテンツ生成
+[7] 実行結果をClaude Code SDKにフィードバック
          ↓
-[8] x-poster.ts による投稿実行
+[8] Claudeが結果を評価し、学習データを更新
          ↓
 [9] 結果を階層データに記録（current → learning → archives）
          ↓
@@ -257,21 +261,25 @@ tasks/
 ### データの流れ
 
 ```
-収集フェーズ:
-  RSS Feeds → rss-collector.ts → CollectionResult
-  X Account → playwright-account.ts → AccountStatus
+Claudeへの情報提供:
+  System State + Market Data + Account Status → claude-autonomous-agent.ts
            ↓
-意思決定フェーズ:
-  CollectionResult + AccountStatus → decision-engine.ts
+Claudeの意思決定:
+  claude-autonomous-agent.ts → Action Decision (JSON)
            ↓
-生成フェーズ:
-  決定戦略 + 収集データ → content-creator.ts → 投稿コンテンツ
+実行フェーズ:
+  [データ収集の場合]
+    Claude Decision → Specified Collector → CollectionResult
+  [投稿作成の場合]
+    Claude Decision → content-creator.ts → x-poster.ts
+  [分析の場合]
+    Claude Decision → performance-analyzer.ts
            ↓
-投稿フェーズ:
-  投稿コンテンツ → x-poster.ts → X Platform
+フィードバック:
+  Execution Result → claude-autonomous-agent.ts → Learning Update
            ↓
-学習フェーズ:
-  投稿結果 → data/learning/*.yaml → 次回実行時に活用
+保存フェーズ:
+  結果 → data/learning/*.yaml → 次回実行時にClaudeが参照
 ```
 
 ## 7. 疎結合Collector設計

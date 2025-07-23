@@ -1,0 +1,84 @@
+# X API v2 移行計画サマリー
+migration_summary:
+  created_at: "2025-01-23T22:30:00Z"
+  created_by: "Manager (Claude)"
+  
+  current_status:
+    auth_method: "OAuth 1.0a"
+    api_version: "v1.1"
+    endpoints:
+      - "/1.1/statuses/update.json"
+      - "/2/users/me"
+    
+  target_status:
+    auth_method: "OAuth 2.0 (Bearer Token)"
+    api_version: "v2"
+    endpoints:
+      - "/2/tweets"
+      - "/2/users"
+      - "/2/tweets/search/recent"
+      - "/2/users/:id/tweets"
+  
+  implementation_phases:
+    phase1:
+      name: "基本移行"
+      duration: "2週間"
+      tasks:
+        - "OAuth 2.0認証実装"
+        - "v2エンドポイント対応"
+        - "型定義作成"
+        - "基本投稿機能移行"
+      
+    phase2:
+      name: "データ収集機能"
+      duration: "2週間"
+      tasks:
+        - "タイムライン収集"
+        - "検索機能（Proプラン）"
+        - "エンゲージメント分析"
+        - "キャッシュ実装"
+    
+    phase3:
+      name: "高度な機能"
+      duration: "オプション"
+      tasks:
+        - "リアルタイムストリーミング"
+        - "メディア投稿"
+        - "スレッド投稿"
+        - "詳細分析"
+  
+  documents_created:
+    - path: "docs/x-api-migration-plan.md"
+      description: "詳細な移行計画書"
+    
+    - path: "REQUIREMENTS.md"
+      description: "要件定義書更新（X API v2対応）"
+    
+    - path: "tasks/20250723_221543_x_api_migration/instructions/"
+      files:
+        - "00-implementation-checklist.md"
+        - "01-phase1-implementation.md"
+        - "02-phase2-data-collection.md"
+  
+  next_actions:
+    - action: "X API認証情報取得"
+      priority: "high"
+      assigned_to: "User"
+      
+    - action: "Phase 1実装開始"
+      priority: "high"
+      assigned_to: "Worker"
+      
+    - action: "進捗管理"
+      priority: "medium"
+      assigned_to: "Manager"
+  
+  risk_factors:
+    - "APIレート制限への対応"
+    - "認証方式変更の影響"
+    - "データ形式の互換性"
+    
+  success_criteria:
+    - "全機能のv2移行完了"
+    - "エラー率5%以下"
+    - "既存機能への影響なし"

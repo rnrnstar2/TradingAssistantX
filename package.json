@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx src/scripts/dev.ts",
+    "dev": "MODE=dev tsx src/scripts/dev.ts",
+    "post": "MODE=production tsx src/scripts/dev.ts",
     "start": "tsx src/scripts/main.ts",
     "manager": "ROLE=manager claude --dangerously-skip-permissions",
     "worker": "ROLE=worker claude --dangerously-skip-permissions",
@@ -26,7 +27,6 @@
     "date-fns-tz": "^3.2.0",
     "js-yaml": "^4.1.0",
     "node-fetch": "^3.3.2",
-    "playwright": "^1.40.0",
     "rss-parser": "^3.13.0",
     "tsx": "^4.20.0"
   },

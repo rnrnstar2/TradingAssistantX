@@ -1,0 +1,24 @@
+timestamp: '2025-07-23T03:38:19.406Z'
+phases:
+  - name: analysis
+    duration: 5.432
+    result: success
+  - name: decision
+    duration: 10.908
+    result: educational
+  - name: collection
+    duration: 1.825
+    result: 50 items collected
+  - name: content_generation
+    duration: 175.517
+    result: content_created
+  - name: posting
+    duration: 0.003
+    result: posting_failed
+  - name: optimization
+    duration: 0.059
+    result: learning_complete
+final_result: completed_successfully
+metrics:
+  execution_time: 193.744
+  memory_usage: 39

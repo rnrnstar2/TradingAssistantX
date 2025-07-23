@@ -1,0 +1,118 @@
+# X API v2 タイムラインキャッシュデータ
+cache_metadata:
+  last_updated: "2025-07-23T22:15:43Z"
+  cache_duration_minutes: 15
+  api_tier: "basic"
+  source: "x-data-collector"
+  version: "2.0"
+
+timeline_data:
+  - tweet_id: "1815432109876543210"
+    text: "投資の基礎知識を身につけることが重要です。まずはリスク管理から始めましょう。 #投資初心者 #リスク管理"
+    created_at: "2025-07-23T21:30:00Z"
+    author_id: "123456789"
+    lang: "ja"
+    metrics:
+      likes: 45
+      retweets: 12
+      replies: 3
+      quotes: 1
+      impressions: 1250
+    entities:
+      hashtags:
+        - start: 34
+          end: 40
+          tag: "投資初心者"
+        - start: 41
+          end: 47
+          tag: "リスク管理"
+  
+  - tweet_id: "1815431098765432109"
+    text: "FXトレードで成功するための3つのポイント：1. 資金管理 2. テクニカル分析 3. メンタル管理"
+    created_at: "2025-07-23T21:15:00Z"
+    author_id: "987654321"
+    lang: "ja"
+    metrics:
+      likes: 78
+      retweets: 23
+      replies: 8
+      quotes: 5
+      impressions: 2100
+    entities:
+      hashtags: []
+      mentions: []
+  
+  - tweet_id: "1815430987654321098"
+    text: "暗号資産市場の動向を分析しています。ビットコインの価格動向に注目 #暗号資産 #ビットコイン #投資分析"
+    created_at: "2025-07-23T21:00:00Z"
+    author_id: "456789123"
+    lang: "ja"
+    metrics:
+      likes: 156
+      retweets: 67
+      replies: 24
+      quotes: 12
+      impressions: 4500
+    entities:
+      hashtags:
+        - start: 36
+          end: 40
+          tag: "暗号資産"
+        - start: 41
+          end: 47
+          tag: "ビットコイン"
+        - start: 48
+          end: 53
+          tag: "投資分析"
+
+search_cache:
+  "投資 初心者":
+    cached_at: "2025-07-23T21:45:00Z"
+    query: "投資 初心者 -is:retweet lang:ja"
+    results_count: 25
+    expires_at: "2025-07-23T22:00:00Z"
+    results:
+      - tweet_id: "1815433210987654321"
+        text: "投資初心者が知っておくべき基本用語を解説します"
+        engagement_score: 8.5
+      - tweet_id: "1815433109876543210"
+        text: "初心者向け投資セミナーを開催します"
+        engagement_score: 6.2
+  
+  "株式 分析":
+    cached_at: "2025-07-23T21:30:00Z"
+    query: "株式 分析 -is:retweet lang:ja"
+    results_count: 18
+    expires_at: "2025-07-23T21:45:00Z"
+    results:
+      - tweet_id: "1815432987654321098"
+        text: "今日の株式市場分析をお届けします"
+        engagement_score: 9.1
+      - tweet_id: "1815432876543210987"
+        text: "テクニカル分析の基本パターンについて"
+        engagement_score: 7.8
+
+rate_limit_status:
+  timeline_endpoint:
+    remaining_calls: 750
+    reset_time: "2025-07-23T22:30:00Z"
+    limit_per_15min: 900
+  
+  search_endpoint:
+    remaining_calls: 280
+    reset_time: "2025-07-23T22:30:00Z"
+    limit_per_15min: 300
+
+collection_stats:
+  total_tweets_cached: 3
+  total_searches_cached: 2
+  cache_hit_rate: 0.65
+  last_collection_duration_ms: 2340
+  successful_collections: 15
+  failed_collections: 2
+  
+performance_metrics:
+  avg_response_time_ms: 850
+  data_quality_score: 8.7
+  relevance_score: 9.2
+  cache_efficiency: 0.78

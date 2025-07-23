@@ -1,0 +1,24 @@
+timestamp: '2025-07-23T02:47:13.862Z'
+mode: development_single_execution
+command: pnpm dev
+purpose: MVP基盤テスト・デバッグ
+system:
+  node_version: v22.14.0
+  platform: darwin
+  architecture: arm64
+  working_directory: /Users/rnrnstar/github/TradingAssistantX
+  environment: development
+configuration:
+  execution_mode: single_run
+  basic_flow: RSS収集 → 投稿作成 → X投稿 → 記録保存
+  logging_enabled: true
+  output_directory: tasks/outputs/
+  target_files:
+    - data/current/today-posts.yaml
+expectations:
+  execution_count: 1
+  timeout: 15 minutes
+  output_files:
+    - execution results
+    - success/error logs
+    - today posts record

@@ -1,0 +1,157 @@
+config_data_structure_status:
+  config_directory:
+    autonomous_config:
+      exists: true
+      structure_valid: true
+      key_settings:
+        - daily_posts_limit: 15  # ✅ 1日15回の投稿設定確認
+        - retry_attempts: 3
+        - timeout_seconds: 30
+        - auto_cleanup: true
+        - retention_days: 30
+        - archive_strategy: "monthly"
+        - logging_level: "info"
+        - logging_format: "yaml"
+    posting_times:
+      exists: true
+      daily_posts_count: 15  # ✅ 1日15回の投稿時刻設定確認
+      timezone_configured: true  # Asia/Tokyo設定
+      auto_schedule: true
+      time_distribution:
+        - morning: 3回 (07:00-08:00)
+        - midday: 2回 (12:00-12:30)
+        - afternoon: 2回 (15:00-15:30)
+        - evening: 3回 (18:00-19:00)
+        - night: 5回 (21:00-23:00)
+    rss_sources:
+      exists: true
+      sources_count: 6  # Bloomberg Japan, Nikkei Business, 教育向け4つのクエリベース
+      google_news_queries: true  # ✅ 4つのクエリベース検索設定
+      major_financial_feeds: 2  # Bloomberg, Nikkei Asia
+      educational_queries: 4  # 投資初心者向け、日本株投資、市場動向等
+      priority_system: true
+      collection_settings_defined: true
+    brand_strategy:
+      exists: true
+      strategy_defined: true
+      core_theme: "投資初心者向け基礎教育"
+      target_audience: "投資を始めたい・始めたばかりの20-40代"
+      growth_stage_rules: 3段階定義済み
+      theme_consistency_rules: フォロワー数に応じた適応的設定
+    additional_files:
+      - filename: "collection-strategies.yaml"
+        purpose: "疎結合設計による動的データ収集戦略設定"
+        note: "REQUIREMENTS.mdには記載なし、MVP教訓に従い削除対象候補"
+      
+  current_directory:
+    file_count: 1  # today-posts.yaml のみ
+    total_size_mb: 0.004  # 672バイト = 約0.004MB
+    oldest_file_days: 0  # 本日作成
+    compliance:
+      file_limit: true  # 20ファイル以下 (1/20)
+      size_limit: true  # 1MB以下 (0.004/1.0)
+      duration_limit: true  # 7日以内 (0日経過)
+    missing_required_files:
+      - account-status.yaml  # REQUIREMENTS.md記載、未存在
+      - active-strategy.yaml  # REQUIREMENTS.md記載、未存在
+      - weekly-summary.yaml  # REQUIREMENTS.md記載、未存在
+    files:
+      - filename: "today-posts.yaml"
+        size_kb: 0.7
+        age_days: 0
+        content_type: "投稿実行結果ログ"
+        structure: "統計、投稿詳細、更新日時"
+        
+  learning_directory:
+    file_count: 5
+    total_size_mb: 0.02  # 約20KB = 0.02MB
+    oldest_file_days: 1  # 7/22作成ファイルあり
+    compliance:
+      size_limit: true  # 10MB以下 (0.02/10.0)
+      duration_limit: true  # 90日以内 (最大1日経過)
+    files:
+      - filename: "effective-topics.yaml"
+        size_kb: 2.8
+        age_days: 1
+        content_type: "効果的トピック分析"
+      - filename: "engagement-patterns.yaml"
+        size_kb: 0.2
+        age_days: 0
+        content_type: "エンゲージメントパターン"
+      - filename: "high-engagement.yaml"
+        size_kb: 2.4
+        age_days: 1
+        content_type: "高エンゲージメント分析"
+      - filename: "post-insights.yaml"
+        size_kb: 0.8
+        age_days: 0
+        content_type: "投稿インサイト"
+      - filename: "success-patterns.yaml"
+        size_kb: 2.1
+        age_days: 1
+        content_type: "成功パターン分析"
+
+  archives_directory:
+    exists: true
+    structure_compliance: "部分的"  # 階層構造は存在するが整理が不十分
+    subdirectories:
+      - "posts/2025-07/" # ✅ YYYY-MM形式
+      - "insights/2025-3/" # ⚠️ YYYY-Q形式だが2025-Q3が正しい
+      - "2025-07/" # ⚠️ 直下に年月ディレクトリ（非標準）
+    file_organization_issues:
+      - "2025-07/配下に古いテストデータが混在"
+      - "insights/2025-3/は空ディレクトリ"
+      - "階層構造が一部REQUIREMENTS.mdと不一致"
+      
+  project_configuration:
+    package_json:
+      exists: true
+      scripts_defined:
+        start: true  # "tsx src/scripts/main.ts"
+        dev: true    # "tsx src/scripts/dev.ts"
+        manager: true # ROLE=manager用
+        worker: true  # ROLE=worker用
+        test: true    # vitest関連
+      dependencies_appropriate: true
+      claude_code_sdk_version: "^0.3.3"
+      required_packages:
+        - axios: "^1.10.0"
+        - playwright: "^1.40.0"
+        - rss-parser: "^3.13.0"
+        - js-yaml: "^4.1.0"
+        - tsx: "^4.20.0"
+    tsconfig_valid: true
+    tsconfig_settings:
+      target: "ES2022"
+      module: "ESNext"
+      outdir: "./dist"
+      rootdir: "./src"
+      strict: true
+      exclude_appropriate: true  # node_modules, dist, tests, tasks除外
+    gitignore_appropriate: false  # ⚠️ 不十分
+    gitignore_issues:
+      - "node_modules/の除外設定なし"
+      - "dist/の除外設定なし" 
+      - "data/current/の除外設定なし（一時データのため除外推奨）"
+      - "tasks/の除外設定なし"
+    
+  overall_assessment:
+    structure_compliance: "部分的"
+    data_hierarchy_status: "要改善"
+    hallucination_risks:
+      - "collection-strategies.yamlがREQUIREMENTS.mdに記載なし"
+      - "data/current/に必須ファイル3つが不足"
+      - "archives/ディレクトリの構造が部分的に非標準"
+      - ".gitignoreが不適切で機密データ漏洩リスク"
+    critical_issues:
+      - "❌ data/current/にaccount-status.yaml, active-strategy.yaml, weekly-summary.yamlが存在しない"
+      - "❌ collection-strategies.yamlはMVP教訓に従い削除対象"
+      - "⚠️ archives/の階層構造が一部REQUIREMENTS.mdと不一致"
+      - "❌ .gitignoreが基本的な除外設定を欠如"
+    recommendations:
+      - "✅ 即座にdata/current/の必須ファイル3つを作成"
+      - "✅ collection-strategies.yamlを削除（MVP教訓269-271行目準拠）"
+      - "✅ archives/ディレクトリ構造をREQUIREMENTS.md準拠に再編成"
+      - "✅ .gitignoreを適切に設定（node_modules, dist, data/current, tasks等）"
+      - "✅ 要件定義チェッカー（integrity-checker.ts）の実装優先"
+      - "✅ データ階層移動の自動化実装"

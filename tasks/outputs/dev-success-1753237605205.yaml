@@ -1,0 +1,19 @@
+startup_timestamp: '2025-07-23T02:26:43.505Z'
+completion_timestamp: '2025-07-23T02:26:45.205Z'
+mode: development_single_execution
+command: pnpm dev
+result: success
+execution_details:
+  total_time_ms: 1695
+  total_time_readable: 1.70秒
+  rss_data_count: 50
+  post_successful: true
+  post_id: dev_1753237605192_21xa9c
+outputs:
+  execution_results: tasks/outputs/
+  today_posts: data/current/today-posts.yaml
+  logs: tasks/outputs/
+next_steps:
+  - Review execution results in tasks/outputs/
+  - Check today posts record in data/current/today-posts.yaml
+  - Use pnpm start for production runs

@@ -1,0 +1,46 @@
+timestamp: '2025-07-23T02:27:44.254Z'
+result: success
+execution:
+  rssDataCount: 50
+  postSuccessful: true
+  executionTime: 1287
+  executionPhase: completed
+system_metrics:
+  memory:
+    rss: 177
+    heapUsed: 42
+    heapTotal: 74
+    external: 6
+  cpu:
+    user: 792
+    system: 134
+  process:
+    pid: 30421
+    uptime: 2
+    nodeVersion: v22.14.0
+    platform: darwin
+  system:
+    freeMemory: 102
+    totalMemory: 16384
+    loadAverage:
+      - 4.10400390625
+      - 3.76416015625
+      - 3.57666015625
+    hostname: Mac-mini-3.local
+    uptime: 1197263
+  timestamp: '2025-07-23T02:27:45.543Z'
+daily_statistics:
+  total_posts: 12
+  successful_posts: 11
+  failed_posts: 1
+  success_rate: 92
+  avg_execution_time: 5777
+  daily_limit: 15
+  remaining_posts: 3
+  time_since_last_post_minutes: 0
+  today_date: '2025-07-23'
+files:
+  todayPosts: data/current/today-posts.yaml
+  outputs: tasks/outputs/
+  learning: data/learning/
+next_execution_estimate: '2025-07-23T03:00:00.000Z'

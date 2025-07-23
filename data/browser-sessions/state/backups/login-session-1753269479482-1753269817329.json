@@ -1,0 +1,211 @@
+{
+  "version": "1.0.0",
+  "createdAt": "2025-07-23T11:23:37.328Z",
+  "lastUpdated": "2025-07-23T11:23:37.328Z",
+  "sessionId": "login-session-1753269479482",
+  "authenticationData": {
+    "isAuthenticated": false,
+    "lastAuthCheck": "2025-07-23T11:23:37.328Z",
+    "authMethod": "cookies",
+    "cookies": [
+      {
+        "name": "guest_id_marketing",
+        "value": "v1%3A175326947966062589",
+        "domain": ".x.com",
+        "path": "/",
+        "expires": 1787829500.899616,
+        "httpOnly": false,
+        "secure": true,
+        "sameSite": "None"
+      },
+      {
+        "name": "guest_id_ads",
+        "value": "v1%3A175326947966062589",
+        "domain": ".x.com",
+        "path": "/",
+        "expires": 1787829500.899592,
+        "httpOnly": false,
+        "secure": true,
+        "sameSite": "None"
+      },
+      {
+        "name": "guest_id",
+        "value": "v1%3A175326947966062589",
+        "domain": ".x.com",
+        "path": "/",
+        "expires": 1787829479.751207,
+        "httpOnly": false,
+        "secure": true,
+        "sameSite": "None"
+      },
+      {
+        "name": "personalization_id",
+        "value": "\"v1_naH1rd7viWA1y8hynKV9AQ==\"",
+        "domain": ".x.com",
+        "path": "/",
+        "expires": 1787829479.800192,
+        "httpOnly": false,
+        "secure": true,
+        "sameSite": "None"
+      },
+      {
+        "name": "gt",
+        "value": "1947979502153613338",
+        "domain": ".x.com",
+        "path": "/",
+        "expires": 1753278479.800217,
+        "httpOnly": false,
+        "secure": true,
+        "sameSite": "Lax"
+      },
+      {
+        "name": "guest_id_marketing",
+        "value": "v1%3A175326948089756980",
+        "domain": ".twitter.com",
+        "path": "/",
+        "expires": 1787829481.038065,
+        "httpOnly": false,
+        "secure": true,
+        "sameSite": "None"
+      },
+      {
+        "name": "guest_id_ads",
+        "value": "v1%3A175326948089756980",
+        "domain": ".twitter.com",
+        "path": "/",
+        "expires": 1787829481.038114,
+        "httpOnly": false,
+        "secure": true,
+        "sameSite": "None"
+      },
+      {
+        "name": "personalization_id",
+        "value": "\"v1_JdEaUiHqb9bmuipveieLzQ==\"",
+        "domain": ".twitter.com",
+        "path": "/",
+        "expires": 1787829481.038161,
+        "httpOnly": false,
+        "secure": true,
+        "sameSite": "None"
+      },
+      {
+        "name": "guest_id",
+        "value": "v1%3A175326948089756980",
+        "domain": ".twitter.com",
+        "path": "/",
+        "expires": 1787829481.038189,
+        "httpOnly": false,
+        "secure": true,
+        "sameSite": "None"
+      },
+      {
+        "name": "__cf_bm",
+        "value": "SPjaDeXbk.D0nJTBq3UtB1kKtL63RJfMUkSZWE3xnqM-1753269481-1.0.1.1-OEMN2qXFHhwR_ZKWyGlZrfUg7zn3xEyWLVnKS5_i6JlBdZ3JE4Z2HrSt0NrO4prmKATTWTDHV9D9FmZXl.u22NiFpOQTrlE1TJjUn0rXjiQ",
+        "domain": ".twitter.com",
+        "path": "/",
+        "expires": 1753271281.038214,
+        "httpOnly": true,
+        "secure": true,
+        "sameSite": "None"
+      },
+      {
+        "name": "kdt",
+        "value": "dGAmLLOQZuW7pidJWZbd87o7erf8OPyPBYMOMG90",
+        "domain": ".x.com",
+        "path": "/",
+        "expires": 1787829499.355064,
+        "httpOnly": true,
+        "secure": true,
+        "sameSite": "Lax"
+      },
+      {
+        "name": "auth_token",
+        "value": "03245d61e58b3b53978577ce54515251c763271f",
+        "domain": ".x.com",
+        "path": "/",
+        "expires": 1787829499.355184,
+        "httpOnly": true,
+        "secure": true,
+        "sameSite": "None"
+      },
+      {
+        "name": "ct0",
+        "value": "742b870afea21f331f3cd246b769443b3942a66004d1428cfa7fe8a17dcef149a71cf27ff5b525812a2bf037e02a7d676077f0534fffe01eb372367c8ea06c0c5f359241f24ec9c794ec5f7ef5f580c0",
+        "domain": ".x.com",
+        "path": "/",
+        "expires": 1787829499.696559,
+        "httpOnly": false,
+        "secure": true,
+        "sameSite": "Lax"
+      },
+      {
+        "name": "att",
+        "value": "1-XwVWR6egrS0s43T7L1Uhsp90bWgRvCExUG9jE6v8",
+        "domain": ".x.com",
+        "path": "/",
+        "expires": 1753355899.948506,
+        "httpOnly": true,
+        "secure": true,
+        "sameSite": "None"
+      },
+      {
+        "name": "lang",
+        "value": "en",
+        "domain": "x.com",
+        "path": "/",
+        "expires": -1,
+        "httpOnly": false,
+        "secure": false,
+        "sameSite": "Lax"
+      },
+      {
+        "name": "twid",
+        "value": "u%3D1668630325667463171",
+        "domain": ".x.com",
+        "path": "/",
+        "expires": 1784805500.899654,
+        "httpOnly": false,
+        "secure": true,
+        "sameSite": "None"
+      },
+      {
+        "name": "IDE",
+        "value": "AHWqTUlq2sF8R8ziwPQpY5LpMiixkmLaqtNcBBq6hKqN5CDW3pdY8GcMU4qnqQr2bpU",
+        "domain": ".doubleclick.net",
+        "path": "/",
+        "expires": 1787829500.993252,
+        "httpOnly": true,
+        "secure": true,
+        "sameSite": "None"
+      },
+      {
+        "name": "__cf_bm",
+        "value": "WLjWZcywAyZBc_LsPFXrgV9Jiv2M5zheePnUcl2k3TM-1753269516-1.0.1.1-VV8FQHjb5LSY5XeCCqORrZ56DtDQFCVxYK9Lbnh4Bp7PRCwpI3JNhaF2HR1tyYPVOuhs4rnsFfA.RY9hSqPVfg_g5jQwKWDFWwzg4kg2_YU",
+        "domain": ".x.com",
+        "path": "/",
+        "expires": 1753271316.256518,
+        "httpOnly": true,
+        "secure": true,
+        "sameSite": "None"
+      }
+    ],
+    "localStorage": {},
+    "sessionStorage": {}
+  },
+  "browserData": {
+    "url": "https://x.com/rnrnstar",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "timezone": "Asia/Tokyo",
+    "locale": "ja-JP"
+  },
+  "metadata": {
+    "loginCount": 0,
+    "sessionDuration": 0,
+    "errorCount": 0,
+    "successfulOperations": 1
+  }
+}

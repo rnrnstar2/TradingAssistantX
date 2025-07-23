@@ -1,0 +1,82 @@
+# 変更検知ベース実行システム提案
+
+## 現状の定期実行システムからの移行
+
+### 削除対象
+- loop-manager.ts の定期実行ロジック
+- POSTING_SCHEDULE による時間ベースの実行
+- 1分ごとのポーリング
+
+### 新規実装: change-detector.ts
+
+## 変更検知対象
+
+1. RSSフィード更新検知:
+   - 各RSS源を定期的にチェック（5分間隔）
+   - 新規記事検出時のみ実行
+   - 記事のタイムスタンプをキャッシュ
+
+2. 設定ファイル変更検知:
+   - data/config/*.yaml の変更監視
+   - chokidarライブラリ使用
+   - 変更時即座に再読み込み・実行
+
+3. Xアカウントデータ変更:
+   - フォロワー数の急激な変化
+   - エンゲージメントの異常検知
+   - 重要なメンションやリプライ
+
+## 実装アーキテクチャ
+
+```typescript
+// src/core/change-detector.ts
+interface ChangeEvent {
+  type: 'rss_update' | 'config_change' | 'x_data_change';
+  source: string;
+  timestamp: string;
+  data: any;
+}
+
+class ChangeDetector {
+  private rssChecker: RSSUpdateChecker;
+  private fileWatcher: ConfigFileWatcher;
+  private xDataMonitor: XDataMonitor;
+  
+  async start() {
+    // 各種監視を開始
+    this.startRSSMonitoring();
+    this.startFileWatching();
+    this.startXDataMonitoring();
+  }
+  
+  private async onChangeDetected(event: ChangeEvent) {
+    // 変更検知時にCoreRunnerを実行
+    await this.coreRunner.execute({
+      trigger: event,
+      mode: 'reactive'
+    });
+  }
+}
+```
+
+## 必要な依存関係
+- chokidar: ファイル監視
+- node-cron: RSS定期チェック用
+- diff: 変更検出用
+
+## 移行手順
+1. change-detector.ts の実装
+2. dev.ts を変更検知モードに修正
+3. main.ts の定期実行を変更検知に置換
+4. loop-manager.ts の段階的廃止
+
+## メリット
+- 無駄な実行の削減
+- リアルタイム性の向上
+- システムリソースの効率化
+- 重要な変更への即座の対応
+
+## 実行トリガー例
+- RSS: 新規記事が5件以上
+- Config: 優先度やカテゴリの変更
+- X: フォロワー100人増加、バズ投稿への反応

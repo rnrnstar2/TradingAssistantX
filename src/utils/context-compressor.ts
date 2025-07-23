@@ -1,4 +1,4 @@
-import { BaseCollectionResult } from '../types/collection-types';
+import type { BaseCollectionResult } from '../types/data-types';
 
 /**
  * Claude Code SDK向けにコンテキストデータを最適化・圧縮するユーティリティ

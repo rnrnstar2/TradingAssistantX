@@ -1,0 +1,7 @@
+# Account Status - MVP Data Structure
+# Basic account information for MVP functionality
+
+username: "tradingassistantx"
+followers_count: 0
+last_updated: "2025-07-23T00:00:00Z"
+is_active: true
