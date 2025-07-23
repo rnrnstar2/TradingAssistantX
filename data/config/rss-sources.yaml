@@ -4,12 +4,24 @@ sources:
       url: "https://feeds.bloomberg.com/markets/news.rss"
       priority: 1
       category: "market"
+      enabled: false  # 英語記事配信のため無効化
+      
+    - name: "東洋経済オンライン"
+      url: "https://toyokeizai.net/list/feed/rss"
+      priority: 1
+      category: "market"
       enabled: true
       
     - name: "Nikkei Business"
       url: "https://business.nikkei.com/rss/sns/nb.rdf"
       priority: 2
       category: "business"
+      enabled: true
+      
+    - name: "DIAMOND Online"
+      url: "https://diamond.jp/list/feed/rss"
+      priority: 3
+      category: "market"
       enabled: true
 
   educational:
@@ -35,7 +47,7 @@ sources:
       url: "https://asia.nikkei.com/rss/feed/nar"
       priority: 6
       category: "market"
-      enabled: true
+      enabled: false  # 英語記事品質問題により無効化
 
 collection_settings:
   max_items_per_source: 10
