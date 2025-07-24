@@ -63,12 +63,7 @@ jobs:
             
             # 代替認証方法（設定ファイル）
             mkdir -p ~/.claude
-            cat > ~/.claude/config.json << EOF
-{
-  "access_token": "$CLAUDE_ACCESS_TOKEN",
-  "refresh_token": "$CLAUDE_REFRESH_TOKEN"
-}
-EOF
+            echo "{\"access_token\": \"$CLAUDE_ACCESS_TOKEN\", \"refresh_token\": \"$CLAUDE_REFRESH_TOKEN\"}" > ~/.claude/config.json
             
             # 権限設定
             chmod 600 ~/.claude/config.json || true
