@@ -71,7 +71,7 @@ jobs:
         run: |
           echo "Creating Claude SDK script..."
           
-          cat > claude-sdk-execution.js << 'EOF'
+          cat > claude-sdk-execution.cjs << 'EOF'
           const { claude } = require('@instantlyeasy/claude-code-sdk-ts');
 
           async function executeClaudeSDK() {
@@ -102,7 +102,7 @@ jobs:
           EOF
           
           echo "Running Claude SDK execution..."
-          node claude-sdk-execution.js
+          node claude-sdk-execution.cjs
 
       # 結果の確認とレポート
       - name: Verify SDK functionality
