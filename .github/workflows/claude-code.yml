@@ -50,13 +50,14 @@ jobs:
       - name: Test SDK Installation
         run: |
           echo "Testing SDK installation..."
-          node -e "const { claude } = require('@instantlyeasy/claude-code-sdk-ts'); console.log('✅ SDK imported successfully');"
+          echo "const { claude } = require('@instantlyeasy/claude-code-sdk-ts'); console.log('✅ SDK imported successfully');" > test-import.cjs
+          node test-import.cjs
           echo "✅ SDK installation verified"
 
       - name: Create SDK Test Script
         run: |
           echo "Creating CommonJS test script..."
-          cat > test-claude-sdk.js << 'EOF'
+          cat > test-claude-sdk.cjs << 'EOF'
           const { claude } = require('@instantlyeasy/claude-code-sdk-ts');
           
           async function testClaudeSDK() {
@@ -94,7 +95,7 @@ jobs:
       - name: Run SDK Test
         run: |
           echo "Running Claude SDK test..."
-          node test-claude-sdk.js
+          node test-claude-sdk.cjs
           echo "✅ SDK test completed"
 
       - name: Generate comprehensive report
