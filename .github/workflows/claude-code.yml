@@ -53,37 +53,21 @@ jobs:
           if [ -n "$CLAUDE_ACCESS_TOKEN" ]; then
             echo "✅ Claude access token is available"
             
-            # Claude CLI認証（環境変数経由）
-            export CLAUDE_ACCESS_TOKEN="$CLAUDE_ACCESS_TOKEN"
-            export CLAUDE_REFRESH_TOKEN="$CLAUDE_REFRESH_TOKEN"
+            # Claude CLI認証（環境変数経由）- MAXプラン用
+            echo "Setting up Claude CLI authentication for MAX plan..."
+            export ANTHROPIC_AUTH_TOKEN="$CLAUDE_ACCESS_TOKEN"
             
             # Claude CLIの詳細情報確認
             echo "Checking Claude CLI installation..."
             claude --version || echo "Claude CLI version check failed"
-            claude --help || echo "Claude CLI help failed"
-            
-            # Claude CLIログイン試行
-            echo "Attempting Claude CLI login..."
-            claude login --token "$CLAUDE_ACCESS_TOKEN" || echo "Claude CLI login failed, trying alternative method"
             
             # 認証状況確認
             echo "Checking Claude authentication status..."
-            claude auth status || echo "Auth status check failed"
+            claude auth status || echo "Not authenticated yet - this is expected"
             
-            # 代替認証方法（設定ファイル）
-            mkdir -p ~/.claude
-            echo "{\"access_token\": \"$CLAUDE_ACCESS_TOKEN\", \"refresh_token\": \"$CLAUDE_REFRESH_TOKEN\"}" > ~/.claude/config.json
-            
-            # 権限設定
-            chmod 600 ~/.claude/config.json || true
-            
-            # 設定ファイル確認
-            echo "Config file created:"
-            ls -la ~/.claude/ || echo "Config directory not found"
-            
-            # 最終認証確認
-            echo "Final authentication check..."
-            claude auth status || echo "Final auth check failed"
+            # MAXプラン認証試行（環境変数経由）
+            echo "Attempting authentication via environment variable..."
+            echo "ANTHROPIC_AUTH_TOKEN is set: $([ -n "$ANTHROPIC_AUTH_TOKEN" ] && echo "Yes" || echo "No")"
             
           else
             echo "❌ Claude access token not found in secrets"
