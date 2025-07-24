@@ -1,11 +1,21 @@
 import { Logger, systemLogger } from './logger';
+import { KaitoTwitterAPIClient } from '../kaito-api';
+import { DataManager } from '../data/data-manager';
+// エンドポイント別Claude SDK関数をインポート
+// import { ClaudeSDK } from '../claude'; // ClaudeSDKクラスが存在しないためコメントアウト
 
 export class ComponentContainer {
   private components: Map<string, any> = new Map();
   private logger: Logger;
+  
+  // エンドポイント別設計用の直接アクセスプロパティ
+  public kaitoClient?: KaitoTwitterAPIClient;
+  public dataManager?: DataManager;
+  // public claudeSDK: ClaudeSDK;  // ClaudeSDKクラスが存在しないためコメントアウト
 
   constructor() {
     this.logger = systemLogger;
+    // 初期化は SystemLifecycle で実行
   }
 
   /**
@@ -68,6 +78,13 @@ export class ComponentContainer {
     this.components.clear();
     this.logger.debug(`🧹 Container cleared (${keyCount} components removed)`);
   }
+
+  // ============================================================================
+  // エンドポイント別アクセス用ヘルパー（エンドポイント別設計対応）
+  // ============================================================================
+
+  // Claude SDK エンドポイント別関数を直接呼び出すため、
+  // これらのメソッドは不要
 }
 
 // よく使用されるコンポーネントキーの定数定義

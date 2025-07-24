@@ -4,19 +4,7 @@
  * フィルタルール管理・リアルタイム処理
  */
 
-export interface WebhookRule {
-  id: string;
-  tag: string;
-  value: string;
-  description: string;
-}
-
-export interface WebhookEvent {
-  eventType: string;
-  data: any;
-  timestamp: string;
-  ruleTag?: string;
-}
+import { WebhookRule, WebhookEvent } from '../types';
 
 export class WebhookEndpoints {
   constructor(private baseUrl: string, private headers: Record<string, string>) {}

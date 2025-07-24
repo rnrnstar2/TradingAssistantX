@@ -3,13 +3,10 @@ import { ComponentContainer, COMPONENT_KEYS } from '../shared/component-containe
 import { MainLoop } from '../scheduler/main-loop';
 import { CoreScheduler } from '../scheduler/core-scheduler';
 import { DataManager } from '../data/data-manager';
-import { KaitoApiClient } from '../kaito-api/core/client';
+import { KaitoApiClient } from '../kaito-api';
 import { Config } from '../shared/config';
-import { ClaudeDecisionEngine } from '../claude/decision-engine';
-import { MarketAnalyzer } from '../claude/market-analyzer';
-import { ContentGenerator } from '../claude/content-generator';
-import { SearchEngine } from '../kaito-api/search-engine';
-import { ActionExecutor } from '../kaito-api/action-executor';
+import { TweetEndpoints } from '../kaito-api/endpoints/tweet-endpoints';
+import { ActionEndpoints } from '../kaito-api/endpoints/action-endpoints';
 
 // TradingAssistantX のインターface定義（型安全性のため）
 interface ITradingAssistantX {
@@ -32,11 +29,24 @@ interface ITradingAssistantX {
 }
 
 /**
- * SystemLifecycle - システム起動・停止・初期化ワークフロー管理
- * ApplicationRunner機能を統合したシステムライフサイクル管理クラス
- * main.tsから分離された生命周期管理専用クラス + CLI実行機能
+ * SystemLifecycle - システム起動・停止・初期化ワークフロー管理クラス
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 
+ * 🎯 責任範囲:
+ * • システム全体の起動・停止ワークフロー管理
+ * • ComponentContainerを使った依存性注入コンテナ初期化
+ * • 全コンポーネントのヘルスチェック・状態管理
+ * • グレースフルシャットダウン・リソースクリーンアップ
+ * • ApplicationRunner機能統合 + CLI実行サポート
+ * 
+ * 🔗 主要連携:
+ * • main.ts → initializeComponents(), startSystem(), stopSystem()呼び出し
+ * • ComponentContainer → 全コンポーネントの依存性管理
+ * • SystemInitializer → コンポーネント初期化処理統合
+ * • HealthChecker → システム健全性監視統合
+ * • ShutdownManager → 安全なシステム停止処理統合
  */
-// SystemInitializer統合クラス
+// SystemInitializer統合クラス - コンポーネント初期化統合管理
 class SystemInitializer {
   private logger: Logger;
 
@@ -52,6 +62,7 @@ class SystemInitializer {
       success: true,
       action: 'wait',
       executionTime: 0,
+      duration: 0,
       metadata: {
         executionTime: 0,
         retryCount: 0,
@@ -59,23 +70,17 @@ class SystemInitializer {
         timestamp: new Date().toISOString()
       }
     }));
-    const contentGenerator = new ContentGenerator();
     const kaitoClient = new KaitoApiClient();
-    const searchEngine = new SearchEngine();
-    const marketAnalyzer = new MarketAnalyzer(searchEngine);
-    const decisionEngine = new ClaudeDecisionEngine(searchEngine);
-    const actionExecutor = new ActionExecutor();
+    const searchEngine = new TweetEndpoints();
+    const actionExecutor = new ActionEndpoints();
     const dataManager = new DataManager();
 
     container.register(COMPONENT_KEYS.SCHEDULER, scheduler);
     container.register(COMPONENT_KEYS.MAIN_LOOP, mainLoop);
-    container.register(COMPONENT_KEYS.DECISION_ENGINE, decisionEngine);
-    container.register(COMPONENT_KEYS.CONTENT_GENERATOR, contentGenerator);
     container.register(COMPONENT_KEYS.KAITO_CLIENT, kaitoClient);
     container.register(COMPONENT_KEYS.SEARCH_ENGINE, searchEngine);
     container.register(COMPONENT_KEYS.ACTION_EXECUTOR, actionExecutor);
     container.register(COMPONENT_KEYS.DATA_MANAGER, dataManager);
-    container.register(COMPONENT_KEYS.MARKET_ANALYZER, marketAnalyzer);
     container.register(COMPONENT_KEYS.CONFIG, config);
 
     this.logger.info('📦 コンポーネント初期化完了');
@@ -92,6 +97,14 @@ class SystemInitializer {
 
       await config.initialize();
       await this.initializeDataManager(dataManager);
+      
+      // KaitoApiClientを初期化してから認証
+      // デフォルト設定を作成し、API keyを環境変数から設定
+      const { createDefaultConfig } = await import('../kaito-api/core/config.js');
+      const kaitoConfig = await createDefaultConfig('dev');
+      kaitoConfig.authentication.primaryKey = process.env.KAITO_API_TOKEN || '';
+      
+      kaitoClient.initializeWithConfig(kaitoConfig);
       await kaitoClient.authenticate();
 
       const connectionOk = await kaitoClient.testConnection();
@@ -123,17 +136,25 @@ class SystemInitializer {
   }
 }
 
-// HealthChecker統合クラス
+// HealthChecker統合クラス - システム健全性監視統合管理
 interface ComponentHealth {
   component: string;
   status: 'healthy' | 'warning' | 'error';
   details?: string;
+  checkDuration?: number; // ヘルスチェックにかかった時間（ms）
+  lastCheck?: string; // 最後のチェック時刻
 }
 
 interface HealthReport {
   overall: 'healthy' | 'warning' | 'error';
   components: ComponentHealth[];
   timestamp: string;
+  totalCheckDuration: number; // 全体チェック時間
+  systemResources: {
+    memoryUsage: NodeJS.MemoryUsage;
+    uptime: number;
+    cpuUsage: NodeJS.CpuUsage;
+  };
 }
 
 class HealthChecker {
@@ -143,180 +164,354 @@ class HealthChecker {
     this.logger = systemLogger;
   }
 
+  /**
+   * システム全体ヘルスチェック - 型安全・パフォーマンス向上版
+   * 各コンポーネントの健全性を並行チェックし、統合レポートを作成
+   */
   async performSystemHealthCheck(
     mainLoop: MainLoop,
     dataManager: DataManager, 
     kaitoClient: KaitoApiClient
   ): Promise<HealthReport> {
+    const startTime = process.hrtime();
+    const cpuUsageStart = process.cpuUsage();
+    
     try {
       this.logger.info('🏥 システムヘルスチェック実行中...');
 
-      const healthChecks = await Promise.allSettled([
+      // 並行ヘルスチェックの実行
+      const healthCheckPromises = [
         this.checkMainLoopHealth(mainLoop),
         this.checkDataManagerHealth(dataManager),
         this.checkApiHealth(kaitoClient)
-      ]);
+      ];
+      
+      const healthChecks = await Promise.allSettled(healthCheckPromises);
+      const componentNames = ['MainLoop', 'DataManager', 'KaitoAPI'];
 
+      // 結果の集約・分析
       const components: ComponentHealth[] = [];
       let overallStatus: 'healthy' | 'warning' | 'error' = 'healthy';
 
       healthChecks.forEach((check, index) => {
+        const componentName = componentNames[index];
+        
         if (check.status === 'fulfilled') {
           components.push(check.value);
+          
+          // 統合状態の更新
           if (check.value.status === 'error') {
             overallStatus = 'error';
           } else if (check.value.status === 'warning' && overallStatus !== 'error') {
             overallStatus = 'warning';
           }
         } else {
-          components.push({
-            component: ['MainLoop', 'DataManager', 'KaitoAPI'][index],
+          // チェック自体が失敗した場合
+          const errorComponent: ComponentHealth = {
+            component: componentName,
             status: 'error',
-            details: check.reason instanceof Error ? check.reason.message : 'Unknown error'
-          });
+            details: check.reason instanceof Error ? check.reason.message : 'Health check execution failed',
+            lastCheck: new Date().toISOString()
+          };
+          components.push(errorComponent);
           overallStatus = 'error';
         }
       });
 
+      // システムリソース情報の収集
+      const endTime = process.hrtime(startTime);
+      const totalCheckDuration = endTime[0] * 1000 + endTime[1] / 1000000; // ms
+      const cpuUsageEnd = process.cpuUsage(cpuUsageStart);
+
       const report: HealthReport = {
         overall: overallStatus,
         components,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        totalCheckDuration: Math.round(totalCheckDuration * 1000) / 1000, // 小数点3桁
+        systemResources: {
+          memoryUsage: process.memoryUsage(),
+          uptime: process.uptime(),
+          cpuUsage: cpuUsageEnd
+        }
       };
 
+      // 結果ログ出力
       if (report.overall === 'healthy') {
-        this.logger.success('✅ システムヘルスチェック完了');
+        this.logger.success('✅ システムヘルスチェック完了', {
+          duration: `${report.totalCheckDuration}ms`,
+          components: components.length,
+          memoryHeapUsed: `${Math.round(report.systemResources.memoryUsage.heapUsed / 1024 / 1024)}MB`
+        });
       } else {
-        this.logger.warn('⚠️ システムヘルスチェック完了（問題あり）:', report);
+        this.logger.warn('⚠️ システムヘルスチェック完了（問題あり）:', {
+          overall: report.overall,
+          problemComponents: components.filter(c => c.status !== 'healthy').map(c => c.component),
+          duration: `${report.totalCheckDuration}ms`
+        });
       }
 
       return report;
+      
     } catch (error) {
-      this.logger.error('❌ システムヘルスチェック失敗:', error);
-      throw error;
+      const endTime = process.hrtime(startTime);
+      const duration = endTime[0] * 1000 + endTime[1] / 1000000;
+      
+      this.logger.error('❌ システムヘルスチェック失敗:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        duration: `${Math.round(duration * 1000) / 1000}ms`
+      });
+      
+      throw new Error(`System health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
+  /**
+   * MainLoopコンポーネントヘルスチェック
+   */
   private async checkMainLoopHealth(mainLoop: MainLoop): Promise<ComponentHealth> {
+    const checkStart = process.hrtime();
+    
     try {
       const health = await mainLoop.performHealthCheck();
+      const checkEnd = process.hrtime(checkStart);
+      const checkDuration = checkEnd[0] * 1000 + checkEnd[1] / 1000000; // ms
       
       return {
         component: 'MainLoop',
         status: health.overall === 'healthy' ? 'healthy' : 'warning',
-        details: health.overall !== 'healthy' ? JSON.stringify(health) : undefined
+        details: health.overall !== 'healthy' ? JSON.stringify(health) : undefined,
+        checkDuration: Math.round(checkDuration * 1000) / 1000,
+        lastCheck: new Date().toISOString()
       };
     } catch (error) {
+      const checkEnd = process.hrtime(checkStart);
+      const checkDuration = checkEnd[0] * 1000 + checkEnd[1] / 1000000;
+      
       return {
         component: 'MainLoop', 
         status: 'error',
-        details: error instanceof Error ? error.message : 'Health check failed'
+        details: error instanceof Error ? error.message : 'Health check failed',
+        checkDuration: Math.round(checkDuration * 1000) / 1000,
+        lastCheck: new Date().toISOString()
       };
     }
   }
 
+  /**
+   * DataManagerコンポーネントヘルスチェック
+   */
   private async checkDataManagerHealth(dataManager: DataManager): Promise<ComponentHealth> {
+    const checkStart = process.hrtime();
+    
     try {
       const health = await dataManager.performHealthCheck();
+      const checkEnd = process.hrtime(checkStart);
+      const checkDuration = checkEnd[0] * 1000 + checkEnd[1] / 1000000; // ms
+      
+      const hasErrors = health.errors && health.errors.length > 0;
       
       return {
         component: 'DataManager',
-        status: health.errors.length === 0 ? 'healthy' : 'warning',
-        details: health.errors.length > 0 ? `Errors: ${health.errors.join(', ')}` : undefined
+        status: hasErrors ? 'warning' : 'healthy',
+        details: hasErrors ? `Errors: ${health.errors.join(', ')}` : undefined,
+        checkDuration: Math.round(checkDuration * 1000) / 1000,
+        lastCheck: new Date().toISOString()
       };
     } catch (error) {
+      const checkEnd = process.hrtime(checkStart);
+      const checkDuration = checkEnd[0] * 1000 + checkEnd[1] / 1000000;
+      
       return {
         component: 'DataManager',
         status: 'error', 
-        details: error instanceof Error ? error.message : 'Health check failed'
+        details: error instanceof Error ? error.message : 'Health check failed',
+        checkDuration: Math.round(checkDuration * 1000) / 1000,
+        lastCheck: new Date().toISOString()
       };
     }
   }
 
+  /**
+   * KaitoApiClientコンポーネントヘルスチェック
+   */
   private async checkApiHealth(kaitoClient: KaitoApiClient): Promise<ComponentHealth> {
+    const checkStart = process.hrtime();
+    
     try {
       const isHealthy = await kaitoClient.testConnection();
+      const checkEnd = process.hrtime(checkStart);
+      const checkDuration = checkEnd[0] * 1000 + checkEnd[1] / 1000000; // ms
       
       return {
         component: 'KaitoAPI',
         status: isHealthy ? 'healthy' : 'error',
-        details: !isHealthy ? 'API connection test failed' : undefined
+        details: !isHealthy ? 'API connection test failed' : undefined,
+        checkDuration: Math.round(checkDuration * 1000) / 1000,
+        lastCheck: new Date().toISOString()
       };
     } catch (error) {
+      const checkEnd = process.hrtime(checkStart);
+      const checkDuration = checkEnd[0] * 1000 + checkEnd[1] / 1000000;
+      
       return {
         component: 'KaitoAPI',
         status: 'error',
-        details: error instanceof Error ? error.message : 'Connection test failed'
+        details: error instanceof Error ? error.message : 'Connection test failed',
+        checkDuration: Math.round(checkDuration * 1000) / 1000,
+        lastCheck: new Date().toISOString()
       };
     }
   }
 }
 
-// ShutdownManager統合クラス
+// ShutdownManager統合クラス - グレースフルシャットダウン統合管理
 class ShutdownManager {
   private logger: Logger;
+  private shutdownStartTime?: number;
 
   constructor() {
     this.logger = systemLogger;
   }
 
+  /**
+   * グレースフルシャットダウン - 安全なシステム停止処理
+   * 順序立てたシャットダウンでリソースの安全な解放を実行
+   */
   async gracefulShutdown(
     scheduler: CoreScheduler | null,
     dataManager: DataManager | null
   ): Promise<void> {
+    this.shutdownStartTime = Date.now();
+    
     try {
-      this.logger.info('🛑 グレースフルシャットダウン開始');
+      this.logger.info('🛑 グレースフルシャットダウン開始', {
+        processId: process.pid,
+        uptime: `${Math.round(process.uptime())}秒`,
+        startTime: new Date().toISOString()
+      });
 
+      // シャットダウンステップの実行
+      const shutdownSteps = [];
+      
       if (scheduler) {
-        await this.stopScheduler(scheduler);
+        shutdownSteps.push({ name: 'Scheduler停止', action: () => this.stopScheduler(scheduler) });
       }
-
+      
       if (dataManager) {
-        await this.saveFinalData(dataManager);
+        shutdownSteps.push({ name: '最終データ保存', action: () => this.saveFinalData(dataManager) });
       }
 
-      this.logger.success('✅ グレースフルシャットダウン完了');
+      // 各ステップを順次実行
+      for (const step of shutdownSteps) {
+        try {
+          this.logger.info(`🛠️ ${step.name}実行中...`);
+          await step.action();
+          this.logger.success(`✅ ${step.name}完了`);
+        } catch (stepError) {
+          this.logger.error(`❌ ${step.name}エラー:`, stepError);
+          // 一つのステップが失敗しても続行
+        }
+      }
+
+      const shutdownDuration = Date.now() - this.shutdownStartTime;
+      this.logger.success('✅ グレースフルシャットダウン完了', {
+        duration: `${shutdownDuration}ms`,
+        stepsCompleted: shutdownSteps.length,
+        finalMemoryUsage: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`
+      });
+      
     } catch (error) {
-      this.logger.error('❌ シャットダウンエラー:', error);
+      const shutdownDuration = this.shutdownStartTime ? Date.now() - this.shutdownStartTime : 0;
+      
+      this.logger.error('❌ グレースフルシャットダウンエラー:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        duration: `${shutdownDuration}ms`,
+        processId: process.pid
+      });
+      
+      // シャットダウンエラーでも続行（強制停止を防ぐ）
     }
   }
 
+  /**
+   * スケジューラーの安全停止
+   */
   private async stopScheduler(scheduler: CoreScheduler): Promise<void> {
     try {
+      // スケジューラーの現在状態をログ出力
+      const status = scheduler.getStatus();
+      this.logger.debug('📊 停止前スケジューラー状態:', status);
+      
+      // 停止実行
       scheduler.stop();
-      this.logger.info('⏹️ Scheduler stopped');
+      
+      // 少し待って停止確認
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      this.logger.info('⏹️ CoreScheduler停止完了');
     } catch (error) {
-      this.logger.error('❌ Scheduler停止エラー:', error);
+      this.logger.error('❌ CoreScheduler停止エラー:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+      
+      throw error; // シャットダウンステップでエラーを伝播
     }
   }
 
+  /**
+   * 最終データ保存 - シャットダウン時の状態保存
+   */
   private async saveFinalData(dataManager: DataManager): Promise<void> {
     try {
-      const currentStatus = {
+      const shutdownTimestamp = new Date().toISOString();
+      const uptime = process.uptime();
+      const memoryUsage = process.memoryUsage();
+      
+      const finalStatus = {
         account_status: {
-          followers: 0,
+          followers: 0, // 実際の値はシャットダウン時に取得不可
           following: 0,
           tweets_today: 0,
           engagement_rate_24h: 0
         },
         system_status: {
-          last_execution: new Date().toISOString(),
-          next_execution: '',
+          last_execution: shutdownTimestamp,
+          next_execution: '', // シャットダウンのため空
           errors_today: 0,
-          success_rate: 0.95
+          success_rate: 0.95, // デフォルト値
+          shutdown_reason: 'graceful_shutdown',
+          uptime_seconds: Math.round(uptime)
         },
         rate_limits: {
-          posts_remaining: 10,
+          posts_remaining: 10, // 保守的なデフォルト値
           retweets_remaining: 20,
           likes_remaining: 50,
           reset_time: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+        },
+        shutdown_info: {
+          timestamp: shutdownTimestamp,
+          process_id: process.pid,
+          memory_usage_mb: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+          uptime_seconds: Math.round(uptime)
         }
       };
 
-      await dataManager.saveCurrentStatus(currentStatus);
-      this.logger.info('💾 Final data saved');
+      await dataManager.saveCurrentStatus(finalStatus);
+      
+      this.logger.info('💾 最終データ保存完了', {
+        timestamp: shutdownTimestamp,
+        memoryUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`,
+        uptime: `${Math.round(uptime)}秒`
+      });
+      
     } catch (error) {
-      this.logger.error('❌ 最終データ保存エラー:', error);
+      this.logger.error('❌ 最終データ保存エラー:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+      
+      throw error; // シャットダウンステップでエラーを伝播
     }
   }
 }
@@ -342,7 +537,8 @@ export class SystemLifecycle {
    * コンポーネント初期化（main.tsから呼び出し）
    */
   initializeComponents(config: Config): ComponentContainer {
-    return this.initializer.initializeComponents(config);
+    this.container = this.initializer.initializeComponents(config);
+    return this.container;
   }
 
   /**

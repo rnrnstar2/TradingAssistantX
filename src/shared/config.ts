@@ -195,7 +195,7 @@ export class Config {
       
     } catch (error) {
       console.error(`❌ Configuration update failed for ${path}:`, error);
-      throw new Error(`Configuration update failed: ${error.message}`);
+      throw new Error(`Configuration update failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -293,7 +293,7 @@ export class Config {
       this.lastLoadTime = now;
       
     } catch (error) {
-      if (error.code === 'ENOENT') {
+      if ((error as any).code === 'ENOENT') {
         console.warn('⚠️ Configuration file not found, creating default');
         await this.saveConfig();
       } else {

@@ -141,17 +141,17 @@ export class MainLoop {
       // 基本的な健全性チェック
       if (this.isExecuting && Date.now() - new Date(this.metrics.lastExecutionTime).getTime() > 300000) {
         // 5分以上実行中の場合は異常
-        health.components.scheduler = 'error';
+        (health.components as any).scheduler = 'error';
       }
 
       if (!this.metrics || this.metrics.totalExecutions < 0) {
-        health.components.metrics = 'error';
+        (health.components as any).metrics = 'error';
       }
 
       // 全体状況判定
-      const errorCount = Object.values(health.components).filter(status => status === 'error').length;
+      const errorCount = Object.values(health.components).filter((status: any) => status === 'error').length;
       
-      if (errorCount > 0) health.overall = 'critical';
+      if (errorCount > 0) (health as any).overall = 'critical';
 
       console.log('✅ Scheduler health check completed');
       return health;
@@ -230,6 +230,7 @@ export class MainLoop {
       success: false,
       action: 'skip',
       executionTime: 0,
+      duration: 0,
       error: 'Execution already in progress',
       metadata: {
         executionTime: 0,
@@ -245,6 +246,7 @@ export class MainLoop {
       success: false,
       action: 'error',
       executionTime,
+      duration: executionTime,
       error: error.message,
       metadata: {
         executionTime,

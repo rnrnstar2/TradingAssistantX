@@ -4,34 +4,7 @@
  * コミュニティ情報・メンバー・投稿管理
  */
 
-export interface CommunityInfo {
-  id: string;
-  name: string;
-  description: string;
-  memberCount: number;
-  isPublic: boolean;
-  rules: string[];
-}
-
-export interface CommunityMember {
-  userId: string;
-  username: string;
-  role: 'admin' | 'moderator' | 'member';
-  joinedAt: string;
-}
-
-export interface CommunityPost {
-  id: string;
-  content: string;
-  authorId: string;
-  communityId: string;
-  createdAt: string;
-  engagement: {
-    likes: number;
-    replies: number;
-    shares: number;
-  };
-}
+import { CommunityInfo, CommunityMember, CommunityPost } from '../types';
 
 export class CommunityEndpoints {
   constructor(private baseUrl: string, private headers: Record<string, string>) {}

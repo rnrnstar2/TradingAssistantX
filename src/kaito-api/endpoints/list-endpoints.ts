@@ -4,22 +4,7 @@
  * リスト投稿・フォロワー・メンバー管理
  */
 
-export interface TwitterList {
-  id: string;
-  name: string;
-  description: string;
-  memberCount: number;
-  followerCount: number;
-  isPrivate: boolean;
-  ownerId: string;
-}
-
-export interface ListMember {
-  userId: string;
-  username: string;
-  displayName: string;
-  addedAt: string;
-}
+import { TwitterList, ListMember } from '../types';
 
 export class ListEndpoints {
   constructor(private baseUrl: string, private headers: Record<string, string>) {}

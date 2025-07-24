@@ -4,28 +4,7 @@
  * 認証・ログイン・2FA対応
  */
 
-export interface LoginRequest {
-  username?: string;
-  email?: string;
-  password: string;
-  twoFactorCode?: string;
-}
-
-export interface LoginResponse {
-  success: boolean;
-  authToken?: string;
-  refreshToken?: string;
-  expiresIn?: number;
-  requiresTwoFactor?: boolean;
-  error?: string;
-}
-
-export interface AuthStatus {
-  isAuthenticated: boolean;
-  userId?: string;
-  username?: string;
-  expiresAt?: string;
-}
+import { LoginRequest, LoginResponse, AuthStatus } from '../types';
 
 export class LoginEndpoints {
   constructor(private baseUrl: string, private headers: Record<string, string>) {}

@@ -4,18 +4,7 @@
  * トレンド情報取得（WOEID対応）
  */
 
-export interface TrendData {
-  name: string;
-  query: string;
-  tweetVolume: number | null;
-  rank: number;
-}
-
-export interface TrendLocation {
-  woeid: number;
-  name: string;
-  countryCode: string;
-}
+import { TrendData, TrendLocation } from '../types';
 
 export class TrendEndpoints {
   constructor(private baseUrl: string, private headers: Record<string, string>) {}

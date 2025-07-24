@@ -15,114 +15,20 @@
  * - データ最小化原則
  */
 
-import { KaitoAPIConfig } from '../core/config';
-
-// ============================================================================
-// USER INTERFACES
-// ============================================================================
-
-export interface UserInfo {
-  id: string;
-  username: string;
-  displayName: string;
-  description: string;
-  followersCount: number;
-  followingCount: number;
-  tweetsCount: number;
-  verified: boolean;
-  createdAt: string;
-  location: string;
-  website: string;
-  profileImageUrl: string;
-  bannerImageUrl: string;
-}
-
-export interface FollowResult {
-  userId: string;
-  following: boolean;
-  timestamp: string;
-  success: boolean;
-  error?: string;
-}
-
-export interface UnfollowResult {
-  userId: string;
-  unfollowed: boolean;
-  timestamp: string;
-  success: boolean;
-  error?: string;
-}
-
-export interface UserSearchResult {
-  users: UserInfo[];
-  totalCount: number;
-  nextToken?: string;
-  searchQuery: string;
-  timestamp: string;
-}
-
-export interface UserSearchOptions {
-  query: string;
-  maxResults?: number;
-  nextToken?: string;
-  includeVerified?: boolean;
-  minFollowers?: number;
-  maxFollowers?: number;
-}
-
-export interface ProfileUpdateData {
-  displayName?: string;
-  description?: string;
-  location?: string;
-  website?: string;
-  profileImageUrl?: string;
-  bannerImageUrl?: string;
-}
-
-export interface ProfileUpdateResult {
-  userId: string;
-  updated: boolean;
-  timestamp: string;
-  success: boolean;
-  updatedFields: string[];
-  error?: string;
-}
-
-// === 統合: プライバシー保護システム インターフェース ===
-
-export interface SafeUserProfile {
-  basicInfo: Pick<UserInfo, 'username' | 'displayName' | 'verified' | 'description'>;
-  publicMetrics: Pick<UserInfo, 'followersCount' | 'tweetsCount'>;
-  educationalValue: {
-    isEducationalAccount: boolean;
-    educationalTopics: string[];
-    credibilityLevel: 'high' | 'medium' | 'low';
-  };
-  safetyLevel: 'safe' | 'caution' | 'restricted';
-}
-
-export interface UserAnalytics {
-  userId: string;
-  engagementRate: number;
-  educationalContentRatio: number;
-  activityLevel: 'low' | 'medium' | 'high';
-  credibilityScore: number;
-  topTopics: string[];
-  lastAnalyzed: string;
-}
-
-export interface AccountSafetyCheck {
-  isSafe: boolean;
-  safetyLevel: 'safe' | 'caution' | 'restricted';
-  concerns: string[];
-  recommendations: string[];
-}
-
-export interface EducationalSearchOptions extends UserSearchOptions {
-  educationalOnly?: boolean;
-  minCredibilityLevel?: 'low' | 'medium' | 'high';
-  topics?: string[];
-}
+import { 
+  KaitoAPIConfig,
+  UserInfo, 
+  FollowResult, 
+  UnfollowResult, 
+  UserSearchResult, 
+  UserSearchOptions, 
+  ProfileUpdateData, 
+  ProfileUpdateResult,
+  SafeUserProfile,
+  UserAnalytics,
+  AccountSafetyCheck,
+  EducationalSearchOptions
+} from '../types';
 
 // ============================================================================
 // USER ENDPOINTS CLASS
@@ -174,27 +80,9 @@ export class UserEndpoints {
       }
 
       // API呼び出し
-      const response = await this.httpClient.get<{
-        data: {
-          id: string;
-          username: string;
-          name: string;
-          description: string;
-          public_metrics: {
-            followers_count: number;
-            following_count: number;
-            tweet_count: number;
-          };
-          verified: boolean;
-          created_at: string;
-          location: string;
-          url: string;
-          profile_image_url: string;
-          profile_banner_url: string;
-        }
-      }>(`/users/${userId}`, {
+      const response = await this.httpClient.get(`/users/${userId}`, {
         'user.fields': 'created_at,description,location,public_metrics,url,verified,profile_image_url,profile_banner_url'
-      });
+      }) as any;
 
       const userData = response.data;
       
@@ -244,28 +132,10 @@ export class UserEndpoints {
       }
 
       // API呼び出し
-      const response = await this.httpClient.get<{
-        data: Array<{
-          id: string;
-          username: string;
-          name: string;
-          description: string;
-          public_metrics: {
-            followers_count: number;
-            following_count: number;
-            tweet_count: number;
-          };
-          verified: boolean;
-          created_at: string;
-          location: string;
-          url: string;
-          profile_image_url: string;
-          profile_banner_url: string;
-        }>
-      }>('/users', {
+      const response = await this.httpClient.get('/users', {
         ids: userIds.join(','),
         'user.fields': 'created_at,description,location,public_metrics,url,verified,profile_image_url,profile_banner_url'
-      });
+      }) as any;
 
       const users: UserInfo[] = response.data.map((userData: any) => ({
         id: userData.id,
@@ -309,14 +179,9 @@ export class UserEndpoints {
       }
 
       // API呼び出し
-      const response = await this.httpClient.post<{
-        data: {
-          following: boolean;
-          pending_follow: boolean;
-        }
-      }>('/users/me/following', {
+      const response = await this.httpClient.post('/users/me/following', {
         target_user_id: userId
-      });
+      }) as any;
 
       const result: FollowResult = {
         userId,
@@ -354,11 +219,7 @@ export class UserEndpoints {
       }
 
       // API呼び出し
-      const response = await this.httpClient.delete<{
-        data: {
-          following: boolean;
-        }
-      }>(`/users/me/following/${userId}`);
+      const response = await this.httpClient.delete(`/users/me/following/${userId}`) as any;
 
       const result: UnfollowResult = {
         userId,
@@ -411,29 +272,7 @@ export class UserEndpoints {
       }
 
       // API呼び出し
-      const response = await this.httpClient.get<{
-        data: Array<{
-          id: string;
-          username: string;
-          name: string;
-          description: string;
-          public_metrics: {
-            followers_count: number;
-            following_count: number;
-            tweet_count: number;
-          };
-          verified: boolean;
-          created_at: string;
-          location: string;
-          url: string;
-          profile_image_url: string;
-          profile_banner_url: string;
-        }>;
-        meta: {
-          result_count: number;
-          next_token?: string;
-        };
-      }>('/users/search', params);
+      const response = await this.httpClient.get('/users/search', params) as any;
 
       let users: UserInfo[] = response.data.map((userData: any) => ({
         id: userData.id,
@@ -526,13 +365,7 @@ export class UserEndpoints {
       }
 
       // API呼び出し
-      const response = await this.httpClient.post<{
-        data: {
-          id: string;
-          name: string;
-          username: string;
-        }
-      }>('/users/me', apiUpdateData);
+      const response = await this.httpClient.post('/users/me', apiUpdateData) as any;
 
       const result: ProfileUpdateResult = {
         userId: response.data.id,
@@ -579,12 +412,7 @@ export class UserEndpoints {
       // @マークを除去
       const cleanUsername = username.replace(/^@/, '');
 
-      const response = await this.httpClient.get<{
-        data: {
-          id: string;
-          username: string;
-        }
-      }>(`/users/by/username/${cleanUsername}`);
+      const response = await this.httpClient.get(`/users/by/username/${cleanUsername}`) as any;
 
       return response.data.id;
 
@@ -603,14 +431,9 @@ export class UserEndpoints {
         return false;
       }
 
-      const response = await this.httpClient.get<{
-        data: Array<{
-          id: string;
-          following: boolean;
-        }>
-      }>('/users/me/following', {
+      const response = await this.httpClient.get('/users/me/following', {
         ids: userId
-      });
+      }) as any;
 
       return response.data.length > 0 && response.data[0].following;
 

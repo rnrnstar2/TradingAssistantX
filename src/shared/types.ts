@@ -1,26 +1,71 @@
 /**
- * 全システム共通の型定義
- * REQUIREMENTS.md準拠版 - 型定義統合ファイル
- * types/kaito-api-types.ts統合済み（重複排除版）
+ * 全システム共通の型定義 - 重複排除・整理済み版
+ * REQUIREMENTS.md準拠版 - システム全体の型定義ハブ
+ * 
+ * 構成:
+ * - Claude SDK型定義の再エクスポート
+ * - KaitoAPI型定義の再エクスポート  
+ * - システム独自の型定義
+ * 
+ * 重複排除済み:
+ * - PostResult, RetweetResult, QuoteTweetResult, LikeResult (→ kaito-api/core/client.ts)
+ * - SystemContext (→ claude/types.ts)
+ * - TweetData → SimpleTweetData にリネーム
  */
 
 // ============================================================================
-// CLAUDE DECISION TYPES
+// IMPORTS - 外部型定義の集約
 // ============================================================================
 
-export interface ClaudeDecision {
-  action: 'post' | 'retweet' | 'quote_tweet' | 'like' | 'wait';
-  reasoning: string;
-  parameters: {
-    topic?: string;
-    searchQuery?: string;
-    content?: string;
-    targetTweetId?: string;
-    duration?: number;
-    reason?: string;
-    retry_action?: string;
+// Claude SDK Types
+import type { 
+  ClaudeDecision, 
+  GeneratedContent, 
+  AnalysisResult, 
+  SearchQuery,
+  SystemContext
+} from '../claude/types';
+
+export type { 
+  ClaudeDecision, 
+  GeneratedContent, 
+  AnalysisResult, 
+  SearchQuery,
+  SystemContext
+};
+
+// KaitoAPI Types
+import type {
+  AccountInfo,
+  PostResult,
+  CoreRetweetResult,
+  QuoteTweetResult,
+  LikeResult
+} from '../kaito-api';
+
+// Re-export types for use throughout the application
+export type { AccountInfo, PostResult, QuoteTweetResult, LikeResult };
+export type RetweetResult = CoreRetweetResult;
+
+// メインワークフロー型定義
+export interface ExecutionContext {
+  twitterData: any;
+  learningData: LearningData;
+  timestamp: string;
+}
+
+// ============================================================================
+// LEARNING DATA TYPES - 学習データ型定義
+// ============================================================================
+
+export interface LearningData {
+  decisionPatterns: DecisionPattern[];
+  successStrategies: SuccessStrategy[];
+  errorLessons: ErrorLesson[];
+  executionCount?: {
+    today: number;
+    total: number;
   };
-  confidence: number;
 }
 
 export type ClaudeActionType = 'post' | 'retweet' | 'quote_tweet' | 'like' | 'wait';
@@ -61,7 +106,7 @@ export interface Tweet {
   url: string;
 }
 
-export interface TweetData {
+export interface SimpleTweetData {
   id: string;
   text: string;
   author: string;
@@ -75,14 +120,18 @@ export interface TweetData {
 }
 
 // ============================================================================
-// EXECUTION RESULT TYPES
+// EXECUTION RESULT TYPES - 統一された実行結果型
 // ============================================================================
 
 export interface ExecutionResult {
   success: boolean;
   action: string;
   executionTime: number;
-  duration: number; // Added for compatibility
+  duration: number;
+  decision?: any; // ClaudeDecision型は履面インポートで入手
+  actionResult?: any;
+  analysis?: any; // AnalysisResult型は履面インポートで入手
+  timestamp?: string;
   result?: {
     id: string;
     url?: string;
@@ -106,41 +155,11 @@ export interface ActionResult {
   executionTime: number;
 }
 
-// ============================================================================
-// SYSTEM CONTEXT TYPES
-// ============================================================================
+// SystemContext is now imported from claude/types.ts to avoid duplication
 
-export interface SystemContext {
-  timestamp: string;
-  account: {
-    followerCount: number;
-    lastPostTime?: string;
-    postsToday: number;
-    engagementRate: number;
-    accountHealth: 'good' | 'warning' | 'critical';
-  };
-  system: {
-    executionCount: {
-      today: number;
-      total: number;
-    };
-    health: {
-      all_systems_operational: boolean;
-      api_status: 'healthy' | 'degraded' | 'error';
-      rate_limits_ok: boolean;
-    };
-  };
-  market: {
-    trendingTopics: string[];
-    volatility: 'low' | 'medium' | 'high';
-    sentiment: 'bearish' | 'neutral' | 'bullish';
-  };
-  learningData: {
-    decisionPatterns: DecisionPattern[];
-    successStrategies: SuccessStrategy[];
-    errorLessons: ErrorLesson[];
-  };
-}
+// ============================================================================
+// SHARED SYSTEM TYPES - システム全体共通型
+// ============================================================================
 
 export interface AccountStatus {
   followers_count: number;
@@ -189,18 +208,7 @@ export interface PostContent {
   timestamp: number;
 }
 
-export interface GeneratedContent {
-  content: string;
-  hashtags: string[];
-  estimatedEngagement: number;
-  quality: QualityMetrics;
-  metadata: {
-    wordCount: number;
-    language: string;
-    contentType: string;
-    generatedAt: string;
-  };
-}
+// Removed duplicate GeneratedContent - using Claude SDK version
 
 export interface QualityMetrics {
   overall: number;
@@ -253,7 +261,7 @@ export interface CollectionParams {
 }
 
 export interface CollectedData {
-  tweets: TweetData[];
+  tweets: SimpleTweetData[];
   metrics: BasicMetrics;
   timestamp: string;
   source: string;
@@ -334,7 +342,7 @@ export interface SearchResult {
 export interface DecisionPattern {
   id: string;
   context: Partial<SystemContext>;
-  decision: ClaudeDecision;
+  decision: any; // ClaudeDecision型は履面インポートで入手 
   result: ExecutionResult;
   timestamp: string;
 }
@@ -443,10 +451,109 @@ export interface MarketIntelligence {
 }
 
 // ============================================================================
+// DATA FLOW INTEGRATION TYPES - 指示書準拠の統合型定義
+// ============================================================================
+
+export interface DataFlowConfig {
+  currentRetentionMinutes: number;  // デフォルト: 30
+  archiveOnCompletion: boolean;     // デフォルト: true
+  maxCurrentFiles: number;          // デフォルト: 20
+  enableCompression: boolean;       // デフォルト: false (MVP)
+}
+
+export interface ExecutionMetadata {
+  executionId: string;
+  startTime: string;
+  endTime?: string;
+  dataManager: {
+    currentPath: string;
+    archivePath?: string;
+    filesCreated: number;
+    totalSize: number;
+  };
+}
+
+export interface ExecutionTrace {
+  step: string;
+  timestamp: string;
+  input: any;
+  output: any;
+  duration: number;
+  success: boolean;
+  error?: string;
+}
+
+export interface DataFlowIntegration {
+  claudeOutputs: {
+    decision?: any;
+    content?: any;
+    analysis?: any;
+    searchQuery?: any;
+  };
+  kaitoResponses: Record<string, any>;
+  posts: Array<{
+    id: string;
+    timestamp: string;
+    content: string;
+    metrics?: {
+      likes: number;
+      retweets: number;
+      replies: number;
+    };
+  }>;
+  executionSummary: {
+    executionId: string;
+    startTime: string;
+    endTime?: string;
+    totalActions: number;
+    successCount: number;
+    errorCount: number;
+  };
+}
+
+// エラーハンドリング・リカバリー用型定義
+export interface RetryConfig {
+  maxRetries: number;
+  baseDelay: number;        // 基本遅延時間（ms）
+  backoffMultiplier: number; // 指数バックオフ倍率
+  maxDelay: number;         // 最大遅延時間（ms）
+}
+
+export interface OperationResult<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  retryCount: number;
+  duration: number;
+  timestamp: string;
+}
+
+export interface TransactionState {
+  operationId: string;
+  steps: Array<{
+    stepId: string;
+    operation: string;
+    success: boolean;
+    rollbackData?: any;
+    timestamp: string;
+  }>;
+  canRollback: boolean;
+  rollbackInProgress: boolean;
+}
+
+export interface IntegrityCheckResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+  checkedItems: number;
+  timestamp: string;
+}
+
+// ============================================================================
 // TYPE GUARDS
 // ============================================================================
 
-export function isClaudeDecision(obj: any): obj is ClaudeDecision {
+export function isClaudeDecision(obj: any): obj is any {
   return obj && 
     typeof obj.action === 'string' && 
     typeof obj.reasoning === 'string' && 
@@ -454,13 +561,7 @@ export function isClaudeDecision(obj: any): obj is ClaudeDecision {
     obj.parameters !== undefined;
 }
 
-export function isSystemContext(obj: any): obj is SystemContext {
-  return obj && 
-    obj.account && 
-    obj.system && 
-    obj.market &&
-    typeof obj.timestamp === 'string';
-}
+// isSystemContext type guard is now available through claude/types.ts import
 
 export function isExecutionResult(obj: any): obj is ExecutionResult {
   return obj && 
@@ -469,7 +570,7 @@ export function isExecutionResult(obj: any): obj is ExecutionResult {
     obj.metadata !== undefined;
 }
 
-export function isTweetData(obj: any): obj is TweetData {
+export function isSimpleTweetData(obj: any): obj is SimpleTweetData {
   return obj && 
     typeof obj.id === 'string' && 
     typeof obj.text === 'string' &&
@@ -566,6 +667,7 @@ export function createExecutionResult(
     success,
     action,
     executionTime: 0,
+    duration: 0,
     error,
     metadata: {
       executionTime: 0,
@@ -597,37 +699,7 @@ export interface CostTrackingInfo {
   lastUpdated: string;
 }
 
-export interface PostResult {
-  id: string;
-  url: string;
-  timestamp: string;
-  success: boolean;
-  error?: string;
-}
-
-export interface RetweetResult {
-  id: string;
-  originalTweetId: string;
-  timestamp: string;
-  success: boolean;
-  error?: string;
-}
-
-export interface QuoteTweetResult {
-  id: string;
-  originalTweetId: string;
-  comment: string;
-  timestamp: string;
-  success: boolean;
-  error?: string;
-}
-
-export interface LikeResult {
-  tweetId: string;
-  timestamp: string;
-  success: boolean;
-  error?: string;
-}
+// PostResult, RetweetResult, QuoteTweetResult, LikeResult are now imported from kaito-api/core/client.ts to avoid duplication
 
 export interface UserEndpoints {
   getProfile: (userId: string) => Promise<any>;

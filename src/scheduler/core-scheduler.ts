@@ -5,9 +5,9 @@
  */
 
 // KaitoAPI統合インポート
-import { KaitoTwitterAPIClient } from '../kaito-api/core/client';
-import { SearchEngine } from '../kaito-api/search-engine';
-import { ActionExecutor } from '../kaito-api/action-executor';
+import { KaitoTwitterAPIClient } from '../kaito-api';
+import { TweetEndpoints } from '../kaito-api/endpoints/tweet-endpoints';
+import { ActionEndpoints } from '../kaito-api/endpoints/action-endpoints';
 
 export interface SchedulerConfig {
   intervalMinutes: number;
@@ -58,8 +58,8 @@ export class CoreScheduler {
 
   // KaitoAPI統合コンポーネント
   private kaitoClient?: KaitoTwitterAPIClient;
-  private searchEngine?: SearchEngine;
-  private actionExecutor?: ActionExecutor;
+  private searchEngine?: TweetEndpoints;
+  private actionExecutor?: ActionEndpoints;
 
   private readonly DEFAULT_CONFIG: SchedulerConfig = {
     intervalMinutes: 30,
@@ -75,8 +75,8 @@ export class CoreScheduler {
   constructor(
     config?: Partial<SchedulerConfig>,
     kaitoClient?: KaitoTwitterAPIClient,
-    searchEngine?: SearchEngine,
-    actionExecutor?: ActionExecutor
+    searchEngine?: TweetEndpoints,
+    actionExecutor?: ActionEndpoints
   ) {
     this.config = { ...this.DEFAULT_CONFIG, ...config };
     this.kaitoClient = kaitoClient;
