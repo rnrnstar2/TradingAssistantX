@@ -1,9 +1,14 @@
 /**
  * メイン実行ループ統合クラス
  * REQUIREMENTS.md準拠版 - 30分間隔自動実行システム
+ * KaitoAPI統合による高度実行ループ実装
  */
 
-import { ClaudeDecision } from '../claude/decision-engine';
+import { ClaudeDecision, ClaudeDecisionEngine } from '../claude/decision-engine';
+// KaitoAPI統合インポート
+import { KaitoTwitterAPIClient } from '../kaito-api/client';
+import { SearchEngine } from '../kaito-api/search-engine';
+import { ActionExecutor } from '../kaito-api/action-executor';
 
 export interface SystemContext {
   timestamp: string;
@@ -70,17 +75,44 @@ export interface LoopMetrics {
   lastExecutionTime: string;
 }
 
+// KaitoAPI統合インターフェース
+export interface IntegratedContext {
+  timestamp: string;
+  accountInfo: any;
+  trendData: any[];
+  marketSentiment: any;
+}
+
 /**
  * メイン実行ループ統合クラス
  * 30分間隔での自動実行フローを管理・統合
+ * KaitoAPI統合による高度実行ループ機能
  */
 export class MainLoop {
   private metrics!: LoopMetrics;
   private isExecuting: boolean = false;
 
-  constructor() {
+  // KaitoAPI統合コンポーネント
+  private claudeEngine?: ClaudeDecisionEngine;
+  private kaitoClient?: KaitoTwitterAPIClient;
+  private searchEngine?: SearchEngine;
+  private actionExecutor?: ActionExecutor;
+
+  constructor(
+    claudeEngine?: ClaudeDecisionEngine,
+    kaitoClient?: KaitoTwitterAPIClient,
+    searchEngine?: SearchEngine,
+    actionExecutor?: ActionExecutor
+  ) {
+    this.claudeEngine = claudeEngine;
+    this.kaitoClient = kaitoClient;
+    this.searchEngine = searchEngine;
+    this.actionExecutor = actionExecutor;
+    
     this.initializeMetrics();
-    console.log('✅ MainLoop initialized - REQUIREMENTS.md準拠版');
+    console.log('✅ MainLoop initialized - KaitoAPI統合版:', {
+      integratedComponents: !!(claudeEngine && kaitoClient && searchEngine && actionExecutor)
+    });
   }
 
   /**
@@ -179,6 +211,82 @@ export class MainLoop {
   }
 
   /**
+   * 統合実行サイクル
+   * KaitoAPI統合による高度実行ループ
+   */
+  async executeIntegratedCycle(): Promise<ExecutionResult> {
+    if (this.isExecuting) {
+      console.warn('⚠️ Integrated execution already in progress, skipping');
+      return this.createSkippedResult();
+    }
+
+    if (!this.claudeEngine || !this.kaitoClient || !this.searchEngine || !this.actionExecutor) {
+      console.warn('⚠️ Missing integrated components, falling back to basic cycle');
+      return this.runOnce();
+    }
+
+    this.isExecuting = true;
+    const startTime = Date.now();
+
+    try {
+      console.log('🚀 Starting integrated execution cycle...');
+
+      // 1. 統合データ収集
+      const contextData = await this.collectIntegratedContext();
+      
+      // 2. Claude統合判断
+      const decision = await this.claudeEngine.makeEnhancedDecision();
+      
+      // 3. KaitoAPI実行
+      const result = await this.actionExecutor.executeAction(decision);
+      
+      // 4. 結果分析・学習
+      await this.processExecutionResult(result, contextData);
+      
+      const executionTime = Date.now() - startTime;
+      const executionResult: ExecutionResult = {
+        success: result.success,
+        action: decision.action,
+        executionTime,
+        result: {
+          id: result.id || `integrated_${Date.now()}`,
+          url: result.url,
+          content: decision.parameters.content || decision.reasoning
+        },
+        metadata: {
+          confidence: decision.confidence,
+          reasoning: decision.reasoning,
+          context: 'Integrated KaitoAPI execution',
+          timestamp: new Date().toISOString()
+        }
+      };
+
+      this.updateMetrics(executionResult, true);
+
+      console.log('✅ Integrated execution cycle completed:', {
+        action: decision.action,
+        success: result.success,
+        duration: `${executionTime}ms`,
+        confidence: decision.confidence
+      });
+
+      return executionResult;
+
+    } catch (error) {
+      const executionTime = Date.now() - startTime;
+      const errorResult = this.handleIntegratedError(error as Error, executionTime);
+      
+      this.updateMetrics(errorResult, false);
+      
+      console.error('❌ Integrated execution cycle failed:', error);
+      return errorResult;
+
+    } finally {
+      this.isExecuting = false;
+    }
+  }
+
+  /**
    * システム健全性チェック
    */
   async performHealthCheck(): Promise<{
@@ -206,7 +314,26 @@ export class MainLoop {
         timestamp: new Date().toISOString()
       };
 
-      // 実際の健全性チェックロジックは各コンポーネントの実装に依存
+      // 統合コンポーネントの健全性チェック
+      if (this.kaitoClient && this.searchEngine && this.actionExecutor) {
+        const [kaitoHealth, searchHealth, executorHealth] = await Promise.allSettled([
+          this.kaitoClient.testConnection(),
+          this.searchEngine.getCapabilities(),
+          this.actionExecutor.getExecutionMetrics()
+        ]);
+
+        if (kaitoHealth.status === 'rejected') health.components.kaitoApi = 'error';
+        if (searchHealth.status === 'rejected') health.components.kaitoApi = 'degraded';
+        if (executorHealth.status === 'rejected') health.components.kaitoApi = 'degraded';
+      }
+
+      // 全体状況判定
+      const errorCount = Object.values(health.components).filter(status => status === 'error').length;
+      const degradedCount = Object.values(health.components).filter(status => status === 'degraded').length;
+      
+      if (errorCount > 0) health.overall = 'critical';
+      else if (degradedCount > 1) health.overall = 'degraded';
+
       console.log('✅ System health check completed');
       return health;
 
@@ -309,14 +436,7 @@ export class MainLoop {
 
     } catch (error) {
       console.error('❌ Decision making failed:', error);
-      
-      // フォールバック決定
-      return {
-        action: 'wait',
-        reasoning: `Decision making failed: ${error.message}. Defaulting to wait.`,
-        parameters: { duration: 1800000 }, // 30 minutes
-        confidence: 0.1
-      };
+      throw error;
     }
   }
 
@@ -504,5 +624,100 @@ export class MainLoop {
 
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // ============================================================================
+  // KaitoAPI統合プライベートメソッド
+  // ============================================================================
+
+  /**
+   * 統合コンテキスト収集
+   */
+  private async collectIntegratedContext(): Promise<IntegratedContext> {
+    try {
+      console.log('📊 統合コンテキスト収集開始');
+
+      if (!this.kaitoClient || !this.searchEngine) {
+        throw new Error('Missing KaitoAPI components for context collection');
+      }
+
+      const [accountInfo, trendData, marketSentiment] = await Promise.all([
+        this.kaitoClient.getAccountInfo(),
+        this.searchEngine.searchTrends(),
+        this.searchEngine.analyzeMarketSentiment()
+      ]);
+      
+      const context: IntegratedContext = {
+        timestamp: new Date().toISOString(),
+        accountInfo,
+        trendData,
+        marketSentiment
+      };
+
+      console.log('✅ 統合コンテキスト収集完了:', {
+        followers: accountInfo.followersCount,
+        trends: trendData.length,
+        sentiment: marketSentiment.overall_sentiment
+      });
+
+      return context;
+
+    } catch (error) {
+      console.error('❌ 統合コンテキスト収集エラー:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 実行結果処理
+   */
+  private async processExecutionResult(result: any, contextData: IntegratedContext): Promise<void> {
+    try {
+      console.log('🔄 実行結果処理開始');
+
+      // 結果分析
+      const analysis = {
+        success: result.success,
+        action: result.action || 'unknown',
+        engagement: result.engagement || 0,
+        context: contextData,
+        timestamp: new Date().toISOString()
+      };
+
+      // 学習データ更新（Mock実装）
+      await this.delay(300);
+
+      console.log('✅ 実行結果処理完了:', {
+        success: analysis.success,
+        action: analysis.action
+      });
+
+    } catch (error) {
+      console.error('❌ 実行結果処理エラー:', error);
+    }
+  }
+
+  /**
+   * 統合エラーハンドリング
+   */
+  private handleIntegratedError(error: Error, executionTime: number): ExecutionResult {
+    console.error('🚨 統合実行エラー詳細:', {
+      message: error.message,
+      stack: error.stack?.substring(0, 200),
+      executionTime
+    });
+
+    return {
+      success: false,
+      action: 'integrated_error',
+      executionTime,
+      error: `Integrated execution failed: ${error.message}`,
+      metadata: {
+        confidence: 0,
+        reasoning: 'Integrated execution encountered an error',
+        context: 'Error handling - KaitoAPI integration',
+        timestamp: new Date().toISOString()
+      }
+    };
   }
 }

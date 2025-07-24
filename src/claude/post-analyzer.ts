@@ -4,6 +4,8 @@
  */
 
 import { claude } from '@instantlyeasy/claude-code-sdk-ts';
+// EngagementPredictor統合インポート
+import { EngagementPredictor, EngagementPrediction, TweetData } from './engagement-predictor';
 
 export interface QualityMetrics {
   overall: number;
@@ -16,14 +18,6 @@ export interface QualityMetrics {
   risk_assessment: number;
 }
 
-export interface EngagementPrediction {
-  estimated_likes: number;
-  estimated_retweets: number;
-  estimated_replies: number;
-  engagement_rate: number;
-  best_posting_time: string;
-  confidence: number;
-}
 
 export interface PostAnalysis {
   quality: QualityMetrics;
@@ -35,15 +29,6 @@ export interface PostAnalysis {
   target_audience_match: number;
 }
 
-export interface TweetData {
-  content: string;
-  likes?: number;
-  retweets?: number;
-  replies?: number;
-  timestamp?: string;
-  hashtags?: string[];
-  mentions?: string[];
-}
 
 /**
  * Claude Code SDKによる投稿分析・品質評価クラス
@@ -53,8 +38,8 @@ export class PostAnalyzer {
   private readonly QUALITY_THRESHOLD = 70;
   private readonly ENGAGEMENT_BASELINE = 2.0;
 
-  constructor() {
-    console.log('✅ PostAnalyzer initialized - REQUIREMENTS.md準拠版');
+  constructor(private engagementPredictor?: EngagementPredictor) {
+    console.log('✅ PostAnalyzer initialized - EngagementPredictor統合版');
   }
 
   /**
@@ -113,52 +98,24 @@ JSON形式で回答してください:
 
     } catch (error) {
       console.error('Quality analysis failed:', error);
-      return this.getDefaultQualityMetrics();
+      throw error;
     }
   }
 
-  /**
-   * エンゲージメント予測分析
-   */
-  async evaluateEngagement(tweet: TweetData): Promise<EngagementPrediction> {
-    try {
-      const { content, hashtags = [], mentions = [] } = tweet;
-      
-      // 基本エンゲージメント計算
-      const baseEngagement = this.calculateBaseEngagement(content, hashtags, mentions);
-      
-      // 最適投稿時間推定
-      const bestPostingTime = this.getBestPostingTime();
-      
-      // 時間帯による調整
-      const timeAdjustment = this.getTimeAdjustment(bestPostingTime);
-      
-      const adjustedEngagement = baseEngagement * timeAdjustment;
-
-      return {
-        estimated_likes: Math.round(adjustedEngagement * 0.7),
-        estimated_retweets: Math.round(adjustedEngagement * 0.2),
-        estimated_replies: Math.round(adjustedEngagement * 0.1),
-        engagement_rate: adjustedEngagement,
-        best_posting_time: bestPostingTime,
-        confidence: this.calculatePredictionConfidence(content, hashtags)
-      };
-
-    } catch (error) {
-      console.error('Engagement prediction failed:', error);
-      return this.getDefaultEngagementPrediction();
-    }
-  }
 
   /**
    * 包括的投稿分析（品質+エンゲージメント+改善提案）
    */
   async analyzePost(content: string): Promise<PostAnalysis> {
     try {
-      // 並行して品質分析とエンゲージメント予測を実行
+      // 並行して品質分析とエンゲージメント予測を実行（EngagementPredictor使用）
+      if (!this.engagementPredictor) {
+        throw new Error('EngagementPredictor is required for post analysis');
+      }
+      
       const [quality, engagement] = await Promise.all([
         this.analyzeQuality(content),
-        this.evaluateEngagement({ content })
+        this.engagementPredictor.evaluateEngagement({ content })
       ]);
 
       // 改善提案生成
@@ -184,68 +141,10 @@ JSON形式で回答してください:
 
     } catch (error) {
       console.error('Post analysis failed:', error);
-      return this.getDefaultPostAnalysis();
+      throw error;
     }
   }
 
-  /**
-   * 投稿パフォーマンス事後分析
-   */
-  async analyzePerformance(tweet: TweetData): Promise<{
-    performance_score: number;
-    vs_prediction: {
-      likes_accuracy: number;
-      retweets_accuracy: number;
-      replies_accuracy: number;
-    };
-    insights: string[];
-    learning_points: string[];
-  }> {
-    try {
-      const { content, likes = 0, retweets = 0, replies = 0 } = tweet;
-      
-      // 事前予測を取得
-      const prediction = await this.evaluateEngagement(tweet);
-      
-      // パフォーマンススコア計算
-      const actualEngagement = likes + retweets + replies;
-      const predictedEngagement = prediction.estimated_likes + prediction.estimated_retweets + prediction.estimated_replies;
-      const performanceScore = (actualEngagement / Math.max(predictedEngagement, 1)) * 100;
-      
-      // 予測精度分析
-      const likesAccuracy = this.calculateAccuracy(likes, prediction.estimated_likes);
-      const retweetsAccuracy = this.calculateAccuracy(retweets, prediction.estimated_retweets);
-      const repliesAccuracy = this.calculateAccuracy(replies, prediction.estimated_replies);
-      
-      // インサイト生成
-      const insights = this.generatePerformanceInsights(tweet, prediction, performanceScore);
-      const learningPoints = this.generateLearningPoints(content, actualEngagement, predictedEngagement);
-
-      return {
-        performance_score: Math.round(performanceScore),
-        vs_prediction: {
-          likes_accuracy: likesAccuracy,
-          retweets_accuracy: retweetsAccuracy,
-          replies_accuracy: repliesAccuracy
-        },
-        insights,
-        learning_points: learningPoints
-      };
-
-    } catch (error) {
-      console.error('Performance analysis failed:', error);
-      return {
-        performance_score: 50,
-        vs_prediction: {
-          likes_accuracy: 50,
-          retweets_accuracy: 50,
-          replies_accuracy: 50
-        },
-        insights: ['分析エラーが発生しました'],
-        learning_points: ['データ収集の改善が必要です']
-      };
-    }
-  }
 
   // ============================================================================
   // PRIVATE METHODS
@@ -267,10 +166,11 @@ JSON形式で回答してください:
         };
       }
     } catch (error) {
-      console.warn('Failed to parse analysis response, using defaults');
+      console.error('Failed to parse analysis response');
+      throw new Error('Failed to parse quality analysis response');
     }
     
-    return this.getDefaultQualityMetrics();
+    throw new Error('Quality analysis parsing failed');
   }
 
   private calculateOverallScore(metrics: Omit<QualityMetrics, 'overall'>): number {
@@ -295,63 +195,9 @@ JSON形式で回答してください:
     );
   }
 
-  private calculateBaseEngagement(content: string, hashtags: string[], mentions: string[]): number {
-    let baseScore = 10;
 
-    // コンテンツ長による調整
-    if (content.length > 100 && content.length < 200) baseScore += 5;
-    if (content.length > 200) baseScore += 3;
 
-    // ハッシュタグによる調整
-    baseScore += Math.min(hashtags.length * 3, 15);
 
-    // エンゲージメント要素
-    if (content.includes('？')) baseScore += 8; // 質問
-    if (content.includes('💡') || content.includes('📊')) baseScore += 5; // 絵文字
-    if (content.includes('初心者')) baseScore += 7; // ターゲット明確
-    if (content.includes('具体的') || content.includes('実践')) baseScore += 6; // 実用性
-
-    return Math.min(baseScore, 50);
-  }
-
-  private getBestPostingTime(): string {
-    const currentHour = new Date().getHours();
-    const optimalTimes = ['09:00', '12:00', '18:00', '21:00'];
-    
-    // 現在時刻に最も近い最適時間を選択
-    const currentMinutes = currentHour * 60;
-    let bestTime = '09:00';
-    let minDiff = Infinity;
-
-    optimalTimes.forEach(time => {
-      const [hours, minutes] = time.split(':').map(Number);
-      const timeMinutes = hours * 60 + minutes;
-      const diff = Math.abs(currentMinutes - timeMinutes);
-      
-      if (diff < minDiff) {
-        minDiff = diff;
-        bestTime = time;
-      }
-    });
-
-    return bestTime;
-  }
-
-  private getTimeAdjustment(postingTime: string): number {
-    const optimalTimes = ['09:00', '12:00', '18:00', '21:00'];
-    return optimalTimes.includes(postingTime) ? 1.2 : 1.0;
-  }
-
-  private calculatePredictionConfidence(content: string, hashtags: string[]): number {
-    let confidence = 0.6;
-
-    // コンテンツ品質による調整
-    if (content.length > 50) confidence += 0.1;
-    if (hashtags.length > 0 && hashtags.length <= 4) confidence += 0.1;
-    if (content.includes('投資') || content.includes('資産')) confidence += 0.1;
-
-    return Math.min(confidence, 0.9);
-  }
 
   private generateRecommendations(quality: QualityMetrics, engagement: EngagementPrediction): string[] {
     const recommendations: string[] = [];
@@ -482,40 +328,6 @@ JSON形式で回答してください:
     return points;
   }
 
-  // デフォルト値生成メソッド
-  private getDefaultQualityMetrics(): QualityMetrics {
-    return {
-      overall: 70,
-      readability: 70,
-      relevance: 70,
-      engagement_potential: 60,
-      factual_accuracy: 80,
-      originality: 60,
-      timeliness: 70,
-      risk_assessment: 80
-    };
-  }
 
-  private getDefaultEngagementPrediction(): EngagementPrediction {
-    return {
-      estimated_likes: 15,
-      estimated_retweets: 3,
-      estimated_replies: 2,
-      engagement_rate: 2.0,
-      best_posting_time: '12:00',
-      confidence: 0.6
-    };
-  }
 
-  private getDefaultPostAnalysis(): PostAnalysis {
-    return {
-      quality: this.getDefaultQualityMetrics(),
-      engagement: this.getDefaultEngagementPrediction(),
-      recommendations: ['品質分析が利用できません'],
-      issues: [],
-      optimization_suggestions: [],
-      sentiment: 'neutral',
-      target_audience_match: 70
-    };
-  }
 }

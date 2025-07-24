@@ -1,7 +1,14 @@
 /**
  * Claude Code SDK による意思決定エンジン
  * REQUIREMENTS.md準拠版 - 30分間隔実行システム対応
+ * KaitoAPI統合による判断精度向上実装
  */
+
+// KaitoAPI統合インポート
+import { SearchEngine } from '../kaito-api/search-engine';
+import { KaitoTwitterAPIClient } from '../kaito-api/client';
+// MarketAnalyzer統合インポート
+import { MarketAnalyzer, MarketContext } from './market-analyzer';
 
 export interface ClaudeDecision {
   action: 'post' | 'retweet' | 'quote_tweet' | 'like' | 'wait';
@@ -36,6 +43,7 @@ interface MarketData {
   sentiment: 'bearish' | 'neutral' | 'bullish';
 }
 
+
 interface SystemContext {
   account: AccountStatus;
   system: {
@@ -51,18 +59,51 @@ interface SystemContext {
 /**
  * Claude Code SDKによるアクション決定エンジン
  * 30分間隔での自律判断実装
+ * KaitoAPI統合による高度判断システム
  */
-export class DecisionEngine {
+export class ClaudeDecisionEngine {
   private readonly MAX_POSTS_PER_DAY = 5;
   private readonly MIN_WAIT_BETWEEN_POSTS = 3600000; // 1 hour
   private readonly CONFIDENCE_THRESHOLD = 0.7;
 
-  constructor() {
-    console.log('✅ DecisionEngine initialized - REQUIREMENTS.md準拠版');
+  constructor(
+    private searchEngine: SearchEngine,
+    private kaitoClient: KaitoTwitterAPIClient,
+    private marketAnalyzer: MarketAnalyzer
+  ) {
+    console.log('✅ ClaudeDecisionEngine initialized - MarketAnalyzer統合版');
   }
 
   /**
-   * システムコンテキストを分析してアクションを決定
+   * リアルタイムデータ活用判断
+   * KaitoAPI統合による判断精度向上
+   */
+  async makeEnhancedDecision(): Promise<ClaudeDecision> {
+    try {
+      console.log('🧠 Claude統合判断開始 - KaitoAPI連携');
+
+      // 1. KaitoAPIでリアルタイム状況取得
+      const accountStatus = await this.kaitoClient.getAccountInfo();
+      const trendData = await this.searchEngine.searchTrends();
+      
+      // 2. 市場コンテキスト分析（MarketAnalyzer使用）
+      const marketContext = await this.marketAnalyzer.analyzeMarketContext();
+      
+      // 3. Claude判断にリアルタイムデータ統合
+      const enhancedPrompt = this.marketAnalyzer.buildEnhancedPrompt(accountStatus, trendData, marketContext);
+      
+      // 4. 統合判断実行
+      return this.marketAnalyzer.executeEnhancedDecision(enhancedPrompt, marketContext);
+
+    } catch (error) {
+      console.error('❌ 統合判断エラー:', error);
+      throw error;
+    }
+  }
+
+
+  /**
+   * システムコンテキストを分析してアクションを決定（レガシー版）
    */
   async makeDecision(context: SystemContext): Promise<ClaudeDecision> {
     try {
@@ -140,7 +181,8 @@ export class DecisionEngine {
       );
 
     } catch (error) {
-      return this.handleDecisionError(error as Error);
+      console.error('Decision error:', error);
+      throw error;
     }
   }
 
@@ -218,27 +260,14 @@ export class DecisionEngine {
     }
   }
 
-  /**
-   * エラーハンドリング用フォールバック決定
-   */
-  private handleDecisionError(error: Error): ClaudeDecision {
-    console.error('Decision error handled', { error });
-    
-    return {
-      action: 'wait',
-      reasoning: `Decision error occurred: ${error.message}. System will wait and retry.`,
-      parameters: {
-        duration: 600000, // 10 minutes
-        reason: 'decision_error',
-        retry_action: 'analyze'
-      },
-      confidence: 0.2
-    };
-  }
 
   // ============================================================================
-  // PRIVATE HELPER METHODS
+  // PRIVATE HELPER METHODS - 統合版
   // ============================================================================
+
+
+
+
 
   private createPostDecision(reasoning: string, confidence: number, contentType?: string): ClaudeDecision {
     return {

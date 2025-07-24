@@ -12,6 +12,9 @@ jobs:
     name: Complete Claude Test (CLI + SDK + Queries)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      CLAUDE_ACCESS_TOKEN: ${{ secrets.CLAUDE_ACCESS_TOKEN }}
+      CLAUDE_REFRESH_TOKEN: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
     
     steps:
       - name: Checkout repository
@@ -39,6 +42,22 @@ jobs:
           echo "Testing Claude CLI help command..."
           claude --help
           echo "✅ Help command completed"
+
+      - name: Setup Claude Authentication
+        run: |
+          echo "Setting up Claude authentication..."
+          echo "Access token available: ${{ secrets.CLAUDE_ACCESS_TOKEN != '' }}"
+          echo "Refresh token available: ${{ secrets.CLAUDE_REFRESH_TOKEN != '' }}"
+          
+          # Try to use environment variables for authentication
+          if [ -n "$CLAUDE_ACCESS_TOKEN" ]; then
+            echo "✅ Claude access token detected in environment"
+            # Claude Code CLI may automatically use environment variables
+          else
+            echo "❌ No Claude access token found"
+          fi
+          
+          echo "✅ Authentication setup completed"
 
       - name: Install Claude SDK TypeScript
         run: |
@@ -100,23 +119,41 @@ jobs:
 
       - name: Test Actual Claude Query (CLI)
         run: |
-          echo "Testing actual Claude CLI query..."
+          echo "Testing actual Claude CLI query with authentication..."
+          echo "Environment check:"
+          echo "- CLAUDE_ACCESS_TOKEN set: ${{ secrets.CLAUDE_ACCESS_TOKEN != '' }}"
+          echo "- CLAUDE_REFRESH_TOKEN set: ${{ secrets.CLAUDE_REFRESH_TOKEN != '' }}"
+          
           echo "Requesting X post creation..."
           
           # Test with --print flag for non-interactive mode
-          claude --print "Create a short, engaging X (Twitter) post about learning programming. Keep it under 280 characters and include one relevant emoji." || echo "CLI query failed - likely authentication required"
+          echo "🚀 Starting Claude query..."
+          if claude --print "Create a short, engaging X (Twitter) post about learning programming. Keep it under 280 characters and include one relevant emoji."; then
+            echo "✅ Claude CLI query successful!"
+          else
+            echo "❌ Claude CLI query failed"
+            echo "Checking authentication status..."
+            claude auth status || echo "Authentication status check failed"
+          fi
           
           echo "✅ Claude CLI query test completed"
 
       - name: Test Actual Claude Query (SDK)
         run: |
-          echo "Testing actual Claude SDK query..."
+          echo "Testing actual Claude SDK query with authentication..."
+          echo "Environment variables available:"
+          echo "- CLAUDE_ACCESS_TOKEN: ${{ secrets.CLAUDE_ACCESS_TOKEN != '' }}"
+          echo "- CLAUDE_REFRESH_TOKEN: ${{ secrets.CLAUDE_REFRESH_TOKEN != '' }}"
+          
           cat > test-claude-query.cjs << 'EOF'
           const { claude } = require('@instantlyeasy/claude-code-sdk-ts');
           
           async function testClaudeQuery() {
             try {
-              console.log('🚀 Testing actual Claude query...');
+              console.log('🚀 Testing actual Claude query with authentication...');
+              console.log('Environment check:');
+              console.log('- CLAUDE_ACCESS_TOKEN available:', !!process.env.CLAUDE_ACCESS_TOKEN);
+              console.log('- CLAUDE_REFRESH_TOKEN available:', !!process.env.CLAUDE_REFRESH_TOKEN);
               
               const response = await claude()
                 .query('Create a short, engaging X (Twitter) post about learning programming. Keep it under 280 characters and include one relevant emoji.')
@@ -127,8 +164,12 @@ jobs:
               return true;
             } catch (error) {
               console.error('❌ Claude SDK query failed:', error.message);
+              console.log('Error details for debugging:');
+              console.log('- Error name:', error.name);
+              console.log('- Error stack:', error.stack?.split('\n')[0]);
+              
               if (error.message.includes('auth') || error.message.includes('token')) {
-                console.log('🔑 Authentication required - this is expected without MAX plan setup');
+                console.log('🔑 Authentication error detected');
               }
               return false;
             }
@@ -137,7 +178,11 @@ jobs:
           testClaudeQuery();
           EOF
           
-          node test-claude-query.cjs || echo "SDK query failed - likely authentication required"
+          if node test-claude-query.cjs; then
+            echo "✅ Claude SDK query successful!"
+          else
+            echo "❌ Claude SDK query failed - checking authentication..."
+          fi
           echo "✅ Claude SDK query test completed"
 
       - name: Test Authentication Status

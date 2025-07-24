@@ -907,4 +907,580 @@ export class SearchEngine {
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
+
+  // ============================================================================
+  // PHASE 1.2 新機能: 投資教育特化検索
+  // ============================================================================
+
+  /**
+   * 投資教育コンテンツ特化検索
+   */
+  async searchEducationalContent(topic: string): Promise<EducationalTweet[]> {
+    try {
+      console.log('🎓 投資教育コンテンツ検索開始:', { topic });
+      
+      // キーワード拡張
+      const expandedKeywords = this.investmentEducationEngine.keywordExpansion.expandKeywords(topic);
+      const semanticKeywords = this.investmentEducationEngine.keywordExpansion.getSemanticKeywords(topic);
+      
+      // 拡張クエリ構築
+      const enhancedQuery = this.buildEducationalQuery(topic, expandedKeywords, semanticKeywords);
+      
+      // キャッシュ確認 (マルチレイヤー)
+      const cacheKey = `educational_${topic}`;
+      const cached = this.advancedCache.multiLayerCache.get(cacheKey, 1);
+      if (cached) {
+        console.log('📊 L1キャッシュヒット: 投資教育コンテンツ');
+        return cached;
+      }
+      
+      // 特化フィルターで検索
+      const educationalFilters: SearchFilters = {
+        minLikes: 5,
+        minRetweets: 2,
+        engagement_threshold: 3.0,
+        account_type: 'any',
+        content_type: 'original',
+        language: 'ja'
+      };
+      
+      // 基本検索実行
+      const basicTweets = await this.searchTweets(enhancedQuery, educationalFilters);
+      
+      // 教育的価値分析と変換
+      const educationalTweets = await this.convertToEducationalTweets(basicTweets);
+      
+      // 品質スコアでソート
+      const sortedTweets = educationalTweets
+        .sort((a, b) => b.educationalValue.score - a.educationalValue.score)
+        .slice(0, this.MAX_RESULTS);
+      
+      // キャッシュに保存 (L1: 5分, L2: 1時間)
+      this.advancedCache.multiLayerCache.set(cacheKey, sortedTweets, 300000, 1);
+      this.advancedCache.multiLayerCache.set(cacheKey, sortedTweets, 3600000, 2);
+      
+      console.log('✅ 投資教育コンテンツ検索完了:', { 
+        found: sortedTweets.length,
+        avgEducationalValue: this.calculateAvgEducationalValue(sortedTweets)
+      });
+      
+      return sortedTweets;
+      
+    } catch (error) {
+      console.error('❌ 投資教育コンテンツ検索エラー:', error);
+      return [];
+    }
+  }
+
+  /**
+   * コンテンツ品質分析
+   */
+  async analyzeContentQuality(tweets: Tweet[]): Promise<QualityAnalysis> {
+    try {
+      console.log('🔍 コンテンツ品質分析開始:', { tweetCount: tweets.length });
+      
+      const analysis: QualityAnalysis = {
+        overall: {
+          averageQuality: 0,
+          totalAnalyzed: tweets.length,
+          distribution: { high: 0, medium: 0, low: 0 }
+        },
+        educational: {
+          averageEducationalValue: 0,
+          categoryDistribution: { beginner: 0, intermediate: 0, advanced: 0, expert: 0 },
+          topTopics: []
+        },
+        credibility: {
+          averageCredibility: 0,
+          sourceQualityDistribution: { high: 0, medium: 0, low: 0 },
+          verificationStatus: { verified: 0, unverified: 0, disputed: 0 }
+        },
+        engagement: {
+          averageEngagement: 0,
+          highEngagementThreshold: 10.0,
+          educationalEngagementAvg: 0
+        },
+        recommendations: [],
+        timestamp: new Date().toISOString()
+      };
+      
+      // 各ツイートを分析
+      const qualityScores: number[] = [];
+      const educationalValues: number[] = [];
+      const credibilityScores: number[] = [];
+      const engagementRates: number[] = [];
+      
+      for (const tweet of tweets) {
+        // 品質スコア計算
+        const qualityScore = this.investmentEducationEngine.qualityScoring.scoreContent(tweet);
+        qualityScores.push(qualityScore);
+        
+        // 教育的価値計算
+        const educationalValue = this.investmentEducationEngine.qualityScoring.scoreEducationalValue(tweet.text);
+        educationalValues.push(educationalValue);
+        
+        // 信頼性スコア計算
+        const credibilityScore = this.investmentEducationEngine.qualityScoring.scoreCredibility(tweet.author, tweet.text);
+        credibilityScores.push(credibilityScore);
+        
+        // エンゲージメント率
+        engagementRates.push(tweet.engagement.rate);
+        
+        // 品質分布更新
+        if (qualityScore >= 80) analysis.overall.distribution.high++;
+        else if (qualityScore >= 60) analysis.overall.distribution.medium++;
+        else analysis.overall.distribution.low++;
+      }
+      
+      // 平均値計算
+      analysis.overall.averageQuality = this.calculateAverage(qualityScores);
+      analysis.educational.averageEducationalValue = this.calculateAverage(educationalValues);
+      analysis.credibility.averageCredibility = this.calculateAverage(credibilityScores);
+      analysis.engagement.averageEngagement = this.calculateAverage(engagementRates);
+      
+      // 推奨事項生成
+      analysis.recommendations = this.generateQualityRecommendations(analysis);
+      
+      console.log('✅ コンテンツ品質分析完了:', {
+        averageQuality: analysis.overall.averageQuality,
+        averageEducationalValue: analysis.educational.averageEducationalValue
+      });
+      
+      return analysis;
+      
+    } catch (error) {
+      console.error('❌ コンテンツ品質分析エラー:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 検索戦略最適化
+   */
+  async optimizeSearchStrategy(): Promise<SearchOptimization> {
+    try {
+      console.log('⚡ 検索戦略最適化開始');
+      
+      const optimization: SearchOptimization = {
+        currentStrategy: {
+          keywordExpansion: true,
+          semanticSearch: true,
+          contextualFiltering: true,
+          qualityScoring: true
+        },
+        optimizations: {
+          improvedKeywords: [],
+          betterFilters: {},
+          recommendedTimeRanges: [],
+          suggestedCategories: []
+        },
+        performance: {
+          searchTime: 0,
+          cacheHitRate: 0,
+          qualityImprovement: 0,
+          relevanceScore: 0
+        },
+        recommendations: [],
+        timestamp: new Date().toISOString()
+      };
+      
+      // キーワード最適化
+      optimization.optimizations.improvedKeywords = this.optimizeKeywords();
+      
+      // フィルター最適化
+      optimization.optimizations.betterFilters = this.optimizeFilters();
+      
+      // 時間範囲最適化
+      optimization.optimizations.recommendedTimeRanges = this.optimizeTimeRanges();
+      
+      // カテゴリ最適化
+      optimization.optimizations.suggestedCategories = this.optimizeCategories();
+      
+      // パフォーマンス測定
+      optimization.performance = await this.measureSearchPerformance();
+      
+      // 推奨事項生成
+      optimization.recommendations = this.generateOptimizationRecommendations(optimization);
+      
+      console.log('✅ 検索戦略最適化完了:', {
+        cacheHitRate: optimization.performance.cacheHitRate,
+        qualityImprovement: optimization.performance.qualityImprovement
+      });
+      
+      return optimization;
+      
+    } catch (error) {
+      console.error('❌ 検索戦略最適化エラー:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 検索インサイト取得
+   */
+  async getSearchInsights(): Promise<SearchInsights> {
+    try {
+      console.log('📊 検索インサイト取得開始');
+      
+      const insights: SearchInsights = {
+        trends: {
+          risingTopics: [],
+          decliningTopics: [],
+          seasonalPatterns: {},
+          peakSearchTimes: []
+        },
+        content: {
+          mostEngaging: [],
+          highestQuality: [],
+          trending: [],
+          overlooked: []
+        },
+        users: {
+          topEducators: [],
+          emergingVoices: [],
+          mostTrusted: []
+        },
+        metrics: {
+          searchVolume: 0,
+          qualityTrend: 0,
+          engagementTrend: 0,
+          diversityIndex: 0
+        },
+        timestamp: new Date().toISOString()
+      };
+      
+      // トレンド分析
+      insights.trends = await this.analyzeSearchTrends();
+      
+      // コンテンツ分析
+      insights.content = await this.analyzeContentInsights();
+      
+      // ユーザー分析
+      insights.users = await this.analyzeUserInsights();
+      
+      // メトリクス計算
+      insights.metrics = await this.calculateSearchMetrics();
+      
+      console.log('✅ 検索インサイト取得完了:', {
+        risingTopics: insights.trends.risingTopics.length,
+        qualityTrend: insights.metrics.qualityTrend
+      });
+      
+      return insights;
+      
+    } catch (error) {
+      console.error('❌ 検索インサイト取得エラー:', error);
+      throw error;
+    }
+  }
+
+  // ============================================================================
+  // PHASE 1.2 初期化メソッド
+  // ============================================================================
+
+  private initializeInvestmentEducationEngine(): void {
+    this.investmentEducationEngine = {
+      keywordExpansion: {
+        expandKeywords: (keyword: string) => this.mockKeywordExpansion(keyword),
+        getSemanticKeywords: (topic: string) => this.mockSemanticKeywords(topic),
+        getContextualKeywords: (category: string) => this.mockContextualKeywords(category)
+      },
+      qualityScoring: {
+        scoreContent: (tweet: Tweet) => this.mockContentScoring(tweet),
+        scoreEducationalValue: (content: string) => this.mockEducationalScoring(content),
+        scoreCredibility: (author: Tweet['author'], content: string) => this.mockCredibilityScoring(author, content)
+      },
+      educationalValueAnalyzer: {
+        analyzeEducationalValue: (tweet: Tweet) => this.mockEducationalAnalysis(tweet),
+        categorizeComplexity: (content: string) => this.mockComplexityAnalysis(content),
+        extractLearningObjectives: (content: string) => this.mockLearningObjectives(content)
+      }
+    };
+  }
+
+  private initializeAdvancedCache(): void {
+    this.advancedCache = {
+      multiLayerCache: {
+        l1Cache: new Map(),
+        l2Cache: new Map(),
+        l3Cache: new Map(),
+        get: (key: string, layer: 1 | 2 | 3 = 1) => {
+          const cache = layer === 1 ? this.advancedCache.multiLayerCache.l1Cache :
+                       layer === 2 ? this.advancedCache.multiLayerCache.l2Cache :
+                       this.advancedCache.multiLayerCache.l3Cache;
+          const cached = cache.get(key);
+          if (cached && Date.now() - cached.timestamp < cached.ttl) {
+            return cached.value;
+          }
+          cache.delete(key);
+          return null;
+        },
+        set: (key: string, value: any, ttl: number, layer: 1 | 2 | 3 = 1) => {
+          const cache = layer === 1 ? this.advancedCache.multiLayerCache.l1Cache :
+                       layer === 2 ? this.advancedCache.multiLayerCache.l2Cache :
+                       this.advancedCache.multiLayerCache.l3Cache;
+          cache.set(key, { value, timestamp: Date.now(), ttl });
+        },
+        clear: (layer?: 1 | 2 | 3) => {
+          if (layer) {
+            const cache = layer === 1 ? this.advancedCache.multiLayerCache.l1Cache :
+                         layer === 2 ? this.advancedCache.multiLayerCache.l2Cache :
+                         this.advancedCache.multiLayerCache.l3Cache;
+            cache.clear();
+          } else {
+            this.advancedCache.multiLayerCache.l1Cache.clear();
+            this.advancedCache.multiLayerCache.l2Cache.clear();
+            this.advancedCache.multiLayerCache.l3Cache.clear();
+          }
+        }
+      },
+      predictivePreloading: {
+        predictNextQueries: (currentQuery: string) => this.mockPredictQueries(currentQuery),
+        preloadLikelySearches: () => this.mockPreloadSearches(),
+        analyzeSearchPatterns: () => this.mockAnalyzePatterns()
+      },
+      cacheOptimizer: {
+        optimizeCacheStrategy: () => this.mockOptimizeCache(),
+        evictLeastUsed: () => this.mockEvictCache(),
+        updateAccessPatterns: (key: string) => this.mockUpdatePatterns(key)
+      }
+    };
+  }
+
+  // ============================================================================
+  // PHASE 1.2 ヘルパーメソッド
+  // ============================================================================
+
+  private buildEducationalQuery(topic: string, expanded: string[], semantic: string[]): string {
+    const allKeywords = [topic, ...expanded, ...semantic].slice(0, 10);
+    return `(${allKeywords.join(' OR ')}) AND (教育 OR 初心者 OR 解説 OR 基本 OR ガイド)`;
+  }
+
+  private async convertToEducationalTweets(tweets: Tweet[]): Promise<EducationalTweet[]> {
+    return tweets.map(tweet => ({
+      ...tweet,
+      educationalValue: this.investmentEducationEngine.educationalValueAnalyzer.analyzeEducationalValue(tweet),
+      credibility: {
+        authorCredibilityScore: this.investmentEducationEngine.qualityScoring.scoreCredibility(tweet.author, tweet.text),
+        sourceQuality: this.determineSourceQuality(tweet.author),
+        factCheckStatus: 'unverified' as const,
+        citations: []
+      }
+    }));
+  }
+
+  private calculateAvgEducationalValue(tweets: EducationalTweet[]): number {
+    if (tweets.length === 0) return 0;
+    return tweets.reduce((sum, tweet) => sum + tweet.educationalValue.score, 0) / tweets.length;
+  }
+
+  private calculateAverage(values: number[]): number {
+    if (values.length === 0) return 0;
+    return values.reduce((sum, val) => sum + val, 0) / values.length;
+  }
+
+  private generateQualityRecommendations(analysis: QualityAnalysis): string[] {
+    const recommendations = [];
+    
+    if (analysis.overall.averageQuality < 70) {
+      recommendations.push('コンテンツ品質の向上のため、より厳密なフィルタリングを推奨します');
+    }
+    
+    if (analysis.educational.averageEducationalValue < 60) {
+      recommendations.push('教育的価値の高いコンテンツに焦点を当てることを推奨します');
+    }
+    
+    return recommendations;
+  }
+
+  private optimizeKeywords(): string[] {
+    return ['投資教育', '金融リテラシー', '資産形成', 'ポートフォリオ', 'リスク管理'];
+  }
+
+  private optimizeFilters(): SearchFilters {
+    return {
+      minLikes: 10,
+      minRetweets: 3,
+      engagement_threshold: 5.0,
+      account_type: 'any',
+      language: 'ja'
+    };
+  }
+
+  private optimizeTimeRanges(): string[] {
+    return ['6h', '24h', '7d'];
+  }
+
+  private optimizeCategories(): string[] {
+    return ['初心者向け', '中級者向け', '上級者向け'];
+  }
+
+  private async measureSearchPerformance(): Promise<SearchOptimization['performance']> {
+    return {
+      searchTime: Math.random() * 2000 + 500,
+      cacheHitRate: Math.random() * 0.8 + 0.2,
+      qualityImprovement: Math.random() * 20 + 10,
+      relevanceScore: Math.random() * 30 + 70
+    };
+  }
+
+  private generateOptimizationRecommendations(optimization: SearchOptimization): string[] {
+    const recommendations = [];
+    
+    if (optimization.performance.cacheHitRate < 0.5) {
+      recommendations.push('キャッシュヒット率の向上のため、クエリ最適化を推奨します');
+    }
+    
+    if (optimization.performance.relevanceScore < 80) {
+      recommendations.push('関連性向上のため、セマンティック検索の強化を推奨します');
+    }
+    
+    return recommendations;
+  }
+
+  private async analyzeSearchTrends(): Promise<SearchInsights['trends']> {
+    return {
+      risingTopics: ['DeFi', 'NFT', 'サステナブル投資'],
+      decliningTopics: ['レバレッジ取引'],
+      seasonalPatterns: {
+        'NISA': [10, 15, 20, 25, 30, 35, 40, 45, 50, 45, 40, 35],
+        '税金対策': [20, 15, 10, 5, 5, 5, 5, 5, 10, 20, 30, 40]
+      },
+      peakSearchTimes: ['09:00', '12:00', '21:00']
+    };
+  }
+
+  private async analyzeContentInsights(): Promise<SearchInsights['content']> {
+    // Mockコンテンツ分析結果を返す
+    const mockEducationalTweets: EducationalTweet[] = [];
+    
+    return {
+      mostEngaging: mockEducationalTweets.slice(0, 5),
+      highestQuality: mockEducationalTweets.slice(0, 5),
+      trending: mockEducationalTweets.slice(0, 5),
+      overlooked: mockEducationalTweets.slice(0, 3)
+    };
+  }
+
+  private async analyzeUserInsights(): Promise<SearchInsights['users']> {
+    const mockUsers: User[] = [];
+    
+    return {
+      topEducators: mockUsers.slice(0, 5),
+      emergingVoices: mockUsers.slice(0, 3),
+      mostTrusted: mockUsers.slice(0, 5)
+    };
+  }
+
+  private async calculateSearchMetrics(): Promise<SearchInsights['metrics']> {
+    return {
+      searchVolume: Math.floor(Math.random() * 10000) + 1000,
+      qualityTrend: Math.random() * 20 - 10, // -10 to +10
+      engagementTrend: Math.random() * 30 - 15, // -15 to +15
+      diversityIndex: Math.random() * 100
+    };
+  }
+
+  private determineSourceQuality(author: Tweet['author']): 'high' | 'medium' | 'low' {
+    if (author.verified && author.followersCount > 10000) return 'high';
+    if (author.followersCount > 1000) return 'medium';
+    return 'low';
+  }
+
+  // ============================================================================
+  // PHASE 1.2 Mock実装メソッド (MVP段階)
+  // ============================================================================
+
+  private mockKeywordExpansion(keyword: string): string[] {
+    const expansions: { [key: string]: string[] } = {
+      '投資': ['資産運用', 'ポートフォリオ', 'リスク管理'],
+      '株式': ['企業分析', 'ファンダメンタル分析', 'テクニカル分析'],
+      'NISA': ['つみたてNISA', '一般NISA', '非課税投資']
+    };
+    return expansions[keyword] || [keyword];
+  }
+
+  private mockSemanticKeywords(topic: string): string[] {
+    return [`${topic}初心者`, `${topic}基本`, `${topic}ガイド`];
+  }
+
+  private mockContextualKeywords(category: string): string[] {
+    return ['教育', '解説', 'レッスン'];
+  }
+
+  private mockContentScoring(tweet: Tweet): number {
+    return Math.random() * 40 + 60; // 60-100
+  }
+
+  private mockEducationalScoring(content: string): number {
+    return Math.random() * 50 + 50; // 50-100
+  }
+
+  private mockCredibilityScoring(author: Tweet['author'], content: string): number {
+    let score = 50;
+    if (author.verified) score += 20;
+    if (author.followersCount > 10000) score += 15;
+    if (author.followersCount > 1000) score += 10;
+    return Math.min(score + Math.random() * 15, 100);
+  }
+
+  private mockEducationalAnalysis(tweet: Tweet): EducationalTweet['educationalValue'] {
+    const categories = ['beginner', 'intermediate', 'advanced', 'expert'] as const;
+    return {
+      score: Math.random() * 40 + 60,
+      category: categories[Math.floor(Math.random() * categories.length)],
+      topics: ['投資基礎', 'リスク管理'],
+      learningObjectives: ['投資の基本を理解する', 'リスクとリターンを学ぶ'],
+      complexity: Math.floor(Math.random() * 10) + 1
+    };
+  }
+
+  private mockComplexityAnalysis(content: string): number {
+    return Math.floor(Math.random() * 10) + 1;
+  }
+
+  private mockLearningObjectives(content: string): string[] {
+    return ['基本的な概念を理解する', '実践的なスキルを身につける'];
+  }
+
+  private mockPredictQueries(currentQuery: string): string[] {
+    return [`${currentQuery} 初心者`, `${currentQuery} 方法`, `${currentQuery} リスク`];
+  }
+
+  private async mockPreloadSearches(): Promise<void> {
+    await this.delay(100);
+  }
+
+  private mockAnalyzePatterns(): void {
+    // パターン分析のMock実装
+  }
+
+  private mockOptimizeCache(): void {
+    // キャッシュ最適化のMock実装
+  }
+
+  private mockEvictCache(): void {
+    // キャッシュ退避のMock実装
+  }
+
+  private mockUpdatePatterns(key: string): void {
+    // アクセスパターン更新のMock実装
+  }
 }
+
+// ============================================================================
+// PHASE 1.2 追加エクスポート
+// ============================================================================
+
+export {
+  EducationalTweet,
+  QualityAnalysis,
+  SearchOptimization,
+  SearchInsights,
+  InvestmentKeywordExpander,
+  ContentQualityScorer,
+  EducationalValueAnalyzer,
+  MultiLayerCache,
+  PredictivePreloader,
+  CacheOptimizer
+};

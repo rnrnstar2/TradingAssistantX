@@ -27,7 +27,11 @@ ls -la src/ data/
 
 ### Manager権限
 - ✅ **許可**: `docs/roles/manager-role.md`読み込み → 指示書作成・Worker統率
-- ✅ **例外**: `tasks/{TIMESTAMP}/instructions/`配下の指示書作成のみWrite許可
+- ✅ **ドキュメント編集許可**: 
+  - `REQUIREMENTS.md` - 要件定義書の修正・改善
+  - `*.md` - 全ドキュメントファイルの編集
+  - `docs/` - ドキュメントディレクトリ配下の全ファイル
+  - `tasks/{TIMESTAMP}/instructions/` - 指示書作成
 - 🚫 **禁止**: プロダクションコード（src/）の実装・編集
 
 ### Worker権限
@@ -74,9 +78,10 @@ ls data/current/ | wc -l  # 20ファイル上限
 - ❌ src/内への無断ファイル追加
 
 ### 権限違反
-- ❌ Manager権限でのプロダクションコード実装
+- ❌ Manager権限でのプロダクションコード（src/）実装・編集
 - ❌ 権限確認なしでの作業開始
 - ❌ 要件定義書未確認での実装
+- ❌ Manager権限でのWorker専用ディレクトリ編集
 
 ### データ違反
 - ❌ モックデータ・テストモードの使用
@@ -88,7 +93,12 @@ ls data/current/ | wc -l  # 20ファイル上限
 実装・編集前に必須確認：
 - [ ] ROLE環境変数確認完了
 - [ ] REQUIREMENTS.md読み込み完了
-- [ ] 対象ファイルが要件定義に記載されている
-- [ ] 出力先がdata/またはtasks/outputs/配下
+- [ ] 対象ファイルが要件定義に記載されている、またはドキュメント系ファイル（Manager権限時）
+- [ ] 出力先がdata/またはtasks/outputs/配下、またはドキュメント系（Manager権限時）
 - [ ] 疎結合設計原則に従っている
 - [ ] モックデータを使用していない
+
+### Manager権限時の追加チェック
+- [ ] ドキュメント編集対象確認（REQUIREMENTS.md、*.md、docs/配下）
+- [ ] プロダクションコード（src/）への変更は禁止
+- [ ] Worker専用ディレクトリへの変更は禁止

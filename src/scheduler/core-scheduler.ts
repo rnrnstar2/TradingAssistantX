@@ -1,7 +1,13 @@
 /**
  * 30分間隔制御システム
  * REQUIREMENTS.md準拠版 - 定期自動実行スケジューラー
+ * KaitoAPI統合による動的スケジューリング実装
  */
+
+// KaitoAPI統合インポート
+import { KaitoTwitterAPIClient } from '../kaito-api/client';
+import { SearchEngine } from '../kaito-api/search-engine';
+import { ActionExecutor } from '../kaito-api/action-executor';
 
 export interface SchedulerConfig {
   intervalMinutes: number;
@@ -28,9 +34,20 @@ export interface ExecutionCallback {
   (): Promise<{ success: boolean; duration: number; error?: string }>;
 }
 
+// KaitoAPI統合インターフェース
+export interface SystemHealth {
+  all_systems_operational: boolean;
+  api_status: 'healthy' | 'degraded' | 'error';
+  rate_limits_ok: boolean;
+  kaitoHealth: boolean;
+  searchHealth: boolean;
+  executorHealth: boolean;
+}
+
 /**
  * 30分間隔制御システムクラス
  * 定期的な自動実行を管理し、実行頻度とタイミングを制御
+ * KaitoAPI統合による動的スケジューリング機能
  */
 export class CoreScheduler {
   private config: SchedulerConfig;
@@ -38,6 +55,11 @@ export class CoreScheduler {
   private isRunning: boolean = false;
   private executionCallback: ExecutionCallback | null = null;
   private scheduleStatus!: ScheduleStatus;
+
+  // KaitoAPI統合コンポーネント
+  private kaitoClient?: KaitoTwitterAPIClient;
+  private searchEngine?: SearchEngine;
+  private actionExecutor?: ActionExecutor;
 
   private readonly DEFAULT_CONFIG: SchedulerConfig = {
     intervalMinutes: 30,
@@ -50,12 +72,22 @@ export class CoreScheduler {
     }
   };
 
-  constructor(config?: Partial<SchedulerConfig>) {
+  constructor(
+    config?: Partial<SchedulerConfig>,
+    kaitoClient?: KaitoTwitterAPIClient,
+    searchEngine?: SearchEngine,
+    actionExecutor?: ActionExecutor
+  ) {
     this.config = { ...this.DEFAULT_CONFIG, ...config };
+    this.kaitoClient = kaitoClient;
+    this.searchEngine = searchEngine;
+    this.actionExecutor = actionExecutor;
+    
     this.initializeScheduleStatus();
-    console.log('✅ CoreScheduler initialized - REQUIREMENTS.md準拠版:', {
+    console.log('✅ CoreScheduler initialized - KaitoAPI統合版:', {
       intervalMinutes: this.config.intervalMinutes,
-      maxDailyExecutions: this.config.maxDailyExecutions
+      maxDailyExecutions: this.config.maxDailyExecutions,
+      kaitoIntegrated: !!(kaitoClient && searchEngine && actionExecutor)
     });
   }
 
@@ -386,5 +418,170 @@ export class CoreScheduler {
       console.error('🚨 Force execution failed:', error);
       throw error;
     }
+  }
+
+  // ============================================================================
+  // KaitoAPI統合メソッド
+  // ============================================================================
+
+  /**
+   * 動的スケジュール調整
+   * KaitoAPI監視による動的スケジューリング
+   */
+  async executeSmartScheduling(): Promise<void> {
+    try {
+      if (!this.kaitoClient) {
+        console.warn('KaitoClient not available, using standard scheduling');
+        return;
+      }
+
+      console.log('🧠 動的スケジュール調整開始');
+
+      // 1. API状況監視
+      const apiStatus = await this.kaitoClient.getRateLimitStatus();
+      const qpsStatus = this.kaitoClient.getCurrentQPS();
+      
+      // 2. 動的間隔調整
+      if (apiStatus.posting.remaining < 10) {
+        const resetTime = new Date(apiStatus.posting.resetTime);
+        await this.adjustScheduleForRateLimit(resetTime);
+      }
+      
+      // 3. 最適タイミング実行
+      const optimalTiming = await this.calculateOptimalTiming();
+      await this.scheduleNextExecution();
+
+      console.log('✅ 動的スケジュール調整完了:', {
+        rateLimitRemaining: apiStatus.posting.remaining,
+        currentQPS: qpsStatus,
+        nextExecution: this.scheduleStatus.nextExecution
+      });
+
+    } catch (error) {
+      console.error('❌ 動的スケジュール調整エラー:', error);
+    }
+  }
+
+  /**
+   * KaitoAPI統合ヘルスチェック
+   */
+  async performIntegratedHealthCheck(): Promise<SystemHealth> {
+    try {
+      console.log('🏥 統合ヘルスチェック開始');
+
+      const healthResults = await Promise.allSettled([
+        this.kaitoClient?.testConnection() || Promise.resolve(false),
+        this.searchEngine?.getCapabilities() || Promise.resolve(null),
+        this.actionExecutor?.getExecutionMetrics() || Promise.resolve(null)
+      ]);
+
+      const kaitoHealth = healthResults[0].status === 'fulfilled' ? healthResults[0].value : false;
+      const searchHealth = healthResults[1].status === 'fulfilled' && healthResults[1].value !== null;
+      const executorHealth = healthResults[2].status === 'fulfilled' && healthResults[2].value !== null;
+
+      const systemHealth = this.synthesizeSystemHealth(kaitoHealth, searchHealth, executorHealth);
+
+      console.log('✅ 統合ヘルスチェック完了:', systemHealth);
+      return systemHealth;
+
+    } catch (error) {
+      console.error('❌ 統合ヘルスチェックエラー:', error);
+      return {
+        all_systems_operational: false,
+        api_status: 'error',
+        rate_limits_ok: false,
+        kaitoHealth: false,
+        searchHealth: false,
+        executorHealth: false
+      };
+    }
+  }
+
+  // ============================================================================
+  // KaitoAPI統合プライベートメソッド
+  // ============================================================================
+
+  /**
+   * レート制限対応スケジュール調整
+   */
+  private async adjustScheduleForRateLimit(resetTime: Date): Promise<void> {
+    const now = new Date();
+    const waitTime = resetTime.getTime() - now.getTime();
+    
+    if (waitTime > 0) {
+      console.log(`⏰ レート制限により実行を延期: ${Math.ceil(waitTime / 60000)}分待機`);
+      
+      // 次回実行時間を調整
+      const adjustedTime = new Date(resetTime.getTime() + 5 * 60 * 1000); // 5分バッファ
+      this.scheduleStatus.nextExecution = adjustedTime.toISOString();
+      
+      // インターバルも一時的に調整
+      const originalInterval = this.config.intervalMinutes;
+      this.config.intervalMinutes = Math.max(waitTime / 60000, 30);
+      
+      // 元のインターバルに戻すためのタイマー設定
+      setTimeout(() => {
+        this.config.intervalMinutes = originalInterval;
+        console.log(`⚙️ インターバルを元に戻しました: ${originalInterval}分`);
+      }, waitTime);
+    }
+  }
+
+  /**
+   * 最適タイミング計算
+   */
+  private async calculateOptimalTiming(): Promise<Date> {
+    try {
+      // 基本的な次回実行時間
+      let optimalTime = this.calculateNextExecutionTime();
+
+      // KaitoAPI統合による最適化
+      if (this.kaitoClient && this.searchEngine) {
+        const rateLimits = await this.kaitoClient.getRateLimitStatus();
+        const currentQPS = this.kaitoClient.getCurrentQPS();
+
+        // QPS負荷が高い場合は実行を遅らせる
+        if (currentQPS > 150) { // 200QPS制限の75%
+          const delay = Math.min((currentQPS - 150) * 1000, 300000); // 最大5分遅延
+          optimalTime = new Date(optimalTime.getTime() + delay);
+          console.log(`⚡ QPS負荷により実行を遅延: ${delay / 1000}秒`);
+        }
+
+        // レート制限残量が少ない場合の調整
+        if (rateLimits.posting.remaining < 5) {
+          const resetTime = new Date(rateLimits.posting.resetTime);
+          optimalTime = new Date(Math.max(optimalTime.getTime(), resetTime.getTime() + 60000));
+          console.log('⚠️ レート制限残量少のため実行時間調整');
+        }
+      }
+
+      return optimalTime;
+
+    } catch (error) {
+      console.error('❌ 最適タイミング計算エラー:', error);
+      return this.calculateNextExecutionTime();
+    }
+  }
+
+  /**
+   * システムヘルス統合
+   */
+  private synthesizeSystemHealth(kaitoHealth: boolean, searchHealth: boolean, executorHealth: boolean): SystemHealth {
+    const allOperational = kaitoHealth && searchHealth && executorHealth;
+    
+    let apiStatus: 'healthy' | 'degraded' | 'error' = 'healthy';
+    if (!allOperational) {
+      const healthyCount = [kaitoHealth, searchHealth, executorHealth].filter(Boolean).length;
+      apiStatus = healthyCount >= 2 ? 'degraded' : 'error';
+    }
+
+    return {
+      all_systems_operational: allOperational,
+      api_status: apiStatus,
+      rate_limits_ok: kaitoHealth, // KaitoClient健全性でレート制限状況を判断
+      kaitoHealth,
+      searchHealth,
+      executorHealth
+    };
   }
 }
