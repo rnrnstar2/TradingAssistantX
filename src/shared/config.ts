@@ -377,9 +377,9 @@ export class Config {
     
     for (const [key, value] of Object.entries(userConfig)) {
       if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-        merged[key] = { ...merged[key], ...value };
+        (merged as any)[key] = { ...(merged as any)[key], ...value };
       } else {
-        merged[key] = value;
+        (merged as any)[key] = value;
       }
     }
     

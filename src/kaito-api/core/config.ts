@@ -264,8 +264,12 @@ export class KaitoAPIConfigManager {
     const baseUrl = this.currentConfig.api.baseUrl;
     const version = this.currentConfig.api.version;
     
-    // @ts-ignore - TypeScript認識問題の回避
-    let endpointPath = this.endpointConfig[category][endpoint];
+    const categoryConfig = this.endpointConfig[category];
+    if (!categoryConfig || typeof categoryConfig !== 'object') {
+      throw new Error(`無効なカテゴリーです: ${category}`);
+    }
+    
+    let endpointPath = (categoryConfig as any)[endpoint];
     
     if (!endpointPath) {
       throw new Error(`エンドポイントが見つかりません: ${category}.${endpoint}`);
@@ -420,13 +424,6 @@ export function buildApiEndpoint(
 // ============================================================================
 // EXPORTS
 // ============================================================================
-
-export {
-  KaitoAPIConfig,
-  EndpointConfig,
-  ConfigValidationResult,
-  KaitoAPIConfigManager
-};
 
 /**
  * 使用例:

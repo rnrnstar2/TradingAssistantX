@@ -1,0 +1,15 @@
+account_status:
+  followers: 0
+  following: 0
+  tweets_today: 0
+  engagement_rate_24h: 0
+system_status:
+  last_execution: '2025-07-24T05:18:48.182Z'
+  next_execution: ''
+  errors_today: 0
+  success_rate: 0.95
+rate_limits:
+  posts_remaining: 10
+  retweets_remaining: 20
+  likes_remaining: 50
+  reset_time: '2025-07-24T06:18:48.182Z'

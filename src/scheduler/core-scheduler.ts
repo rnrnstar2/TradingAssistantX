@@ -5,7 +5,7 @@
  */
 
 // KaitoAPI統合インポート
-import { KaitoTwitterAPIClient } from '../kaito-api/client';
+import { KaitoTwitterAPIClient } from '../kaito-api/core/client';
 import { SearchEngine } from '../kaito-api/search-engine';
 import { ActionExecutor } from '../kaito-api/action-executor';
 

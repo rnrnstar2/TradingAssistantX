@@ -1,6 +1,7 @@
 /**
  * 全システム共通の型定義
  * REQUIREMENTS.md準拠版 - 型定義統合ファイル
+ * types/kaito-api-types.ts統合済み（重複排除版）
  */
 
 // ============================================================================
@@ -81,10 +82,11 @@ export interface ExecutionResult {
   success: boolean;
   action: string;
   executionTime: number;
+  duration: number; // Added for compatibility
   result?: {
     id: string;
     url?: string;
-    timestamp: string;
+    content?: string;
   };
   error?: string;
   metadata: {
@@ -134,9 +136,9 @@ export interface SystemContext {
     sentiment: 'bearish' | 'neutral' | 'bullish';
   };
   learningData: {
-    decisionPatterns: any[];
-    successStrategies: any[];
-    errorLessons: any[];
+    decisionPatterns: DecisionPattern[];
+    successStrategies: SuccessStrategy[];
+    errorLessons: ErrorLesson[];
   };
 }
 
@@ -330,36 +332,28 @@ export interface SearchResult {
 // ============================================================================
 
 export interface DecisionPattern {
+  id: string;
+  context: Partial<SystemContext>;
+  decision: ClaudeDecision;
+  result: ExecutionResult;
   timestamp: string;
-  context: {
-    followers: number;
-    last_post_hours_ago: number;
-    market_trend: string;
-  };
-  decision: {
-    action: string;
-    reasoning: string;
-    confidence: number;
-  };
-  result: {
-    engagement_rate: number;
-    new_followers: number;
-    success: boolean;
-  };
 }
 
 export interface SuccessStrategy {
-  high_engagement: {
-    post_times: string[];
-    topics: string[];
-    hashtags: string[];
-  };
-  content_types: {
-    [type: string]: {
-      success_rate: number;
-      avg_engagement: number;
-    };
-  };
+  id: string;
+  strategy: string;
+  successRate: number;
+  conditions: string[];
+  examples: DecisionPattern[];
+}
+
+export interface ErrorLesson {
+  id: string;
+  error: string;
+  context: string;
+  lesson: string;
+  prevention: string;
+  timestamp: string;
 }
 
 // ============================================================================
@@ -581,3 +575,240 @@ export function createExecutionResult(
     }
   };
 }
+
+// ============================================================================
+// KAITO API INTEGRATION TYPES - types/kaito-api-types.ts統合部分
+// ============================================================================
+
+export interface KaitoClientConfig {
+  apiKey: string;
+  qpsLimit: number; // 200QPS上限
+  retryPolicy: {
+    maxRetries: number;
+    backoffMs: number;
+  };
+  costTracking: boolean; // $0.15/1k tweets追跡
+}
+
+export interface CostTrackingInfo {
+  tweetsProcessed: number;
+  estimatedCost: number; // USD
+  resetDate: string;
+  lastUpdated: string;
+}
+
+export interface PostResult {
+  id: string;
+  url: string;
+  timestamp: string;
+  success: boolean;
+  error?: string;
+}
+
+export interface RetweetResult {
+  id: string;
+  originalTweetId: string;
+  timestamp: string;
+  success: boolean;
+  error?: string;
+}
+
+export interface QuoteTweetResult {
+  id: string;
+  originalTweetId: string;
+  comment: string;
+  timestamp: string;
+  success: boolean;
+  error?: string;
+}
+
+export interface LikeResult {
+  tweetId: string;
+  timestamp: string;
+  success: boolean;
+  error?: string;
+}
+
+export interface UserEndpoints {
+  getProfile: (userId: string) => Promise<any>;
+  updateProfile: (data: any) => Promise<any>;
+  follow: (userId: string) => Promise<any>;
+  unfollow: (userId: string) => Promise<any>;
+  getFollowers: (userId: string) => Promise<any>;
+  getFollowing: (userId: string) => Promise<any>;
+}
+
+export interface TweetEndpoints {
+  getTweet: (tweetId: string) => Promise<any>;
+  getUserTweets: (userId: string) => Promise<any>;
+  getTimeline: () => Promise<any>;
+  searchTweets: (query: string) => Promise<any>;
+}
+
+export interface CommunityEndpoints {
+  getCommunities: () => Promise<any>;
+  joinCommunity: (communityId: string) => Promise<any>;
+  leaveCommunity: (communityId: string) => Promise<any>;
+  getCommunityTweets: (communityId: string) => Promise<any>;
+}
+
+export interface ListEndpoints {
+  getLists: () => Promise<any>;
+  createList: (data: any) => Promise<any>;
+  updateList: (listId: string, data: any) => Promise<any>;
+  deleteList: (listId: string) => Promise<any>;
+  addToList: (listId: string, userId: string) => Promise<any>;
+  removeFromList: (listId: string, userId: string) => Promise<any>;
+}
+
+export interface TrendEndpoints {
+  getTrends: (location?: string) => Promise<any>;
+  getHashtagTrends: () => Promise<any>;
+  getTopicTrends: (category?: string) => Promise<any>;
+}
+
+export interface LoginEndpoints {
+  authenticate: (credentials: any) => Promise<any>;
+  refreshToken: () => Promise<any>;
+  logout: () => Promise<any>;
+  validateSession: () => Promise<any>;
+}
+
+export interface TweetActionEndpoints {
+  post: (content: string, options?: any) => Promise<PostResult>;
+  retweet: (tweetId: string) => Promise<RetweetResult>;
+  quoteTweet: (tweetId: string, comment: string) => Promise<QuoteTweetResult>;
+  like: (tweetId: string) => Promise<LikeResult>;
+  unlike: (tweetId: string) => Promise<any>;
+  reply: (tweetId: string, content: string) => Promise<any>;
+  deleteTweet: (tweetId: string) => Promise<any>;
+}
+
+export interface ActionExecutorConfig {
+  endpoints: {
+    user: UserEndpoints;
+    tweet: TweetEndpoints;
+    communities: CommunityEndpoints;
+    list: ListEndpoints;
+    trend: TrendEndpoints;
+    login: LoginEndpoints;
+    tweetAction: TweetActionEndpoints;
+  };
+  reliability: {
+    enableRollback: boolean;
+    rollbackTimeoutMs: number;
+    healthCheckInterval: number;
+  };
+}
+
+export interface ActionContext {
+  decision: any; // ClaudeDecision import circular避け
+  environment: {
+    isDryRun: boolean;
+    rateLimitCheck: boolean;
+    validationLevel: 'strict' | 'normal' | 'permissive';
+  };
+  retry: {
+    maxRetries: number;
+    baseDelay: number;
+    backoffMultiplier: number;
+  };
+  rollback?: {
+    enabled: boolean;
+    actions: RollbackAction[];
+  };
+}
+
+export interface RollbackAction {
+  type: 'delete_tweet' | 'unfollow_user' | 'unlike_tweet' | 'leave_community';
+  targetId: string;
+  timestamp: string;
+  originalAction: string;
+}
+
+export interface QPSStatus {
+  currentQPS: number;
+  limit: number;
+  resetTime: string;
+  requestsInLastSecond: number;
+}
+
+export interface KaitoAPIIntegration {
+  client: any; // KaitoTwitterAPIClient circular避け
+  searchEngine: any; // SearchEngine circular避け  
+  actionExecutor: any; // ActionExecutor circular避け
+  isInitialized: boolean;
+  lastHealthCheck: string;
+}
+
+export interface APIError {
+  code: string;
+  message: string;
+  details?: any;
+  timestamp: string;
+  context: string;
+}
+
+// 型ガード統合
+export function isPostResult(result: any): result is PostResult {
+  return (
+    typeof result === 'object' &&
+    typeof result.id === 'string' &&
+    typeof result.url === 'string' &&
+    typeof result.timestamp === 'string' &&
+    typeof result.success === 'boolean'
+  );
+}
+
+export function isKaitoClientConfig(config: any): config is KaitoClientConfig {
+  return (
+    typeof config === 'object' &&
+    typeof config.apiKey === 'string' &&
+    typeof config.qpsLimit === 'number' &&
+    typeof config.retryPolicy === 'object' &&
+    typeof config.costTracking === 'boolean'
+  );
+}
+
+// ユーティリティ型
+export type ActionType = 
+  | 'post' 
+  | 'retweet' 
+  | 'quote_tweet' 
+  | 'like' 
+  | 'wait' 
+  | 'follow' 
+  | 'unfollow'
+  | 'join_community'
+  | 'create_list'
+  | 'get_trends';
+
+export type SearchType = 
+  | 'tweet' 
+  | 'user' 
+  | 'trend' 
+  | 'batch';
+
+export type EndpointCategory = 
+  | 'user'
+  | 'tweet'
+  | 'communities'
+  | 'list'
+  | 'trend'
+  | 'login'
+  | 'tweetAction';
+
+// 定数
+export const KAITO_API_CONSTANTS = {
+  QPS_LIMIT: 200,
+  COST_PER_1K_TWEETS: 0.15,
+  MAX_TWEET_LENGTH: 280,
+  CACHE_TTL_MS: 300000, // 5 minutes
+  DEFAULT_TIMEOUT_MS: 30000,
+  MAX_RETRIES: 3,
+  MIN_REQUEST_INTERVAL_MS: 700, // Performance requirement
+  SUPPORTED_LANGUAGES: ['ja', 'en'],
+  MAX_SEARCH_RESULTS: 100,
+  MAX_BATCH_SIZE: 10,
+  ROLLBACK_TIMEOUT_MS: 300000 // 5 minutes
+} as const;

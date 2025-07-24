@@ -369,21 +369,21 @@ export class DataManager {
       await this.loadConfig();
       configOk = true;
     } catch (error) {
-      errors.push(`Config health check failed: ${error.message}`);
+      errors.push(`Config health check failed: ${error instanceof Error ? error.message : String(error)}`);
     }
 
     try {
       await this.loadLearningData();
       learningOk = true;
     } catch (error) {
-      errors.push(`Learning data health check failed: ${error.message}`);
+      errors.push(`Learning data health check failed: ${error instanceof Error ? error.message : String(error)}`);
     }
 
     try {
       await this.loadCurrentStatus();
       contextOk = true;
     } catch (error) {
-      errors.push(`Context health check failed: ${error.message}`);
+      errors.push(`Context health check failed: ${error instanceof Error ? error.message : String(error)}`);
     }
 
     console.log('🏥 データベース健全性チェック完了:', {

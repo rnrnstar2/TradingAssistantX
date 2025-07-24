@@ -1,196 +1,90 @@
 #!/usr/bin/env node
 /**
- * システム起動スクリプト
- * REQUIREMENTS.md準拠版 - 30分間隔自動実行システム（リファクタリング版）
+ * システム起動スクリプト（エントリーポイント）
+ * REQUIREMENTS.md準拠版 - 30分間隔自動実行システム（クリーンアップ版）
+ * 
+ * ワークフロー別クラス構成:
+ * • SystemLifecycle    - システム起動・停止・初期化
+ * • SchedulerManager   - スケジューラー管理・30分間隔制御
+ * • ExecutionFlow      - メインループ実行・4ステップワークフロー
+ * • StatusController   - 状態管理・手動実行・設定リロード
  */
 
 import 'dotenv/config';
 import { getConfig } from './shared/config';
 import { systemLogger } from './shared/logger';
-import { ComponentContainer, COMPONENT_KEYS } from './core/component-container';
-import { SystemInitializer } from './core/system-initializer';
-import { HealthChecker } from './core/health-checker';
-import { ShutdownManager } from './core/shutdown-manager';
-import { SystemStatus } from './core/system-status';
-import { ApplicationRunner } from './cli/application-runner';
+import { ComponentContainer } from './shared/component-container';
+
+// ワークフロー専用クラス群
+import { SystemLifecycle } from './main-workflows/system-lifecycle';
+import { SchedulerManager } from './main-workflows/scheduler-manager';
+import { ExecutionFlow } from './main-workflows/execution-flow';
+import { StatusController } from './main-workflows/status-controller';
 
 /**
- * TradingAssistantX メインアプリケーションクラス（リファクタリング版）
- * 30分間隔での自動実行システムを統合・管理
+ * TradingAssistantX メインアプリケーションクラス（クリーンアップ版）
+ * ワークフロー別クラス群による完全分離アーキテクチャ
  */
 class TradingAssistantX {
   private container: ComponentContainer;
-  private initializer: SystemInitializer;
-  private healthChecker: HealthChecker;
-  private shutdownManager: ShutdownManager;
-  private systemStatus: SystemStatus;
-  private isInitialized: boolean = false;
+  private systemLifecycle: SystemLifecycle;
+  private schedulerManager: SchedulerManager;
+  private executionFlow: ExecutionFlow;
+  private statusController: StatusController;
 
   constructor() {
     const config = getConfig();
     
-    // 専用クラス初期化
-    this.initializer = new SystemInitializer();
-    this.healthChecker = new HealthChecker();
-    this.shutdownManager = new ShutdownManager();
-    this.systemStatus = new SystemStatus();
+    // ワークフロー専用クラス群初期化
+    this.systemLifecycle = new SystemLifecycle(new ComponentContainer());
     
-    // コンポーネント初期化
-    this.container = this.initializer.initializeComponents(config);
+    // SystemLifecycleでコンポーネント初期化を実行
+    this.container = this.systemLifecycle.initializeComponents(config);
     
-    systemLogger.info('TradingAssistantX initialized - REQUIREMENTS.md準拠版（リファクタリング）');
+    this.schedulerManager = new SchedulerManager(this.container);
+    this.executionFlow = new ExecutionFlow(this.container);
+    this.statusController = new StatusController(this.container);
+    
+    systemLogger.info('TradingAssistantX initialized - ワークフロー分離アーキテクチャ版');
   }
 
-  /**
-   * システム起動
-   */
   async start(): Promise<void> {
-    try {
-      systemLogger.info('🚀 TradingAssistantX システム開始');
-
-      // 初期化
-      await this.initializer.initialize(this.container);
-      this.isInitialized = true;
-
-      // ヘルスチェック
-      const mainLoop = this.container.get(COMPONENT_KEYS.MAIN_LOOP);
-      const dataManager = this.container.get(COMPONENT_KEYS.DATA_MANAGER);
-      const kaitoClient = this.container.get(COMPONENT_KEYS.KAITO_CLIENT);
-      
-      await this.healthChecker.performSystemHealthCheck(mainLoop, dataManager, kaitoClient);
-
-      // スケジューラー開始
-      this.startScheduler();
-
-      systemLogger.success('✅ システム起動完了 - 30分間隔自動実行開始');
-
-    } catch (error) {
-      systemLogger.error('❌ システム起動失敗:', error);
-      await this.stop();
-      throw error;
-    }
+    await this.systemLifecycle.startSystem();
+    this.schedulerManager.startScheduler(() => this.executionFlow.executeMainLoop());
   }
 
-  /**
-   * システム停止
-   */
   async stop(): Promise<void> {
-    systemLogger.info('⏹️ システム停止処理開始');
-    
-    const scheduler = this.container.has(COMPONENT_KEYS.SCHEDULER) 
-      ? this.container.get(COMPONENT_KEYS.SCHEDULER) : null;
-    const dataManager = this.container.has(COMPONENT_KEYS.DATA_MANAGER) 
-      ? this.container.get(COMPONENT_KEYS.DATA_MANAGER) : null;
-    
-    await this.shutdownManager.gracefulShutdown(scheduler, dataManager);
-    systemLogger.success('✅ システム停止完了');
+    this.schedulerManager.stopScheduler();
+    await this.systemLifecycle.stopSystem();
   }
 
-  /**
-   * システム状態取得
-   */
   getSystemStatus(): Record<string, unknown> {
-    const scheduler = this.container.has(COMPONENT_KEYS.SCHEDULER) 
-      ? this.container.get(COMPONENT_KEYS.SCHEDULER) : null;
-    const mainLoop = this.container.has(COMPONENT_KEYS.MAIN_LOOP) 
-      ? this.container.get(COMPONENT_KEYS.MAIN_LOOP) : null;
-
-    return this.systemStatus.getSystemStatus(this.isInitialized, scheduler, mainLoop);
-  }
-
-  /**
-   * 手動実行トリガー（デバッグ用）
-   */
-  async triggerManualExecution(): Promise<void> {
-    await this.systemStatus.triggerManualExecution(
-      this.isInitialized, 
-      () => this.executeMainLoop()
+    return this.statusController.getSystemStatus(
+      this.systemLifecycle.getInitializationStatus()
     );
   }
 
-  /**
-   * 設定リロード
-   */
+  async triggerManualExecution(): Promise<void> {
+    await this.statusController.triggerManualExecution(
+      this.systemLifecycle.getInitializationStatus(),
+      () => this.executionFlow.executeMainLoop()
+    );
+  }
+
   async reloadConfiguration(): Promise<void> {
-    const config = this.container.get(COMPONENT_KEYS.CONFIG);
-    const scheduler = this.container.get(COMPONENT_KEYS.SCHEDULER);
-    
-    await this.systemStatus.reloadConfiguration(config, scheduler);
-  }
-
-  // ============================================================================
-  // PRIVATE METHODS
-  // ============================================================================
-
-  private startScheduler(): void {
-    const config = this.container.get(COMPONENT_KEYS.CONFIG);
-    const scheduler = this.container.get(COMPONENT_KEYS.SCHEDULER);
-    
-    const schedulerConfig = config.getSchedulerConfig();
-    
-    scheduler.updateConfig(schedulerConfig);
-    scheduler.setExecutionCallback(async () => {
-      return await this.executeMainLoop();
-    });
-
-    scheduler.start();
-    
-    systemLogger.info('⏰ スケジューラー開始:', {
-      interval: schedulerConfig.intervalMinutes,
-      maxDaily: schedulerConfig.maxDailyExecutions
-    });
-  }
-
-  private async executeMainLoop(): Promise<{ success: boolean; duration: number; error?: string }> {
-    const startTime = Date.now();
-
-    try {
-      systemLogger.info('🔄 メインループ実行開始');
-
-      const mainLoop = this.container.get(COMPONENT_KEYS.MAIN_LOOP);
-      const result = await mainLoop.runOnce();
-
-      const duration = Date.now() - startTime;
-
-      if (result.success) {
-        systemLogger.success('✅ メインループ実行完了:', {
-          action: result.action,
-          duration: `${duration}ms`,
-          confidence: result.metadata.confidence
-        });
-
-        return { success: true, duration };
-      } else {
-        systemLogger.error('❌ メインループ実行失敗:', result.error);
-        return { success: false, duration, error: result.error };
-      }
-
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      systemLogger.error('❌ メインループ実行エラー:', error);
-      
-      return { 
-        success: false, 
-        duration, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      };
-    }
+    await this.statusController.reloadConfiguration();
+    await this.schedulerManager.reloadSchedulerConfig();
   }
 }
-
-// ============================================================================
-// MAIN EXECUTION
-// ============================================================================
 
 async function main(): Promise<void> {
   const app = new TradingAssistantX();
-  const runner = new ApplicationRunner();
-  
-  await runner.run(app);
+  // ApplicationRunner functionality is integrated into SystemLifecycle
+  await app.start();
 }
 
-// エントリーポイント実行（ES module対応）
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Check if this module is being run directly (CommonJS compatible)
+if (require.main === module) {
   main().catch((error) => {
     console.error('🚨 Fatal error:', error);
     process.exit(1);

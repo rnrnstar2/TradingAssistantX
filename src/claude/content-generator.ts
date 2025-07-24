@@ -81,7 +81,7 @@ export class ContentGenerator {
 
     } catch (error) {
       console.error('Content generation failed:', error);
-      return this.createFallbackContent(request.topic, request.contentType);
+      throw error; // 品質確保のため、失敗時は素直にエラーを投げる
     }
   }
 
@@ -188,21 +188,4 @@ ${maxLength}文字以内で投稿内容のみを返してください。`;
     return [...baseHashtags, ...(typeSpecificHashtags[contentType as keyof typeof typeSpecificHashtags] || typeSpecificHashtags.general)];
   }
 
-  /**
-   * フォールバック用コンテンツ作成
-   */
-  private createFallbackContent(topic: string, contentType?: string): GeneratedContent {
-    const fallbackContent = `${topic}について学びを深めていきましょう。投資は常に学習が重要です。皆さんはどのように投資の勉強をしていますか？ #投資教育 #資産運用`;
-    
-    return {
-      content: fallbackContent,
-      hashtags: ['#投資教育', '#資産運用'],
-      qualityScore: 75,
-      metadata: {
-        wordCount: fallbackContent.length,
-        contentType: contentType || 'general',
-        generatedAt: new Date().toISOString()
-      }
-    };
-  }
 }

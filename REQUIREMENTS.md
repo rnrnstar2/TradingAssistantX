@@ -104,7 +104,7 @@ interface ClaudeDecision {
 ## 📁 ディレクトリ・ファイル構造（MVP版）
 
 ### /src ディレクトリ（Claude強み活用アーキテクチャ版）
-**20ファイル・6ディレクトリ構成 - Claude SDK価値最大化設計（MVP+Claude強み）**
+**28ファイル・9ディレクトリ構成 - Claude SDK価値最大化設計（MVP+Claude強み）**
 
 ```
 src/
@@ -115,17 +115,31 @@ src/
 │   ├── market-analyzer.ts     # 基本的な市場コンテキスト分析 (80行程度)
 │   └── prompt-builder.ts      # Claude用プロンプト最適化 (80行程度)
 │
-├── kaito-api/                 # KaitoTwitterAPI基本構成 (6ファイル - MVP必須機能)
-│   ├── client.ts              # API認証・基本リクエスト管理
-│   ├── config.ts              # API設定・エンドポイント管理
-│   ├── search-engine.ts       # 投稿検索・トレンド取得
-│   ├── tweet-actions.ts       # 投稿・RT・いいね実行
-│   ├── user-info.ts           # アカウント情報取得
-│   └── response-handler.ts    # レスポンス処理・エラーハンドリング
+├── kaito-api/                 # KaitoTwitterAPI完全分離アーキテクチャ (11ファイル)
+│   ├── core/                  # 基盤機能 (2ファイル)
+│   │   ├── client.ts          # API認証・QPS制御・リクエスト管理
+│   │   └── config.ts          # API設定・エンドポイント管理
+│   ├── endpoints/             # エンドポイント別分離 (8ファイル)
+│   │   ├── user-endpoints.ts      # ユーザー情報・フォロー関係・検索
+│   │   ├── tweet-endpoints.ts     # ツイート検索・詳細・リプライ・引用
+│   │   ├── community-endpoints.ts # コミュニティ情報・メンバー・投稿
+│   │   ├── list-endpoints.ts      # リスト投稿・フォロワー・メンバー
+│   │   ├── trend-endpoints.ts     # トレンド情報取得（WOEID対応）
+│   │   ├── login-endpoints.ts     # 認証・ログイン・2FA対応
+│   │   ├── action-endpoints.ts    # 投稿・いいね・RT・画像アップロード
+│   │   └── webhook-endpoints.ts   # フィルタルール管理・リアルタイム処理
+│   └── utils/                 # ユーティリティ (1ファイル)
+│       └── response-handler.ts    # レスポンス処理・エラーハンドリング
 │
 ├── scheduler/                 # スケジュール制御 (2ファイル)
 │   ├── core-scheduler.ts      # 30分間隔制御
 │   └── main-loop.ts           # メイン実行ループ統合
+│
+├── main-workflows/            # システム実行フロー管理 (4ファイル)
+│   ├── execution-flow.ts      # メイン実行フロー制御
+│   ├── scheduler-manager.ts   # スケジューラー管理
+│   ├── status-controller.ts   # ステータス制御
+│   └── system-lifecycle.ts    # システムライフサイクル管理
 │
 ├── data/                      # データ管理統合 (8ファイル)
 │   ├── data-manager.ts        # データ管理クラス
@@ -227,7 +241,7 @@ src/
 ### Claude強み活用MVP制限
 - **🚫 過剰詳細分析禁止**: 7指標品質評価、詳細エンゲージメント予測などは実装しない
 - **✅ バランス重視**: 動作確実性とClaude価値の両立
-- **📏 ファイル数制限**: src/claude 5ファイル、src/kaito-api 6ファイルを厳守（各ファイル80-120行）
+- **📏 ファイル数制限**: src/claude 5ファイル、src/kaito-api 11ファイル、src/main-workflows 4ファイルを厳守
 - **🤖 Claude価値活用**: AI判断・学習・品質評価の基本機能は実装
 
 ### Claude強み活用MVP要件

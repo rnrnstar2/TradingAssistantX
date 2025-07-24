@@ -521,7 +521,7 @@ export class TweetEndpoints {
         };
       }>('/tweets/search/recent', params);
 
-      const tweets: TweetData[] = response.data.map(tweetData => ({
+      const tweets: TweetData[] = response.data.map((tweetData: any) => ({
         id: tweetData.id,
         text: tweetData.text,
         authorId: tweetData.author_id,
@@ -533,7 +533,7 @@ export class TweetEndpoints {
           replyCount: tweetData.public_metrics.reply_count,
           impressionCount: tweetData.public_metrics.impression_count
         },
-        contextAnnotations: tweetData.context_annotations?.map(annotation => ({
+        contextAnnotations: tweetData.context_annotations?.map((annotation: any) => ({
           domain: annotation.domain.name,
           entity: annotation.entity.name,
           description: annotation.entity.description
@@ -630,7 +630,7 @@ export class TweetEndpoints {
           replyCount: tweetData.public_metrics.reply_count,
           impressionCount: tweetData.public_metrics.impression_count
         },
-        contextAnnotations: tweetData.context_annotations?.map(annotation => ({
+        contextAnnotations: tweetData.context_annotations?.map((annotation: any) => ({
           domain: annotation.domain.name,
           entity: annotation.entity.name,
           description: annotation.entity.description
@@ -691,7 +691,7 @@ export class TweetEndpoints {
         'tweet.fields': 'id,text,author_id,created_at,public_metrics'
       });
 
-      const tweets: TweetData[] = response.data.map(tweetData => ({
+      const tweets: TweetData[] = response.data.map((tweetData: any) => ({
         id: tweetData.id,
         text: tweetData.text,
         authorId: tweetData.author_id,
@@ -758,18 +758,6 @@ export class TweetEndpoints {
 // ============================================================================
 // EXPORTS
 // ============================================================================
-
-export {
-  TweetData,
-  TweetResult,
-  RetweetResult,
-  QuoteResult,
-  TweetSearchResult,
-  TweetSearchOptions,
-  CreateTweetOptions,
-  DeleteTweetResult,
-  TweetEndpoints
-};
 
 /**
  * 使用例:

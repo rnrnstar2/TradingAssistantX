@@ -1,181 +1,199 @@
 /**
- * Claude Code SDK 市場コンテキスト分析専門モジュール
- * REQUIREMENTS.md準拠版 - 市場分析機能の疎結合実装
- * decision-engine.tsから分離された市場分析機能
+ * Claude Code SDK 基本的市場コンテキスト分析モジュール
+ * REQUIREMENTS.md準拠版 - Claude強み活用MVP設計
+ * 簡潔な市場情報収集・分析機能
  */
 
 import { SearchEngine } from '../kaito-api/search-engine';
-import { KaitoTwitterAPIClient } from '../kaito-api/client';
+import { KaitoTwitterAPIClient } from '../kaito-api/core/client';
 
-export interface MarketContext {
+export interface BasicMarketContext {
   sentiment: 'bearish' | 'neutral' | 'bullish';
   volatility: 'low' | 'medium' | 'high';
   trendingTopics: string[];
-  highEngagementOpportunities: any[];
-  competitorActivity: any[];
+  timestamp: string;
 }
 
-export interface ClaudeDecision {
-  action: 'post' | 'retweet' | 'quote_tweet' | 'like' | 'wait';
+export interface MarketOpportunity {
+  topic: string;
+  relevance: number;
+  suggested_action: 'post' | 'engage' | 'monitor';
   reasoning: string;
-  parameters: {
-    topic?: string;
-    searchQuery?: string;
-    content?: string;
-    targetTweetId?: string;
-    duration?: number;
-    reason?: string;
-    retry_action?: string;
-  };
-  confidence: number;
 }
 
 /**
- * 市場コンテキスト分析専門クラス
- * 市場センチメント、ボラティリティ、トレンド分析を担当
+ * 基本的市場コンテキスト分析クラス
+ * 過剰でない範囲での市場情報収集・分析
  */
 export class MarketAnalyzer {
   constructor(
-    private searchEngine: SearchEngine,
-    private kaitoClient: KaitoTwitterAPIClient
+    private searchEngine?: SearchEngine,
+    private kaitoClient?: KaitoTwitterAPIClient
   ) {
-    console.log('✅ MarketAnalyzer initialized - 市場分析専門モジュール');
+    console.log('✅ MarketAnalyzer initialized - MVP基本分析版');
   }
 
   /**
-   * 市場コンテキスト総合分析
-   * 市場センチメント、高エンゲージメント投稿、トレンド情報を統合分析
+   * 基本市場コンテキスト分析
+   * 必要最小限の市場情報を収集・分析
    */
-  async analyzeMarketContext(): Promise<MarketContext> {
+  async analyzeBasicMarketContext(): Promise<BasicMarketContext> {
     try {
-      console.log('📊 市場コンテキスト分析開始');
+      console.log('📊 基本市場コンテキスト分析開始');
 
-      const marketSentiment = await this.searchEngine.analyzeMarketSentiment();
-      const highEngagementTweets = await this.searchEngine.findHighEngagementTweets('投資');
-      const trendingTopics = await this.searchEngine.searchTrends();
-      
-      return this.synthesizeMarketContext(marketSentiment, highEngagementTweets, trendingTopics);
+      // 基本情報収集
+      const [trendData, sentimentInfo] = await Promise.allSettled([
+        this.searchEngine?.searchTrends() || [],
+        this.estimateBasicSentiment()
+      ]);
+
+      const trends = trendData.status === 'fulfilled' ? trendData.value : [];
+      const sentiment = sentimentInfo.status === 'fulfilled' ? sentimentInfo.value : 'neutral';
+
+      const context: BasicMarketContext = {
+        sentiment,
+        volatility: this.estimateVolatility(trends),
+        trendingTopics: this.extractRelevantTopics(trends),
+        timestamp: new Date().toISOString()
+      };
+
+      console.log('✅ 基本市場コンテキスト分析完了:', {
+        sentiment: context.sentiment,
+        topics: context.trendingTopics.length
+      });
+
+      return context;
 
     } catch (error) {
       console.error('❌ 市場コンテキスト分析エラー:', error);
-      return {
-        sentiment: 'neutral',
-        volatility: 'medium',
-        trendingTopics: [],
-        highEngagementOpportunities: [],
-        competitorActivity: []
-      };
+      throw error; // 品質確保のため、失敗時は素直にエラーを投げる
     }
   }
 
   /**
-   * 市場コンテキスト統合処理
-   * 各種データソースからの情報を統合してMarketContextを生成
+   * 市場機会分析
+   * 基本的な投稿機会の識別
    */
-  synthesizeMarketContext(marketSentiment: any, highEngagementTweets: any[], trendingTopics: any[]): MarketContext {
-    return {
-      sentiment: marketSentiment.overall_sentiment || 'neutral',
-      volatility: this.calculateVolatility(marketSentiment),
-      trendingTopics: trendingTopics.map(t => t.topic || '').slice(0, 5),
-      highEngagementOpportunities: highEngagementTweets.slice(0, 10),
-      competitorActivity: []
-    };
+  analyzeMarketOpportunities(context: BasicMarketContext): MarketOpportunity[] {
+    try {
+      const opportunities: MarketOpportunity[] = [];
+
+      // トレンドトピック分析
+      context.trendingTopics.forEach(topic => {
+        const relevance = this.calculateTopicRelevance(topic);
+        if (relevance > 0.6) {
+          opportunities.push({
+            topic,
+            relevance,
+            suggested_action: this.suggestActionForTopic(topic, context),
+            reasoning: `投資教育との関連度: ${Math.round(relevance * 100)}%`
+          });
+        }
+      });
+
+      // センチメントベース機会
+      if (context.sentiment === 'bullish' && context.volatility === 'low') {
+        opportunities.push({
+          topic: '市場教育コンテンツ',
+          relevance: 0.8,
+          suggested_action: 'post',
+          reasoning: 'ポジティブな市場環境で教育コンテンツに最適'
+        });
+      }
+
+      return opportunities.slice(0, 3); // 最大3つの機会
+    } catch (error) {
+      console.error('市場機会分析エラー:', error);
+      return [];
+    }
+  }
+
+  // ============================================================================
+  // PRIVATE METHODS
+  // ============================================================================
+
+  /**
+   * 基本センチメント推定
+   */
+  private async estimateBasicSentiment(): Promise<'bearish' | 'neutral' | 'bullish'> {
+    try {
+      if (!this.searchEngine) {
+        return 'neutral';
+      }
+
+      // 簡単なセンチメント分析
+      const sentimentData = await this.searchEngine.analyzeMarketSentiment();
+      return sentimentData?.overall_sentiment || 'neutral';
+    } catch (error) {
+      console.warn('センチメント推定失敗、中立を返す');
+      return 'neutral';
+    }
   }
 
   /**
-   * ボラティリティ計算
-   * 市場センチメントスコアからボラティリティレベルを算出
+   * ボラティリティ推定
    */
-  private calculateVolatility(marketSentiment: any): 'low' | 'medium' | 'high' {
-    const score = Math.abs(marketSentiment.sentiment_score || 0);
-    if (score > 0.7) return 'high';
-    if (score > 0.3) return 'medium';
+  private estimateVolatility(trends: any[]): 'low' | 'medium' | 'high' {
+    // トレンド数とキーワードからボラティリティを推定
+    const trendCount = trends.length;
+    const volatileKeywords = ['急騰', '暴落', '急落', '高騰'];
+    const hasVolatileKeywords = trends.some(trend => 
+      volatileKeywords.some(keyword => 
+        (trend.topic || trend.name || '').includes(keyword)
+      )
+    );
+
+    if (hasVolatileKeywords || trendCount > 10) return 'high';
+    if (trendCount > 5) return 'medium';
     return 'low';
   }
 
   /**
-   * 統合プロンプト構築
-   * 市場コンテキスト分析結果に基づくClaude判断用プロンプト生成
+   * 関連トピック抽出
    */
-  buildEnhancedPrompt(accountStatus: any, trendData: any[], marketContext: MarketContext): string {
-    return `
-市場コンテキスト分析に基づく判断要請:
-
-アカウント状況:
-- フォロワー数: ${accountStatus.followersCount}
-- 投稿数: ${accountStatus.tweetsCount}
-
-市場データ:
-- センチメント: ${marketContext.sentiment}
-- ボラティリティ: ${marketContext.volatility}
-- トレンドトピック: ${marketContext.trendingTopics.slice(0, 3).join(', ')}
-- 高エンゲージメント機会: ${marketContext.highEngagementOpportunities.length}件
-
-最適なアクションと理由を判断してください。
-    `;
+  private extractRelevantTopics(trends: any[]): string[] {
+    const investmentKeywords = ['投資', '資産', '株', '債券', 'NISA', 'iDeCo', '金融', '経済'];
+    
+    return trends
+      .filter(trend => {
+        const topicText = trend.topic || trend.name || '';
+        return investmentKeywords.some(keyword => topicText.includes(keyword));
+      })
+      .map(trend => trend.topic || trend.name)
+      .slice(0, 5);
   }
 
   /**
-   * 統合判断実行
-   * 市場コンテキストに基づく高度なClaudeDecision生成
+   * トピック関連度計算
    */
-  async executeEnhancedDecision(enhancedPrompt: string, marketContext: MarketContext): Promise<ClaudeDecision> {
-    console.log('⚡ 統合判断実行中:', { 
-      promptLength: enhancedPrompt.length,
-      marketSentiment: marketContext.sentiment 
-    });
+  private calculateTopicRelevance(topic: string): number {
+    let relevance = 0.3; // ベース関連度
 
-    // 高度な判断ロジック
-    if (marketContext.sentiment === 'bullish' && marketContext.volatility === 'low') {
-      return this.createPostDecision(
-        'ポジティブな市場環境と低ボラティリティを活用した投稿機会',
-        0.85,
-        'market_opportunity'
-      );
+    const highRelevanceKeywords = ['投資', '資産運用', 'NISA'];
+    const mediumRelevanceKeywords = ['株式', '債券', '金融', '経済'];
+
+    if (highRelevanceKeywords.some(keyword => topic.includes(keyword))) {
+      relevance += 0.4;
+    } else if (mediumRelevanceKeywords.some(keyword => topic.includes(keyword))) {
+      relevance += 0.2;
     }
 
-    if (marketContext.trendingTopics.length > 0 && marketContext.highEngagementOpportunities.length > 0) {
-      return this.createPostDecision(
-        'トレンドトピックと高エンゲージメント機会の統合活用',
-        0.78,
-        'trend_engagement'
-      );
+    return Math.min(relevance, 1.0);
+  }
+
+  /**
+   * トピック別アクション提案
+   */
+  private suggestActionForTopic(topic: string, context: BasicMarketContext): 'post' | 'engage' | 'monitor' {
+    const relevance = this.calculateTopicRelevance(topic);
+    
+    if (relevance > 0.8 && context.sentiment !== 'bearish') {
+      return 'post';
+    } else if (relevance > 0.6) {
+      return 'engage';
+    } else {
+      return 'monitor';
     }
-
-    return this.createWaitDecision(
-      '市場コンディション分析により待機が最適',
-      0.65,
-      1800000
-    );
   }
 
-  /**
-   * 投稿決定オブジェクト生成ヘルパー
-   */
-  private createPostDecision(reasoning: string, confidence: number, contentType?: string): ClaudeDecision {
-    return {
-      action: 'post',
-      reasoning,
-      parameters: {
-        topic: contentType || 'general',
-        content: contentType
-      },
-      confidence
-    };
-  }
-
-  /**
-   * 待機決定オブジェクト生成ヘルパー
-   */
-  private createWaitDecision(reasoning: string, confidence: number, duration?: number): ClaudeDecision {
-    return {
-      action: 'wait',
-      reasoning,
-      parameters: {
-        duration: duration || 1800000, // Default 30 minutes
-        reason: 'scheduled_wait'
-      },
-      confidence
-    };
-  }
 }
