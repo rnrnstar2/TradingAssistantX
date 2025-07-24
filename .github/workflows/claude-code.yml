@@ -28,16 +28,16 @@ jobs:
           npm install -g @anthropic-ai/claude-code
           echo "✅ Installation completed"
 
-      - name: Verify Claude Code CLI
+      - name: Verify Claude CLI
         run: |
-          echo "Checking Claude Code CLI version..."
-          claude-code --version
+          echo "Checking Claude CLI version..."
+          claude --version
           echo "✅ Version check completed"
 
       - name: Test CLI Help
         run: |
-          echo "Testing Claude Code CLI help command..."
-          claude-code --help
+          echo "Testing Claude CLI help command..."
+          claude --help
           echo "✅ Help command completed"
 
       - name: Generate simple report
