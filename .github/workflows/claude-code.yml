@@ -71,26 +71,8 @@ jobs:
         run: |
           echo "Creating Claude SDK script..."
           
-          # TypeScript設定ファイルを作成
-          cat > tsconfig.json << 'EOF'
-          {
-            "compilerOptions": {
-              "target": "ES2020",
-              "module": "CommonJS",
-              "esModuleInterop": true,
-              "allowSyntheticDefaultImports": true,
-              "strict": true,
-              "skipLibCheck": true,
-              "forceConsistentCasingInFileNames": true
-            },
-            "ts-node": {
-              "esm": false
-            }
-          }
-          EOF
-          
-          cat > claude-sdk-execution.ts << 'EOF'
-          import { claude } from '@instantlyeasy/claude-code-sdk-ts';
+          cat > claude-sdk-execution.js << 'EOF'
+          const { claude } = require('@instantlyeasy/claude-code-sdk-ts');
 
           async function executeClaudeSDK() {
             try {
@@ -120,7 +102,7 @@ jobs:
           EOF
           
           echo "Running Claude SDK execution..."
-          npx ts-node --esm=false claude-sdk-execution.ts
+          node claude-sdk-execution.js
 
       # 結果の確認とレポート
       - name: Verify SDK functionality
