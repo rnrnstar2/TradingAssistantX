@@ -55,17 +55,21 @@ jobs:
 
       - name: Create SDK Test Script
         run: |
-          echo "Creating TypeScript test script..."
-          cat > test-claude-sdk.ts << 'EOF'
-          import { claude } from '@instantlyeasy/claude-code-sdk-ts';
+          echo "Creating CommonJS test script..."
+          cat > test-claude-sdk.js << 'EOF'
+          const { claude } = require('@instantlyeasy/claude-code-sdk-ts');
           
           async function testClaudeSDK() {
             try {
               console.log('🚀 Starting Claude SDK test...');
               
-              // Note: This will fail without authentication, but we can test the API structure
+              // Test SDK import and structure
               console.log('📝 SDK imported successfully');
               console.log('📝 Claude function is available:', typeof claude);
+              
+              // Test if we can create a claude instance
+              const claudeInstance = claude();
+              console.log('📝 Claude instance created:', typeof claudeInstance);
               
               console.log('✅ SDK structure test completed');
               return true;
@@ -90,7 +94,7 @@ jobs:
       - name: Run SDK Test
         run: |
           echo "Running Claude SDK test..."
-          npx ts-node test-claude-sdk.ts
+          node test-claude-sdk.js
           echo "✅ SDK test completed"
 
       - name: Generate comprehensive report
