@@ -15,10 +15,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 18
+      - name: Setup Node.js 20 LTS
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       # Claude Code CLI のインストール
       - name: Install Claude Code CLI
@@ -128,7 +128,7 @@ jobs:
           echo "## Claude Code SDK Execution Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Execution Results" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Node.js 18 setup completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Node.js 20 LTS setup completed" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Claude Code CLI installed" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Claude Code SDK installed" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Authentication configured" >> $GITHUB_STEP_SUMMARY
@@ -136,7 +136,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Environment Details" >> $GITHUB_STEP_SUMMARY
           echo "- OS: Ubuntu Latest" >> $GITHUB_STEP_SUMMARY
-          echo "- Node.js: 18.x" >> $GITHUB_STEP_SUMMARY
+          echo "- Node.js: 20.x LTS" >> $GITHUB_STEP_SUMMARY
           echo "- SDK: @instantlyeasy/claude-code-sdk-ts" >> $GITHUB_STEP_SUMMARY
           echo "- CLI: @anthropic-ai/claude-code" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
