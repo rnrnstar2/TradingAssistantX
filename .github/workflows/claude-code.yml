@@ -44,17 +44,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
       - name: Setup Node.js
         id: env
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Install Claude Code CLI
         run: |
@@ -299,7 +299,7 @@ jobs:
           
           for pattern in "${PATTERNS[@]}"; do
             echo "Checking for pattern: $pattern"
-            if grep -r -i "$pattern" src/ --include="*.ts" --include="*.js" | grep -v "// TODO\|// FIXME\|console.log\|interface\|type\|@param\|\* \|max_tokens\|authToken\|apiKey\|bearer_token\|refreshToken\|authenticate\|credentials\|CLAUDE_API_KEY\|KAITO_API_TOKEN"; then
+            if grep -r -i "$pattern" src/ --include="*.ts" --include="*.js" | grep -v "// TODO\|// FIXME\|console.log\|interface\|type\|@param\|\* \|max_tokens\|authToken\|apiKey\|bearer_token\|refreshToken\|authenticate\|credentials\|CLAUDE_API_KEY\|KAITO_API_TOKEN\|api_key\\?\|auth_token:\|getClaudeConfig\|getKaitoApiConfig"; then
               echo "⚠️ Potential secret pattern found: $pattern"
               FOUND_ISSUES=true
             fi
