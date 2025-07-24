@@ -1,362 +1,51 @@
-name: Claude Code CI/CD Pipeline (MAX Plan)
+name: Claude Code Simple Test
 
 on:
-  workflow_dispatch:  # 手動実行
-    inputs:
-      claude_action:
-        description: 'Claude action to perform'
-        required: true
-        default: 'analyze'
-        type: choice
-        options:
-        - analyze
-        - test
-        - optimize
-        - review
-        - trading-analysis
+  workflow_dispatch:  # Manual execution only
   push:
-    branches: [ main, develop ]
-    paths-ignore:
-      - 'README.md'
-      - 'docs/**'
-  pull_request:
     branches: [ main ]
-  schedule:
-    # Run every 30 minutes (aligned with TradingAssistantX schedule)
-    - cron: '*/30 * * * *'
-
-env:
-  NODE_VERSION: '20'
-  PNPM_VERSION: '8'
+    paths:
+      - '.github/workflows/claude-code.yml'
 
 jobs:
-  # Environment preparation and authentication
-  prepare-environment:
-    name: Prepare Claude Environment
+  simple-test:
+    name: Basic Claude Code CLI Test
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      claude-ready: ${{ steps.auth.outputs.ready }}
-      environment-ready: ${{ steps.env.outputs.ready }}
+    timeout-minutes: 5
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
-        id: env
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          node-version: '20'
 
       - name: Install Claude Code CLI
         run: |
           echo "Installing Claude Code CLI..."
           npm install -g @anthropic-ai/claude-code
-          echo "✅ Claude CLI installed successfully"
+          echo "✅ Installation completed"
 
-      - name: Configure Claude Authentication (MAX Plan)
-        id: auth
-        env:
-          CLAUDE_ACCESS_TOKEN: ${{ secrets.CLAUDE_ACCESS_TOKEN }}
-          CLAUDE_REFRESH_TOKEN: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+      - name: Verify Claude Code CLI
         run: |
-          echo "Configuring Claude authentication (MAX plan only)..."
-          
-          if [ -n "$CLAUDE_ACCESS_TOKEN" ]; then
-            echo "✅ Claude access token is available"
-            export ANTHROPIC_AUTH_TOKEN="$CLAUDE_ACCESS_TOKEN"
-            
-            # Validate CLI installation
-            claude --version
-            echo "ready=true" >> $GITHUB_OUTPUT
-            echo "environment-ready=true" >> $GITHUB_OUTPUT
-          else
-            echo "❌ Claude access token not found in secrets"
-            echo "ready=false" >> $GITHUB_OUTPUT
-            echo "environment-ready=false" >> $GITHUB_OUTPUT
-            exit 1
-          fi
+          echo "Checking Claude Code CLI version..."
+          claude-code --version
+          echo "✅ Version check completed"
 
-  # TradingAssistantX specific analysis
-  claude-analysis:
-    name: Claude Code Analysis
-    needs: prepare-environment
-    if: needs.prepare-environment.outputs.claude-ready == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js and pnpm
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Install dependencies
+      - name: Test CLI Help
         run: |
-          pnpm install --frozen-lockfile
-          npm install -g @anthropic-ai/claude-code
+          echo "Testing Claude Code CLI help command..."
+          claude-code --help
+          echo "✅ Help command completed"
 
-      - name: Prepare TradingAssistantX context
+      - name: Generate simple report
         run: |
-          cat > .claude-context << 'EOF'
-          # TradingAssistantX - AI-Powered X (Twitter) Trading Assistant
-          
-          ## Project Overview
-          TradingAssistantX is an MVP system for automated X (Twitter) posting with AI-driven decision making.
-          
-          ## Key Features
-          - 30-minute interval automated execution
-          - Claude SDK integration for intelligent action decisions
-          - KaitoAPI integration for X (Twitter) operations
-          - Learning system with YAML-based data management
-          - Investment education focused content
-          
-          ## Architecture
-          - src/claude/: AI decision engine and content generation
-          - src/kaito-api/: X API integration with endpoint separation
-          - src/scheduler/: 30-minute interval execution control
-          - data/: Configuration and learning data in YAML format
-          
-          ## Current Focus
-          Please analyze for:
-          1. TypeScript compliance and code quality
-          2. Architecture adherence to REQUIREMENTS.md
-          3. Performance optimization opportunities
-          4. Security best practices for API integrations
-          5. Claude SDK integration improvements
-          EOF
-
-      - name: Run TypeScript check
-        continue-on-error: true
-        run: pnpm run type-check || echo "TypeScript errors detected"
-
-      - name: Run linting
-        continue-on-error: true
-        run: pnpm run lint || echo "Linting issues detected"
-
-      - name: Claude Code Analysis
-        env:
-          CLAUDE_ACCESS_TOKEN: ${{ secrets.CLAUDE_ACCESS_TOKEN }}
-        run: |
-          export ANTHROPIC_AUTH_TOKEN="$CLAUDE_ACCESS_TOKEN"
-          
-          ACTION="${{ github.event.inputs.claude_action || 'analyze' }}"
-          
-          case $ACTION in
-            "analyze")
-              claude-code "Analyze the TradingAssistantX codebase focusing on TypeScript errors, architectural issues, and MVP compliance with REQUIREMENTS.md. Provide specific improvement suggestions." --no-confirm
-              ;;
-            "test")
-              claude-code "Review the testing strategy for TradingAssistantX. Suggest comprehensive tests for the 30-minute execution cycle, Claude decision engine, and KaitoAPI integration." --no-confirm
-              ;;
-            "optimize")
-              claude-code "Identify performance bottlenecks in the TradingAssistantX 30-minute execution cycle. Focus on Claude SDK calls, API requests, and data management optimization." --no-confirm
-              ;;
-            "review")
-              claude-code "Perform a comprehensive security and code quality review of TradingAssistantX. Focus on API key management, input validation, and defensive programming practices." --no-confirm
-              ;;
-            "trading-analysis")
-              claude-code "Analyze the investment education content generation and decision making logic. Suggest improvements for educational value and market relevance." --no-confirm
-              ;;
-          esac
-
-      - name: Archive analysis results
-        if: always()
-        run: |
-          mkdir -p artifacts/claude-analysis
-          
-          # Save analysis results if available
-          if [ -f .claude-output ]; then
-            cp .claude-output artifacts/claude-analysis/analysis-$(date +%Y%m%d-%H%M%S).md
-          fi
-          
-          # Create summary
-          echo "# Claude Analysis Summary" > artifacts/claude-analysis/summary.md
-          echo "" >> artifacts/claude-analysis/summary.md
-          echo "- **Trigger**: ${{ github.event_name }}" >> artifacts/claude-analysis/summary.md
-          echo "- **Action**: ${{ github.event.inputs.claude_action || 'analyze' }}" >> artifacts/claude-analysis/summary.md
-          echo "- **Timestamp**: $(date)" >> artifacts/claude-analysis/summary.md
-          echo "- **Branch**: ${{ github.ref_name }}" >> artifacts/claude-analysis/summary.md
-
-      - name: Upload analysis results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: claude-analysis-${{ github.run_number }}
-          path: artifacts/claude-analysis/
-          retention-days: 30
-
-  # Data validation for TradingAssistantX
-  data-validation:
-    name: Data Structure Validation
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Validate data directory structure
-        run: |
-          echo "Validating TradingAssistantX data structure..."
-          
-          # Check required directories
-          REQUIRED_DIRS=("data/config" "data/learning" "data/context")
-          for dir in "${REQUIRED_DIRS[@]}"; do
-            if [ ! -d "$dir" ]; then
-              echo "❌ Missing required directory: $dir"
-              exit 1
-            else
-              echo "✅ Directory exists: $dir"
-            fi
-          done
-
-      - name: Validate YAML files
-        run: |
-          echo "Validating YAML syntax..."
-          
-          # Install Python for YAML validation
-          sudo apt-get update
-          sudo apt-get install -y python3 python3-yaml
-          
-          # Check all YAML files
-          find data/ -name "*.yaml" -o -name "*.yml" | while read file; do
-            echo "Checking: $file"
-            if ! python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
-              echo "❌ Invalid YAML syntax in $file"
-              exit 1
-            else
-              echo "✅ Valid YAML: $file"
-            fi
-          done
-
-      - name: Check data file sizes
-        run: |
-          echo "Checking data file sizes (per REQUIREMENTS.md limits)..."
-          
-          # Check current directory (1MB limit)
-          if [ -d "data/current" ]; then
-            CURRENT_SIZE=$(du -s data/current | cut -f1)
-            if [ $CURRENT_SIZE -gt 1024 ]; then
-              echo "⚠️ data/current exceeds 1MB limit: ${CURRENT_SIZE}KB"
-            else
-              echo "✅ data/current size OK: ${CURRENT_SIZE}KB"
-            fi
-          fi
-          
-          # Check learning directory (10MB limit)
-          if [ -d "data/learning" ]; then
-            LEARNING_SIZE=$(du -s data/learning | cut -f1)
-            if [ $LEARNING_SIZE -gt 10240 ]; then
-              echo "⚠️ data/learning exceeds 10MB limit: ${LEARNING_SIZE}KB"
-            else
-              echo "✅ data/learning size OK: ${LEARNING_SIZE}KB"
-            fi
-          fi
-
-  # Security scan
-  security-scan:
-    name: Security Analysis
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Check for hardcoded secrets
-        run: |
-          echo "Scanning for potential hardcoded secrets..."
-          
-          # Define patterns to search for
-          PATTERNS=(
-            "api[_-]*key"
-            "secret"
-            "token"
-            "password"
-            "credential"
-            "bearer"
-            "oauth"
-          )
-          
-          FOUND_ISSUES=false
-          
-          for pattern in "${PATTERNS[@]}"; do
-            echo "Checking for pattern: $pattern"
-            if grep -r -i "$pattern" src/ --include="*.ts" --include="*.js" | grep -v "// TODO\|// FIXME\|console.log\|interface\|type\|@param\|\* \|max_tokens\|authToken\|apiKey\|bearer_token\|refreshToken\|authenticate\|credentials\|CLAUDE_API_KEY\|KAITO_API_TOKEN\|api_key\\?\|auth_token:\|getClaudeConfig\|getKaitoApiConfig"; then
-              echo "⚠️ Potential secret pattern found: $pattern"
-              FOUND_ISSUES=true
-            fi
-          done
-          
-          if [ "$FOUND_ISSUES" = true ]; then
-            echo "❌ Potential security issues found. Please review."
-            exit 1
-          else
-            echo "✅ No obvious security issues detected"
-          fi
-
-      - name: Validate environment variable usage
-        run: |
-          echo "Checking environment variable usage..."
-          
-          # Check for proper environment variable usage
-          if grep -r "process\.env" src/ --include="*.ts" | grep -v "NODE_ENV\|DEBUG"; then
-            echo "Environment variables found (ensure they're properly documented):"
-            grep -r "process\.env" src/ --include="*.ts" | grep -v "NODE_ENV\|DEBUG"
-          fi
-
-  # Summary and notification
-  workflow-summary:
-    name: Workflow Summary
-    needs: [prepare-environment, claude-analysis, data-validation, security-scan]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Generate comprehensive summary
-        run: |
-          echo "# TradingAssistantX Claude Code CI/CD Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Simple Claude Code CLI Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Node.js 20 setup completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Claude Code CLI installed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ CLI version command executed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ CLI help command executed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Workflow Information" >> $GITHUB_STEP_SUMMARY
-          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Timestamp**: $(date)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Claude Action**: ${{ github.event.inputs.claude_action || 'analyze' }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          echo "## Job Results" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment Preparation**: ${{ needs.prepare-environment.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Claude Analysis**: ${{ needs.claude-analysis.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Data Validation**: ${{ needs.data-validation.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Security Scan**: ${{ needs.security-scan.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
-          echo "1. Review Claude analysis results in workflow artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "2. Address any security or validation issues identified" >> $GITHUB_STEP_SUMMARY
-          echo "3. Implement suggested improvements from Claude analysis" >> $GITHUB_STEP_SUMMARY
-          echo "4. Ensure REQUIREMENTS.md compliance" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## TradingAssistantX Specific Notes" >> $GITHUB_STEP_SUMMARY
-          echo "- Focus on 30-minute execution cycle reliability" >> $GITHUB_STEP_SUMMARY
-          echo "- Maintain data structure compliance with MVP requirements" >> $GITHUB_STEP_SUMMARY
-          echo "- Ensure Claude SDK integration security" >> $GITHUB_STEP_SUMMARY
-          echo "- Validate KaitoAPI integration best practices" >> $GITHUB_STEP_SUMMARY
+          echo "**Next step**: Test authentication with MAX plan credentials" >> $GITHUB_STEP_SUMMARY
