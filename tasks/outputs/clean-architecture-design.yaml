@@ -1,0 +1,219 @@
+# Clean Architecture設計書 - KaitoTwitterAPI統合版
+clean_architecture_design:
+  created_at: "2025-01-23T23:30:00Z"
+  created_by: "Manager (Claude)"
+  
+  best_practices_research:
+    sources:
+      - "TypeScript/Node.js 2025年ベストプラクティス"
+      - "Clean Architecture原則"
+      - "レイヤー分離設計"
+      - "モジュール化手法"
+    
+    key_findings:
+      - "技術的責務による命名（機能別ではない）"
+      - "依存関係は内側向きのみ"
+      - "各レイヤーの独立テスト可能性"
+      - "1ファイル200-500行が理想"
+      - "関心の分離が最重要"
+  
+  architecture_layers:
+    layer_1_domain:
+      name: "Domain Layer (ドメイン層)"
+      responsibility: "ビジネスエンティティとコアビジネスルール"
+      dependencies: "なし（最内層）"
+      file_count: 7
+      directories:
+        entities:
+          - "post.entity.ts: 投稿ビジネスエンティティ"
+          - "user.entity.ts: ユーザービジネスエンティティ"
+          - "engagement.entity.ts: エンゲージメントビジネスエンティティ"
+        value_objects:
+          - "posting-strategy.vo.ts: 投稿戦略値オブジェクト"
+        repositories:
+          - "post.repository.ts: 投稿リポジトリインターフェース"
+          - "learning.repository.ts: 学習データリポジトリインターフェース"
+        services:
+          - "strategy.domain-service.ts: 戦略決定ドメインサービス"
+    
+    layer_2_use_cases:
+      name: "Use Cases Layer (ユースケース層)"
+      responsibility: "アプリケーション固有のビジネスルール"
+      dependencies: "Domain層のみ"
+      file_count: 6
+      directories:
+        post_management:
+          - "create-post.use-case.ts: 投稿作成ユースケース"
+          - "execute-action.use-case.ts: アクション実行ユースケース"
+        analysis:
+          - "analyze-performance.use-case.ts: パフォーマンス分析ユースケース"
+          - "market-analysis.use-case.ts: 市場分析ユースケース"
+        learning:
+          - "record-result.use-case.ts: 結果記録ユースケース"
+          - "extract-insights.use-case.ts: 洞察抽出ユースケース"
+    
+    layer_3_adapters:
+      name: "Adapters Layer (アダプター層)"
+      responsibility: "入出力の変換とインターフェース適応"
+      dependencies: "Use Cases層とDomain層"
+      file_count: 9
+      directories:
+        controllers:
+          - "post.controller.ts: 投稿コントローラー"
+          - "analysis.controller.ts: 分析コントローラー"
+        presenters:
+          - "decision.presenter.ts: 判断結果プレゼンター"
+        gateways:
+          - "claude.gateway.ts: Claude Code SDKゲートウェイ"
+          - "kaito-api.gateway.ts: KaitoTwitterAPIゲートウェイ"
+        dtos:
+          - "post.dto.ts: 投稿データ転送オブジェクト"
+          - "analysis.dto.ts: 分析データ転送オブジェクト"
+          - "learning.dto.ts: 学習データ転送オブジェクト"
+    
+    layer_4_infrastructure:
+      name: "Infrastructure Layer (インフラ層)"
+      responsibility: "外部システムとの通信と技術的実装"
+      dependencies: "全レイヤー（最外層）"
+      file_count: 6
+      directories:
+        kaito_api:
+          - "kaito-client.ts: KaitoTwitterAPIクライアント実装"
+        storage:
+          - "yaml-learning.repository.ts: YAML学習データリポジトリ実装"
+          - "memory-cache.repository.ts: メモリキャッシュリポジトリ実装"
+        external:
+          - "claude-client.ts: Claudeクライアント実装"
+        config:
+          - "app.config.ts: アプリケーション設定"
+          - "api.config.ts: API設定"
+  
+  shared_components:
+    name: "Shared Components (共有コンポーネント)"
+    file_count: 4
+    directories:
+      types:
+        - "index.ts: 全型定義の統一エクスポート"
+      utils:
+        - "logger.ts: ログ管理ユーティリティ"
+        - "type-guards.ts: 型ガード関数"
+      scripts:
+        - "dev.ts: 開発実行スクリプト"
+        - "main.ts: 本番実行スクリプト"
+  
+  architecture_benefits:
+    testability:
+      - "各層の独立テスト可能"
+      - "モック注入が容易"
+      - "ビジネスロジックの単体テスト簡素化"
+      - "インターフェース分離による柔軟性"
+    
+    maintainability:
+      - "責務の明確な分離"
+      - "変更影響範囲の最小化"
+      - "安全なリファクタリング"
+      - "コードの可読性向上"
+    
+    scalability:
+      - "新機能追加の容易性"
+      - "外部システム変更の影響局所化"
+      - "レイヤー別独立開発"
+      - "並行開発の効率化"
+    
+    flexibility:
+      - "フレームワーク独立性"
+      - "ビジネスルールの保護"
+      - "技術選択の柔軟性"
+      - "依存関係の制御"
+  
+  implementation_guidelines:
+    dependency_rule:
+      principle: "依存関係は常に内側（ドメイン）向きのみ"
+      enforcement:
+        - "外層は内層を知っているが、内層は外層を知らない"
+        - "インターフェースを通じた依存性注入"
+        - "抽象化に依存、具象に依存しない"
+    
+    single_responsibility:
+      principle: "各ファイル・クラスは単一の責務を持つ"
+      guidelines:
+        - "1ファイル200-500行を目安"
+        - "クラス名・ファイル名で責務が明確"
+        - "1つの変更理由のみ"
+    
+    interface_segregation:
+      principle: "クライアントは使わないインターフェースに依存すべきでない"
+      implementation:
+        - "小さく特化したインターフェース"
+        - "責務別のインターフェース分離"
+        - "必要最小限の公開メソッド"
+  
+  kaito_api_integration:
+    domain_level:
+      - "KaitoTwitterAPIの概念をドメインエンティティに抽象化"
+      - "投稿、エンゲージメント、ユーザーエンティティの定義"
+      - "ビジネスルールの純粋な表現"
+    
+    use_case_level:
+      - "KaitoTwitterAPI機能の具体的なユースケース定義"
+      - "投稿作成、分析実行、学習記録の流れ"
+      - "ビジネスプロセスの実装"
+    
+    adapter_level:
+      - "KaitoTwitterAPIとドメインの橋渡し"
+      - "データ変換とプロトコル適応"
+      - "Claude Code SDKとの統合"
+    
+    infrastructure_level:
+      - "KaitoTwitterAPIの具体的な実装"
+      - "HTTP通信とAPI呼び出し"
+      - "エラーハンドリングと再試行"
+  
+  file_organization_metrics:
+    total_files: 28
+    breakdown:
+      domain: 7
+      use_cases: 6
+      adapters: 9
+      infrastructure: 6
+      shared: 4
+    
+    comparison:
+      previous_structure: "30+ files (複雑)"
+      simplified_version: "15 files (少なすぎ)"
+      clean_architecture: "28 files (最適)"
+    
+    file_size_targets:
+      small_files: "50-200行 (DTO, Entity)"
+      medium_files: "200-400行 (Use Case, Repository)"
+      large_files: "400-500行 (複雑なService)"
+      maximum_limit: "500行を超えない"
+  
+  migration_strategy:
+    phase_1: "既存コードの責務分析"
+    phase_2: "ドメイン層の抽出と定義"
+    phase_3: "ユースケース層の実装"
+    phase_4: "アダプター層の構築"
+    phase_5: "インフラ層の実装"
+    phase_6: "統合テストと動作確認"
+  
+  success_criteria:
+    architectural:
+      - "レイヤー間依存関係の正しい方向"
+      - "各層の独立テスト可能性"
+      - "ビジネスロジックの外部技術からの独立"
+    
+    practical:
+      - "新機能追加時の変更範囲最小化"
+      - "外部API変更時の影響局所化"
+      - "開発者の学習コスト適正化"
+    
+    quality:
+      - "コード可読性の向上"
+      - "テストカバレッジの向上"
+      - "バグ発生率の低下"
+  
+  next_actions:
+    immediate: "Clean Architecture版のREQUIREMENTS.md更新"
+    short_term: "各レイヤーの詳細設計"
+    long_term: "段階的な実装とマイグレーション"

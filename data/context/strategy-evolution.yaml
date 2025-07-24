@@ -1,0 +1,34 @@
+strategy_evolution:
+  - date: "2025-01-23"
+    strategy: "朝投稿重点"
+    trigger: "朝のエンゲージメント率3.2%を記録"
+    adjustment: "09:00投稿を優先戦略に設定"
+    result: "平均エンゲージメント率15%向上"
+    confidence_change: "+0.12"
+    
+  - date: "2025-01-22"
+    strategy: "専門用語削減"
+    trigger: "専門用語使用時の低エンゲージメント検出"
+    adjustment: "平易な表現への変更ルール追加"
+    result: "理解しやすさ評価向上"
+    confidence_change: "+0.08"
+    
+  - date: "2025-01-21"
+    strategy: "質問型コンテンツ強化"
+    trigger: "フォロワーとの対話増加要請"
+    adjustment: "疑問文使用率を30%以上に設定"
+    result: "返信率25%向上"
+    confidence_change: "+0.15"
+    
+  - date: "2025-01-20"
+    strategy: "投稿間隔最適化"
+    trigger: "連続投稿による効果低下検出"
+    adjustment: "最低6時間間隔ルール導入"
+    result: "個別投稿のエンゲージメント向上"
+    confidence_change: "+0.10"
+    
+current_evolution_focus:
+  primary_goal: "エンゲージメント率3.5%達成"
+  secondary_goal: "フォロワー1000名到達"
+  testing_strategies: ["動画コンテンツ", "スレッド投稿", "ライブ配信"]
+  next_review_date: "2025-01-24T09:00:00Z"

@@ -1,0 +1,33 @@
+decision_patterns:
+  - situation: "朝9時、フォロワー500名、前回投稿から12時間経過"
+    action_taken: "create_post"
+    parameters:
+      topic: "投資基礎"
+      content_type: "educational"
+    result: "success"
+    engagement_rate: 3.2
+    follower_growth: 5
+    lesson: "朝の投稿は高エンゲージメント"
+    timestamp: "2025-01-23T09:00:00Z"
+    
+  - situation: "夜21時、フォロワー520名、前回投稿から6時間経過"
+    action_taken: "create_post"
+    parameters:
+      topic: "市場解説"
+      content_type: "analysis"
+    result: "success"
+    engagement_rate: 2.8
+    follower_growth: 3
+    lesson: "夜の投稿も効果的"
+    timestamp: "2025-01-23T21:00:00Z"
+    
+  - situation: "午後15時、フォロワー525名、前回投稿から3時間経過"
+    action_taken: "create_post"
+    parameters:
+      topic: "専門用語解説"
+      content_type: "educational"
+    result: "failure"
+    engagement_rate: 0.8
+    follower_growth: 0
+    lesson: "短時間での連続投稿は逆効果"
+    timestamp: "2025-01-23T15:00:00Z"

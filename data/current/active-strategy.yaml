@@ -1,6 +1,0 @@
-# Active Strategy - MVP Data Structure
-# Current action state for MVP functionality
-
-current_action: "wait"
-reason: "System initialization - awaiting first execution"
-timestamp: "2025-07-23T00:00:00Z"

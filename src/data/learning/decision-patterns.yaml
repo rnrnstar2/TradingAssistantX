@@ -1,0 +1,42 @@
+patterns:
+  - timestamp: "2024-01-20T10:00:00Z"
+    context:
+      followers: 1250
+      last_post_hours_ago: 4
+      market_trend: "bullish"
+    decision:
+      action: "post"
+      reasoning: "Good engagement time, bullish market"
+      confidence: 0.85
+    result:
+      engagement_rate: 3.2
+      new_followers: 5
+      success: true
+  
+  - timestamp: "2024-01-20T12:30:00Z"
+    context:
+      followers: 1255
+      last_post_hours_ago: 2
+      market_trend: "neutral"
+    decision:
+      action: "retweet"
+      reasoning: "High-quality educational content found"
+      confidence: 0.92
+    result:
+      engagement_rate: 2.8
+      new_followers: 2
+      success: true
+  
+  - timestamp: "2024-01-20T18:15:00Z"
+    context:
+      followers: 1257
+      last_post_hours_ago: 6
+      market_trend: "bearish"
+    decision:
+      action: "quote_tweet"
+      reasoning: "Market volatility requires expert commentary"
+      confidence: 0.88
+    result:
+      engagement_rate: 4.1
+      new_followers: 8
+      success: true

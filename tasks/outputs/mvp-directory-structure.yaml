@@ -1,0 +1,252 @@
+# MVP ディレクトリ構造設計 - 機能別分類版
+mvp_directory_structure:
+  created_at: "2025-01-23T23:50:00Z"
+  created_by: "Manager (Claude)"
+  
+  user_requirement: "claude系、kaitoapi系、スケジュール系などディレクトリで分けたい"
+  
+  improved_structure:
+    philosophy: "機能別責務でのディレクトリ分類 + 12ファイル構成維持"
+    total_files: 12
+    total_directories: 6 # (claude, kaito-api, scheduler, data, shared, scripts)
+    
+    directory_classification:
+      claude:
+        purpose: "Claude Code SDK関連機能"
+        files:
+          - "decision-engine.ts: アクション決定エンジン"
+          - "content-generator.ts: 投稿内容生成"
+          - "post-analyzer.ts: 投稿分析・評価"
+        responsibility: "Claude APIとの連携、判断ロジック、コンテンツ生成"
+      
+      kaito_api:
+        purpose: "KaitoTwitterAPI関連機能"
+        files:
+          - "client.ts: KaitoTwitterAPIクライアント"
+          - "search-engine.ts: 投稿検索機能"
+          - "action-executor.ts: X投稿・RT・いいね実行"
+        responsibility: "KaitoTwitterAPIとの通信、X操作実行"
+      
+      scheduler:
+        purpose: "スケジュール・実行制御"
+        files:
+          - "core-scheduler.ts: 30分間隔制御"
+          - "main-loop.ts: メイン実行ループ"
+        responsibility: "定期実行制御、システム統合管理"
+      
+      data:
+        purpose: "データ管理・永続化"
+        files:
+          - "data-manager.ts: dataディレクトリ管理"
+        responsibility: "学習データ読み書き、YAML管理"
+      
+      shared:
+        purpose: "共通機能・ユーティリティ"
+        files:
+          - "types.ts: 型定義統合"
+          - "config.ts: 設定管理"
+          - "logger.ts: ログ管理"
+        responsibility: "全体で使用する共通機能"
+      
+      scripts:
+        purpose: "実行スクリプト"
+        files:
+          - "main.ts: システム起動"
+        responsibility: "システム起動・初期化"
+  
+  detailed_structure:
+    src_directory: |
+      src/
+      ├── claude/                    # Claude Code SDK関連 (3ファイル)
+      │   ├── decision-engine.ts     # アクション決定エンジン
+      │   ├── content-generator.ts   # 投稿内容生成
+      │   └── post-analyzer.ts       # 投稿分析・品質評価
+      │
+      ├── kaito-api/                 # KaitoTwitterAPI関連 (3ファイル)
+      │   ├── client.ts              # KaitoTwitterAPIクライアント
+      │   ├── search-engine.ts       # 投稿検索エンジン
+      │   └── action-executor.ts     # アクション実行（投稿・RT・いいね）
+      │
+      ├── scheduler/                 # スケジュール制御 (2ファイル)
+      │   ├── core-scheduler.ts      # 30分間隔制御
+      │   └── main-loop.ts           # メイン実行ループ統合
+      │
+      ├── data/                      # データ管理 (1ファイル)
+      │   └── data-manager.ts        # dataディレクトリ管理
+      │
+      ├── shared/                    # 共通機能 (3ファイル)
+      │   ├── types.ts               # 型定義統合
+      │   ├── config.ts              # 設定管理
+      │   └── logger.ts              # ログ管理
+      │
+      └── main.ts                    # システム起動スクリプト (1ファイル)
+  
+  file_responsibilities:
+    claude_directory:
+      decision_engine:
+        purpose: "Claude Code SDKによるアクション決定"
+        key_functions:
+          - "makeDecision(): アクション種別決定"
+          - "buildPrompt(): 判断用プロンプト構築"
+          - "parseResponse(): Claude応答の解析"
+        dependencies: ["shared/types", "data/data-manager"]
+      
+      content_generator:
+        purpose: "投稿内容の生成"
+        key_functions:
+          - "generatePost(): 投稿文章生成"
+          - "generateQuoteComment(): 引用コメント生成"
+          - "validateContent(): 内容検証"
+        dependencies: ["shared/types", "shared/config"]
+      
+      post_analyzer:
+        purpose: "投稿の分析・評価"
+        key_functions:
+          - "analyzeTweet(): 投稿品質分析"
+          - "evaluateEngagement(): エンゲージメント評価"
+          - "checkRelevance(): 関連性チェック"
+        dependencies: ["shared/types"]
+    
+    kaito_api_directory:
+      client:
+        purpose: "KaitoTwitterAPIクライアント"
+        key_functions:
+          - "post(): 投稿実行"
+          - "retweet(): リツイート実行"
+          - "like(): いいね実行"
+          - "quoteTweet(): 引用リツイート実行"
+        dependencies: ["shared/types", "shared/config"]
+      
+      search_engine:
+        purpose: "投稿検索機能"
+        key_functions:
+          - "searchTweets(): 投稿検索"
+          - "findRetweetCandidates(): RT候補検索"
+          - "findLikeCandidates(): いいね候補検索"
+        dependencies: ["kaito-api/client", "shared/types"]
+      
+      action_executor:
+        purpose: "決定されたアクションの実行"
+        key_functions:
+          - "executeAction(): アクション実行分岐"
+          - "handlePostAction(): 投稿処理"
+          - "handleRetweetAction(): RT処理"
+          - "handleLikeAction(): いいね処理"
+        dependencies: ["kaito-api/client", "claude/content-generator"]
+    
+    scheduler_directory:
+      core_scheduler:
+        purpose: "30分間隔での実行制御"
+        key_functions:
+          - "start(): スケジューラー開始"
+          - "stop(): スケジューラー停止"
+          - "executeOnce(): 単発実行"
+        dependencies: ["scheduler/main-loop"]
+      
+      main_loop:
+        purpose: "メイン実行ループの統合"
+        key_functions:
+          - "runMainLoop(): メインループ実行"
+          - "handleError(): エラー処理"
+          - "recordResult(): 結果記録"
+        dependencies: ["claude/decision-engine", "kaito-api/action-executor", "data/data-manager"]
+    
+    data_directory:
+      data_manager:
+        purpose: "dataディレクトリの管理"
+        key_functions:
+          - "loadLearningData(): 学習データ読み込み"
+          - "saveLearningData(): 学習データ保存"
+          - "loadSessionMemory(): セッション記憶読み込み"
+          - "updateContext(): コンテキスト更新"
+        dependencies: ["shared/types"]
+    
+    shared_directory:
+      types:
+        purpose: "全型定義の統合"
+        contents:
+          - "ClaudeDecision: Claude判断結果型"
+          - "ActionResult: アクション実行結果型"
+          - "LearningData: 学習データ型"
+          - "SystemContext: システムコンテキスト型"
+      
+      config:
+        purpose: "設定管理"
+        key_functions:
+          - "loadApiConfig(): API設定読み込み"
+          - "getEnvironmentConfig(): 環境設定取得"
+        dependencies: []
+      
+      logger:
+        purpose: "ログ管理"
+        key_functions:
+          - "logDecision(): 判断ログ"
+          - "logAction(): アクション実行ログ"
+          - "logError(): エラーログ"
+        dependencies: []
+  
+  import_relationships:
+    dependency_flow: |
+      main.ts
+      └── scheduler/core-scheduler.ts
+          └── scheduler/main-loop.ts
+              ├── claude/decision-engine.ts
+              │   └── data/data-manager.ts
+              ├── kaito-api/action-executor.ts
+              │   ├── kaito-api/client.ts
+              │   ├── kaito-api/search-engine.ts
+              │   └── claude/content-generator.ts
+              └── data/data-manager.ts
+      
+      shared/ (全体で使用)
+      ├── types.ts (全ファイルで使用)
+      ├── config.ts (設定が必要なファイルで使用)
+      └── logger.ts (ログが必要なファイルで使用)
+  
+  directory_benefits:
+    claude_separation:
+      - "Claude関連ロジックの集約"
+      - "AI判断機能の独立性"
+      - "プロンプト管理の統一"
+    
+    kaito_api_separation:
+      - "API通信機能の集約"
+      - "X操作機能の統一"
+      - "外部API依存の局所化"
+    
+    scheduler_separation:
+      - "実行制御の明確化"
+      - "タイミング管理の統一"
+      - "システム統合ポイントの明確化"
+    
+    shared_utilities:
+      - "共通機能の重複排除"
+      - "型定義の統一管理"
+      - "設定・ログの一元化"
+  
+  implementation_order:
+    phase_1: "shared/ - 共通機能・型定義"
+    phase_2: "data/ - データ管理機能"
+    phase_3: "claude/ - Claude連携機能"
+    phase_4: "kaito-api/ - API通信機能"
+    phase_5: "scheduler/ - 実行制御機能"
+    phase_6: "main.ts - システム統合"
+  
+  testing_strategy:
+    unit_tests:
+      - "各ディレクトリ毎の独立テスト"
+      - "mock依存による分離テスト"
+    
+    integration_tests:
+      - "ディレクトリ間連携テスト"
+      - "30分間隔実行テスト"
+    
+    e2e_tests:
+      - "全体フロー動作確認"
+      - "長期実行安定性テスト"
+  
+  maintenance_advantages:
+    clarity: "機能別の明確な責務分離"
+    modularity: "独立したモジュール構成"
+    scalability: "機能追加時の影響局所化"
+    debugging: "問題箇所の特定容易性"

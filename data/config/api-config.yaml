@@ -1,0 +1,11 @@
+kaito_twitter_api:
+  api_key: "${KAITO_API_KEY}"
+  base_url: "https://api.twitterapi.io"
+  rate_limit: 200
+  timeout: 30000
+  retry_attempts: 3
+
+claude_sdk:
+  model: "claude-3-sonnet"
+  max_tokens: 4000
+  temperature: 0.7

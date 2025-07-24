@@ -1,0 +1,298 @@
+# MVPコア機能実装計画 - 30分間隔実行システム
+mvp_core_implementation:
+  created_at: "2025-01-23T23:45:00Z"
+  created_by: "Manager (Claude)"
+  
+  user_requirements:
+    core_functionality: "30分おきに実行される自動X投稿システム"
+    execution_flow:
+      - "dataディレクトリ確認"
+      - "Claude Code SDKによるアクション決定"
+      - "アクション別実行（投稿・RT・引用RT・いいね）"
+    priority: "動作するMVPを最優先、Clean Architectureは後回し"
+  
+  mvp_minimal_structure:
+    total_files: 12
+    philosophy: "Clean Architectureより動作するシステムを優先"
+    
+    core_structure:
+      src:
+        - "main.ts: 30分間隔実行のメインループ"
+        - "core-scheduler.ts: スケジューラー管理"
+        - "claude-decision-engine.ts: Claude判断エンジン"
+        - "action-executor.ts: アクション実行統合"
+        - "content-generator.ts: 投稿内容生成"
+        - "kaito-api-client.ts: KaitoTwitterAPI統合クライアント"
+        - "data-manager.ts: dataディレクトリ管理"
+        - "search-engine.ts: 投稿検索エンジン"
+        - "post-analyzer.ts: 投稿分析・判断"
+        - "logger.ts: ログ管理"
+        - "types.ts: 全型定義統合"
+        - "config.ts: 設定管理"
+      
+      data:
+        - "config/api-config.yaml: API認証設定"
+        - "learning/decision-patterns.yaml: 判断パターン学習"
+        - "context/session-memory.yaml: セッション記憶"
+  
+  core_functionality_design:
+    thirty_minute_scheduler:
+      file: "src/core-scheduler.ts"
+      responsibility: "30分間隔での自動実行制御"
+      implementation:
+        - "setInterval(30分) による定期実行"
+        - "実行状態管理とオーバーラップ防止"
+        - "エラー発生時の次回実行保証"
+      
+      code_structure: |
+        export class CoreScheduler {
+          private isRunning = false;
+          private intervalId: NodeJS.Timeout | null = null;
+          
+          start(): void {
+            this.intervalId = setInterval(async () => {
+              if (!this.isRunning) {
+                this.isRunning = true;
+                try {
+                  await this.executeCore();
+                } finally {
+                  this.isRunning = false;
+                }
+              }
+            }, 30 * 60 * 1000); // 30分
+          }
+          
+          private async executeCore(): Promise<void> {
+            // メイン処理実行
+          }
+        }
+    
+    data_directory_checker:
+      file: "src/data-manager.ts"
+      responsibility: "dataディレクトリの確認と読み込み"
+      implementation:
+        - "学習データ・設定・コンテキストの読み込み"
+        - "ファイル存在チェックとデフォルト値設定"
+        - "データ整合性の基本検証"
+      
+      code_structure: |
+        export class DataManager {
+          async loadCurrentContext(): Promise<SystemContext> {
+            const learningData = await this.loadLearningData();
+            const sessionMemory = await this.loadSessionMemory();
+            const apiConfig = await this.loadApiConfig();
+            
+            return {
+              learningData,
+              sessionMemory,
+              apiConfig,
+              timestamp: new Date()
+            };
+          }
+          
+          async saveLearningData(data: LearningData): Promise<void> {
+            // 学習結果の保存
+          }
+        }
+    
+    claude_decision_engine:
+      file: "src/claude-decision-engine.ts"
+      responsibility: "Claude Code SDKによるアクション決定"
+      implementation:
+        - "現在状況とデータの統合分析"
+        - "アクション種別決定（投稿・RT・引用RT・いいね・待機）"
+        - "アクションパラメータの生成"
+      
+      decision_types:
+        - "post: 新規投稿作成"
+        - "retweet: 既存投稿のリツイート"
+        - "quote_tweet: 引用リツイート"
+        - "like: いいね"
+        - "wait: 待機"
+      
+      code_structure: |
+        export interface ClaudeDecision {
+          action: 'post' | 'retweet' | 'quote_tweet' | 'like' | 'wait';
+          reasoning: string;
+          parameters: {
+            topic?: string;
+            searchQuery?: string;
+            content?: string;
+            targetTweetId?: string;
+          };
+          confidence: number;
+        }
+        
+        export class ClaudeDecisionEngine {
+          async makeDecision(context: SystemContext): Promise<ClaudeDecision> {
+            const prompt = this.buildDecisionPrompt(context);
+            const response = await this.callClaude(prompt);
+            return this.parseDecision(response);
+          }
+        }
+    
+    action_executor:
+      file: "src/action-executor.ts"
+      responsibility: "決定されたアクションの統合実行"
+      implementation:
+        - "アクション種別による処理分岐"
+        - "各専用処理の呼び出し"
+        - "実行結果の記録と学習データ更新"
+      
+      code_structure: |
+        export class ActionExecutor {
+          async executeAction(decision: ClaudeDecision): Promise<ActionResult> {
+            switch (decision.action) {
+              case 'post':
+                return await this.executePost(decision);
+              case 'retweet':
+                return await this.executeRetweet(decision);
+              case 'quote_tweet':
+                return await this.executeQuoteTweet(decision);
+              case 'like':
+                return await this.executeLike(decision);
+              case 'wait':
+                return { success: true, action: 'wait' };
+            }
+          }
+        }
+    
+    post_creation_flow:
+      files: 
+        - "src/content-generator.ts"
+        - "src/kaito-api-client.ts"
+      
+      flow:
+        1: "トピック決定（Claudeの判断）"
+        2: "投稿内容生成（Claude + 学習データ活用）"
+        3: "KaitoTwitterAPI経由で投稿実行"
+        4: "結果記録と学習データ更新"
+      
+      implementation:
+        content_generator: |
+          export class ContentGenerator {
+            async generatePost(topic: string, context: SystemContext): Promise<string> {
+              const prompt = this.buildContentPrompt(topic, context);
+              const content = await this.callClaude(prompt);
+              return this.validateAndFormat(content);
+            }
+          }
+        
+        kaito_client: |
+          export class KaitoApiClient {
+            async createPost(content: string): Promise<PostResult> {
+              // KaitoTwitterAPI投稿実行
+            }
+            
+            async searchTweets(query: string): Promise<Tweet[]> {
+              // 投稿検索
+            }
+            
+            async retweet(tweetId: string): Promise<PostResult> {
+              // リツイート実行
+            }
+          }
+    
+    retweet_flow:
+      flow:
+        1: "検索クエリ生成（Claudeの判断）"
+        2: "KaitoTwitterAPIで投稿検索"
+        3: "候補投稿の分析と選択"
+        4: "リツイート実行"
+        5: "結果記録"
+      
+      search_criteria:
+        - "投資教育関連キーワード"
+        - "エンゲージメント率"
+        - "投稿者の信頼性"
+        - "内容の教育的価値"
+    
+    quote_tweet_flow:
+      flow:
+        1: "検索クエリ生成"
+        2: "候補投稿検索"
+        3: "Claude判断：引用価値評価"
+        4: "引用コメント生成"
+        5: "引用リツイート実行"
+      
+      claude_evaluation:
+        - "投稿の教育価値"
+        - "自アカウントとの関連性"
+        - "追加できる価値・視点"
+        - "フォロワーへの有益性"
+    
+    like_flow:
+      flow:
+        1: "いいね対象投稿検索"
+        2: "投稿品質評価"
+        3: "いいね実行"
+        4: "エンゲージメント記録"
+      
+      like_criteria:
+        - "高品質な投資教育コンテンツ"
+        - "アカウント戦略に合致"
+        - "適切な頻度制御"
+  
+  execution_sequence:
+    main_loop:
+      1: "DataManager: dataディレクトリ読み込み"
+      2: "ClaudeDecisionEngine: アクション決定"
+      3: "ActionExecutor: アクション実行"
+      4: "DataManager: 結果記録・学習データ更新"
+      5: "Logger: 実行ログ記録"
+      6: "30分後: 次回実行"
+    
+    error_handling:
+      - "各段階でのtry-catch実装"
+      - "エラー時の安全な状態維持"
+      - "次回実行への影響最小化"
+      - "エラー内容の詳細ログ記録"
+  
+  integration_points:
+    kaito_twitter_api:
+      - "投稿作成・実行"
+      - "投稿検索・取得"
+      - "リツイート・いいね実行"
+      - "アカウント状況取得"
+    
+    claude_code_sdk:
+      - "アクション決定"
+      - "投稿内容生成"
+      - "投稿評価・判断"
+      - "引用コメント生成"
+    
+    data_persistence:
+      - "学習データ蓄積"
+      - "セッション記憶保持"
+      - "実行履歴記録"
+  
+  success_metrics:
+    functional:
+      - "30分間隔での安定実行"
+      - "各アクション種別の正常実行"
+      - "エラー時の適切な復旧"
+      - "学習データの蓄積"
+    
+    quality:
+      - "投稿品質の維持"
+      - "適切なアクション選択"
+      - "エンゲージメント率向上"
+      - "フォロワー増加"
+  
+  implementation_priority:
+    week_1: "基本スケジューラーとデータ管理"
+    week_2: "Claude判断エンジンとアクション実行"
+    week_3: "KaitoTwitterAPI統合"
+    week_4: "テスト・調整・最適化"
+  
+  future_enhancements:
+    - "Clean Architecture移行"
+    - "高度な分析機能"
+    - "複数アクション組み合わせ"
+    - "パフォーマンス最適化"
+  
+  key_advantages:
+    simplicity: "シンプルで理解しやすい構造"
+    reliability: "確実に動作する実装"
+    maintainability: "MVP段階での保守性"
+    extensibility: "将来の拡張への準備"

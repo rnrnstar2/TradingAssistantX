@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "MODE=dev tsx src/scripts/dev.ts",
-    "post": "MODE=production tsx src/scripts/dev.ts",
-    "start": "tsx src/scripts/main.ts",
+    "dev": "MODE=dev tsx src/main.ts",
+    "post": "MODE=production tsx src/main.ts",
+    "start": "tsx src/main.ts",
     "manager": "ROLE=manager claude --dangerously-skip-permissions",
     "worker": "ROLE=worker claude --dangerously-skip-permissions",
     "test": "vitest",

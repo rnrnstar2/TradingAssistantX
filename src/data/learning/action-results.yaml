@@ -1,0 +1,40 @@
+results:
+  - timestamp: "2024-01-20T10:30:00Z"
+    action: "post"
+    content: "投資の基本原則について..."
+    metrics:
+      likes: 15
+      retweets: 3
+      replies: 2
+      engagement_rate: 2.8
+    success: true
+  
+  - timestamp: "2024-01-20T12:45:00Z"
+    action: "retweet"
+    content: "RT @投資専門家: NISA制度の活用法について詳しく解説..."
+    metrics:
+      likes: 8
+      retweets: 12
+      replies: 1
+      engagement_rate: 1.9
+    success: false
+  
+  - timestamp: "2024-01-20T18:20:00Z"
+    action: "quote_tweet"
+    content: "この分析に加えて、リスク管理の観点も重要です。特に初心者の方は..."
+    metrics:
+      likes: 22
+      retweets: 6
+      replies: 4
+      engagement_rate: 3.2
+    success: true
+  
+  - timestamp: "2024-01-20T21:10:00Z"
+    action: "like"
+    content: "いいね対象: 投資教育に関する優良な投稿"
+    metrics:
+      likes: 0
+      retweets: 0
+      replies: 0
+      engagement_rate: 0.5
+    success: true

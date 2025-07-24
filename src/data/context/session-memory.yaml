@@ -1,0 +1,24 @@
+current_session:
+  start_time: "2024-01-20T09:00:00Z"
+  actions_taken: 3
+  last_action: "quote_tweet"
+  next_scheduled: "2024-01-20T10:30:00Z"
+
+memory:
+  recent_topics: ["市場分析", "投資戦略", "リスク管理"]
+  successful_hashtags: ["#投資", "#資産形成", "#投資教育"]
+  follower_growth_trend: "positive"
+  
+learning_context:
+  high_performing_content:
+    - "投資の基本原則シリーズ"
+    - "初心者向けNISA解説"
+    - "リスク管理の重要性"
+  low_performing_content:
+    - "複雑な金融商品解説"
+    - "専門用語の多い分析"
+  
+interaction_patterns:
+  best_engagement_times: ["09:00", "12:00", "18:00"]
+  preferred_content_length: "200-250文字"
+  effective_hashtag_count: 2-3

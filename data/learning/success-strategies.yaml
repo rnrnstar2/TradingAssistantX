@@ -1,0 +1,21 @@
+success_strategies:
+  - strategy: "投資基礎教育コンテンツ"
+    success_rate: 0.85
+    average_engagement: 3.2
+    best_times: ["09:00", "21:00"]
+    effective_topics: ["基本用語解説", "初心者向けヒント", "複利効果"]
+    sample_content: "投資の基本：リスクとリターンの関係について、初心者でも分かりやすく解説します。"
+    
+  - strategy: "市場解説コンテンツ"  
+    success_rate: 0.72
+    average_engagement: 2.8
+    best_times: ["21:00"]
+    effective_topics: ["市場動向", "経済指標解説", "トレンド分析"]
+    sample_content: "今日の市場動向：日経平均の動きから読み取れる投資家心理について分析。"
+    
+  - strategy: "質問型エンゲージメント"
+    success_rate: 0.78
+    average_engagement: 4.1
+    best_times: ["12:00", "18:00"]
+    effective_topics: ["投資相談", "Q&A", "意見交換"]
+    sample_content: "皆さんは長期投資と短期投資、どちらを重視していますか？理由も教えてください。"

@@ -1,0 +1,31 @@
+strategies:
+  high_engagement:
+    - post_times: ["09:00", "12:00", "18:00"]
+    - topics: ["market_analysis", "educational_content"]
+    - hashtags: ["#投資", "#資産形成"]
+  content_types:
+    educational:
+      success_rate: 0.78
+      avg_engagement: 2.8
+    market_commentary:
+      success_rate: 0.65
+      avg_engagement: 2.1
+    trend_analysis:
+      success_rate: 0.72
+      avg_engagement: 3.1
+    risk_management:
+      success_rate: 0.69
+      avg_engagement: 2.4
+  optimal_timing:
+    weekday_peaks: ["09:00-10:00", "12:00-13:00", "18:00-19:00"]
+    weekend_peaks: ["10:00-11:00", "15:00-16:00"]
+  audience_preferences:
+    beginner_content:
+      preferred_topics: ["基本投資", "NISA", "iDeCo"]
+      success_rate: 0.82
+    intermediate_content:
+      preferred_topics: ["株式分析", "ポートフォリオ構築"]
+      success_rate: 0.71
+    advanced_content:
+      preferred_topics: ["デリバティブ", "オプション取引"]
+      success_rate: 0.58
