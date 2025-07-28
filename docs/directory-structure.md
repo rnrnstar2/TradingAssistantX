@@ -36,9 +36,11 @@ src/
 │   │   ├── tweet-endpoints.ts  # 投稿・エンゲージメント（いいね、RT、引用）
 │   │   ├── trend-endpoints.ts  # トレンド・検索機能
 │   │   └── action-endpoints.ts # アクション実行・統合機能
-│   ├── types.ts               # KaitoAPI型定義統合
-│   └── utils/                 # レスポンス処理・エラーハンドリング
-│   # 詳細仕様: docs/kaito-api.md
+│   ├── types.ts               # KaitoAPI型定義統合（Request/Response/Error型定義）
+│   └── utils/                 # レスポンス処理・エラーハンドリング・ユーティリティ関数
+│       ├── response-handler.ts    # API応答処理・型変換・エラー解析
+│       ├── retry-handler.ts       # リトライ処理・指数バックオフ・失敗回復
+│       └── validation-utils.ts    # 入力検証・データ正規化・サニタイズ
 │
 ├── main-workflows/            # システム実行フロー管理 (9ファイル・Phase 2 分割完了)
 │   ├── core/                  # 分割されたコア機能（Phase 2 リファクタリング済み）
@@ -149,13 +151,13 @@ tests/
 
 ```
 docs/
-├── README.md                         # プロジェクト概要
-├── claude.md                         # Claude Code SDK仕様書（テスト含む）
-├── kaito-api.md                      # KaitoTwitterAPI仕様書（テスト含む）
-├── directory-structure.md            # このファイル - プロジェクト構造
-└── roles/                            # 役割定義
-    ├── manager-role.md               # Manager権限の役割定義
-    └── worker-role.md                # Worker権限の役割定義
+├── README.md                         # プロジェクト概要・導入ガイド
+├── claude.md                         # Claude Code SDK仕様書（エンドポイント別設計・テスト仕様含む）
+├── kaito-api.md                      # KaitoTwitterAPI仕様書（認証・エンドポイント・テスト仕様含む）
+├── directory-structure.md            # このファイル - プロジェクト構造詳細
+└── roles/                            # 役割別権限定義
+    ├── manager-role.md               # Manager権限の役割定義・作業範囲・責任
+    └── worker-role.md                # Worker権限の役割定義・実装範囲・制約
 ```
 
 ## ⚙️ 設定ファイル
@@ -169,27 +171,30 @@ TradingAssistantX/
 ├── tsconfig.json                     # TypeScript設定
 ├── vitest.config.ts                  # Vitest テスト設定
 ├── vitest.setup.ts                   # Vitest セットアップ
-├── turbo.json                        # Turbo ビルド設定
 └── eslint.config.js                  # ESLint設定
 ```
 
 ## 🗂️ その他のファイル
-**開発用ファイルとバックアップ**
+**開発用ファイル**
 
 ```
 TradingAssistantX/
 ├── CLAUDE.md                         # Claude Code SDK運用指示書
 ├── REQUIREMENTS.md                   # MVP要件定義書
-├── REQUIREMENTS.md.backup.xxx        # バックアップファイル
 ├── memo.md                           # 開発メモ
-├── test-kaito-integration.ts         # 統合テスト用ファイル
 └── dev.ts                            # 開発用スクリプト
 ```
 
 ## アーキテクチャ設計原則
 
 ### エンドポイント別設計（Claude SDK）
-詳細は [docs/claude.md](docs/claude.md) を参照。
+- **🎯 明確な責任分離**: 各エンドポイント = 1つの役割（判断・生成・分析・検索）
+- **📊 型安全**: エンドポイントごとの専用入力/出力型で確実な連携
+- **🔧 使いやすさ**: どのファイルがどの返却型かが明確、直感的な使用
+- **🏗️ 一貫性**: kaito-apiと同様のendpoints/構造で統一感
+- **🚀 拡張性**: 新機能 = 新エンドポイント追加のみ、既存に影響なし
+- **📋 保守性**: プロンプト・変数・返却型が1ファイルで完結管理
+- **🔄 明確なデータフロー**: Kaito API → 特定エンドポイント → 固定型返却 → 分岐
 
 ### 統合アーキテクチャ（Phase 2 リファクタリング済み）
 - **🔧 重複解消**: scheduler/ディレクトリの冗長性を完全排除
@@ -214,6 +219,8 @@ TradingAssistantX/
 - **Context層**: 実行状況・セッション情報（既存維持）
 
 ### データ整合性
-- **1投稿1ファイル**: post-TIMESTAMP.yaml形式で管理
-- **自動インデックス**: 投稿作成時に自動でインデックス更新
-- **KaitoAPI制限対策**: 詳細は [docs/kaito-api.md](docs/kaito-api.md) を参照
+- **1投稿1ファイル**: post-TIMESTAMP.yaml形式で管理、投稿データの原子性保証
+- **自動インデックス**: 投稿作成時に自動でインデックス更新、検索性能向上
+- **KaitoAPI制限対策**: QPS制御（1秒間隔）・レート制限監視・自動リトライ・失敗時フォールバック
+- **データ検証**: YAML構造検証・必須フィールドチェック・型安全性確保
+- **バックアップ戦略**: 自動アーカイブ・履歴保持・データ復旧機能
