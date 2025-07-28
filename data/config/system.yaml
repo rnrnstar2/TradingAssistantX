@@ -1,0 +1,11 @@
+# System Configuration
+system:
+  intervalMinutes: 30
+  maxDailyExecutions: 48
+  timezone: "Asia/Tokyo"
+  
+limits:
+  maxPostsPerDay: 8
+  minWaitBetweenPosts: 3600000
+  maxRetweetPerDay: 5
+  maxLikePerDay: 10

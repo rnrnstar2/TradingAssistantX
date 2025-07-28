@@ -603,27 +603,16 @@ export class KaitoTwitterAPIClient {
   private readonly API_BASE_URL = 'https://api.twitterapi.io';
   private readonly COST_PER_1K_TWEETS = 0.15; // $0.15/1k tweets
   
-  // TwitterAPI.io エンドポイント定義
-  private readonly endpoints = {
-    tweets: {
-      create: '/v1/tweets',
-      search: '/v1/tweets/search',
-      get: '/v1/tweets/:id'
-    },
-    users: {
-      info: '/v1/users/:username',
-      search: '/v1/users/search'
-    },
-    actions: {
-      like: '/v1/tweets/:id/like',
-      retweet: '/v1/tweets/:id/retweet',
-      quote: '/v1/tweets/quote'
-    },
-    auth: {
-      verify: '/v1/auth/verify'
-    },
-    health: '/health'
-  };
+  // configからエンドポイントを取得
+  private get endpoints() {
+    return this.apiConfig?.endpointConfig || {
+      user: { info: '/twitter/user/info' },
+      tweet: { create: '/twitter/tweet/create', retweet: '/twitter/action/retweet', search: '/twitter/tweet/advanced_search', quote: '/twitter/action/quote' },
+      engagement: { like: '/twitter/action/like' },
+      auth: { verify: '/twitter/user/info' },
+      health: '/twitter/tweet/advanced_search'
+    };
+  }
 
   private config: KaitoClientConfig;
   private apiConfig: KaitoAPIConfig | null = null;
@@ -945,7 +934,10 @@ export class KaitoTwitterAPIClient {
       // TwitterAPI.io アカウント情報取得
       const accountInfo = await TwitterAPIErrorHandler.retryWithExponentialBackoff(
         async () => {
-          return await this.httpClient!.get<TwitterAPIResponse<AccountInfo>>('/v1/account/info');
+          // 認証されたアカウント自身の情報を取得 - TwitterAPI.io形式
+          // userNameクエリパラメータを使用
+          const endpoint = `${this.endpoints.user.info}?userName=me`;
+          return await this.httpClient!.get<TwitterAPIResponse<AccountInfo>>(endpoint);
         },
         this.config.retryPolicy.maxRetries,
         this.config.retryPolicy.backoffMs
@@ -1151,7 +1143,7 @@ export class KaitoTwitterAPIClient {
       id: string;
       text: string;
       created_at: string;
-    }>>(this.endpoints.tweets.create, postData);
+    }>>(this.endpoints.tweet.create, postData);
 
     return {
       id: response.data.id,
@@ -1162,10 +1154,11 @@ export class KaitoTwitterAPIClient {
   }
 
   private async executeRealRetweet(tweetId: string): Promise<RetweetResult> {
-    const endpoint = this.endpoints.actions.retweet.replace(':id', tweetId);
+    const endpoint = this.endpoints.tweet.retweet;
+    const postData = { tweetId };
     const response = await this.httpClient!.post<TwitterAPIResponse<{
       retweeted: boolean;
-    }>>(endpoint);
+    }>>(endpoint, postData);
 
     return {
       id: `retweet_${Date.now()}`,
@@ -1185,7 +1178,7 @@ export class KaitoTwitterAPIClient {
       id: string;
       text: string;
       created_at: string;
-    }>>(this.endpoints.actions.quote, postData);
+    }>>(this.endpoints.tweet.quote, postData);
 
     return {
       id: response.data.id,
@@ -1197,10 +1190,11 @@ export class KaitoTwitterAPIClient {
   }
 
   private async executeRealLike(tweetId: string): Promise<LikeResult> {
-    const endpoint = this.endpoints.actions.like.replace(':id', tweetId);
+    const endpoint = this.endpoints.engagement.like;
+    const postData = { tweetId };
     const response = await this.httpClient!.post<TwitterAPIResponse<{
       liked: boolean;
-    }>>(endpoint);
+    }>>(endpoint, postData);
 
     return {
       tweetId,

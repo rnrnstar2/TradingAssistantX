@@ -5,11 +5,11 @@
 ### 1. セッション管理
 - **新規セッション開始時**: 新タイムスタンプディレクトリ作成
 - **タスク分析**: git status → 実装対象特定 → 影響範囲の把握
-- **制約確認**: `docs/mvp-constraints/mvp-principles.md`必須読み込み
+- **制約確認**: MVP制約の確認
 - **指示書作成**: `tasks/{TIMESTAMP}/instructions/TASK-XXX-name.md`
 
 ### 2. 過剰実装防止システム (YAGNI原則)
-**MVP制約確認**: 指示書作成前にmvp-principles.mdを必ず確認
+**MVP制約確認**: 指示書作成前にMVP原則を必ず確認
 
 **MVP適合性チェック**:
 - この機能は今すぐ必要か？

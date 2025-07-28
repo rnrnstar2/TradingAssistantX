@@ -33,7 +33,7 @@ import {
   createInvalidDecisionResponse,
   createInvalidContentResponse,
   createInvalidAnalysisResponse
-} from '../test-utils/mock-data';
+} from '../test-utils/claude-mock-data';
 
 import { validateResponseStructure } from '../test-utils/test-helpers';
 

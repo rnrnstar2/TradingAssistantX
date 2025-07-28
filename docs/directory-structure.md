@@ -101,31 +101,25 @@ tests/
 │   ├── types.test.ts                    # 型定義テスト
 │   └── index.test.ts                    # エクスポート統合テスト
 ├── kaito-api/                        # KaitoAPI 単体テスト
-│   ├── core/                         # 基盤機能テスト (10ファイル)
+│   ├── core/                         # 基盤機能テスト (9ファイル)
 │   │   ├── client.test.ts            # API認証・リクエスト管理テスト
 │   │   ├── config.test.ts            # API設定管理テスト
 │   │   ├── config-manager.test.ts    # 設定マネージャーテスト
-│   │   ├── config-security.test.ts   # セキュリティテスト
 │   │   ├── config-validation.test.ts # バリデーションテスト
 │   │   ├── error-handler.test.ts     # エラーハンドリングテスト
 │   │   ├── http-client.test.ts       # HTTPクライアントテスト
 │   │   ├── integration.test.ts       # 統合テスト
 │   │   ├── qps-controller.test.ts    # QPS制御テスト
 │   │   └── simple.test.ts            # 基本機能テスト
-│   ├── endpoints/                    # エンドポイント別テスト (15ファイル)
+│   ├── endpoints/                    # エンドポイント別テスト (8ファイル)
 │   │   ├── action-endpoints.test.ts      # アクション実行エンドポイントテスト
-│   │   ├── action-endpoints-integration.test.ts # アクション統合テスト
+│   │   ├── endpoints-integration.test.ts # エンドポイント統合テスト
 │   │   ├── tweet-endpoints.test.ts       # ツイート関連エンドポイントテスト
 │   │   ├── tweet-endpoints-integration.test.ts # ツイート統合テスト
-│   │   ├── content-validation.test.ts    # コンテンツバリデーションテスト
-│   │   ├── educational-content.test.ts   # 教育コンテンツテスト
-│   │   ├── frequency-control.test.ts     # 頻度制御テスト
-│   │   ├── spam-detection.test.ts        # スパム検出テスト
 │   │   ├── tweet-creation.test.ts        # ツイート作成テスト
-│   │   ├── tweet-retrieval.test.ts       # ツイート取得テスト
 │   │   ├── tweet-retweet.test.ts         # リツイートテスト
-│   │   ├── tweet-search.test.ts          # ツイート検索テスト
-│   │   └── tweet-validation.test.ts      # ツイートバリデーションテスト
+│   │   ├── tweet-validation.test.ts      # ツイートバリデーションテスト
+│   │   └── user-endpoints.test.ts        # ユーザーエンドポイントテスト
 │   ├── integration/                  # 統合テスト (6ファイル)
 │   │   ├── core-integration.test.ts      # コア統合テスト
 │   │   ├── endpoints-integration.test.ts # エンドポイント統合テスト
@@ -133,8 +127,18 @@ tests/
 │   │   ├── full-stack-integration.test.ts # フルスタック統合テスト
 │   │   ├── real-api-integration.test.ts  # 実API統合テスト
 │   │   └── workflow-integration.test.ts  # ワークフロー統合テスト
+│   ├── performance/                  # パフォーマンステスト (1ファイル)
+│   │   └── performance.test.ts       # パフォーマンス検証テスト
+│   ├── real-api/                     # 実APIテスト (1ファイル)
+│   │   └── real-integration.test.ts  # 実API統合テスト
+│   ├── scripts/                      # テストスクリプト (1ファイル)
+│   │   └── integration-check.ts      # 統合テストチェックスクリプト
+│   ├── types/                        # 型安全性テスト (1ファイル)
+│   │   └── type-safety.test.ts       # 型安全性検証テスト
+│   ├── run-integration-tests.ts     # 統合テスト実行スクリプト
 │   ├── types.test.ts                 # KaitoAPI型定義テスト
-│   ├── action-types.test.ts          # アクション型テスト
+│   ├── config-types.test.ts          # 設定型テスト
+│   ├── core-types.test.ts            # コア型テスト
 │   ├── tweet-types.test.ts           # ツイート型テスト
 │   ├── user-types.test.ts            # ユーザー型テスト
 │   └── type-compatibility.test.ts    # 型互換性テスト

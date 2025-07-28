@@ -54,21 +54,12 @@ import {
   createMockAnalysisInput,
   createMockSearchInput,
   createMockExecutionRecord
-} from '../test-utils/mock-data';
-import {
-  setupClaudeMock,
-  resetClaudeMock,
-  mockClaude
-} from '../test-utils/claude-mock';
-
-// Claude SDK モック設定
-vi.mock('@instantlyeasy/claude-code-sdk-ts', () => ({
-  claude: () => mockClaude
-}));
+} from '../test-utils/claude-mock-data';
+// モック設定を削除 - 実際のClaude APIを使用
 
 describe('Claude Index Export Integration Tests', () => {
   beforeEach(() => {
-    resetClaudeMock();
+    // モック削除 - 実際のAPIを使用
   });
 
   describe('エクスポート確認テスト', () => {
@@ -171,16 +162,13 @@ describe('Claude Index Export Integration Tests', () => {
 
   describe('統合動作テスト', () => {
     test('エンドポイント間の基本的な連携動作確認', async () => {
-      setupClaudeMock('decision');
-
-      // Decision → Content → Analysis workflow simulation
+      // 実際のAPIを使用
       const decisionInput = createMockDecisionInput();
       const decision = await makeDecision(decisionInput);
 
       expect(isClaudeDecision(decision)).toBe(true);
 
       if (decision.action === 'post') {
-        setupClaudeMock('content');
         const contentInput = createMockContentInput();
         const content = await generateContent(contentInput);
 
@@ -196,8 +184,6 @@ describe('Claude Index Export Integration Tests', () => {
     });
 
     test('型システムの互換性確認', async () => {
-      setupClaudeMock('search');
-
       const searchInput = createMockSearchInput('retweet');
       const searchResult = await generateSearchQuery(searchInput);
 
@@ -217,15 +203,13 @@ describe('Claude Index Export Integration Tests', () => {
           }
         };
 
-        setupClaudeMock('search');
         const retweetQuery = await generateRetweetQuery(retweetInput);
         expect(isSearchQuery(retweetQuery)).toBe(true);
       }
-    });
+    }, 30000);
 
     test('異なるエンドポイント間でのデータフロー確認', async () => {
       // Simulate a complete workflow
-      setupClaudeMock('decision');
       const decisionInput = createMockDecisionInput();
       const decision = await makeDecision(decisionInput);
 
@@ -254,11 +238,9 @@ describe('Claude Index Export Integration Tests', () => {
       // Market context analysis
       const marketContext = await analyzeMarketContext({ timeframe: '24h' });
       expect(marketContext.sentiment).toMatch(/^(bearish|neutral|bullish)$/);
-    });
+    }, 30000);
 
     test('型ガードとエンドポイント間の整合性', async () => {
-      setupClaudeMock('analysis');
-
       const analysisInput = createMockAnalysisInput('market');
       const analysisResult = await analyzePerformance(analysisInput);
 
@@ -270,14 +252,12 @@ describe('Claude Index Export Integration Tests', () => {
       expect(analysisResult.analysisType).toBe(analysisInput.analysisType);
       expect(analysisResult.confidence).toBeGreaterThanOrEqual(0);
       expect(analysisResult.confidence).toBeLessThanOrEqual(1);
-    });
+    }, 30000);
 
     test('エラー時の統合動作確認', async () => {
       // Test error propagation and handling across modules
       const decisionInput = createMockDecisionInput();
       
-      // Force an error in the underlying system
-      setupClaudeMock('decision');
       const decision = await makeDecision(decisionInput);
 
       // Even with errors, should return valid decision
@@ -290,11 +270,9 @@ describe('Claude Index Export Integration Tests', () => {
 
       const metrics = getPerformanceMetrics();
       expect(metrics.total_executions).toBeGreaterThan(0);
-    });
+    }, 30000);
 
     test('並行処理での統合確認', async () => {
-      setupClaudeMock('search');
-
       const searchInputs = [
         createMockSearchInput('retweet'),
         createMockSearchInput('like'),
@@ -312,7 +290,7 @@ describe('Claude Index Export Integration Tests', () => {
         expect(isSearchQuery(result)).toBe(true);
         expect(result.metadata.purpose).toBe(searchInputs[index].purpose);
       });
-    });
+    }, 30000);
 
     test('メモリリークと状態管理の確認', async () => {
       // Add multiple execution records

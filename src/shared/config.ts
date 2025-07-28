@@ -27,7 +27,6 @@ export interface SystemConfig {
 export interface EnvironmentConfig {
   NODE_ENV: 'development' | 'production' | 'test';
   KAITO_API_TOKEN: string;
-  CLAUDE_API_KEY?: string;
   LOG_LEVEL?: string;
   DEBUG?: string;
   DATA_DIR?: string;
@@ -98,11 +97,8 @@ export class Config {
   /**
    * Claude設定取得
    */
-  getClaudeConfig(): SystemConfig['claude'] & { api_key?: string } {
-    return {
-      ...this.config.claude,
-      api_key: this.envConfig.CLAUDE_API_KEY
-    };
+  getClaudeConfig(): SystemConfig['claude'] {
+    return this.config.claude;
   }
 
   /**
@@ -196,7 +192,6 @@ export class Config {
     return {
       NODE_ENV: (process.env.NODE_ENV as any) || 'development',
       KAITO_API_TOKEN: process.env.KAITO_API_TOKEN || '',
-      CLAUDE_API_KEY: process.env.CLAUDE_API_KEY,
       LOG_LEVEL: process.env.LOG_LEVEL,
       DEBUG: process.env.DEBUG,
       DATA_DIR: process.env.DATA_DIR,

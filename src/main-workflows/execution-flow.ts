@@ -80,8 +80,16 @@ export class ExecutionFlow {
     try {
       WorkflowLogger.logPhaseStart(WORKFLOW_CONSTANTS.LOG_MESSAGES.WORKFLOW_START);
       
-      // DataManager実行サイクル初期化
+      // DataManager取得
       const dataManager = this.container.get<DataManager>(COMPONENT_KEYS.DATA_MANAGER);
+      
+      // 前回実行のアーカイブ（必要な場合）
+      await CommonErrorHandler.handleAsyncOperation(
+        () => dataManager.archiveCurrentToHistory(),
+        'データアーカイブ処理'
+      );
+      
+      // 新しい実行サイクル初期化
       executionId = await CommonErrorHandler.handleAsyncOperation(
         () => dataManager.initializeExecutionCycle(),
         'DataManager実行サイクル初期化'
@@ -90,12 +98,6 @@ export class ExecutionFlow {
       if (!TypeGuards.isNonEmptyString(executionId)) {
         throw new Error('実行サイクル初期化に失敗しました');
       }
-      
-      // 前回実行のアーカイブ（必要な場合）
-      await CommonErrorHandler.handleAsyncOperation(
-        () => dataManager.archiveCurrentToHistory(),
-        'データアーカイブ処理'
-      );
       
       // ===================================================================
       // 30分毎自動実行ワークフロー (REQUIREMENTS.md準拠)
@@ -107,16 +109,25 @@ export class ExecutionFlow {
       const context = await CommonErrorHandler.handleAsyncOperation(
         () => this.contextLoader.loadSystemContext(),
         step1.description
-      ) as SystemContext;
+      );
+      
+      if (!context) {
+        throw new Error('システムコンテキストの読み込みに失敗しました');
+      }
+      
       WorkflowLogger.logStep(step1.number, step1.name, 'success');
 
       // 2. 【Claude判断】
       const step2 = WORKFLOW_CONSTANTS.WORKFLOW_STEPS.CLAUDE_DECISION;
       WorkflowLogger.logStep(step2.number, step2.name, 'start');
       const decision = await CommonErrorHandler.handleAsyncOperation(
-        () => this.makeClaudeDecision(context),
+        () => this.makeClaudeDecision(context as SystemContext),
         step2.description
-      ) as ClaudeDecision;
+      );
+      
+      if (!decision) {
+        throw new Error('Claude判断の取得に失敗しました');
+      }
       
       // データ保存フック: Claude決定後
       await dataManager.saveClaudeOutput('decision', decision);
@@ -127,9 +138,14 @@ export class ExecutionFlow {
       const step3 = WORKFLOW_CONSTANTS.WORKFLOW_STEPS.ACTION_EXECUTION;
       WorkflowLogger.logStep(step3.number, step3.name, 'start');
       const actionResult = await CommonErrorHandler.handleAsyncOperation(
-        () => this.actionExecutor.executeAction(decision, dataManager),
+        () => this.actionExecutor.executeAction(decision as ClaudeDecision, dataManager),
         step3.description
-      ) as ActionResult;
+      );
+      
+      if (!actionResult) {
+        throw new Error('アクション実行に失敗しました');
+      }
+      
       WorkflowLogger.logStep(step3.number, step3.name, 'success');
       
       // 4. 【結果記録】

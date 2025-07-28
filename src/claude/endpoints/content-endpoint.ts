@@ -133,9 +133,10 @@ ${maxLength}文字以内で投稿内容のみを返してください。`;
  * 引用コメント用プロンプト構築
  */
 function buildQuoteCommentPrompt(originalTweet: any): string {
+  const tweetContent = originalTweet?.content || originalTweet?.text || '（内容なし）';
   return `投資教育の観点から、以下のツイートに価値を付加する引用コメントを150文字以内で作成してください。
 
-元ツイート: ${originalTweet.content || originalTweet.text}
+元ツイート: ${tweetContent}
 
 要件:
 - 建設的で教育的な観点

@@ -1,14 +1,14 @@
 import { KaitoTwitterAPIClient } from '../../../src/kaito-api/core/client';
 
 // 環境変数でのみ実行されるテスト
-const REAL_API_ENABLED = process.env.KAITO_API_TOKEN && process.env.RUN_REAL_API_TESTS === 'true';
+const REAL_API_ENABLED = !!process.env.KAITO_API_TOKEN;
 
 describe('Real TwitterAPI.io Integration Tests', () => {
   let client: KaitoTwitterAPIClient;
 
   beforeAll(() => {
     if (!REAL_API_ENABLED) {
-      console.log('⚠️ Real API tests skipped - set RUN_REAL_API_TESTS=true and KAITO_API_TOKEN');
+      console.log('⚠️ Real API tests skipped - set KAITO_API_TOKEN');
       return;
     }
 

@@ -41,8 +41,6 @@ const accountInfo = await client.getAccountInfo();
 ### 環境変数
 ```bash
 KAITO_API_TOKEN=your_twitterapi_io_token  # 必須
-KAITO_QPS_LIMIT=200                       # オプション
-KAITO_COST_TRACKING=true                  # オプション
 ```
 
 ### 制限・パフォーマンス
@@ -72,7 +70,7 @@ npm test kaito-api
 npm run test:integration
 
 # 実API動作確認
-RUN_REAL_API_TESTS=true npm run test:real-api
+KAITO_API_TOKEN=your_token npm run test:real-api
 ```
 
 ## 🚨 実装教訓（2025/7/27 実用化達成）

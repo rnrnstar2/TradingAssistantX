@@ -56,6 +56,11 @@ function validateConstraints(context: SystemContext, constraints?: { maxPostsPer
   const maxPosts = constraints?.maxPostsPerDay || SYSTEM_LIMITS.MAX_POSTS_PER_DAY;
   const minWait = constraints?.minWaitBetweenPosts || SYSTEM_LIMITS.MIN_WAIT_BETWEEN_POSTS;
 
+  // Null/undefined check for context
+  if (!context) {
+    return createWaitDecision('Context is missing', 0.6);
+  }
+
   // アカウント情報チェック
   if (!context.account) {
     return createWaitDecision('Account context missing', 0.7);

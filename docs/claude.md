@@ -157,7 +157,7 @@ async function executeWorkflow() {
 - **フレームワーク**: Jest + TypeScript
 - **カバレッジ**: 各エンドポイント90%以上
 - **モッキング**: Claude API呼び出しは完全モック化
-- **実データ禁止**: テスト時はREAL_DATA_MODE=false必須
+- **実APIテスト制御**: テストはAPIトークン設定時に実行
 - **並列実行**: テスト間の独立性保証で並列実行対応
 
 ### テスト品質基準

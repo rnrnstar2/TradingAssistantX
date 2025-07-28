@@ -7,11 +7,12 @@ import { KaitoTwitterAPIClient } from '../kaito-api';
 import { TweetEndpoints } from '../kaito-api/endpoints/tweet-endpoints';
 import { ActionEndpoints } from '../kaito-api/endpoints/action-endpoints';
 // 分割されたコアクラスのインポート
-import { SchedulerCore, SchedulerConfig, ScheduleStatus, ExecutionCallback } from './core/scheduler-core';
+import { SchedulerCore, SchedulerConfig, ScheduleStatus } from './core/scheduler-core';
+import type { ExecutionCallback } from './core/scheduler-core';
 import { SchedulerMaintenance } from './core/scheduler-maintenance';
 
 // 再エクスポート（外部APIとの互換性維持）
-export { SchedulerConfig, ScheduleStatus, ExecutionCallback } from './core/scheduler-core';
+export type { SchedulerConfig, ScheduleStatus, ExecutionCallback } from './core/scheduler-core';
 
 // KaitoAPI統合インターフェース
 export interface SystemHealth {

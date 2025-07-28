@@ -11,7 +11,13 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:watch": "vitest watch",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:api": "vitest run",
+    "test:api:kaito": "vitest run tests/kaito-api",
+    "test:api:claude": "vitest run tests/claude",
+    "test:kaito": "tsx tests/kaito-api/run-tests.ts",
+    "test:kaito:watch": "vitest watch tests/kaito-api",
+    "test:kaito:coverage": "vitest run --coverage --coverage.include='src/kaito-api/**/*.ts' --coverage.exclude='src/kaito-api/types.ts' --coverage.exclude='src/kaito-api/index.ts' --coverage.reportsDirectory=tasks/outputs/coverage tests/kaito-api"
   },
   "dependencies": {
     "@inquirer/prompts": "^3.0.0",

@@ -29,9 +29,7 @@ export interface ScheduleStatus {
   totalExecutions: number;
 }
 
-export interface ExecutionCallback {
-  (): Promise<{ success: boolean; duration: number; error?: string }>;
-}
+export type ExecutionCallback = () => Promise<{ success: boolean; duration: number; error?: string }>;
 
 /**
  * SchedulerCore - 内蔵スケジューラー基本機能

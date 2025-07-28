@@ -1,0 +1,18 @@
+executionId: execution-20250728-1749
+startTime: '2025-07-28T08:49:22.108Z'
+decision:
+  action: post
+  reasoning: >-
+    新規アカウント（フォロワー0）での初回投稿として、トレンドトピック「NISA」「投資」を活用した教育的コンテンツ投稿が最適。朝の時間帯は投資情報への関心が高く、今日の投稿数0で制約に余裕があり、システム健全性も良好。認知度向上と学習データ蓄積の両方を狙える。
+  parameters:
+    topic: NISA初心者向け基礎知識
+    searchQuery: NISA 投資 初心者
+    targetTweetId: null
+    duration: null
+    reason: null
+  confidence: 0.9
+actions: []
+metrics:
+  totalActions: 0
+  successCount: 0
+  errorCount: 0

@@ -19,7 +19,7 @@ import {
 } from '../../../src/kaito-api/types';
 
 // 実APIテストの実行制御
-const REAL_API_ENABLED = process.env.KAITO_API_TOKEN && process.env.RUN_REAL_API_TESTS === 'true';
+const REAL_API_ENABLED = !!process.env.KAITO_API_TOKEN;
 
 // テスト用投稿IDを記録（テスト後削除用）
 const testTweetIds: string[] = [];
@@ -34,7 +34,7 @@ describe('Real TwitterAPI.io Integration Tests', () => {
   beforeEach(async () => {
     // 実APIテストが無効の場合はスキップ
     if (!REAL_API_ENABLED) {
-      console.log('⚠️ Real API tests skipped - set RUN_REAL_API_TESTS=true and KAITO_API_TOKEN');
+      console.log('⚠️ Real API tests skipped - set KAITO_API_TOKEN');
       return;
     }
 
@@ -534,7 +534,7 @@ describe('Real TwitterAPI.io Integration Tests', () => {
       timeoutConfig.api.timeout = 1; // 1ms（即座にタイムアウト）
 
       const timeoutClient = new KaitoTwitterAPIClient({
-        apiKey: TEST_API_KEY,
+        apiKey: process.env.KAITO_API_TOKEN!,
         qpsLimit: 10
       });
       timeoutClient.initializeWithConfig(timeoutConfig);

@@ -9,7 +9,6 @@
  * 
  * 環境変数:
  * KAITO_API_TOKEN - TwitterAPI.io APIキー
- * RUN_REAL_API_TESTS - 実API テスト実行フラグ (true/false)
  */
 
 import { KaitoTwitterAPIClient } from '../../src/kaito-api/core/client';

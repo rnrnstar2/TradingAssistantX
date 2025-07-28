@@ -496,7 +496,7 @@ function optimizeLikeQuery(claudeResult: any, input: LikeSearchInput): any {
         input.constraints?.minEngagement || 0,
         5
       ),
-      maxAge: input.constraints?.timeframe || claudeResult.time_range,
+      maxAge: input.constraints?.timeframe || claudeResult.time_range || '12h',
       sentiment: input.constraints?.sentimentFilter || 'positive',
       exclude_keywords: [...(claudeResult.exclude || []), 'spam', '詐欺']
     },

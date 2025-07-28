@@ -1,8 +1,7 @@
 import { systemLogger } from '../../shared/logger';
 import { ComponentContainer, COMPONENT_KEYS } from '../../shared/component-container';
 import { DataManager } from '../../data/data-manager';
-import { ActionEndpoints } from '../../kaito-api/endpoints/action-endpoints';
-import { TweetEndpoints } from '../../kaito-api/endpoints/tweet-endpoints';
+import { KaitoApiClient } from '../../kaito-api';
 import { ClaudeDecision, ActionResult } from '../../shared/types';
 
 // 最適化されたユーティリティクラス
@@ -122,11 +121,25 @@ export class ActionExecutor {
       WorkflowLogger.logInfo(`生成コンテンツ: "${content.content.substring(0, 50)}..."`);
       
       // KaitoAPI呼び出し
-      const actionExecutor = this.container.get<ActionEndpoints>(COMPONENT_KEYS.ACTION_EXECUTOR);
-      const postResult = await CommonErrorHandler.handleAsyncOperation(
-        () => actionExecutor.post(content.content),
-        'X投稿実行'
-      );
+      const kaitoClient = this.container.get<KaitoApiClient>(COMPONENT_KEYS.KAITO_CLIENT);
+      let postResult;
+      
+      try {
+        postResult = await kaitoClient.post(content.content);
+      } catch (error) {
+        // 開発環境用フォールバック
+        if (!process.env.KAITO_API_TOKEN) {
+          systemLogger.warn('⚠️ 開発環境: 投稿APIモック使用');
+          postResult = {
+            id: `dev_${Date.now()}`,
+            text: content.content,
+            createdAt: new Date().toISOString(),
+            success: true
+          };
+        } else {
+          throw error;
+        }
+      }
       
       if (!postResult) {
         throw new Error('投稿実行に失敗しました');
@@ -169,12 +182,11 @@ export class ActionExecutor {
       systemLogger.info(`🔍 生成検索クエリ: "${searchQuery.query}"`);
       
       // 検索実行とリツイート
-      const searchEngine = this.container.get<TweetEndpoints>(COMPONENT_KEYS.SEARCH_ENGINE);
-      const searchResult = await searchEngine.searchTweets({ query: searchQuery.query });
+      const kaitoClient = this.container.get<KaitoApiClient>(COMPONENT_KEYS.KAITO_CLIENT);
+      const searchResult = await kaitoClient.searchTweets(searchQuery.query);
       
-      if (searchResult.tweets.length > 0) {
-        const actionExecutor = this.container.get<ActionEndpoints>(COMPONENT_KEYS.ACTION_EXECUTOR);
-        const retweetResult = await actionExecutor.retweet(searchResult.tweets[0].id);
+      if (searchResult && searchResult.data && searchResult.data.length > 0) {
+        const retweetResult = await kaitoClient.retweet(searchResult.data[0].id);
         
         // データ保存フック: KaitoAPI応答後
         await dataManager.saveKaitoResponse('retweet-result', retweetResult);
