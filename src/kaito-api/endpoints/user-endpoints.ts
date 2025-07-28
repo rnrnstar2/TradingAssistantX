@@ -1,22 +1,17 @@
 /**
- * KaitoAPI User Endpoints - ユーザー関連API実装 + プライバシー保護統合版
+ * KaitoAPI User Endpoints - 最適化版
  * REQUIREMENTS.md準拠 - 疎結合ライブラリアーキテクチャ
  * 
- * 機能概要:
- * - ユーザー情報取得・管理
- * - フォロー関係の管理
- * - ユーザー検索機能
- * - プロフィール情報操作
- * 
- * 統合機能:
- * - プライバシー保護
- * - 教育的価値評価
- * - アカウント安全性チェック
- * - データ最小化原則
+ * 最適化内容:
+ * - 厳密なユーザーIDバリデーション
+ * - TwitterAPI.ioユーザーエンドポイント準拠
+ * - ユーザーデータ正規化強化
+ * - プライバシー保護強化
+ * - エラーハンドリング統一
+ * - フォロー操作セキュリティ強化
  */
 
 import { 
-  KaitoAPIConfig,
   UserInfo, 
   FollowResult, 
   UnfollowResult, 
@@ -24,11 +19,24 @@ import {
   UserSearchOptions, 
   ProfileUpdateData, 
   ProfileUpdateResult,
-  SafeUserProfile,
-  UserAnalytics,
-  AccountSafetyCheck,
-  EducationalSearchOptions
+  HttpClient,
+  TwitterAPIUserResponse,
+  TwitterAPIUserSearchResponse
 } from '../types';
+
+// ============================================================================
+// VALIDATION TYPES
+// ============================================================================
+
+interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+interface SecurityCheckResult {
+  isSafe: boolean;
+  issues: string[];
+}
 
 // ============================================================================
 // USER ENDPOINTS CLASS
@@ -44,23 +52,26 @@ import {
  * - プロフィール管理
  */
 export class UserEndpoints {
-  private config: KaitoAPIConfig;
-  private httpClient: any; // HttpClientインスタンス
-  private userCache: Map<string, { data: UserInfo; timestamp: number }> = new Map();
-  private analyticsCache: Map<string, { data: UserAnalytics; timestamp: number }> = new Map();
-  private readonly CACHE_TTL = 15 * 60 * 1000; // 15分キャッシュ
+  private readonly USER_ENDPOINTS = {
+    getUserById: '/twitter/user/info',
+    getUserByUsername: '/twitter/user/info', // TwitterAPI.ioではuserNameパラメータで区別
+    searchUsers: '/twitter/user/search',
+    followUser: '/twitter/user/follow',
+    unfollowUser: '/twitter/user/unfollow',
+    getFollowers: '/twitter/user/followers',
+    getFollowing: '/twitter/user/following'
+  } as const;
 
-  // === 統合: 教育関連キーワード ===
-  private readonly EDUCATIONAL_INDICATORS = [
-    '投資教育', '金融教育', 'アナリスト', 'ファイナンシャルプランナー',
-    'FP', '証券', '銀行', '投資顧問', '教育', '解説', '初心者向け'
-  ];
+  private readonly USER_LIMITS = {
+    username: { min: 1, max: 15 },
+    displayName: { min: 1, max: 50 },
+    description: { min: 0, max: 160 },
+    searchQuery: { min: 1, max: 100 },
+    maxResults: { min: 1, max: 100 }
+  } as const;
 
-  constructor(config: KaitoAPIConfig, httpClient: any) {
-    this.config = config;
-    this.httpClient = httpClient;
-    
-    console.log('✅ UserEndpoints initialized - 疎結合ライブラリアーキテクチャ + プライバシー保護統合版');
+  constructor(private httpClient: HttpClient) {
+    console.log('✅ UserEndpoints initialized - TwitterAPI.io最適化版');
   }
 
   // ============================================================================
@@ -72,46 +83,37 @@ export class UserEndpoints {
    * 指定されたユーザーIDの詳細情報を取得
    */
   async getUserInfo(userId: string): Promise<UserInfo> {
+    // ユーザーIDバリデーション強化
+    const validation = this.validateUserId(userId);
+    if (!validation.isValid) {
+      throw new Error(`User ID validation failed: ${validation.errors.join(', ')}`);
+    }
+
     try {
-      console.log('👤 ユーザー情報取得中...', { userId });
-
-      if (!userId || userId.trim().length === 0) {
-        throw new Error('User ID is required');
-      }
-
-      // API呼び出し
-      const response = await this.httpClient.get(`/users/${userId}`, {
-        'user.fields': 'created_at,description,location,public_metrics,url,verified,profile_image_url,profile_banner_url'
-      }) as any;
-
-      const userData = response.data;
-      
-      const userInfo: UserInfo = {
-        id: userData.id,
-        username: userData.username,
-        displayName: userData.name,
-        description: userData.description || '',
-        followersCount: userData.public_metrics.followers_count,
-        followingCount: userData.public_metrics.following_count,
-        tweetsCount: userData.public_metrics.tweet_count,
-        verified: userData.verified,
-        createdAt: userData.created_at,
-        location: userData.location || '',
-        website: userData.url || '',
-        profileImageUrl: userData.profile_image_url || '',
-        bannerImageUrl: userData.profile_banner_url || ''
-      };
-
-      console.log('✅ ユーザー情報取得完了:', { 
-        username: userInfo.username, 
-        followers: userInfo.followersCount 
+      console.log('👤 Enhanced user info retrieval via TwitterAPI.io:', { 
+        userId: this.maskSensitiveData(userId) 
       });
 
-      return userInfo;
+      const params = this.buildUserInfoParams();
+      
+      // TwitterAPI.io用のパラメータ調整
+      if (this.isValidUserId(userId)) {
+        params.userId = userId;
+      } else {
+        // ユーザー名として扱う
+        params.userName = userId;
+      }
+
+      const response = await this.httpClient.get<TwitterAPIUserResponse>(
+        this.USER_ENDPOINTS.getUserById, 
+        params
+      );
+
+      // レスポンス正規化強化
+      return this.normalizeUserData(response.data);
 
     } catch (error) {
-      console.error('❌ ユーザー情報取得エラー:', error);
-      throw new Error(`Failed to get user info: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw this.handleUserError(error, 'getUserInfo');
     }
   }
 
@@ -171,26 +173,46 @@ export class UserEndpoints {
    * 指定されたユーザーをフォローする
    */
   async followUser(userId: string): Promise<FollowResult> {
+    // フォロー対象バリデーション
+    const validation = this.validateUserId(userId);
+    if (!validation.isValid) {
+      return {
+        userId,
+        following: false,
+        timestamp: new Date().toISOString(),
+        success: false,
+        error: `Follow validation failed: ${validation.errors.join(', ')}`
+      };
+    }
+
     try {
-      console.log('➕ ユーザーフォロー実行中...', { userId });
+      console.log('➕ Enhanced user follow via TwitterAPI.io:', { 
+        userId: this.maskSensitiveData(userId) 
+      });
 
-      if (!userId || userId.trim().length === 0) {
-        throw new Error('User ID is required');
-      }
+      // TwitterAPI.ioフォローエンドポイント
+      const requestData = {
+        userId: this.isValidUserId(userId) ? userId : undefined,
+        userName: this.isValidUsername(userId) ? userId.replace(/^@/, '') : undefined
+      };
 
-      // API呼び出し
-      const response = await this.httpClient.post('/users/me/following', {
-        target_user_id: userId
-      }) as any;
+      const response = await this.httpClient.post(
+        this.USER_ENDPOINTS.followUser, 
+        requestData
+      ) as any;
 
       const result: FollowResult = {
         userId,
-        following: response.data.following,
+        following: Boolean(response.data?.following || response.success),
         timestamp: new Date().toISOString(),
-        success: response.data.following || response.data.pending_follow
+        success: Boolean(response.data?.following || response.success)
       };
 
-      console.log(`${result.success ? '✅' : '❌'} ユーザーフォロー${result.success ? '完了' : '失敗'}:`, result);
+      console.log(`${result.success ? '✅' : '❌'} User follow ${result.success ? 'completed' : 'failed'}:`, {
+        userId: this.maskSensitiveData(userId),
+        success: result.success
+      });
+      
       return result;
 
     } catch (error) {
@@ -201,7 +223,7 @@ export class UserEndpoints {
         following: false,
         timestamp: new Date().toISOString(),
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: this.handleUserError(error, 'followUser').message
       };
     }
   }
@@ -253,75 +275,342 @@ export class UserEndpoints {
    * 指定されたクエリでユーザーを検索する
    */
   async searchUsers(options: UserSearchOptions): Promise<UserSearchResult> {
+    // 検索オプション検証強化
+    const validation = this.validateSearchOptions(options);
+    if (!validation.isValid) {
+      throw new Error(`User search validation failed: ${validation.errors.join(', ')}`);
+    }
+
+    // セキュリティチェック
+    const securityCheck = this.performSecurityCheck(options.query);
+    if (!securityCheck.isSafe) {
+      throw new Error(`Security check failed: ${securityCheck.issues.join(', ')}`);
+    }
+
     try {
-      console.log('🔍 ユーザー検索実行中...', { query: options.query });
-
-      if (!options.query || options.query.trim().length === 0) {
-        throw new Error('Search query is required');
-      }
-
-      // 検索パラメータ構築
-      const params: Record<string, any> = {
-        q: options.query,
-        max_results: Math.min(options.maxResults || 50, 100),
-        'user.fields': 'created_at,description,location,public_metrics,url,verified,profile_image_url,profile_banner_url'
-      };
-
-      if (options.nextToken) {
-        params.next_token = options.nextToken;
-      }
-
-      // API呼び出し
-      const response = await this.httpClient.get('/users/search', params) as any;
-
-      let users: UserInfo[] = response.data.map((userData: any) => ({
-        id: userData.id,
-        username: userData.username,
-        displayName: userData.name,
-        description: userData.description || '',
-        followersCount: userData.public_metrics.followers_count,
-        followingCount: userData.public_metrics.following_count,
-        tweetsCount: userData.public_metrics.tweet_count,
-        verified: userData.verified,
-        createdAt: userData.created_at,
-        location: userData.location || '',
-        website: userData.url || '',
-        profileImageUrl: userData.profile_image_url || '',
-        bannerImageUrl: userData.profile_banner_url || ''
-      }));
-
-      // フィルタリング適用
-      if (options.includeVerified !== undefined) {
-        users = users.filter(user => user.verified === options.includeVerified);
-      }
-
-      if (options.minFollowers !== undefined) {
-        users = users.filter(user => user.followersCount >= options.minFollowers!);
-      }
-
-      if (options.maxFollowers !== undefined) {
-        users = users.filter(user => user.followersCount <= options.maxFollowers!);
-      }
-
-      const result: UserSearchResult = {
-        users,
-        totalCount: users.length,
-        nextToken: response.meta.next_token,
-        searchQuery: options.query,
-        timestamp: new Date().toISOString()
-      };
-
-      console.log('✅ ユーザー検索完了:', { 
-        query: options.query, 
-        count: result.totalCount 
+      console.log('🔍 Enhanced user search via TwitterAPI.io:', { 
+        query: this.maskSensitiveData(options.query),
+        maxResults: options.max_results || 10
       });
 
-      return result;
+      const params = this.buildSearchParams(options);
+      
+      const response = await this.httpClient.get<TwitterAPIUserSearchResponse>(
+        this.USER_ENDPOINTS.searchUsers, 
+        params
+      );
+
+      return this.normalizeSearchResponse(response, options.query);
 
     } catch (error) {
-      console.error('❌ ユーザー検索エラー:', error);
-      throw new Error(`Failed to search users: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw this.handleUserError(error, 'searchUsers');
     }
+  }
+
+  // ============================================================================
+  // VALIDATION METHODS - 厳密な入力検証
+  // ============================================================================
+
+  private validateUserId(userId: string): ValidationResult {
+    const errors: string[] = [];
+
+    if (!userId?.trim()) {
+      errors.push('User ID is required');
+      return { isValid: false, errors };
+    }
+
+    const trimmedId = userId.trim();
+
+    // ユーザーIDまたはユーザー名の検証
+    if (!this.isValidUserId(trimmedId) && !this.isValidUsername(trimmedId)) {
+      errors.push('Invalid user ID or username format');
+    }
+
+    // 長さ制限
+    if (trimmedId.length > 50) {
+      errors.push('User ID too long (max 50 characters)');
+    }
+
+    // セキュリティチェック
+    if (this.containsMaliciousPatterns(trimmedId)) {
+      errors.push('User ID contains suspicious patterns');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+
+  private validateSearchOptions(options: UserSearchOptions): ValidationResult {
+    const errors: string[] = [];
+
+    // クエリ検証
+    if (!options.query?.trim()) {
+      errors.push('Search query is required');
+    } else {
+      const queryLength = options.query.trim().length;
+      if (queryLength < this.USER_LIMITS.searchQuery.min) {
+        errors.push(`Query too short (min ${this.USER_LIMITS.searchQuery.min} characters)`);
+      }
+      if (queryLength > this.USER_LIMITS.searchQuery.max) {
+        errors.push(`Query too long (max ${this.USER_LIMITS.searchQuery.max} characters)`);
+      }
+    }
+
+    // 結果数検証
+    if (options.max_results !== undefined) {
+      if (options.max_results < this.USER_LIMITS.maxResults.min || 
+          options.max_results > this.USER_LIMITS.maxResults.max) {
+        errors.push(`Max results must be between ${this.USER_LIMITS.maxResults.min} and ${this.USER_LIMITS.maxResults.max}`);
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+
+  private validateProfileUpdate(updateData: ProfileUpdateData): ValidationResult {
+    const errors: string[] = [];
+
+    if (!updateData || Object.keys(updateData).length === 0) {
+      errors.push('Update data is required');
+      return { isValid: false, errors };
+    }
+
+    // 表示名検証
+    if (updateData.displayName !== undefined) {
+      const nameLength = updateData.displayName.length;
+      if (nameLength < this.USER_LIMITS.displayName.min || nameLength > this.USER_LIMITS.displayName.max) {
+        errors.push(`Display name must be between ${this.USER_LIMITS.displayName.min} and ${this.USER_LIMITS.displayName.max} characters`);
+      }
+    }
+
+    // 説明文検証
+    if (updateData.description !== undefined) {
+      const descLength = updateData.description.length;
+      if (descLength > this.USER_LIMITS.description.max) {
+        errors.push(`Description too long (max ${this.USER_LIMITS.description.max} characters)`);
+      }
+    }
+
+    // URL検証
+    if (updateData.website && !this.isValidUrl(updateData.website)) {
+      errors.push('Invalid website URL format');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+
+  // ============================================================================
+  // SECURITY METHODS - セキュリティ強化
+  // ============================================================================
+
+  private performSecurityCheck(input: string): SecurityCheckResult {
+    const issues: string[] = [];
+
+    if (this.containsMaliciousPatterns(input)) {
+      issues.push('Input contains potentially malicious patterns');
+    }
+
+    if (this.detectSQLInjection(input)) {
+      issues.push('Potential SQL injection detected');
+    }
+
+    if (this.detectXSSAttempt(input)) {
+      issues.push('Potential XSS attempt detected');
+    }
+
+    return {
+      isSafe: issues.length === 0,
+      issues
+    };
+  }
+
+  private containsMaliciousPatterns(input: string): boolean {
+    const maliciousPatterns = [
+      /<script[^>]*>/i,
+      /javascript:/i,
+      /on\w+\s*=/i,
+      /\beval\b/i,
+      /\bdocument\./i,
+      /\bwindow\./i
+    ];
+
+    return maliciousPatterns.some(pattern => pattern.test(input));
+  }
+
+  private detectSQLInjection(input: string): boolean {
+    const sqlPatterns = [
+      /\bUNION\b.*\bSELECT\b/i,
+      /\bDROP\b.*\bTABLE\b/i,
+      /\bINSERT\b.*\bINTO\b/i,
+      /\bDELETE\b.*\bFROM\b/i,
+      /\bUPDATE\b.*\bSET\b/i,
+      /'\s*(OR|AND)\s*'\d+\s*'\s*=\s*'\d+/i
+    ];
+
+    return sqlPatterns.some(pattern => pattern.test(input));
+  }
+
+  private detectXSSAttempt(input: string): boolean {
+    const xssPatterns = [
+      /<[^>]*>/,
+      /javascript:/i,
+      /on\w+\s*=/i,
+      /\balert\s*\(/i,
+      /\bconfirm\s*\(/i,
+      /\bprompt\s*\(/i
+    ];
+
+    return xssPatterns.some(pattern => pattern.test(input));
+  }
+
+  // ============================================================================
+  // RESPONSE NORMALIZATION - データ正規化強化
+  // ============================================================================
+
+  private normalizeUserData(apiUser: any): UserInfo {
+    return {
+      id: String(apiUser.id || ''),
+      username: String(apiUser.username || '').toLowerCase(),
+      displayName: String(apiUser.name || ''),
+      description: this.sanitizeText(apiUser.description || ''),
+      followersCount: Math.max(0, Number(apiUser.public_metrics?.followers_count || apiUser.followersCount || 0)),
+      followingCount: Math.max(0, Number(apiUser.public_metrics?.following_count || apiUser.followingCount || 0)),
+      tweetsCount: Math.max(0, Number(apiUser.public_metrics?.tweet_count || apiUser.tweetsCount || 0)),
+      verified: Boolean(apiUser.verified || apiUser.verified_type === 'blue'),
+      createdAt: this.normalizeTimestamp(apiUser.created_at || apiUser.createdAt),
+      location: this.sanitizeText(apiUser.location || ''),
+      website: this.normalizeUrl(apiUser.url || apiUser.website || ''),
+      profileImageUrl: this.normalizeUrl(apiUser.profile_image_url || apiUser.profileImageUrl || ''),
+      bannerImageUrl: this.normalizeUrl(apiUser.profile_banner_url || apiUser.bannerImageUrl || '')
+    };
+  }
+
+  private normalizeSearchResponse(
+    response: TwitterAPIUserSearchResponse, 
+    originalQuery: string
+  ): UserSearchResult {
+    const normalizedUsers = response.data.map(user => this.normalizeUserData(user));
+    
+    return {
+      users: normalizedUsers,
+      totalCount: response.meta?.result_count || normalizedUsers.length,
+      nextToken: response.meta?.next_token,
+      searchQuery: originalQuery,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  // ============================================================================
+  // UTILITY METHODS - ヘルパーメソッド
+  // ============================================================================
+
+  private isValidUserId(userId: string): boolean {
+    // TwitterのユーザーIDは数値文字列（1-20桁）
+    return /^\d{1,20}$/.test(userId);
+  }
+
+  private isValidUsername(username: string): boolean {
+    // Twitterのユーザー名は英数字とアンダースコア（1-15文字）
+    return /^[a-zA-Z0-9_]{1,15}$/.test(username.replace(/^@/, ''));
+  }
+
+  private isValidUrl(url: string): boolean {
+    try {
+      new URL(url);
+      return /^https?:\/\//.test(url);
+    } catch {
+      return false;
+    }
+  }
+
+  private sanitizeText(text: string): string {
+    return text
+      .replace(/[\x00-\x1F\x7F-\x9F]/g, '') // 制御文字除去
+      .replace(/<[^>]*>/g, '') // HTMLタグ除去
+      .trim();
+  }
+
+  private normalizeUrl(url: string): string {
+    if (!url || !this.isValidUrl(url)) return '';
+    return url.trim();
+  }
+
+  private normalizeTimestamp(timestamp: any): string {
+    if (!timestamp) return new Date().toISOString();
+    
+    try {
+      return new Date(timestamp).toISOString();
+    } catch {
+      return new Date().toISOString();
+    }
+  }
+
+  private maskSensitiveData(data: string): string {
+    if (data.length <= 4) return '***';
+    return data.substring(0, 2) + '*'.repeat(data.length - 4) + data.substring(data.length - 2);
+  }
+
+  // ============================================================================
+  // PARAMETER BUILDING - TwitterAPI.io最適化
+  // ============================================================================
+
+  private buildUserInfoParams(): Record<string, any> {
+    return {
+      // TwitterAPI.ioの標準パラメータ
+      // userIdまたはuserNameは呼び出し時に追加
+    };
+  }
+
+  private buildSearchParams(options: UserSearchOptions): Record<string, any> {
+    return {
+      query: this.sanitizeText(options.query),
+      count: options.max_results || 10,
+      ...(options.next_token && { nextToken: options.next_token })
+    };
+  }
+
+  // ============================================================================
+  // ERROR HANDLING - 統一されたエラーハンドリング
+  // ============================================================================
+
+  private handleUserError(error: any, context: string): Error {
+    console.error(`❌ ${context} error:`, error);
+
+    // TwitterAPI.io特有エラーハンドリング
+    if (error.response?.status === 429) {
+      return new Error('Rate limit exceeded. Please try again later.');
+    }
+
+    if (error.response?.status === 401) {
+      return new Error('Authentication failed. Please check your API key.');
+    }
+
+    if (error.response?.status === 403) {
+      return new Error('Access forbidden. Check permissions or privacy settings.');
+    }
+
+    if (error.response?.status === 404) {
+      return new Error('User not found or endpoint unavailable.');
+    }
+
+    if (error.response?.status === 422) {
+      return new Error('Invalid request data. Please check your input.');
+    }
+
+    // ネットワークエラー
+    if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+      return new Error('Network error. Please check your internet connection.');
+    }
+
+    return new Error(`${context} failed: ${error.message || 'Unknown error'}`);
   }
 
   // ============================================================================
@@ -333,50 +622,41 @@ export class UserEndpoints {
    * 自分のプロフィール情報を更新する
    */
   async updateProfile(updateData: ProfileUpdateData): Promise<ProfileUpdateResult> {
+    // プロフィール更新データ検証
+    const validation = this.validateProfileUpdate(updateData);
+    if (!validation.isValid) {
+      return {
+        userId: '',
+        updated: false,
+        timestamp: new Date().toISOString(),
+        success: false,
+        updatedFields: [],
+        error: `Profile validation failed: ${validation.errors.join(', ')}`
+      };
+    }
+
     try {
-      console.log('📝 プロフィール更新実行中...', Object.keys(updateData));
+      console.log('📝 Enhanced profile update via TwitterAPI.io:', {
+        fields: Object.keys(updateData),
+        fieldCount: Object.keys(updateData).length
+      });
 
-      if (!updateData || Object.keys(updateData).length === 0) {
-        throw new Error('Update data is required');
-      }
+      // サニタイズされた更新データ構築
+      const { apiUpdateData, updatedFields } = this.buildProfileUpdateData(updateData);
 
-      // 更新データ準備
-      const apiUpdateData: Record<string, any> = {};
-      const updatedFields: string[] = [];
-
-      if (updateData.displayName !== undefined) {
-        apiUpdateData.name = updateData.displayName;
-        updatedFields.push('displayName');
-      }
-
-      if (updateData.description !== undefined) {
-        apiUpdateData.description = updateData.description;
-        updatedFields.push('description');
-      }
-
-      if (updateData.location !== undefined) {
-        apiUpdateData.location = updateData.location;
-        updatedFields.push('location');
-      }
-
-      if (updateData.website !== undefined) {
-        apiUpdateData.url = updateData.website;
-        updatedFields.push('website');
-      }
-
-      // API呼び出し
+      // API呼び出し（TwitterAPI.ioの実際のエンドポイントに合わせて調整が必要）
       const response = await this.httpClient.post('/users/me', apiUpdateData) as any;
 
       const result: ProfileUpdateResult = {
-        userId: response.data.id,
+        userId: String(response.data?.id || 'unknown'),
         updated: true,
         timestamp: new Date().toISOString(),
         success: true,
         updatedFields
       };
 
-      console.log('✅ プロフィール更新完了:', { 
-        userId: result.userId, 
+      console.log('✅ Profile update completed:', { 
+        userId: this.maskSensitiveData(result.userId), 
         fields: updatedFields 
       });
 
@@ -391,9 +671,42 @@ export class UserEndpoints {
         timestamp: new Date().toISOString(),
         success: false,
         updatedFields: [],
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: this.handleUserError(error, 'updateProfile').message
       };
     }
+  }
+
+  private buildProfileUpdateData(updateData: ProfileUpdateData): {
+    apiUpdateData: Record<string, any>;
+    updatedFields: string[];
+  } {
+    const apiUpdateData: Record<string, any> = {};
+    const updatedFields: string[] = [];
+
+    if (updateData.displayName !== undefined) {
+      apiUpdateData.name = this.sanitizeText(updateData.displayName);
+      updatedFields.push('displayName');
+    }
+
+    if (updateData.description !== undefined) {
+      apiUpdateData.description = this.sanitizeText(updateData.description);
+      updatedFields.push('description');
+    }
+
+    if (updateData.location !== undefined) {
+      apiUpdateData.location = this.sanitizeText(updateData.location);
+      updatedFields.push('location');
+    }
+
+    if (updateData.website !== undefined) {
+      const normalizedUrl = this.normalizeUrl(updateData.website);
+      if (normalizedUrl) {
+        apiUpdateData.url = normalizedUrl;
+        updatedFields.push('website');
+      }
+    }
+
+    return { apiUpdateData, updatedFields };
   }
 
   // ============================================================================
@@ -443,363 +756,6 @@ export class UserEndpoints {
     }
   }
 
-  // ============================================================================
-  // === 統合: プライバシー保護・教育的価値評価機能 ===
-  // ============================================================================
-
-  /**
-   * 安全なユーザープロフィール取得
-   */
-  async getSafeUserProfile(userId: string): Promise<SafeUserProfile | null> {
-    try {
-      console.log('👤 安全なユーザープロフィール取得開始:', { userId });
-
-      // キャッシュチェック
-      const cached = this.getUserFromCache(userId);
-      if (cached) {
-        console.log('📋 キャッシュからユーザー情報を取得');
-        return this.createSafeProfile(cached);
-      }
-
-      // API呼び出し（レート制限考慮）
-      await this.enforceRateLimit();
-      const userInfo = await this.getUserInfo(userId);
-      
-      // プライバシー保護処理
-      const protectedUserInfo = this.applyPrivacyProtection(userInfo);
-      
-      // キャッシュに保存
-      this.setUserCache(userId, protectedUserInfo);
-
-      // 安全なプロフィール作成
-      const safeProfile = this.createSafeProfile(protectedUserInfo);
-
-      console.log('✅ 安全なユーザープロフィール取得完了:', {
-        username: safeProfile.basicInfo.username,
-        safetyLevel: safeProfile.safetyLevel
-      });
-
-      return safeProfile;
-
-    } catch (error) {
-      console.error('❌ ユーザープロフィール取得失敗:', error);
-      return null;
-    }
-  }
-
-  /**
-   * 教育的アカウントの検索
-   */
-  async searchEducationalAccounts(options: EducationalSearchOptions): Promise<SafeUserProfile[]> {
-    try {
-      console.log('🎓 教育的アカウント検索開始:', options);
-
-      // 検索クエリに教育キーワードを追加
-      let enhancedQuery = options.query;
-      if (options.educationalOnly) {
-        enhancedQuery += ' ' + this.EDUCATIONAL_INDICATORS.slice(0, 3).join(' OR ');
-      }
-
-      // 基本検索実行
-      const searchResult = await this.searchUsers({
-        ...options,
-        query: enhancedQuery
-      });
-      
-      // 各ユーザーの安全プロフィール作成
-      const safeProfiles = await Promise.all(
-        searchResult.users.map(user => this.createSafeProfile(user))
-      );
-
-      // 教育的価値でフィルタリング・ソート
-      const filteredProfiles = safeProfiles
-        .filter(profile => options.educationalOnly ? 
-          profile.educationalValue.isEducationalAccount : true)
-        .filter(profile => options.minCredibilityLevel ? 
-          this.matchesCredibilityLevel(profile.educationalValue.credibilityLevel, options.minCredibilityLevel) : true)
-        .sort((a, b) => {
-          if (a.educationalValue.credibilityLevel === 'high' && b.educationalValue.credibilityLevel !== 'high') return -1;
-          if (b.educationalValue.credibilityLevel === 'high' && a.educationalValue.credibilityLevel !== 'high') return 1;
-          return b.publicMetrics.followersCount - a.publicMetrics.followersCount;
-        })
-        .slice(0, options.maxResults || 20);
-
-      console.log('✅ 教育的アカウント検索完了:', {
-        found: filteredProfiles.length,
-        highCredibility: filteredProfiles.filter(p => p.educationalValue.credibilityLevel === 'high').length
-      });
-
-      return filteredProfiles;
-
-    } catch (error) {
-      console.error('❌ 教育的アカウント検索失敗:', error);
-      return [];
-    }
-  }
-
-  /**
-   * アカウント安全性チェック
-   */
-  async checkAccountSafety(userId: string): Promise<AccountSafetyCheck> {
-    try {
-      console.log('🔒 アカウント安全性チェック開始:', { userId });
-
-      const userProfile = await this.getSafeUserProfile(userId);
-      if (!userProfile) {
-        return {
-          isSafe: false,
-          safetyLevel: 'restricted',
-          concerns: ['ユーザー情報の取得に失敗'],
-          recommendations: ['このアカウントとの相互作用を避けてください']
-        };
-      }
-
-      const concerns: string[] = [];
-      const recommendations: string[] = [];
-
-      // 基本安全性チェック
-      if (userProfile.basicInfo.verified) {
-        recommendations.push('認証済みアカウントのため信頼性が高いです');
-      } else if (userProfile.publicMetrics.followersCount < 100) {
-        concerns.push('フォロワー数が少なく信頼性が不明です');
-      }
-
-      // 教育的価値チェック
-      if (userProfile.educationalValue.isEducationalAccount) {
-        recommendations.push('教育的価値の高いアカウントです');
-      } else if (userProfile.educationalValue.credibilityLevel === 'low') {
-        concerns.push('教育的価値が低い可能性があります');
-      }
-
-      // 安全レベル決定
-      const safetyLevel = userProfile.safetyLevel;
-      const isSafe = safetyLevel === 'safe' || (safetyLevel === 'caution' && concerns.length <= 1);
-
-      console.log('✅ アカウント安全性チェック完了:', {
-        userId,
-        isSafe,
-        safetyLevel,
-        concernsCount: concerns.length
-      });
-
-      return {
-        isSafe,
-        safetyLevel,
-        concerns,
-        recommendations
-      };
-
-    } catch (error) {
-      console.error('❌ 安全性チェック失敗:', error);
-      return {
-        isSafe: false,
-        safetyLevel: 'restricted',
-        concerns: ['チェック処理でエラーが発生しました'],
-        recommendations: ['注意深く利用してください']
-      };
-    }
-  }
-
-  /**
-   * ユーザー分析（教育的価値重視）
-   */
-  async analyzeUserEducationalValue(userId: string): Promise<UserAnalytics | null> {
-    try {
-      console.log('📊 ユーザー教育的価値分析開始:', { userId });
-
-      // 分析キャッシュチェック
-      const cachedAnalytics = this.getAnalyticsFromCache(userId);
-      if (cachedAnalytics) {
-        console.log('📋 キャッシュから分析結果を取得');
-        return cachedAnalytics;
-      }
-
-      // ユーザー情報取得
-      const userInfo = await this.getSafeUserProfile(userId);
-      if (!userInfo) {
-        throw new Error('ユーザー情報の取得に失敗しました');
-      }
-
-      // 教育的価値分析実行
-      const analytics = await this.performEducationalAnalysis(userInfo);
-      
-      // キャッシュに保存
-      this.setAnalyticsCache(userId, analytics);
-
-      console.log('✅ ユーザー教育的価値分析完了:', {
-        userId,
-        credibilityScore: analytics.credibilityScore,
-        educationalRatio: analytics.educationalContentRatio
-      });
-
-      return analytics;
-
-    } catch (error) {
-      console.error('❌ ユーザー分析失敗:', error);
-      return null;
-    }
-  }
-
-  // ============================================================================
-  // === 統合: プライベートメソッド ===
-  // ============================================================================
-
-  private applyPrivacyProtection(userInfo: UserInfo): UserInfo {
-    // プライバシー保護: 必要最小限の情報のみ取得
-    return {
-      ...userInfo,
-      followingCount: Math.min(userInfo.followingCount || 0, 999999), // 上限設定
-      description: this.sanitizeDescription(userInfo.description || ''),
-      location: userInfo.location ? this.sanitizeLocation(userInfo.location) : '',
-      website: userInfo.website ? this.sanitizeUrl(userInfo.website) : ''
-    };
-  }
-
-  private createSafeProfile(userInfo: UserInfo): SafeUserProfile {
-    const educationalValue = this.assessEducationalValue(userInfo);
-    const safetyLevel = this.assessSafetyLevel(userInfo, educationalValue);
-
-    return {
-      basicInfo: {
-        username: userInfo.username,
-        displayName: userInfo.displayName,
-        verified: userInfo.verified,
-        description: userInfo.description
-      },
-      publicMetrics: {
-        followersCount: userInfo.followersCount,
-        tweetsCount: userInfo.tweetsCount
-      },
-      educationalValue,
-      safetyLevel
-    };
-  }
-
-  private assessEducationalValue(userInfo: UserInfo): SafeUserProfile['educationalValue'] {
-    const description = userInfo.description.toLowerCase();
-    const displayName = userInfo.displayName.toLowerCase();
-    
-    // 教育的キーワードのマッチング
-    const matchedKeywords = this.EDUCATIONAL_INDICATORS.filter(keyword =>
-      description.includes(keyword.toLowerCase()) || displayName.includes(keyword.toLowerCase())
-    );
-
-    const isEducationalAccount = matchedKeywords.length > 0;
-    
-    // 信頼性レベル決定
-    let credibilityLevel: 'high' | 'medium' | 'low' = 'low';
-    if (userInfo.verified && matchedKeywords.length >= 2) {
-      credibilityLevel = 'high';
-    } else if (userInfo.followersCount > 1000 && matchedKeywords.length >= 1) {
-      credibilityLevel = 'medium';
-    }
-
-    return {
-      isEducationalAccount,
-      educationalTopics: matchedKeywords,
-      credibilityLevel
-    };
-  }
-
-  private assessSafetyLevel(userInfo: UserInfo, educationalValue: SafeUserProfile['educationalValue']): 'safe' | 'caution' | 'restricted' {
-    let safetyScore = 50;
-
-    // 認証済みアカウント
-    if (userInfo.verified) safetyScore += 30;
-
-    // フォロワー数
-    if (userInfo.followersCount > 10000) safetyScore += 20;
-    else if (userInfo.followersCount > 1000) safetyScore += 10;
-    else if (userInfo.followersCount < 100) safetyScore -= 10;
-
-    // 教育的価値
-    if (educationalValue.credibilityLevel === 'high') safetyScore += 25;
-    else if (educationalValue.credibilityLevel === 'medium') safetyScore += 15;
-
-    // アカウント年数（仮想計算）
-    const accountAge = Date.now() - new Date(userInfo.createdAt).getTime();
-    const ageInYears = accountAge / (365 * 24 * 60 * 60 * 1000);
-    if (ageInYears > 2) safetyScore += 10;
-
-    if (safetyScore >= 80) return 'safe';
-    if (safetyScore >= 60) return 'caution';
-    return 'restricted';
-  }
-
-  private async performEducationalAnalysis(userProfile: SafeUserProfile): Promise<UserAnalytics> {
-    // Mock分析結果
-    const credibilityScore = userProfile.educationalValue.credibilityLevel === 'high' ? 
-      Math.random() * 20 + 80 : 
-      userProfile.educationalValue.credibilityLevel === 'medium' ? 
-      Math.random() * 30 + 50 : 
-      Math.random() * 40 + 20;
-
-    return {
-      userId: 'analyzed_user',
-      engagementRate: Math.random() * 10 + 2,
-      educationalContentRatio: userProfile.educationalValue.isEducationalAccount ? 
-        Math.random() * 30 + 70 : Math.random() * 50 + 10,
-      activityLevel: credibilityScore > 70 ? 'high' : credibilityScore > 50 ? 'medium' : 'low',
-      credibilityScore,
-      topTopics: userProfile.educationalValue.educationalTopics.slice(0, 5),
-      lastAnalyzed: new Date().toISOString()
-    };
-  }
-
-  // キャッシュ管理
-  private getUserFromCache(userId: string): UserInfo | null {
-    const cached = this.userCache.get(userId);
-    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
-      return cached.data;
-    }
-    this.userCache.delete(userId);
-    return null;
-  }
-
-  private setUserCache(userId: string, data: UserInfo): void {
-    this.userCache.set(userId, { data, timestamp: Date.now() });
-  }
-
-  private getAnalyticsFromCache(userId: string): UserAnalytics | null {
-    const cached = this.analyticsCache.get(userId);
-    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
-      return cached.data;
-    }
-    this.analyticsCache.delete(userId);
-    return null;
-  }
-
-  private setAnalyticsCache(userId: string, data: UserAnalytics): void {
-    this.analyticsCache.set(userId, { data, timestamp: Date.now() });
-  }
-
-  // ユーティリティメソッド
-  private sanitizeDescription(description: string): string {
-    return description.slice(0, 160); // 長さ制限
-  }
-
-  private sanitizeLocation(location: string): string {
-    return location.slice(0, 50);
-  }
-
-  private sanitizeUrl(url: string): string {
-    try {
-      const urlObj = new URL(url);
-      return urlObj.href;
-    } catch {
-      return '';
-    }
-  }
-
-  private matchesCredibilityLevel(level: 'high' | 'medium' | 'low', minLevel: 'high' | 'medium' | 'low'): boolean {
-    const levels = { low: 0, medium: 1, high: 2 };
-    return levels[level] >= levels[minLevel];
-  }
-
-  private async enforceRateLimit(): Promise<void> {
-    // 簡単なレート制限実装
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
 }
 
 // ============================================================================

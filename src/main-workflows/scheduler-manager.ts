@@ -1,37 +1,100 @@
 import { systemLogger } from '../shared/logger';
 import { ComponentContainer, COMPONENT_KEYS } from '../shared/component-container';
 import { Config } from '../shared/config';
-import { CoreScheduler } from '../scheduler/core-scheduler';
-import { DataManager } from '../data/data-manager';
 import { ExecutionResult } from '../shared/types';
+// KaitoAPI統合インポート
+import { KaitoTwitterAPIClient } from '../kaito-api';
+import { TweetEndpoints } from '../kaito-api/endpoints/tweet-endpoints';
+import { ActionEndpoints } from '../kaito-api/endpoints/action-endpoints';
+// 分割されたコアクラスのインポート
+import { SchedulerCore, SchedulerConfig, ScheduleStatus, ExecutionCallback } from './core/scheduler-core';
+import { SchedulerMaintenance } from './core/scheduler-maintenance';
+
+// 再エクスポート（外部APIとの互換性維持）
+export { SchedulerConfig, ScheduleStatus, ExecutionCallback } from './core/scheduler-core';
+
+// KaitoAPI統合インターフェース
+export interface SystemHealth {
+  all_systems_operational: boolean;
+  api_status: 'healthy' | 'degraded' | 'error';
+  rate_limits_ok: boolean;
+  kaitoHealth: boolean;
+  searchHealth: boolean;
+  executorHealth: boolean;
+}
+
+// MainLoop統合型定義
+export interface LoopMetrics {
+  totalExecutions: number;
+  successRate: number;
+  avgExecutionTime: number;
+  actionBreakdown: {
+    [action: string]: {
+      count: number;
+      successRate: number;
+      avgTime: number;
+    };
+  };
+  learningUpdates: number;
+  lastExecutionTime: string;
+}
 
 /**
  * SchedulerManager - スケジューラー管理・30分間隔実行制御クラス
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * 
  * 🎯 責任範囲:
- * • CoreSchedulerの起動・停止・設定管理
- * • 30分間隔でのメインループ実行コールバック制御
+ * • 分割されたコアクラスの統合管理
+ * • 30分間隔でのメインループ実行制御
  * • スケジューラー状態の監視・報告
- * • 動的設定リロード機能
+ * • MainLoop統合機能・公開API提供
  * 
  * 🔗 主要連携:
  * • main.ts → startScheduler()でexecuteMainLoop()をコールバック登録
- * • CoreScheduler → 内部タイマー管理とワークフロー実行
+ * • SchedulerCore → 内部タイマー管理とワークフロー実行
+ * • SchedulerMaintenance → データメンテナンス機能
  * • Config → スケジューラー設定の動的読み込み
  * • StatusController → 手動実行との協調制御
  */
 export class SchedulerManager {
   private container: ComponentContainer;
   private isSchedulerRunning: boolean = false;
+  
+  // 分割されたコアクラス
+  private schedulerCore: SchedulerCore;
+  private schedulerMaintenance: SchedulerMaintenance;
+  
+  // MainLoop統合フィールド
+  private metrics!: LoopMetrics;
+  private isExecuting: boolean = false;
+  
+  // KaitoAPI統合コンポーネント
+  private kaitoClient?: KaitoTwitterAPIClient;
+  private searchEngine?: TweetEndpoints;
+  private actionExecutor?: ActionEndpoints;
+  
+  private readonly DEFAULT_CONFIG: SchedulerConfig = {
+    intervalMinutes: 30,
+    maxDailyExecutions: 48, // 30分間隔で24時間 = 48回
+    enableGracefulShutdown: true,
+    timezone: 'Asia/Tokyo',
+    executionWindow: {
+      start: '07:00',
+      end: '23:00'
+    }
+  };
 
   constructor(container: ComponentContainer) {
     this.container = container;
+    this.schedulerCore = new SchedulerCore(this.DEFAULT_CONFIG);
+    this.schedulerMaintenance = new SchedulerMaintenance(container);
+    this.initializeMetrics();
+    systemLogger.info('✅ SchedulerManager initialized - CoreScheduler & MainLoop統合版');
   }
 
   /**
    * スケジューラー起動ワークフロー
-   * CoreSchedulerを初期化し、30分間隔での自動実行を開始
+   * 内蔵スケジューラーで30分間隔での自動実行を開始（CoreScheduler統合版）
    * 
    * @param executeCallback メインループ実行コールバック（ExecutionFlow.executeMainLoop）
    * @throws Error スケジューラー起動に失敗した場合
@@ -39,43 +102,58 @@ export class SchedulerManager {
   startScheduler(executeCallback: () => Promise<ExecutionResult>): void {
     try {
       // ===================================================================
-      // 【スケジューラー起動ワークフロー】
-      // 0. 実行前チェック → 1. 設定読み込み → 2. スケジューラー設定 → 3. スケジューラー開始
+      // 【スケジューラー起動ワークフロー - CoreScheduler統合版】
+      // 0. 実行前チェック → 1. 設定読み込み → 2. 内蔵スケジューラー設定 → 3. スケジューラー開始
       // ===================================================================
       
+      if (this.isSchedulerRunning) {
+        systemLogger.warn('⚠️ Scheduler is already running');
+        return;
+      }
+      
       systemLogger.info('🔍 【スケジューラー起動ステップ0】実行前チェック開始');
-      this.performPreExecutionChecks();
+      this.schedulerMaintenance.performPreExecutionChecks();
       systemLogger.success('✅ 実行前チェック完了');
       
       systemLogger.info('⚙️ 【スケジューラー起動ステップ1】設定読み込み開始');
       
       // ComponentContainerから必要なコンポーネントを取得
       const config = this.container.get<Config>(COMPONENT_KEYS.CONFIG);
-      const scheduler = this.container.get<CoreScheduler>(COMPONENT_KEYS.SCHEDULER);
-      
-      if (!config || !scheduler) {
-        throw new Error('Required components not found in container');
+      if (!config) {
+        throw new Error('Config component not found in container');
       }
       
       const schedulerConfig = config.getSchedulerConfig();
-      this.validateSchedulerConfig(schedulerConfig);
+      // ConfigからmaxDailyExecutionsが取得できないため、DEFAULT_CONFIGから取得
+      const fullSchedulerConfig = {
+        ...schedulerConfig,
+        maxDailyExecutions: this.DEFAULT_CONFIG.maxDailyExecutions,
+        enableGracefulShutdown: this.DEFAULT_CONFIG.enableGracefulShutdown,
+        executionWindow: this.DEFAULT_CONFIG.executionWindow
+      };
+      this.validateSchedulerConfig(fullSchedulerConfig);
       systemLogger.success('✅ スケジューラー設定読み込み・検証完了');
 
-      systemLogger.info('🔧 【スケジューラー起動ステップ2】CoreScheduler設定開始');
-      scheduler.updateConfig(schedulerConfig);
-      scheduler.setExecutionCallback(executeCallback);
-      systemLogger.success('✅ CoreScheduler設定完了');
+      systemLogger.info('🔧 【スケジューラー起動ステップ2】内蔵スケジューラー設定開始');
+      this.schedulerCore.updateConfig(fullSchedulerConfig);
+      this.schedulerCore.setExecutionCallback(executeCallback);
+      systemLogger.success('✅ 内蔵スケジューラー設定完了');
 
       systemLogger.info('▶️ 【スケジューラー起動ステップ3】スケジューラー開始');
-      scheduler.start();
+      this.schedulerCore.start();
       this.isSchedulerRunning = true;
       
+      // グレースフルシャットダウン設定
+      if (fullSchedulerConfig.enableGracefulShutdown) {
+        this.schedulerCore.setupGracefulShutdown();
+      }
+      
       systemLogger.success('⏰ スケジューラー起動完了 - 30分毎自動実行開始:', {
-        interval: `${schedulerConfig.intervalMinutes}分間隔`,
-        maxDaily: `最大${schedulerConfig.maxDailyExecutions}回/日`,
+        interval: `${fullSchedulerConfig.intervalMinutes}分間隔`,
+        maxDaily: `最大${fullSchedulerConfig.maxDailyExecutions}回/日`,
         workflow: '【データ読み込み→Claude判断→アクション実行→結果記録】',
         status: 'RUNNING',
-        nextExecution: new Date(Date.now() + (schedulerConfig.intervalMinutes * 60 * 1000)).toISOString()
+        nextExecution: this.schedulerCore.getStatus().nextExecution
       });
 
     } catch (error) {
@@ -91,7 +169,7 @@ export class SchedulerManager {
 
   /**
    * スケジューラー停止ワークフロー
-   * 実行中のスケジューラーを安全に停止し、リソースをクリーンアップ
+   * 実行中のスケジューラーを安全に停止し、リソースをクリーンアップ（CoreScheduler統合版）
    */
   stopScheduler(): void {
     try {
@@ -101,26 +179,19 @@ export class SchedulerManager {
         systemLogger.info('ℹ️ スケジューラーは既に停止済み');
         return;
       }
+
+      // スケジューラーの現在状態を記録（デバッグ用）
+      const status = this.schedulerCore.getStatus();
+      systemLogger.debug('📊 停止前スケジューラー状態:', status);
       
-      if (this.container.has(COMPONENT_KEYS.SCHEDULER)) {
-        const scheduler = this.container.get<CoreScheduler>(COMPONENT_KEYS.SCHEDULER);
-        
-        // スケジューラーの現在状態を記録（デバッグ用）
-        const status = scheduler.getStatus();
-        systemLogger.debug('📊 停止前スケジューラー状態:', status);
-        
-        // 安全な停止実行
-        scheduler.stop();
-        this.isSchedulerRunning = false;
-        
-        systemLogger.success('✅ スケジューラー停止完了', {
-          previousStatus: status,
-          stoppedAt: new Date().toISOString()
-        });
-      } else {
-        systemLogger.warn('⚠️ CoreSchedulerコンポーネントが見つかりません');
-        this.isSchedulerRunning = false;
-      }
+      // 安全な停止実行
+      this.schedulerCore.stop();
+      this.isSchedulerRunning = false;
+      
+      systemLogger.success('✅ スケジューラー停止完了', {
+        previousStatus: status,
+        stoppedAt: new Date().toISOString()
+      });
 
     } catch (error) {
       systemLogger.error('❌ スケジューラー停止エラー:', error);
@@ -133,7 +204,7 @@ export class SchedulerManager {
   }
 
   /**
-   * スケジューラー状態取得
+   * スケジューラー状態取得（CoreScheduler統合版）
    */
   getSchedulerStatus(): {
     running: boolean;
@@ -141,16 +212,18 @@ export class SchedulerManager {
     nextExecution?: string;
   } {
     try {
-      if (!this.container.has(COMPONENT_KEYS.SCHEDULER)) {
-        return { running: false };
-      }
-
       const config = this.container.get<Config>(COMPONENT_KEYS.CONFIG);
+      
+      const schedulerConfig = config?.getSchedulerConfig();
+      const fullConfig = schedulerConfig ? {
+        intervalMinutes: schedulerConfig.intervalMinutes,
+        maxDailyExecutions: this.DEFAULT_CONFIG.maxDailyExecutions
+      } : undefined;
       
       return {
         running: this.isSchedulerRunning,
-        config: config.getSchedulerConfig(),
-        nextExecution: new Date(Date.now() + (config.getSchedulerConfig().intervalMinutes * 60 * 1000)).toISOString()
+        config: fullConfig,
+        nextExecution: this.schedulerCore.getStatus()?.nextExecution
       };
 
     } catch (error) {
@@ -161,7 +234,7 @@ export class SchedulerManager {
 
   /**
    * スケジューラー設定動的リロードワークフロー
-   * システム稼働中に設定を再読み込みし、CoreSchedulerに反映
+   * システム稼働中に設定を再読み込みし、内蔵スケジューラーに反映（CoreScheduler統合版）
    * 
    * 処理フロー:
    * 1. 現在の設定をバックアップ
@@ -181,12 +254,20 @@ export class SchedulerManager {
       }
       
       // 現在の設定をバックアップ（ロールバック用）
-      oldConfig = config.getSchedulerConfig();
+      oldConfig = { ...this.schedulerCore.getStatus() };
       systemLogger.debug('📋 現在の設定をバックアップ:', oldConfig);
       
       // 新しい設定を読み込み
       await config.reloadConfig();
-      const newSchedulerConfig = config.getSchedulerConfig();
+      const schedulerConfig = config.getSchedulerConfig();
+      
+      // ConfigからmaxDailyExecutionsが取得できないため、DEFAULT_CONFIGから取得
+      const newSchedulerConfig = {
+        ...schedulerConfig,
+        maxDailyExecutions: this.DEFAULT_CONFIG.maxDailyExecutions,
+        enableGracefulShutdown: this.DEFAULT_CONFIG.enableGracefulShutdown,
+        executionWindow: this.DEFAULT_CONFIG.executionWindow
+      };
       
       // 設定の検証
       this.validateSchedulerConfig(newSchedulerConfig);
@@ -194,13 +275,8 @@ export class SchedulerManager {
       if (this.isSchedulerRunning) {
         systemLogger.info('⚙️ 稼働中スケジューラーに新設定を適用中...');
         
-        const scheduler = this.container.get<CoreScheduler>(COMPONENT_KEYS.SCHEDULER);
-        if (!scheduler) {
-          throw new Error('CoreScheduler component not found');
-        }
-        
-        // 新設定をCoreSchedulerに適用
-        scheduler.updateConfig(newSchedulerConfig);
+        // 新設定を内蔵スケジューラーに適用
+        this.schedulerCore.updateConfig(newSchedulerConfig);
         
         systemLogger.success('✅ 稼働中スケジューラー設定更新完了:', {
           oldInterval: `${oldConfig.intervalMinutes}分間隔`,
@@ -211,6 +287,7 @@ export class SchedulerManager {
         });
       } else {
         systemLogger.info('ℹ️ スケジューラー未稼働 - 設定のみリロード完了');
+        this.schedulerCore.updateConfig(newSchedulerConfig);
       }
       
       systemLogger.success('🔄 スケジューラー設定リロード完了');
@@ -222,8 +299,7 @@ export class SchedulerManager {
       if (oldConfig && this.isSchedulerRunning) {
         try {
           systemLogger.info('🔙 設定ロールバック試行中...');
-          const scheduler = this.container.get<CoreScheduler>(COMPONENT_KEYS.SCHEDULER);
-          scheduler?.updateConfig(oldConfig);
+          this.schedulerCore.updateConfig(oldConfig);
           systemLogger.info('✅ 設定ロールバック完了');
         } catch (rollbackError) {
           systemLogger.error('❌ 設定ロールバック失敗:', rollbackError);
@@ -272,7 +348,7 @@ export class SchedulerManager {
   }
 
   /**
-   * 起動失敗時のクリーンアップ処理
+   * 起動失敗時のクリーンアップ処理（CoreScheduler統合版）
    */
   private cleanupFailedStartup(): void {
     try {
@@ -281,14 +357,11 @@ export class SchedulerManager {
       // スケジューラー状態をリセット
       this.isSchedulerRunning = false;
       
-      // 可能であればSchedulerを停止状態にする
-      if (this.container.has(COMPONENT_KEYS.SCHEDULER)) {
-        const scheduler = this.container.get<CoreScheduler>(COMPONENT_KEYS.SCHEDULER);
-        try {
-          scheduler.stop();
-        } catch (stopError) {
-          systemLogger.warn('⚠️ クリーンアップ中のScheduler停止で軽微なエラー:', stopError);
-        }
+      // 内蔵スケジューラーのクリーンアップ
+      try {
+        this.schedulerCore.stop();
+      } catch (stopError) {
+        systemLogger.warn('⚠️ クリーンアップ中のスケジューラー停止で軽微なエラー:', stopError);
       }
       
       systemLogger.info('✅ 起動失敗クリーンアップ完了');
@@ -298,7 +371,7 @@ export class SchedulerManager {
   }
 
   /**
-   * 緊急停止処理（通常停止が失敗した場合）
+   * 緊急停止処理（通常停止が失敗した場合）（CoreScheduler統合版）
    */
   private forceStopScheduler(): void {
     try {
@@ -306,6 +379,9 @@ export class SchedulerManager {
       
       // 強制的に停止状態にマーク
       this.isSchedulerRunning = false;
+      
+      // スケジューラーコアを強制停止
+      this.schedulerCore.stop();
       
       systemLogger.info('✅ スケジューラー緊急停止完了');
     } catch (error) {
@@ -316,154 +392,250 @@ export class SchedulerManager {
   }
 
   // ===================================================================
-  // DataManager統合機能 - 実行前チェック・定期メンテナンス
+  // メンテナンス機能（委譲）
   // ===================================================================
 
   /**
-   * 実行前チェック（指示書準拠）
-   * 前回実行の完了確認、アーカイブ必要性の判定、ディスク容量チェック
-   */
-  private async performPreExecutionChecks(): Promise<void> {
-    try {
-      systemLogger.info('📋 実行前チェック開始...');
-      
-      const dataManager = this.container.get<DataManager>(COMPONENT_KEYS.DATA_MANAGER);
-      
-      // 1. 前回実行の完了確認
-      const healthCheck = await dataManager.performHealthCheck();
-      if (healthCheck.errors.length > 0) {
-        systemLogger.warn('⚠️ データベース整合性に問題があります:', healthCheck.errors);
-      } else {
-        systemLogger.success('✅ データベース整合性チェック正常');
-      }
-      
-      // 2. アーカイブ必要性の判定（アクティブセッションをチェック）
-      try {
-        const currentData = await dataManager.getCurrentExecutionData();
-        if (currentData.executionId) {
-          systemLogger.info(`🗂️ 未完了実行を検出: ${currentData.executionId} - アーカイブを実行`);
-          await dataManager.archiveCurrentToHistory();
-        }
-      } catch (error) {
-        // 現在実行データがない場合は正常（新規実行）
-        systemLogger.debug('現在実行データなし（新規実行）');
-      }
-      
-      // 3. ディスク容量チェック（簡易版）
-      await this.checkDiskSpace();
-      
-      systemLogger.success('✅ 実行前チェック完了');
-      
-    } catch (error) {
-      systemLogger.error('❌ 実行前チェック失敗:', error);
-      throw new Error(`Pre-execution checks failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * 定期メンテナンス実行
-   * 古いcurrentデータの自動アーカイブ、historyデータの月次整理
+   * 定期メンテナンス実行（委譲）
    */
   async performPeriodicMaintenance(): Promise<void> {
-    try {
-      systemLogger.info('🧹 定期メンテナンス開始...');
-      
-      const dataManager = this.container.get<DataManager>(COMPONENT_KEYS.DATA_MANAGER);
-      
-      // 1. 古いcurrentデータの自動アーカイブ
-      try {
-        await dataManager.archiveCurrentToHistory();
-        systemLogger.info('📦 古いcurrentデータのアーカイブ完了');
-      } catch (error) {
-        systemLogger.warn('⚠️ currentデータアーカイブでエラー:', error);
-      }
-      
-      // 2. 古いデータのクリーンアップ（30日以上前のデータを削除）
-      await dataManager.cleanupOldData(30);
-      systemLogger.info('🗑️ 古いデータクリーンアップ完了');
-      
-      // 3. アーカイブ整合性チェック
-      const isArchiveValid = await dataManager.validateArchive();
-      if (isArchiveValid) {
-        systemLogger.success('✅ アーカイブ整合性チェック正常');
-      } else {
-        systemLogger.warn('⚠️ アーカイブ整合性に問題があります');
-      }
-      
-      systemLogger.success('✅ 定期メンテナンス完了');
-      
-    } catch (error) {
-      systemLogger.error('❌ 定期メンテナンス失敗:', error);
-      // メンテナンス失敗は致命的でないため、エラーをログに記録するだけ
-    }
+    return this.schedulerMaintenance.performPeriodicMaintenance();
   }
 
   /**
-   * ディスク容量チェック（簡易版）
-   */
-  private async checkDiskSpace(): Promise<void> {
-    try {
-      // Node.jsで利用可能な範囲でのディスク容量チェック
-      const fs = await import('fs/promises');
-      const path = await import('path');
-      
-      const dataDir = path.join(process.cwd(), 'src', 'data');
-      
-      try {
-        const stats = await fs.stat(dataDir);
-        systemLogger.debug('データディレクトリサイズチェック完了');
-      } catch (error) {
-        systemLogger.warn('⚠️ データディレクトリアクセスできません:', error);
-      }
-      
-      // 実際の容量チェックは制限があるため、ログ出力のみ
-      systemLogger.success('✅ ディスク容量チェック完了');
-      
-    } catch (error) {
-      systemLogger.warn('⚠️ ディスク容量チェックでエラー:', error);
-      // 容量チェック失敗は致命的でないため、警告のみ
-    }
-  }
-
-  /**
-   * 自動メンテナンススケジュール設定
-   * 1日1回の定期メンテナンスを設定（深夜2時実行）
+   * 自動メンテナンススケジュール設定（委譲）
    */
   setupMaintenanceSchedule(): void {
-    try {
-      systemLogger.info('⏰ 定期メンテナンススケジュール設定中...');
-      
-      // 24時間 = 24 * 60 * 60 * 1000ms
-      const maintenanceInterval = 24 * 60 * 60 * 1000;
-      
-      // 深夜2時に実行するためのタイマー設定
-      const now = new Date();
-      const targetTime = new Date();
-      targetTime.setHours(2, 0, 0, 0); // 深夜2:00
-      
-      // 次回実行時刻が過去の場合は翌日に設定
-      if (targetTime <= now) {
-        targetTime.setDate(targetTime.getDate() + 1);
-      }
-      
-      const timeUntilMaintenance = targetTime.getTime() - now.getTime();
-      
-      // 初回実行タイマー
-      setTimeout(() => {
-        this.performPeriodicMaintenance();
-        
-        // 以降は24時間間隔で実行
-        setInterval(() => {
-          this.performPeriodicMaintenance();
-        }, maintenanceInterval);
-        
-      }, timeUntilMaintenance);
-      
-      systemLogger.success(`✅ 定期メンテナンススケジュール設定完了 - 次回実行: ${targetTime.toISOString()}`);
-      
-    } catch (error) {
-      systemLogger.error('❌ メンテナンススケジュール設定失敗:', error);
-      // スケジュール設定失敗は致命的でないため、エラーログのみ
+    this.schedulerMaintenance.setupMaintenanceSchedule();
+  }
+
+  // ===================================================================
+  // MainLoop統合メソッド群 - 実行ループ制御機能
+  // ===================================================================
+
+  /**
+   * 単一実行サイクル（30分間隔実行の1回分）
+   * MainLoop統合版 - executeScheduledTaskと連携
+   */
+  async runOnce(): Promise<ExecutionResult> {
+    if (this.isExecuting) {
+      systemLogger.warn('⚠️ Execution already in progress, skipping');
+      return this.createSkippedResult();
     }
+
+    this.isExecuting = true;
+    const startTime = Date.now();
+
+    try {
+      systemLogger.info('🚀 Starting scheduled execution cycle...');
+
+      // ===================================================================
+      // メインワークフロー実行 - main.tsに実装済み
+      // MainLoopはスケジュール制御のみ担当
+      // ===================================================================
+      
+      const result = await this.schedulerCore.triggerExecution();
+      const executionTime = Date.now() - startTime;
+
+      // ExecutionResultに変換
+      const executionResult: ExecutionResult = {
+        success: true,
+        action: 'scheduled',
+        executionTime,
+        duration: executionTime,
+        error: undefined,
+        metadata: {
+          executionTime,
+          retryCount: 0,
+          rateLimitHit: false,
+          timestamp: new Date().toISOString()
+        }
+      };
+
+      // メトリクス更新
+      this.updateLoopMetrics(executionResult, true);
+
+      systemLogger.success('✅ Scheduled execution completed:', {
+        action: executionResult.action,
+        duration: `${executionTime}ms`,
+        success: executionResult.success
+      });
+
+      return executionResult;
+
+    } catch (error) {
+      const executionTime = Date.now() - startTime;
+      const errorResult = this.createErrorResult(error as Error, executionTime);
+      
+      this.updateLoopMetrics(errorResult, false);
+      
+      systemLogger.error('❌ Scheduled execution failed:', error);
+      return errorResult;
+
+    } finally {
+      this.isExecuting = false;
+    }
+  }
+
+  /**
+   * ループメトリクス取得
+   */
+  getLoopMetrics(): LoopMetrics {
+    return { ...this.metrics };
+  }
+
+  /**
+   * メトリクスリセット
+   */
+  resetLoopMetrics(): void {
+    this.initializeMetrics();
+    systemLogger.info('📊 Loop metrics reset');
+  }
+
+  /**
+   * 実行状態確認
+   */
+  isCurrentlyExecuting(): boolean {
+    return this.isExecuting;
+  }
+
+  /**
+   * システム健全性チェック（MainLoop統合版）
+   */
+  async performHealthCheck(): Promise<{
+    overall: 'healthy' | 'degraded' | 'critical';
+    components: {
+      scheduler: 'healthy' | 'error';
+      metrics: 'healthy' | 'error';
+    };
+    timestamp: string;
+  }> {
+    try {
+      systemLogger.info('🏥 Performing scheduler health check...');
+
+      // スケジューラー関連の健全性をチェック
+      const health = {
+        overall: 'healthy' as const,
+        components: {
+          scheduler: 'healthy' as const,
+          metrics: 'healthy' as const
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      // 基本的な健全性チェック
+      if (this.isExecuting && Date.now() - new Date(this.metrics.lastExecutionTime).getTime() > 300000) {
+        // 5分以上実行中の場合は異常
+        (health.components as any).scheduler = 'error';
+      }
+
+      if (!this.metrics || this.metrics.totalExecutions < 0) {
+        (health.components as any).metrics = 'error';
+      }
+
+      // 全体状況判定
+      const errorCount = Object.values(health.components).filter((status: any) => status === 'error').length;
+      
+      if (errorCount > 0) (health as any).overall = 'critical';
+
+      systemLogger.success('✅ Scheduler health check completed');
+      return health;
+
+    } catch (error) {
+      systemLogger.error('❌ Scheduler health check failed:', error);
+      return {
+        overall: 'critical',
+        components: {
+          scheduler: 'error',
+          metrics: 'error'
+        },
+        timestamp: new Date().toISOString()
+      };
+    }
+  }
+
+  // ===================================================================
+  // MainLoop統合プライベートメソッド群 - メトリクス管理
+  // ===================================================================
+
+  private initializeMetrics(): void {
+    this.metrics = {
+      totalExecutions: 0,
+      successRate: 0,
+      avgExecutionTime: 0,
+      actionBreakdown: {
+        post: { count: 0, successRate: 0, avgTime: 0 },
+        retweet: { count: 0, successRate: 0, avgTime: 0 },
+        quote_tweet: { count: 0, successRate: 0, avgTime: 0 },
+        like: { count: 0, successRate: 0, avgTime: 0 },
+        wait: { count: 0, successRate: 0, avgTime: 0 },
+        scheduled: { count: 0, successRate: 0, avgTime: 0 }
+      },
+      learningUpdates: 0,
+      lastExecutionTime: ''
+    };
+  }
+
+  private updateLoopMetrics(result: ExecutionResult, learningUpdated: boolean): void {
+    this.metrics.totalExecutions++;
+    
+    // 成功率更新
+    const successCount = this.metrics.successRate * (this.metrics.totalExecutions - 1) + (result.success ? 1 : 0);
+    this.metrics.successRate = successCount / this.metrics.totalExecutions;
+
+    // 平均実行時間更新
+    const totalTime = this.metrics.avgExecutionTime * (this.metrics.totalExecutions - 1) + result.executionTime;
+    this.metrics.avgExecutionTime = totalTime / this.metrics.totalExecutions;
+
+    // アクション別統計更新
+    if (this.metrics.actionBreakdown[result.action]) {
+      const actionStats = this.metrics.actionBreakdown[result.action];
+      actionStats.count++;
+      
+      const actionSuccess = actionStats.successRate * (actionStats.count - 1) + (result.success ? 1 : 0);
+      actionStats.successRate = actionSuccess / actionStats.count;
+      
+      const actionTime = actionStats.avgTime * (actionStats.count - 1) + result.executionTime;
+      actionStats.avgTime = actionTime / actionStats.count;
+    }
+
+    // 学習更新カウント
+    if (learningUpdated) {
+      this.metrics.learningUpdates++;
+    }
+
+    this.metrics.lastExecutionTime = new Date().toISOString();
+  }
+
+  private createSkippedResult(): ExecutionResult {
+    return {
+      success: false,
+      action: 'skip',
+      executionTime: 0,
+      duration: 0,
+      error: 'Execution already in progress',
+      metadata: {
+        executionTime: 0,
+        retryCount: 0,
+        rateLimitHit: false,
+        timestamp: new Date().toISOString()
+      }
+    };
+  }
+
+  private createErrorResult(error: Error, executionTime: number): ExecutionResult {
+    return {
+      success: false,
+      action: 'error',
+      executionTime,
+      duration: executionTime,
+      error: error.message,
+      metadata: {
+        executionTime,
+        retryCount: 0,
+        rateLimitHit: false,
+        timestamp: new Date().toISOString()
+      }
+    };
   }
 }

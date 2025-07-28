@@ -1,12 +1,9 @@
 import { systemLogger, Logger } from '../shared/logger';
 import { ComponentContainer, COMPONENT_KEYS } from '../shared/component-container';
-import { MainLoop } from '../scheduler/main-loop';
-import { CoreScheduler } from '../scheduler/core-scheduler';
 import { DataManager } from '../data/data-manager';
 import { KaitoApiClient } from '../kaito-api';
 import { Config } from '../shared/config';
-import { TweetEndpoints } from '../kaito-api/endpoints/tweet-endpoints';
-import { ActionEndpoints } from '../kaito-api/endpoints/action-endpoints';
+import { SchedulerManager } from './scheduler-manager';
 
 // TradingAssistantX のインターface定義（型安全性のため）
 interface ITradingAssistantX {
@@ -57,33 +54,16 @@ class SystemInitializer {
   initializeComponents(config: Config): ComponentContainer {
     const container = new ComponentContainer();
 
-    const scheduler = new CoreScheduler();
-    const mainLoop = new MainLoop(() => Promise.resolve({
-      success: true,
-      action: 'wait',
-      executionTime: 0,
-      duration: 0,
-      metadata: {
-        executionTime: 0,
-        retryCount: 0,
-        rateLimitHit: false,
-        timestamp: new Date().toISOString()
-      }
-    }));
+    const schedulerManager = new SchedulerManager(container);
     const kaitoClient = new KaitoApiClient();
-    const searchEngine = new TweetEndpoints();
-    const actionExecutor = new ActionEndpoints();
     const dataManager = new DataManager();
 
-    container.register(COMPONENT_KEYS.SCHEDULER, scheduler);
-    container.register(COMPONENT_KEYS.MAIN_LOOP, mainLoop);
+    container.register(COMPONENT_KEYS.SCHEDULER_MANAGER, schedulerManager);
     container.register(COMPONENT_KEYS.KAITO_CLIENT, kaitoClient);
-    container.register(COMPONENT_KEYS.SEARCH_ENGINE, searchEngine);
-    container.register(COMPONENT_KEYS.ACTION_EXECUTOR, actionExecutor);
     container.register(COMPONENT_KEYS.DATA_MANAGER, dataManager);
     container.register(COMPONENT_KEYS.CONFIG, config);
 
-    this.logger.info('📦 コンポーネント初期化完了');
+    this.logger.info('📦 コンポーネント初期化完了 - SchedulerManager統合版');
     return container;
   }
 
@@ -151,9 +131,9 @@ interface HealthReport {
   timestamp: string;
   totalCheckDuration: number; // 全体チェック時間
   systemResources: {
-    memoryUsage: NodeJS.MemoryUsage;
+    memoryUsage: ReturnType<typeof process.memoryUsage>;
     uptime: number;
-    cpuUsage: NodeJS.CpuUsage;
+    cpuUsage: ReturnType<typeof process.cpuUsage>;
   };
 }
 
@@ -169,7 +149,7 @@ class HealthChecker {
    * 各コンポーネントの健全性を並行チェックし、統合レポートを作成
    */
   async performSystemHealthCheck(
-    mainLoop: MainLoop,
+    schedulerManager: SchedulerManager,
     dataManager: DataManager, 
     kaitoClient: KaitoApiClient
   ): Promise<HealthReport> {
@@ -181,13 +161,13 @@ class HealthChecker {
 
       // 並行ヘルスチェックの実行
       const healthCheckPromises = [
-        this.checkMainLoopHealth(mainLoop),
+        this.checkSchedulerManagerHealth(schedulerManager),
         this.checkDataManagerHealth(dataManager),
         this.checkApiHealth(kaitoClient)
       ];
       
       const healthChecks = await Promise.allSettled(healthCheckPromises);
-      const componentNames = ['MainLoop', 'DataManager', 'KaitoAPI'];
+      const componentNames = ['SchedulerManager', 'DataManager', 'KaitoAPI'];
 
       // 結果の集約・分析
       const components: ComponentHealth[] = [];
@@ -266,18 +246,18 @@ class HealthChecker {
   }
 
   /**
-   * MainLoopコンポーネントヘルスチェック
+   * SchedulerManagerコンポーネンツヘルスチェック
    */
-  private async checkMainLoopHealth(mainLoop: MainLoop): Promise<ComponentHealth> {
+  private async checkSchedulerManagerHealth(schedulerManager: SchedulerManager): Promise<ComponentHealth> {
     const checkStart = process.hrtime();
     
     try {
-      const health = await mainLoop.performHealthCheck();
+      const health = await schedulerManager.performHealthCheck();
       const checkEnd = process.hrtime(checkStart);
       const checkDuration = checkEnd[0] * 1000 + checkEnd[1] / 1000000; // ms
       
       return {
-        component: 'MainLoop',
+        component: 'SchedulerManager',
         status: health.overall === 'healthy' ? 'healthy' : 'warning',
         details: health.overall !== 'healthy' ? JSON.stringify(health) : undefined,
         checkDuration: Math.round(checkDuration * 1000) / 1000,
@@ -288,7 +268,7 @@ class HealthChecker {
       const checkDuration = checkEnd[0] * 1000 + checkEnd[1] / 1000000;
       
       return {
-        component: 'MainLoop', 
+        component: 'SchedulerManager', 
         status: 'error',
         details: error instanceof Error ? error.message : 'Health check failed',
         checkDuration: Math.round(checkDuration * 1000) / 1000,
@@ -378,7 +358,7 @@ class ShutdownManager {
    * 順序立てたシャットダウンでリソースの安全な解放を実行
    */
   async gracefulShutdown(
-    scheduler: CoreScheduler | null,
+    schedulerManager: SchedulerManager | null,
     dataManager: DataManager | null
   ): Promise<void> {
     this.shutdownStartTime = Date.now();
@@ -393,8 +373,8 @@ class ShutdownManager {
       // シャットダウンステップの実行
       const shutdownSteps = [];
       
-      if (scheduler) {
-        shutdownSteps.push({ name: 'Scheduler停止', action: () => this.stopScheduler(scheduler) });
+      if (schedulerManager) {
+        shutdownSteps.push({ name: 'SchedulerManager停止', action: () => this.stopSchedulerManager(schedulerManager) });
       }
       
       if (dataManager) {
@@ -434,23 +414,23 @@ class ShutdownManager {
   }
 
   /**
-   * スケジューラーの安全停止
+   * スケジューラーマネージャーの安全停止
    */
-  private async stopScheduler(scheduler: CoreScheduler): Promise<void> {
+  private async stopSchedulerManager(schedulerManager: SchedulerManager): Promise<void> {
     try {
-      // スケジューラーの現在状態をログ出力
-      const status = scheduler.getStatus();
-      this.logger.debug('📊 停止前スケジューラー状態:', status);
+      // スケジューラーマネージャーの現在状態をログ出力
+      const status = schedulerManager.getSchedulerStatus();
+      this.logger.debug('📊 停止前スケジューラーマネージャー状態:', status);
       
       // 停止実行
-      scheduler.stop();
+      schedulerManager.stopScheduler();
       
       // 少し待って停止確認
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      this.logger.info('⏹️ CoreScheduler停止完了');
+      this.logger.info('⏹️ SchedulerManager停止完了');
     } catch (error) {
-      this.logger.error('❌ CoreScheduler停止エラー:', {
+      this.logger.error('❌ SchedulerManager停止エラー:', {
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
@@ -580,11 +560,11 @@ export class SystemLifecycle {
       systemLogger.success('✅ システム初期化完了');
 
       systemLogger.info('🏥 【起動ステップ2】ヘルスチェック開始');
-      const mainLoop = this.container.get<MainLoop>(COMPONENT_KEYS.MAIN_LOOP);
+      const schedulerManager = this.container.get<SchedulerManager>(COMPONENT_KEYS.SCHEDULER_MANAGER);
       const dataManager = this.container.get<DataManager>(COMPONENT_KEYS.DATA_MANAGER);
       const kaitoClient = this.container.get<KaitoApiClient>(COMPONENT_KEYS.KAITO_CLIENT);
       
-      await this.healthChecker.performSystemHealthCheck(mainLoop, dataManager, kaitoClient);
+      await this.healthChecker.performSystemHealthCheck(schedulerManager, dataManager, kaitoClient);
       systemLogger.success('✅ ヘルスチェック完了');
 
       systemLogger.success('✅ システム起動完了 - 30分間隔自動実行準備完了');
@@ -608,12 +588,12 @@ export class SystemLifecycle {
       // ===================================================================
       
       systemLogger.info('🛑 【停止ステップ1】コンポーネント停止開始');
-      const scheduler = this.container.has(COMPONENT_KEYS.SCHEDULER) 
-        ? this.container.get<CoreScheduler>(COMPONENT_KEYS.SCHEDULER) : null;
+      const schedulerManager = this.container.has(COMPONENT_KEYS.SCHEDULER_MANAGER) 
+        ? this.container.get<SchedulerManager>(COMPONENT_KEYS.SCHEDULER_MANAGER) : null;
       const dataManager = this.container.has(COMPONENT_KEYS.DATA_MANAGER) 
         ? this.container.get<DataManager>(COMPONENT_KEYS.DATA_MANAGER) : null;
       
-      await this.shutdownManager.gracefulShutdown(scheduler, dataManager);
+      await this.shutdownManager.gracefulShutdown(schedulerManager, dataManager);
       systemLogger.success('✅ コンポーネント停止完了');
 
       this.isInitialized = false;

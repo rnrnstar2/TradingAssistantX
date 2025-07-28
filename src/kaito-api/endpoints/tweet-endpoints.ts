@@ -18,8 +18,20 @@ import {
   TweetSearchResult, 
   TweetSearchOptions, 
   CreateTweetOptions, 
-  DeleteTweetResult 
+  DeleteTweetResult,
+  HttpClient,
+  TwitterAPITweetResponse,
+  TwitterAPISearchResponse
 } from '../types';
+
+// ============================================================================
+// VALIDATION TYPES
+// ============================================================================
+
+interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
 
 // ============================================================================
 // TWEET ENDPOINTS CLASS
@@ -35,14 +47,8 @@ import {
  * - リプライ・会話管理
  */
 export class TweetEndpoints {
-  private config: KaitoAPIConfig;
-  private httpClient: any; // HttpClientインスタンス
-
-  constructor(config?: KaitoAPIConfig, httpClient?: any) {
-    this.config = config || {} as KaitoAPIConfig;
-    this.httpClient = httpClient || {};
-    
-    console.log('✅ TweetEndpoints initialized - 疎結合ライブラリアーキテクチャ');
+  constructor(private httpClient: HttpClient) {
+    console.log('✅ TweetEndpoints initialized - TwitterAPI.io対応版');
   }
 
   // ============================================================================
@@ -57,75 +63,39 @@ export class TweetEndpoints {
     try {
       console.log('📝 ツイート作成実行中...', { textLength: options.text.length });
 
-      if (!options.text || options.text.trim().length === 0) {
-        throw new Error('Tweet text is required');
+      // バリデーション
+      if (!options.text || options.text.length > 280) {
+        throw new Error('Invalid tweet text');
       }
 
-      if (options.text.length > 280) {
-        throw new Error('Tweet text exceeds 280 character limit');
-      }
-
-      // ツイートデータ準備
-      const tweetData: Record<string, any> = {
+      // TwitterAPI.io形式のリクエスト
+      const requestData: any = {
         text: options.text
       };
 
-      // メディア添付
-      if (options.mediaIds && options.mediaIds.length > 0) {
-        tweetData.media = {
-          media_ids: options.mediaIds
+      if (options.media_ids?.length) {
+        requestData.media_ids = options.media_ids;
+      }
+
+      if (options.reply?.in_reply_to_tweet_id) {
+        requestData.reply = {
+          in_reply_to_tweet_id: options.reply.in_reply_to_tweet_id
         };
       }
 
-      // 投票設定
-      if (options.pollOptions && options.pollOptions.length > 0) {
-        tweetData.poll = {
-          options: options.pollOptions,
-          duration_minutes: options.pollDurationMinutes || 1440 // デフォルト24時間
-        };
+      if (options.quote_tweet_id) {
+        requestData.quote_tweet_id = options.quote_tweet_id;
       }
 
-      // リプライ設定
-      if (options.inReplyToTweetId) {
-        tweetData.reply = {
-          in_reply_to_tweet_id: options.inReplyToTweetId
-        };
-      }
+      const response = await this.httpClient.post<TwitterAPITweetResponse>('/v1/tweets', requestData);
 
-      // 引用ツイート設定
-      if (options.quoteTweetId) {
-        tweetData.quote_tweet_id = options.quoteTweetId;
-      }
-
-      // 位置情報設定
-      if (options.location) {
-        tweetData.geo = {
-          place_id: options.location.placeId
-        };
-      }
-
-      // その他設定
-      if (options.forSuperFollowersOnly) {
-        tweetData.for_super_followers_only = true;
-      }
-
-      if (options.directMessageDeepLink) {
-        tweetData.direct_message_deep_link = options.directMessageDeepLink;
-      }
-
-      // API呼び出し
-      const response = await this.httpClient.post('/tweets', tweetData) as any;
-
-      const result: TweetResult = {
+      return {
         id: response.data.id,
         text: response.data.text,
         url: `https://twitter.com/i/status/${response.data.id}`,
-        timestamp: new Date().toISOString(),
+        timestamp: response.data.created_at,
         success: true
       };
-
-      console.log('✅ ツイート作成完了:', { id: result.id, success: result.success });
-      return result;
 
     } catch (error) {
       console.error('❌ ツイート作成エラー:', error);
@@ -284,7 +254,7 @@ export class TweetEndpoints {
       // 引用ツイート作成
       const createResult = await this.createTweet({
         text: comment,
-        quoteTweetId: tweetId
+        quote_tweet_id: tweetId
       });
 
       const result: QuoteResult = {
@@ -331,95 +301,45 @@ export class TweetEndpoints {
         throw new Error('Search query is required');
       }
 
-      // 検索パラメータ構築
-      const params: Record<string, any> = {
+      const params = {
         query: options.query,
-        max_results: Math.min(options.maxResults || 50, 100),
-        sort_order: options.sortOrder || 'recency'
+        max_results: options.max_results || 10,
+        'tweet.fields': 'created_at,public_metrics,context_annotations,lang',
+        'user.fields': 'username,verified'
       };
 
-      // ツイートフィールド指定
-      const defaultTweetFields = [
-        'id', 'text', 'author_id', 'created_at', 'public_metrics',
-        'context_annotations', 'attachments', 'referenced_tweets',
-        'in_reply_to_user_id', 'conversation_id', 'lang'
-      ];
-      params['tweet.fields'] = (options.tweetFields || defaultTweetFields).join(',');
+      const response = await this.httpClient.get<TwitterAPISearchResponse>('/v1/tweets/search', params);
 
-      // 展開指定
-      if (options.expansions && options.expansions.length > 0) {
-        params.expansions = options.expansions.join(',');
-      }
-
-      // 時間範囲指定
-      if (options.startTime) {
-        params.start_time = options.startTime;
-      }
-      if (options.endTime) {
-        params.end_time = options.endTime;
-      }
-
-      // 次ページトークン
-      if (options.nextToken) {
-        params.next_token = options.nextToken;
-      }
-
-      // 言語指定
-      if (options.lang) {
-        params.lang = options.lang;
-      }
-
-      // リツイート含むかどうか
-      if (options.includeRetweets === false) {
-        params.query += ' -is:retweet';
-      }
-
-      // API呼び出し
-      const response = await this.httpClient.get('/tweets/search/recent', params) as any;
-
-      const tweets: TweetData[] = response.data.map((tweetData: any) => ({
-        id: tweetData.id,
-        text: tweetData.text,
-        authorId: tweetData.author_id,
-        createdAt: tweetData.created_at,
-        publicMetrics: {
-          retweetCount: tweetData.public_metrics.retweet_count,
-          likeCount: tweetData.public_metrics.like_count,
-          quoteCount: tweetData.public_metrics.quote_count,
-          replyCount: tweetData.public_metrics.reply_count,
-          impressionCount: tweetData.public_metrics.impression_count
-        },
-        contextAnnotations: tweetData.context_annotations?.map((annotation: any) => ({
-          domain: annotation.domain.name,
-          entity: annotation.entity.name,
-          description: annotation.entity.description
-        })),
-        attachments: tweetData.attachments,
-        referencedTweets: tweetData.referenced_tweets,
-        inReplyToUserId: tweetData.in_reply_to_user_id,
-        conversationId: tweetData.conversation_id,
-        lang: tweetData.lang
-      }));
-
-      const result: TweetSearchResult = {
-        tweets,
-        totalCount: response.meta.result_count,
-        nextToken: response.meta.next_token,
+      return {
+        tweets: response.data.map(this.mapTweetData),
+        totalCount: response.meta?.result_count || 0,
+        nextToken: response.meta?.next_token,
         searchQuery: options.query,
         timestamp: new Date().toISOString()
       };
-
-      console.log('✅ ツイート検索完了:', { 
-        query: options.query, 
-        count: result.totalCount 
-      });
-
-      return result;
 
     } catch (error) {
       console.error('❌ ツイート検索エラー:', error);
       throw new Error(`Failed to search tweets: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  private mapTweetData(apiTweet: any): TweetData {
+    return {
+      id: apiTweet.id,
+      text: apiTweet.text,
+      author_id: apiTweet.author_id,
+      created_at: apiTweet.created_at,
+      public_metrics: {
+        retweet_count: apiTweet.public_metrics?.retweet_count || 0,
+        like_count: apiTweet.public_metrics?.like_count || 0,
+        quote_count: apiTweet.public_metrics?.quote_count || 0,
+        reply_count: apiTweet.public_metrics?.reply_count || 0,
+        impression_count: apiTweet.public_metrics?.impression_count || 0
+      },
+      context_annotations: apiTweet.context_annotations,
+      lang: apiTweet.lang
+    };
   }
 
   // ============================================================================
@@ -448,30 +368,28 @@ export class TweetEndpoints {
       const tweet: TweetData = {
         id: tweetData.id,
         text: tweetData.text,
-        authorId: tweetData.author_id,
-        createdAt: tweetData.created_at,
-        publicMetrics: {
-          retweetCount: tweetData.public_metrics.retweet_count,
-          likeCount: tweetData.public_metrics.like_count,
-          quoteCount: tweetData.public_metrics.quote_count,
-          replyCount: tweetData.public_metrics.reply_count,
-          impressionCount: tweetData.public_metrics.impression_count
+        author_id: tweetData.author_id,
+        created_at: tweetData.created_at,
+        public_metrics: {
+          retweet_count: tweetData.public_metrics.retweet_count,
+          like_count: tweetData.public_metrics.like_count,
+          quote_count: tweetData.public_metrics.quote_count,
+          reply_count: tweetData.public_metrics.reply_count,
+          impression_count: tweetData.public_metrics.impression_count
         },
-        contextAnnotations: tweetData.context_annotations?.map((annotation: any) => ({
+        context_annotations: tweetData.context_annotations?.map((annotation: any) => ({
           domain: annotation.domain.name,
           entity: annotation.entity.name,
           description: annotation.entity.description
         })),
-        attachments: tweetData.attachments,
-        referencedTweets: tweetData.referenced_tweets,
-        inReplyToUserId: tweetData.in_reply_to_user_id,
-        conversationId: tweetData.conversation_id,
-        lang: tweetData.lang
+        lang: tweetData.lang,
+        in_reply_to_user_id: tweetData.in_reply_to_user_id,
+        conversation_id: tweetData.conversation_id
       };
 
       console.log('✅ ツイート取得完了:', { 
         id: tweet.id, 
-        likes: tweet.publicMetrics.likeCount 
+        likes: tweet.public_metrics.like_count 
       });
 
       return tweet;
@@ -507,14 +425,14 @@ export class TweetEndpoints {
       const tweets: TweetData[] = response.data.map((tweetData: any) => ({
         id: tweetData.id,
         text: tweetData.text,
-        authorId: tweetData.author_id,
-        createdAt: tweetData.created_at,
-        publicMetrics: {
-          retweetCount: tweetData.public_metrics.retweet_count,
-          likeCount: tweetData.public_metrics.like_count,
-          quoteCount: tweetData.public_metrics.quote_count,
-          replyCount: tweetData.public_metrics.reply_count,
-          impressionCount: tweetData.public_metrics.impression_count
+        author_id: tweetData.author_id,
+        created_at: tweetData.created_at,
+        public_metrics: {
+          retweet_count: tweetData.public_metrics.retweet_count,
+          like_count: tweetData.public_metrics.like_count,
+          quote_count: tweetData.public_metrics.quote_count,
+          reply_count: tweetData.public_metrics.reply_count,
+          impression_count: tweetData.public_metrics.impression_count
         }
       }));
 
@@ -529,27 +447,11 @@ export class TweetEndpoints {
 
   /**
    * トレンド検索（execution-flow.tsで使用）
+   * 注意: トレンド検索は trend-endpoints.ts で実装されています
    */
   async searchTrends(): Promise<string[]> {
-    try {
-      console.log('📈 トレンド検索中...');
-
-      // 基本的なトレンドデータを返す（実装は簡略化）
-      const mockTrends = [
-        '投資教育',
-        '資産運用', 
-        '金融リテラシー',
-        '株式投資',
-        '暗号資産'
-      ];
-
-      console.log(`✅ トレンド検索完了: ${mockTrends.length}件`);
-      return mockTrends;
-
-    } catch (error) {
-      console.error('❌ トレンド検索エラー:', error);
-      throw new Error(`Trend search failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    console.log('⚠️ トレンド検索はtrend-endpoints.tsを使用してください');
+    throw new Error('Trend search should use TrendEndpoints class');
   }
 
   // ============================================================================
@@ -568,28 +470,11 @@ export class TweetEndpoints {
 
   /**
    * ツイートテキスト検証
+   * 注意: バリデーションロジックはutils層に移動済み
    */
   validateTweetText(text: string): { isValid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    if (!text || text.trim().length === 0) {
-      errors.push('Tweet text cannot be empty');
-    }
-
-    if (text.length > 280) {
-      errors.push('Tweet text exceeds 280 character limit');
-    }
-
-    // 韓国語チェック
-    const koreanRegex = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
-    if (koreanRegex.test(text)) {
-      errors.push('Korean characters are not allowed');
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors
-    };
+    console.log('⚠️ バリデーションロジックはutils層を使用してください');
+    throw new Error('Validation logic should use utils layer');
   }
 
   /**

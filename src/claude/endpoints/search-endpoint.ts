@@ -43,7 +43,7 @@ export async function generateSearchQuery(input: SearchInput): Promise<SearchQue
       priority: optimizedQuery.priority,
       expectedResults: optimizedQuery.expectedResults,
       metadata: {
-        purpose: input.purpose,
+        purpose: (MIN_ENGAGEMENT_BY_PURPOSE[input.purpose as keyof typeof MIN_ENGAGEMENT_BY_PURPOSE] !== undefined ? input.purpose : 'retweet') as 'retweet' | 'like' | 'trend_analysis' | 'engagement',
         generatedAt: new Date().toISOString()
       }
     };
@@ -84,7 +84,6 @@ export async function generateRetweetQuery(input: RetweetSearchInput): Promise<S
       query: optimizedQuery.query,
       filters: {
         ...optimizedQuery.filters,
-        minEngagement: constraints?.minEngagement || 10,
         verified: false,
         language: 'ja'
       },
@@ -128,8 +127,6 @@ export async function generateLikeQuery(input: LikeSearchInput): Promise<SearchQ
       query: optimizedQuery.query,
       filters: {
         ...optimizedQuery.filters,
-        minEngagement: constraints?.minEngagement || 5,
-        maxAge: constraints?.timeframe || '12h',
         language: 'ja'
       },
       priority: optimizedQuery.priority,
@@ -172,8 +169,6 @@ export async function generateQuoteQuery(input: QuoteSearchInput): Promise<Searc
       query: optimizedQuery.query,
       filters: {
         ...optimizedQuery.filters,
-        minEngagement: constraints?.minEngagement || 15,
-        maxAge: constraints?.timeframe || '24h',
         language: 'ja'
       },
       priority: optimizedQuery.priority,
@@ -406,17 +401,46 @@ JSON形式で回答してください:
 // OPTIMIZATION FUNCTIONS - 最適化機能
 // ============================================================================
 
+// purpose別の最小エンゲージメント基準を明確化
+const MIN_ENGAGEMENT_BY_PURPOSE = {
+  retweet: 10,
+  like: 5, 
+  trend_analysis: 3,
+  engagement: 15  // 'engagement' = quote_tweet用
+} as const;
+
 /**
  * 基本検索クエリ最適化
  */
 function optimizeSearchQuery(claudeResult: any, input: SearchInput): any {
+  // topicが含まれているかチェックし、含まれていない場合は追加
+  const baseQuery = claudeResult.query || input.topic;
+  const finalQuery = baseQuery.includes(input.topic) ? 
+    baseQuery.substring(0, 200) :
+    `${input.topic} ${baseQuery}`.substring(0, 200);
+
+  // 無効なpurposeの場合はデフォルトを使用
+  const validPurpose = MIN_ENGAGEMENT_BY_PURPOSE[input.purpose as keyof typeof MIN_ENGAGEMENT_BY_PURPOSE] !== undefined ? input.purpose : 'retweet';
+  
+  // 入力制約を優先適用しつつ、purpose別最低基準を維持
+  const purposeMinEngagement = MIN_ENGAGEMENT_BY_PURPOSE[validPurpose as keyof typeof MIN_ENGAGEMENT_BY_PURPOSE] || claudeResult.engagement_min;
+  // purpose別最低基準よりも高い制約のみ適用
+  const finalMinEngagement = Math.max(
+    purposeMinEngagement,
+    claudeResult.engagement_min,
+    input.constraints?.minEngagement || 0
+  );
+  
   return {
-    query: claudeResult.query.substring(0, 200),
+    query: finalQuery,
     filters: {
       language: 'ja',
-      minEngagement: claudeResult.engagement_min,
-      maxAge: claudeResult.time_range,
-      ...input.constraints
+      minEngagement: finalMinEngagement,
+      maxAge: input.constraints?.timeframe || claudeResult.time_range,
+      // 入力制約からminEngagementを除外して追加（既にfinalMinEngagementで処理済み）
+      ...Object.fromEntries(
+        Object.entries(input.constraints || {}).filter(([key]) => key !== 'minEngagement')
+      )
     },
     priority: claudeResult.priority,
     expectedResults: claudeResult.expectedResults
@@ -429,12 +453,21 @@ function optimizeSearchQuery(claudeResult: any, input: SearchInput): any {
 function optimizeRetweetQuery(claudeResult: any, input: RetweetSearchInput): any {
   const qualityBoost = input.constraints?.qualityThreshold ? 0.2 : 0;
   
+  // topicが含まれているかチェックし、含まれていない場合は追加
+  const baseQuery = claudeResult.query || input.topic;
+  const finalQuery = baseQuery.includes(input.topic) ? 
+    baseQuery.substring(0, 200) :
+    `${input.topic} ${baseQuery}`.substring(0, 200);
+  
   return {
-    query: claudeResult.query.substring(0, 200),
+    query: finalQuery,
     filters: {
       language: 'ja',
-      minEngagement: Math.max(claudeResult.engagement_min, 10),
-      maxAge: claudeResult.time_range,
+      minEngagement: Math.max(
+        input.constraints?.minEngagement || 0,
+        10
+      ),
+      maxAge: input.constraints?.timeframe || claudeResult.time_range,
       verified: false,
       exclude_keywords: [...(claudeResult.exclude || []), 'spam', '詐欺', '投機']
     },
@@ -449,12 +482,21 @@ function optimizeRetweetQuery(claudeResult: any, input: RetweetSearchInput): any
 function optimizeLikeQuery(claudeResult: any, input: LikeSearchInput): any {
   const sentimentBoost = input.constraints?.sentimentFilter === 'positive' ? 0.1 : 0;
   
+  // topicが含まれているかチェックし、含まれていない場合は追加
+  const baseQuery = claudeResult.query || input.topic;
+  const finalQuery = baseQuery.includes(input.topic) ? 
+    baseQuery.substring(0, 200) :
+    `${input.topic} ${baseQuery}`.substring(0, 200);
+  
   return {
-    query: claudeResult.query.substring(0, 200),
+    query: finalQuery,
     filters: {
       language: 'ja',
-      minEngagement: Math.max(claudeResult.engagement_min, 5),
-      maxAge: claudeResult.time_range,
+      minEngagement: Math.max(
+        input.constraints?.minEngagement || 0,
+        5
+      ),
+      maxAge: input.constraints?.timeframe || claudeResult.time_range,
       sentiment: input.constraints?.sentimentFilter || 'positive',
       exclude_keywords: [...(claudeResult.exclude || []), 'spam', '詐欺']
     },
@@ -469,12 +511,21 @@ function optimizeLikeQuery(claudeResult: any, input: LikeSearchInput): any {
 function optimizeQuoteQuery(claudeResult: any, input: QuoteSearchInput): any {
   const valueAddBoost = input.constraints?.valueAddPotential === 'high' ? 0.3 : 0.1;
   
+  // topicが含まれているかチェックし、含まれていない場合は追加
+  const baseQuery = claudeResult.query || input.topic;
+  const finalQuery = baseQuery.includes(input.topic) ? 
+    baseQuery.substring(0, 200) :
+    `${input.topic} ${baseQuery}`.substring(0, 200);
+  
   return {
-    query: claudeResult.query.substring(0, 200),
+    query: finalQuery,
     filters: {
       language: 'ja',
-      minEngagement: Math.max(claudeResult.engagement_min, 15),
-      maxAge: claudeResult.time_range,
+      minEngagement: Math.max(
+        input.constraints?.minEngagement || 0,
+        15
+      ),
+      maxAge: input.constraints?.timeframe || claudeResult.time_range,
       has_discussion_potential: true,
       exclude_keywords: [...(claudeResult.exclude || []), 'spam', '詐欺', 'FUD']
     },
@@ -498,17 +549,27 @@ function generateFallbackQuery(input: SearchInput): SearchQuery {
     engagement: `${input.topic} 投資 コミュニティ -spam`
   };
 
+  // 無効なpurposeの場合はデフォルトを使用
+  const validPurpose = fallbackQueries[input.purpose] ? input.purpose : 'retweet';
+  
+  // purpose別の最小エンゲージメント基準を適用
+  const purposeMinEngagement = MIN_ENGAGEMENT_BY_PURPOSE[validPurpose as keyof typeof MIN_ENGAGEMENT_BY_PURPOSE] || 3;
+  const finalMinEngagement = Math.max(
+    input.constraints?.minEngagement || 0,
+    purposeMinEngagement
+  );
+
   return {
     query: fallbackQueries[input.purpose] || `${input.topic} 投資 -spam`,
     filters: {
       language: 'ja',
-      minEngagement: 3,
-      maxAge: '24h'
+      minEngagement: finalMinEngagement,
+      maxAge: input.constraints?.timeframe || '24h'
     },
     priority: 0.5,
     expectedResults: 20,
     metadata: {
-      purpose: input.purpose,
+      purpose: validPurpose as 'retweet' | 'like' | 'trend_analysis' | 'engagement',
       generatedAt: new Date().toISOString()
     }
   };
@@ -522,8 +583,11 @@ function generateRetweetFallback(input: RetweetSearchInput): SearchQuery {
     query: `${input.topic} 投資 教育 初心者 -spam -詐欺 -投機`,
     filters: {
       language: 'ja',
-      minEngagement: 10,
-      maxAge: '24h',
+      minEngagement: Math.max(
+        input.constraints?.minEngagement || 0,
+        10
+      ),
+      maxAge: input.constraints?.timeframe || '24h',
       verified: false
     },
     priority: 0.6,
@@ -543,8 +607,11 @@ function generateLikeFallback(input: LikeSearchInput): SearchQuery {
     query: `${input.topic} 投資 初心者 体験 -spam`,
     filters: {
       language: 'ja',
-      minEngagement: 5,
-      maxAge: '12h'
+      minEngagement: Math.max(
+        input.constraints?.minEngagement || 0,
+        5
+      ),
+      maxAge: input.constraints?.timeframe || '12h'
     },
     priority: 0.4,
     expectedResults: 30,
@@ -563,8 +630,11 @@ function generateQuoteFallback(input: QuoteSearchInput): SearchQuery {
     query: `${input.topic} 投資 議論 質問 -spam -詐欺`,
     filters: {
       language: 'ja',
-      minEngagement: 15,
-      maxAge: '24h'
+      minEngagement: Math.max(
+        input.constraints?.minEngagement || 0,
+        15
+      ),
+      maxAge: input.constraints?.timeframe || '24h'
     },
     priority: 0.7,
     expectedResults: 15,

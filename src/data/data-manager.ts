@@ -7,24 +7,6 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
 
-export interface ApiConfig {
-  kaito_api: {
-    base_url: string;
-    auth: {
-      bearer_token: string;
-    };
-    rate_limits: {
-      posts_per_hour: number;
-      retweets_per_hour: number;
-      likes_per_hour: number;
-    };
-  };
-  claude: {
-    model: string;
-    max_tokens: number;
-    temperature: number;
-  };
-}
 
 export interface DecisionPattern {
   timestamp: string;
@@ -155,7 +137,6 @@ export interface PostData {
  */
 export class DataManager {
   private readonly dataDir = path.join(process.cwd(), 'src', 'data');
-  private readonly configDir = path.join(this.dataDir, 'config');
   private readonly learningDir = path.join(this.dataDir, 'learning');
   private readonly contextDir = path.join(this.dataDir, 'context');
   private readonly currentDir = path.join(this.dataDir, 'current');
@@ -167,44 +148,6 @@ export class DataManager {
     this.ensureDirectories();
   }
 
-  // ============================================================================
-  // CONFIG MANAGEMENT
-  // ============================================================================
-
-  /**
-   * API設定の読み込み
-   */
-  async loadConfig(): Promise<ApiConfig> {
-    try {
-      const configPath = path.join(this.configDir, 'api-config.yaml');
-      const content = await fs.readFile(configPath, 'utf-8');
-      const config = yaml.load(content) as ApiConfig;
-
-      console.log('✅ API設定読み込み完了');
-      return config;
-
-    } catch (error) {
-      console.warn('⚠️ API設定読み込み失敗、デフォルト設定使用:', error);
-      return this.getDefaultConfig();
-    }
-  }
-
-  /**
-   * API設定の保存
-   */
-  async saveConfig(config: ApiConfig): Promise<void> {
-    try {
-      const configPath = path.join(this.configDir, 'api-config.yaml');
-      const yamlStr = yaml.dump(config, { indent: 2 });
-      await fs.writeFile(configPath, yamlStr, 'utf-8');
-
-      console.log('✅ API設定保存完了');
-
-    } catch (error) {
-      console.error('❌ API設定保存失敗:', error);
-      throw new Error(`Config save failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
 
   // ============================================================================
   // LEARNING DATA MANAGEMENT
@@ -400,22 +343,13 @@ export class DataManager {
    * データベースの健全性チェック
    */
   async performHealthCheck(): Promise<{
-    config: boolean;
     learning: boolean;
     context: boolean;
     errors: string[];
   }> {
     const errors: string[] = [];
-    let configOk = false;
     let learningOk = false;
     let contextOk = false;
-
-    try {
-      await this.loadConfig();
-      configOk = true;
-    } catch (error) {
-      errors.push(`Config health check failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
 
     try {
       await this.loadLearningData();
@@ -432,13 +366,12 @@ export class DataManager {
     }
 
     console.log('🏥 データベース健全性チェック完了:', {
-      config: configOk,
       learning: learningOk,
       context: contextOk,
       errorCount: errors.length
     });
 
-    return { config: configOk, learning: learningOk, context: contextOk, errors };
+    return { learning: learningOk, context: contextOk, errors };
   }
 
   /**
@@ -1087,7 +1020,6 @@ export class DataManager {
   private async ensureDirectories(): Promise<void> {
     try {
       await Promise.all([
-        fs.mkdir(this.configDir, { recursive: true }),
         fs.mkdir(this.learningDir, { recursive: true }),
         fs.mkdir(this.contextDir, { recursive: true }),
         fs.mkdir(this.currentDir, { recursive: true }),
@@ -1169,26 +1101,6 @@ export class DataManager {
   }
 
   // デフォルト値生成メソッド群
-  private getDefaultConfig(): ApiConfig {
-    return {
-      kaito_api: {
-        base_url: 'https://api.kaito.ai',
-        auth: {
-          bearer_token: '${KAITO_API_TOKEN}'
-        },
-        rate_limits: {
-          posts_per_hour: 10,
-          retweets_per_hour: 20,
-          likes_per_hour: 50
-        }
-      },
-      claude: {
-        model: 'claude-3-sonnet',
-        max_tokens: 4000,
-        temperature: 0.7
-      }
-    };
-  }
 
   private getDefaultSuccessStrategies(): SuccessStrategy {
     return {

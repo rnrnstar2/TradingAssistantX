@@ -2,31 +2,26 @@ import { systemLogger, Logger } from '../shared/logger';
 import { ComponentContainer, COMPONENT_KEYS } from '../shared/component-container';
 import { ExecutionResult } from '../shared/types';
 import { Config } from '../shared/config';
-import { CoreScheduler } from '../scheduler/core-scheduler';
-import { MainLoop } from '../scheduler/main-loop';
+import { SchedulerManager } from './scheduler-manager';
 
 // SystemStatus統合クラス - 型安全版
 interface SystemStatusReport {
   initialized: boolean;
-  scheduler: SchedulerStatus | null;
-  mainLoop: MainLoopStatus | null;
+  schedulerManager: SchedulerManagerStatus | null;
   lastHealthCheck: string;
   uptime: number;
   processId: number;
-  memoryUsage: NodeJS.MemoryUsage;
+  memoryUsage: ReturnType<typeof process.memoryUsage>;
   [key: string]: unknown;
 }
 
-interface SchedulerStatus {
+interface SchedulerManagerStatus {
   running: boolean;
   nextExecution?: string;
-}
-
-interface MainLoopStatus {
-  lastExecution?: string;
   totalExecutions: number;
   successRate: number;
   averageExecutionTime: number;
+  lastExecution?: string;
 }
 
 class SystemStatus {
@@ -38,20 +33,17 @@ class SystemStatus {
 
   getSystemStatus(
     isInitialized: boolean,
-    scheduler: CoreScheduler | null,
-    mainLoop: MainLoop | null
+    schedulerManager: SchedulerManager | null
   ): SystemStatusReport {
     return {
       initialized: isInitialized,
-      scheduler: scheduler ? { 
-        running: scheduler.getStatus()?.isRunning || false,
-        nextExecution: scheduler.getStatus()?.nextExecution 
-      } : null,
-      mainLoop: mainLoop ? {
-        lastExecution: mainLoop.getMetrics()?.lastExecutionTime,
-        totalExecutions: mainLoop.getMetrics()?.totalExecutions || 0,
-        successRate: mainLoop.getMetrics()?.successRate || 0,
-        averageExecutionTime: mainLoop.getMetrics()?.avgExecutionTime || 0
+      schedulerManager: schedulerManager ? { 
+        running: schedulerManager.getSchedulerStatus().running,
+        nextExecution: schedulerManager.getSchedulerStatus().nextExecution,
+        totalExecutions: schedulerManager.getLoopMetrics()?.totalExecutions || 0,
+        successRate: schedulerManager.getLoopMetrics()?.successRate || 0,
+        averageExecutionTime: schedulerManager.getLoopMetrics()?.avgExecutionTime || 0,
+        lastExecution: schedulerManager.getLoopMetrics()?.lastExecutionTime
       } : null,
       lastHealthCheck: new Date().toISOString(),
       uptime: process.uptime(),
@@ -74,15 +66,12 @@ class SystemStatus {
 
   async reloadConfiguration(
     config: Config,
-    scheduler: CoreScheduler
+    schedulerManager: SchedulerManager
   ): Promise<void> {
     try {
       this.logger.info('🔄 設定リロード中...');
       
-      await config.reloadConfig();
-      
-      const newSchedulerConfig = config.getSchedulerConfig();
-      scheduler.updateConfig(newSchedulerConfig);
+      await schedulerManager.reloadSchedulerConfig();
       
       this.logger.success('✅ 設定リロード完了');
     } catch (error) {
@@ -128,12 +117,10 @@ export class StatusController {
       
       systemLogger.debug('📊 システム状態取得開始');
       
-      const scheduler = this.container.has(COMPONENT_KEYS.SCHEDULER) 
-        ? this.container.get<CoreScheduler>(COMPONENT_KEYS.SCHEDULER) : null;
-      const mainLoop = this.container.has(COMPONENT_KEYS.MAIN_LOOP) 
-        ? this.container.get<MainLoop>(COMPONENT_KEYS.MAIN_LOOP) : null;
+      const schedulerManager = this.container.has(COMPONENT_KEYS.SCHEDULER_MANAGER) 
+        ? this.container.get<SchedulerManager>(COMPONENT_KEYS.SCHEDULER_MANAGER) : null;
 
-      const status = this.getEnhancedSystemStatus(isInitialized, scheduler, mainLoop);
+      const status = this.getEnhancedSystemStatus(isInitialized, schedulerManager);
       
       systemLogger.debug('✅ システム状態取得完了');
       return status;
@@ -190,12 +177,12 @@ export class StatusController {
       
       systemLogger.info('🔄 【設定リロードステップ1】設定ファイル再読み込み開始');
       const config = this.container.get<Config>(COMPONENT_KEYS.CONFIG);
-      const scheduler = this.container.get<CoreScheduler>(COMPONENT_KEYS.SCHEDULER);
+      const schedulerManager = this.container.get<SchedulerManager>(COMPONENT_KEYS.SCHEDULER_MANAGER);
       
       // 設定リロードの安全性検証
-      this.validateConfigReloadSafety(config, scheduler);
+      this.validateConfigReloadSafety(config, schedulerManager);
       
-      await this.systemStatus.reloadConfiguration(config, scheduler);
+      await this.systemStatus.reloadConfiguration(config, schedulerManager);
       systemLogger.success('✅ 設定ファイル再読み込み完了');
 
       systemLogger.info('⚙️ 【設定リロードステップ2】スケジューラー設定更新開始');
@@ -252,30 +239,24 @@ export class StatusController {
   /**
    * 強化されたシステム状態取得（型安全版）
    * @param isInitialized システム初期化状態
-   * @param scheduler CoreSchedulerインスタンス
-   * @param mainLoop MainLoopインスタンス
+   * @param schedulerManager SchedulerManagerインスタンス
    * @returns 詳細なシステム状態レポート
    */
   private getEnhancedSystemStatus(
     isInitialized: boolean,
-    scheduler: CoreScheduler | null,
-    mainLoop: MainLoop | null
+    schedulerManager: SchedulerManager | null
   ): SystemStatusReport {
     try {
       const startTime = process.hrtime();
       
-      // スケジューラー状態の安全な取得
-      const schedulerStatus: SchedulerStatus | null = scheduler ? {
-        running: scheduler.getStatus()?.isRunning || false,
-        nextExecution: scheduler.getStatus()?.nextExecution
-      } : null;
-
-      // メインループ状態の安全な取得
-      const mainLoopStatus: MainLoopStatus | null = mainLoop ? {
-        lastExecution: mainLoop.getMetrics()?.lastExecutionTime,
-        totalExecutions: mainLoop.getMetrics()?.totalExecutions || 0,
-        successRate: mainLoop.getMetrics()?.successRate || 0,
-        averageExecutionTime: mainLoop.getMetrics()?.avgExecutionTime || 0
+      // スケジューラーマネージャー状態の安全な取得
+      const schedulerManagerStatus: SchedulerManagerStatus | null = schedulerManager ? {
+        running: schedulerManager.getSchedulerStatus().running,
+        nextExecution: schedulerManager.getSchedulerStatus().nextExecution,
+        totalExecutions: schedulerManager.getLoopMetrics()?.totalExecutions || 0,
+        successRate: schedulerManager.getLoopMetrics()?.successRate || 0,
+        averageExecutionTime: schedulerManager.getLoopMetrics()?.avgExecutionTime || 0,
+        lastExecution: schedulerManager.getLoopMetrics()?.lastExecutionTime
       } : null;
 
       const endTime = process.hrtime(startTime);
@@ -283,8 +264,7 @@ export class StatusController {
 
       return {
         initialized: isInitialized,
-        scheduler: schedulerStatus,
-        mainLoop: mainLoopStatus,
+        schedulerManager: schedulerManagerStatus,
         lastHealthCheck: new Date().toISOString(),
         uptime: process.uptime(),
         processId: process.pid,
@@ -300,8 +280,7 @@ export class StatusController {
       // エラー時のフォールバック状態
       return {
         initialized: false,
-        scheduler: null,
-        mainLoop: null,
+        schedulerManager: null,
         lastHealthCheck: new Date().toISOString(),
         uptime: process.uptime(),
         processId: process.pid,
@@ -345,20 +324,20 @@ export class StatusController {
   /**
    * 設定リロードの安全性検証
    * @param config Configインスタンス
-   * @param scheduler CoreSchedulerインスタンス
+   * @param schedulerManager SchedulerManagerインスタンス
    */
-  private validateConfigReloadSafety(config: Config, scheduler: CoreScheduler): void {
+  private validateConfigReloadSafety(config: Config, schedulerManager: SchedulerManager): void {
     if (!config) {
       throw new Error('Config component not found - 設定リロード不可');
     }
 
-    if (!scheduler) {
-      throw new Error('CoreScheduler component not found - 設定リロード不可');
+    if (!schedulerManager) {
+      throw new Error('SchedulerManager component not found - 設定リロード不可');
     }
 
     // スケジューラーが実行中かどうかの確認
-    const schedulerStatus = scheduler.getStatus();
-    if (schedulerStatus?.isRunning) {
+    const schedulerStatus = schedulerManager.getSchedulerStatus();
+    if (schedulerStatus?.running) {
       systemLogger.info('ℹ️ スケジューラー実行中 - 設定リロード時に一時的な動作変更が発生する可能性があります');
     }
 

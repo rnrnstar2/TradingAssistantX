@@ -213,29 +213,29 @@ export class KaitoAPIConfigManager {
   private initializeEndpointConfig(): EndpointConfig {
     return {
       user: {
-        info: '/users/{userId}',
-        follow: '/users/{userId}/follow',
-        unfollow: '/users/{userId}/unfollow',
-        search: '/users/search'
+        info: '/twitter/user/info',
+        follow: '/twitter/user/follow',
+        unfollow: '/twitter/user/unfollow',
+        search: '/twitter/user/search'
       },
       tweet: {
-        create: '/tweets',
-        retweet: '/tweets/{tweetId}/retweet',
-        quote: '/tweets/{tweetId}/quote',
-        search: '/tweets/search',
-        delete: '/tweets/{tweetId}'
+        create: '/twitter/tweet/create',
+        retweet: '/twitter/action/retweet',
+        quote: '/twitter/action/quote',
+        search: '/twitter/tweet/advanced_search',
+        delete: '/twitter/tweet/delete'
       },
       engagement: {
-        like: '/tweets/{tweetId}/like',
-        unlike: '/tweets/{tweetId}/unlike',
-        bookmark: '/tweets/{tweetId}/bookmark',
-        unbookmark: '/tweets/{tweetId}/unbookmark'
+        like: '/twitter/action/like',
+        unlike: '/twitter/action/unlike',
+        bookmark: '/twitter/action/bookmark',
+        unbookmark: '/twitter/action/unbookmark'
       },
       auth: {
-        verify: '/auth/verify',
-        refresh: '/auth/refresh'
+        verify: '/twitter/user/info',  // 実際のユーザー情報取得で認証確認
+        refresh: '/twitter/user/info'
       },
-      health: '/health'
+      health: '/twitter/tweet/advanced_search'  // ヘルスチェック用
     };
   }
 
@@ -244,8 +244,8 @@ export class KaitoAPIConfigManager {
    */
   private getEnvironmentApiUrl(env: 'dev' | 'staging' | 'prod'): string {
     const urls = {
-      dev: 'https://dev-api.twitterapi.io',
-      staging: 'https://staging-api.twitterapi.io',
+      dev: 'https://api.twitterapi.io',        // dev環境でも本番APIを使用
+      staging: 'https://api.twitterapi.io',    // staging環境でも本番APIを使用  
       prod: 'https://api.twitterapi.io'
     };
     return urls[env];

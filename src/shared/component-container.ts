@@ -91,6 +91,7 @@ export class ComponentContainer {
 export const COMPONENT_KEYS = {
   SCHEDULER: 'scheduler',
   MAIN_LOOP: 'mainLoop', 
+  SCHEDULER_MANAGER: 'schedulerManager', // CoreScheduler & MainLoop統合版
   DECISION_ENGINE: 'decisionEngine',
   CONTENT_GENERATOR: 'contentGenerator',
   MARKET_ANALYZER: 'marketAnalyzer',

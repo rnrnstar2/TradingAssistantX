@@ -2,19 +2,13 @@
 
 ## 📚 ドキュメント一覧
 
-### 👥 役割別ガイド
+### 🏗️ アーキテクチャ・構造
 
-- [Manager Role](./roles/manager-role.md) - Manager 権限の責務と制限
-- [Worker Role](./roles/worker-role.md) - Worker 権限の作業指針
+- **[directory-structure.md](./directory-structure.md)** - プロジェクト全体構造（src/, tests/, docs/, tasks/の詳細）
+- **[claude.md](./claude.md)** - Claude Code SDK仕様書（エンドポイント別設計、テスト仕様）
+- **[kaito-api.md](./kaito-api.md)** - KaitoTwitterAPI仕様書（2層認証、データ制限対策）
 
-## 📋 ドキュメント管理ポリシー
+### 👥 役割定義
 
-### 更新ルール
-
-- 新機能追加時は既存ドキュメントの適切なセクションに追記
-- 新規ドキュメントの作成は原則禁止（REQUIREMENTS.md で定義された構成のみ）
-
-### 品質基準
-
-- 各ドキュメントは単体で理解可能な自己完結性を保持
-- 冗長な内容は避け、簡潔で実用的な記述
+- **[roles/manager-role.md](./roles/manager-role.md)** - Manager権限（指示書作成、Worker統率、実装作業禁止）
+- **[roles/worker-role.md](./roles/worker-role.md)** - Worker権限（実装作業、品質チェック、出力管理規則）

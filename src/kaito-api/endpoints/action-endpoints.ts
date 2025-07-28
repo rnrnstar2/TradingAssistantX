@@ -1,13 +1,14 @@
 /**
- * KaitoAPI アクションエンドポイント - 教育的投稿システム統合版
+ * KaitoAPI アクションエンドポイント - 最適化版
  * REQUIREMENTS.md準拠 - 疎結合アーキテクチャ
- * 投稿・いいね・RT・画像アップロード + 教育的価値検証
+ * 投稿・いいね・RT・画像アップロードのAPI呼び出し専用
  * 
- * 統合機能:
- * - 教育的価値の検証
- * - 適切な頻度制御
- * - スパム防止
- * - 品質保証システム
+ * 最適化内容:
+ * - 厳密な入力バリデーション
+ * - セキュリティ強化（入力サニタイゼーション）
+ * - TwitterAPI.io特有エラーハンドリング統一
+ * - レスポンス正規化
+ * - 禁止コンテンツ検出機能
  */
 
 import { 
@@ -15,416 +16,403 @@ import {
   PostResponse, 
   EngagementRequest, 
   EngagementResponse,
-  EducationalTweetResult,
-  ContentValidation,
-  FrequencyCheck,
-  EducationalRetweetResult,
-  EducationalLikeResult
+  HttpClient,
+  TwitterAPITweetResponse
 } from '../types';
 
+// ============================================================================
+// VALIDATION TYPES
+// ============================================================================
+
+interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+interface SecurityCheckResult {
+  isSafe: boolean;
+  issues: string[];
+}
+
 export class ActionEndpoints {
-  private lastPostTime: number = 0;
-  private lastRetweetTime: number = 0;
-  private lastLikeTime: number = 0;
+  private readonly ENDPOINTS = {
+    createTweet: '/twitter/tweet/create',
+    likeTweet: '/twitter/user/like',
+    retweetTweet: '/twitter/user/retweet',
+    uploadMedia: '/twitter/media/upload'
+  } as const;
 
-  // === 統合: 教育キーワード定義 ===
-  private readonly EDUCATIONAL_KEYWORDS = [
-    '投資教育', '投資初心者', '基礎知識', '学習', '解説',
-    'リスク管理', '資産運用', '分散投資', 'ポートフォリオ',
-    '注意点', 'メリット', 'デメリット', '基本', '入門'
-  ];
+  private readonly RATE_LIMITS = {
+    general: { limit: 900, window: 3600 }, // 900/hour
+    posting: { limit: 300, window: 3600 }, // 300/hour
+    engagement: { limit: 500, window: 3600 } // 500/hour
+  } as const;
 
-  // === 統合: 禁止キーワード（スパム防止） ===
-  private readonly PROHIBITED_KEYWORDS = [
-    '絶対儲かる', '確実に稼げる', '必ず上がる', '損失なし',
-    '秘密の手法', '一攫千金', '楽して稼ぐ', 'すぐに億万長者'
-  ];
-
-  constructor(private baseUrl: string = '', private headers: Record<string, string> = {}) {
-    console.log('✅ ActionEndpoints initialized - 教育的投稿システム統合版');
+  constructor(private httpClient: HttpClient) {
+    console.log('✅ ActionEndpoints initialized - TwitterAPI.io最適化版');
   }
 
-  // === 統合: 教育的投稿作成 ===
-  async createEducationalPost(content: string): Promise<EducationalTweetResult> {
-    try {
-      console.log('📝 教育的投稿作成開始:', { contentLength: content.length });
-
-      // 頻度チェック
-      const frequencyCheck = this.checkPostingFrequency();
-      if (!frequencyCheck.canPost) {
-        throw new Error(`投稿頻度制限: ${Math.ceil(frequencyCheck.waitTimeMs / 60000)}分後に再試行してください`);
-      }
-
-      // コンテンツ検証
-      const validation = await this.validateEducationalContent(content);
-      if (!validation.isEducational || !validation.isAppropriate) {
-        throw new Error(`教育的価値不足: ${validation.reasons.join(', ')}`);
-      }
-
-      // スパム検出
-      if (this.detectSpam(content)) {
-        throw new Error('スパムと判定されたため投稿できません');
-      }
-
-      // 実際の投稿実行
-      const result = await this.createPost({
-        content,
-        mediaIds: [],
-        replyToId: undefined,
-        quoteTweetId: undefined
-      });
-      
-      // 投稿時間更新
-      this.lastPostTime = Date.now();
-
-      const educationalResult: EducationalTweetResult = {
-        id: result.tweetId || '',
-        content: content,
-        timestamp: result.createdAt || new Date().toISOString(),
-        success: result.success,
-        educationalValue: validation.qualityScore,
-        qualityScore: validation.qualityScore,
-        error: result.error
-      };
-
-      if (result.success) {
-        console.log('✅ 教育的投稿完了:', {
-          id: result.tweetId,
-          educationalValue: validation.qualityScore,
-          topics: validation.topics
-        });
-      }
-
-      return educationalResult;
-
-    } catch (error) {
-      console.error('❌ 教育的投稿失敗:', error);
+  async createPost(request: PostRequest): Promise<PostResponse> {
+    // 入力バリデーション強化
+    const validation = this.validatePostRequest(request);
+    if (!validation.isValid) {
       return {
-        id: '',
-        content: content,
-        timestamp: new Date().toISOString(),
         success: false,
-        educationalValue: 0,
-        qualityScore: 0,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: `Validation failed: ${validation.errors.join(', ')}`
       };
     }
-  }
 
-  // 投稿作成（既存機能保持）
-  async createPost(request: PostRequest): Promise<PostResponse> {
+    // セキュリティチェック
+    const securityCheck = this.performSecurityCheck(request.content);
+    if (!securityCheck.isSafe) {
+      return {
+        success: false,
+        error: `Security check failed: ${securityCheck.issues.join(', ')}`
+      };
+    }
+
     try {
-      console.log('Creating post:', request.content.substring(0, 50) + '...');
+      console.log('📝 Creating post with TwitterAPI.io:', request.content.substring(0, 50) + '...');
       
-      // MVP版：基本的な投稿実行
-      const tweetId = `tweet_${Date.now()}`;
+      // サニタイズされたコンテンツで投稿
+      const sanitizedContent = this.sanitizeContent(request.content);
       
+      const response = await this.httpClient.post<TwitterAPITweetResponse>(
+        this.ENDPOINTS.createTweet,
+        {
+          text: sanitizedContent,
+          ...(request.mediaIds && { media_ids: request.mediaIds })
+        }
+      );
+
       return {
         success: true,
-        tweetId,
-        createdAt: new Date().toISOString()
+        tweetId: response.data.id,
+        createdAt: response.data.created_at
       };
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Post creation failed'
-      };
+      return this.handleActionError(error, 'createPost');
     }
   }
 
-  // === 統合: 教育的リツイート ===
-  async retweetEducationalContent(tweetId: string, originalContent: string): Promise<EducationalRetweetResult> {
-    try {
-      console.log('🔄 教育的リツイート開始:', { tweetId });
-
-      // 頻度チェック（リツイート用）
-      const now = Date.now();
-      const timeSinceLastRetweet = now - this.lastRetweetTime;
-      const minRetweetInterval = 10 * 60 * 1000; // 10分間隔
-
-      if (timeSinceLastRetweet < minRetweetInterval) {
-        throw new Error('リツイート頻度制限: 10分間隔でリツイートしてください');
-      }
-
-      // 元投稿の教育的価値検証
-      const validation = await this.validateEducationalContent(originalContent);
-      if (!validation.isEducational) {
-        throw new Error('元投稿に教育的価値が不足しています');
-      }
-
-      // リツイート実行
-      const engagementResult = await this.performEngagement({
-        tweetId,
-        action: 'retweet'
-      });
-      
-      // リツイート時間更新
-      this.lastRetweetTime = Date.now();
-
-      const retweetResult: EducationalRetweetResult = {
-        id: `retweet_${Date.now()}`,
-        originalTweetId: tweetId,
-        timestamp: engagementResult.timestamp,
-        success: engagementResult.success,
-        educationalReason: `教育的価値: ${validation.qualityScore}% - トピック: ${validation.topics.join(', ')}`,
-        error: engagementResult.success ? undefined : 'Retweet failed'
-      };
-
-      if (engagementResult.success) {
-        console.log('✅ 教育的リツイート完了:', {
-          originalTweetId: tweetId,
-          educationalValue: validation.qualityScore
-        });
-      }
-
-      return retweetResult;
-
-    } catch (error) {
-      console.error('❌ 教育的リツイート失敗:', error);
-      return {
-        id: '',
-        originalTweetId: tweetId,
-        timestamp: new Date().toISOString(),
-        success: false,
-        educationalReason: '',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
-    }
-  }
-
-  // === 統合: 教育的いいね ===
-  async likeEducationalContent(tweetId: string, content: string): Promise<EducationalLikeResult> {
-    try {
-      console.log('❤️ 教育的いいね開始:', { tweetId });
-
-      // 頻度チェック（いいね用）
-      const now = Date.now();
-      const timeSinceLastLike = now - this.lastLikeTime;
-      const minLikeInterval = 2 * 60 * 1000; // 2分間隔
-
-      if (timeSinceLastLike < minLikeInterval) {
-        throw new Error('いいね頻度制限: 2分間隔でいいねしてください');
-      }
-
-      // コンテンツの教育的価値検証
-      const validation = await this.validateEducationalContent(content);
-      if (!validation.isEducational || validation.qualityScore < 50) {
-        throw new Error('教育的価値が不足しているためいいねできません');
-      }
-
-      // いいね実行
-      const engagementResult = await this.performEngagement({
-        tweetId,
-        action: 'like'
-      });
-      
-      // いいね時間更新
-      this.lastLikeTime = Date.now();
-
-      const likeResult: EducationalLikeResult = {
-        tweetId: tweetId,
-        timestamp: engagementResult.timestamp,
-        success: engagementResult.success,
-        educationalJustification: `教育的価値: ${validation.qualityScore}% - ${validation.topics.join(', ')}`,
-        error: engagementResult.success ? undefined : 'Like failed'
-      };
-
-      if (engagementResult.success) {
-        console.log('✅ 教育的いいね完了:', {
-          tweetId: tweetId,
-          educationalValue: validation.qualityScore
-        });
-      }
-
-      return likeResult;
-
-    } catch (error) {
-      console.error('❌ 教育的いいね失敗:', error);
-      return {
-        tweetId: tweetId,
-        timestamp: new Date().toISOString(),
-        success: false,
-        educationalJustification: '',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
-    }
-  }
-
-  // エンゲージメント実行（既存機能保持）
   async performEngagement(request: EngagementRequest): Promise<EngagementResponse> {
+    // エンゲージメント要求バリデーション
+    const validation = this.validateEngagementRequest(request);
+    if (!validation.isValid) {
+      throw new Error(`Engagement validation failed: ${validation.errors.join(', ')}`);
+    }
+
     try {
-      console.log(`Performing ${request.action} on tweet ${request.tweetId}`);
+      console.log(`🚀 Performing ${request.action} on tweet ${request.tweetId} via TwitterAPI.io`);
+      
+      let endpoint: string;
+      let requestData: any;
+      
+      switch (request.action) {
+        case 'like':
+          endpoint = this.ENDPOINTS.likeTweet;
+          requestData = { tweet_id: request.tweetId };
+          break;
+        case 'retweet':
+          endpoint = this.ENDPOINTS.retweetTweet;
+          requestData = { tweet_id: request.tweetId };
+          break;
+        default:
+          throw new Error(`Unsupported action: ${request.action}`);
+      }
+
+      const response = await this.httpClient.post(endpoint, requestData);
       
       return {
         success: true,
         action: request.action,
         tweetId: request.tweetId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        data: {
+          liked: request.action === 'like',
+          retweeted: request.action === 'retweet'
+        }
       };
     } catch (error) {
-      throw new Error(`Engagement ${request.action} failed: ${error}`);
+      return this.handleEngagementError(error, request);
     }
   }
 
-  // 画像アップロード（既存機能保持）
   async uploadMedia(mediaData: Buffer, mediaType: string): Promise<{ mediaId: string }> {
-    // 基本的な画像アップロード実装
-    const mediaId = `media_${Date.now()}`;
-    console.log(`Media uploaded: ${mediaId} (${mediaType})`);
-    
-    return { mediaId };
-  }
+    // メディアアップロードバリデーション
+    const validation = this.validateMediaUpload(mediaData, mediaType);
+    if (!validation.isValid) {
+      throw new Error(`Media validation failed: ${validation.errors.join(', ')}`);
+    }
 
-  // === 統合: 投稿統計取得 ===
-  getPostingStatistics() {
-    const frequencyLimit = 30 * 60 * 1000; // 30分間隔をデフォルトとする
-    return {
-      lastPostTime: this.lastPostTime,
-      lastRetweetTime: this.lastRetweetTime,
-      lastLikeTime: this.lastLikeTime,
-      nextAllowedPost: this.lastPostTime + frequencyLimit,
-      canPostNow: this.checkPostingFrequency().canPost
-    };
-  }
-
-  // ============================================================================
-  // === 統合: プライベートメソッド ===
-  // ============================================================================
-
-  private async validateEducationalContent(content: string): Promise<ContentValidation> {
     try {
-      if (!content || content.trim().length === 0) {
-        return {
-          isEducational: false,
-          hasValue: false,
-          isAppropriate: false,
-          qualityScore: 0,
-          topics: [],
-          reasons: ['コンテンツが空です']
-        };
-      }
-
-      const reasons: string[] = [];
-      let qualityScore = 0;
-      const topics: string[] = [];
-
-      // MVP版 - 基本的な教育キーワードチェック
-      const hasEducationalKeywords = this.EDUCATIONAL_KEYWORDS.some(keyword => 
-        content.toLowerCase().includes(keyword.toLowerCase())
-      );
-
-      if (hasEducationalKeywords) {
-        qualityScore = 60; // シンプルな固定スコア
-        const matchedKeywords = this.EDUCATIONAL_KEYWORDS.filter(keyword => 
-          content.toLowerCase().includes(keyword.toLowerCase())
-        );
-        topics.push(...matchedKeywords);
-      } else {
-        qualityScore = 20; // デフォルトスコア
-        reasons.push('教育的キーワードが不足しています');
-      }
-
-      // 禁止キーワードチェック（基本的なスパム検出）
-      const hasProhibitedKeywords = this.PROHIBITED_KEYWORDS.some(keyword => 
-        content.toLowerCase().includes(keyword.toLowerCase())
-      );
-
-      if (hasProhibitedKeywords) {
-        qualityScore = 0; // シンプルな拒否
-        reasons.push('不適切なキーワードが含まれています');
-      }
-
-      // 基本的な長さチェック
-      if (content.length < 10) {
-        qualityScore = 0;
-        reasons.push('内容が短すぎます');
-      }
-
-      return {
-        isEducational: qualityScore >= 40,
-        hasValue: qualityScore >= 60,
-        isAppropriate: !hasProhibitedKeywords,
-        qualityScore: Math.max(0, Math.min(100, qualityScore)),
-        topics: [...new Set(topics)],
-        reasons: reasons.length > 0 ? reasons : ['検証完了']
-      };
-
+      console.log(`📎 Uploading media via TwitterAPI.io (${mediaType}, ${mediaData.length} bytes)`);
+      
+      // TwitterAPI.io メディアアップロード実装
+      // TODO: 実際のAPI実装が必要
+      const mediaId = `media_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      return { mediaId };
     } catch (error) {
-      console.error('コンテンツ検証エラー:', error);
-      return {
-        isEducational: false,
-        hasValue: false,
-        isAppropriate: false,
-        qualityScore: 0,
-        topics: [],
-        reasons: ['検証処理エラー']
-      };
+      throw new Error(`Media upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  private checkPostingFrequency(): FrequencyCheck {
-    const now = Date.now();
-    const timeSinceLastPost = now - this.lastPostTime;
-    const requiredInterval = 30 * 60 * 1000; // 30分間隔
-    const canPost = timeSinceLastPost >= requiredInterval;
-    
+
+  // ============================================================================
+  // VALIDATION METHODS
+  // ============================================================================
+
+  private validatePostRequest(request: PostRequest): ValidationResult {
+    const errors: string[] = [];
+
+    // コンテンツ基本検証
+    if (!request.content?.trim()) {
+      errors.push('Content cannot be empty');
+    }
+
+    if (request.content && request.content.length > 280) {
+      errors.push('Content exceeds 280 character limit');
+    }
+
+    // メディアID検証
+    if (request.mediaIds) {
+      if (request.mediaIds.length > 4) {
+        errors.push('Maximum 4 media items allowed');
+      }
+      if (request.mediaIds.some(id => !this.isValidMediaId(id))) {
+        errors.push('Invalid media ID format detected');
+      }
+    }
+
     return {
-      canPost,
-      lastPostTime: this.lastPostTime,
-      nextAllowedTime: this.lastPostTime + requiredInterval,
-      waitTimeMs: canPost ? 0 : requiredInterval - timeSinceLastPost
+      isValid: errors.length === 0,
+      errors
     };
   }
 
-  private detectSpam(content: string): boolean {
-    // MVP版 - 基本的なスパム検出のみ
-    
-    // 同じ文字の大量繰り返し（簡素化）
-    const repeatingPattern = /(.)\1{20,}/; // 閾値を緩和
-    if (repeatingPattern.test(content)) return true;
+  private validateEngagementRequest(request: EngagementRequest): ValidationResult {
+    const errors: string[] = [];
 
-    // 基本的な装飾文字チェック（簡素化）
-    const decorativeChars = (content.match(/[★☆♪♫◆◇■□▲▼]/g) || []).length;
-    if (decorativeChars > 20) return true; // 閾値を緩和
+    if (!request.tweetId?.trim()) {
+      errors.push('Tweet ID is required');
+    }
+
+    if (request.tweetId && !this.isValidTweetId(request.tweetId)) {
+      errors.push('Invalid tweet ID format');
+    }
+
+    if (!['like', 'retweet'].includes(request.action)) {
+      errors.push('Invalid action type. Must be "like" or "retweet"');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+
+  private validateMediaUpload(mediaData: Buffer, mediaType: string): ValidationResult {
+    const errors: string[] = [];
+
+    if (!mediaData || mediaData.length === 0) {
+      errors.push('Media data is required');
+    }
+
+    // ファイルサイズ制限（5MB）
+    if (mediaData && mediaData.length > 5 * 1024 * 1024) {
+      errors.push('Media file too large (max 5MB)');
+    }
+
+    // サポートされるメディアタイプ
+    const supportedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4'];
+    if (!supportedTypes.includes(mediaType)) {
+      errors.push('Unsupported media type');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+
+  // ============================================================================
+  // SECURITY METHODS
+  // ============================================================================
+
+  private performSecurityCheck(content: string): SecurityCheckResult {
+    const issues: string[] = [];
+
+    // 禁止コンテンツチェック
+    if (this.containsProhibitedContent(content)) {
+      issues.push('Content contains prohibited patterns');
+    }
+
+    // スパムパターンチェック
+    if (this.detectSpamPatterns(content)) {
+      issues.push('Content detected as potential spam');
+    }
+
+    // 不適切な文字チェック
+    if (this.containsInappropriateCharacters(content)) {
+      issues.push('Content contains inappropriate characters');
+    }
+
+    return {
+      isSafe: issues.length === 0,
+      issues
+    };
+  }
+
+  private containsProhibitedContent(content: string): boolean {
+    // 韓国語チェック（指示書に従い）
+    const koreanRegex = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
+    if (koreanRegex.test(content)) return true;
+
+    // 禁止キーワードパターン
+    const prohibitedPatterns = [
+      /spam/i,
+      /scam/i,
+      /crypto.*pump/i,
+      /guaranteed.*profit/i,
+      /click.*here/i,
+      /free.*money/i
+    ];
+
+    return prohibitedPatterns.some(pattern => pattern.test(content));
+  }
+
+  private detectSpamPatterns(content: string): boolean {
+    // 過度な繰り返し文字
+    if (/(..)\1{4,}/.test(content)) return true;
+    
+    // 過度な大文字
+    const upperCaseRatio = (content.match(/[A-Z]/g) || []).length / content.length;
+    if (upperCaseRatio > 0.7) return true;
+    
+    // 過度な絵文字
+    const emojiRegex = /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu;
+    const emojiCount = (content.match(emojiRegex) || []).length;
+    if (emojiCount > content.length * 0.3) return true;
 
     return false;
+  }
+
+  private containsInappropriateCharacters(content: string): boolean {
+    // 制御文字チェック
+    const controlCharRegex = /[\x00-\x1F\x7F-\x9F]/;
+    return controlCharRegex.test(content);
+  }
+
+  private sanitizeContent(content: string): string {
+    // 不適切な文字の除去
+    let sanitized = content
+      .replace(/[\x00-\x1F\x7F-\x9F]/g, '') // 制御文字除去
+      .replace(/\s+/g, ' ') // 連続空白の正規化
+      .trim();
+
+    // 長さ制限の確認
+    if (sanitized.length > 280) {
+      sanitized = sanitized.substring(0, 277) + '...';
+    }
+
+    return sanitized;
+  }
+
+  // ============================================================================
+  // ERROR HANDLING METHODS
+  // ============================================================================
+
+  private handleActionError(error: any, context: string): PostResponse {
+    console.error(`❌ ${context} error:`, error);
+
+    // TwitterAPI.io特有エラーハンドリング
+    if (error.response?.status === 429) {
+      return {
+        success: false,
+        error: 'Rate limit exceeded. Please try again later.'
+      };
+    }
+
+    if (error.response?.status === 401) {
+      return {
+        success: false,
+        error: 'Authentication failed. Please check your API key.'
+      };
+    }
+
+    if (error.response?.status === 403) {
+      return {
+        success: false,
+        error: 'Action forbidden. Check account permissions or content policy.'
+      };
+    }
+
+    if (error.response?.status === 422) {
+      return {
+        success: false,
+        error: 'Invalid request data. Please check your input.'
+      };
+    }
+
+    return {
+      success: false,
+      error: error.message || 'Unknown error occurred'
+    };
+  }
+
+  private handleEngagementError(error: any, request: EngagementRequest): EngagementResponse {
+    console.error(`❌ Engagement ${request.action} error:`, error);
+
+    return {
+      success: false,
+      action: request.action,
+      tweetId: request.tweetId,
+      timestamp: new Date().toISOString(),
+      data: {
+        liked: false,
+        retweeted: false
+      }
+    };
+  }
+
+  // ============================================================================
+  // UTILITY METHODS
+  // ============================================================================
+
+  private isValidTweetId(tweetId: string): boolean {
+    // TwitterのツイートIDは数値文字列（1-19桁）
+    return /^\d{1,19}$/.test(tweetId);
+  }
+
+  private isValidMediaId(mediaId: string): boolean {
+    // メディアIDの基本的な形式チェック
+    return /^media_\d+/.test(mediaId) || /^\d+_\d+/.test(mediaId);
   }
 
   // ============================================================================
   // EXECUTION-FLOW COMPATIBILITY METHODS
   // ============================================================================
 
-  /**
-   * 投稿メソッド（execution-flow.tsで使用）
-   */
   async post(content: string): Promise<PostResponse> {
     return await this.createPost({ content });
   }
 
-  /**
-   * リツイートメソッド（execution-flow.tsで使用）
-   */
   async retweet(tweetId: string): Promise<EngagementResponse> {
     return await this.performEngagement({ tweetId, action: 'retweet' });
   }
 
-  /**
-   * いいねメソッド（execution-flow.tsで使用）
-   */
   async like(tweetId: string): Promise<EngagementResponse> {
     return await this.performEngagement({ tweetId, action: 'like' });
   }
 
-  /**
-   * 実行メトリクスを取得（core-scheduler.tsで使用）
-   */
   async getExecutionMetrics(): Promise<any> {
     return {
       totalPosts: 0,
       totalRetweets: 0,
       totalLikes: 0,
-      educationalContentRatio: 0.95,
-      lastExecutionTime: new Date().toISOString()
+      lastExecutionTime: new Date().toISOString(),
+      rateLimits: this.RATE_LIMITS
     };
   }
 }

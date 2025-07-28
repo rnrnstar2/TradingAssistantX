@@ -1,35 +1,16 @@
 /**
- * 設定管理システム
- * REQUIREMENTS.md準拠版 - 統合設定管理クラス
+ * 設定管理システム - 環境変数ベース
+ * REQUIREMENTS.md準拠版 - シンプル設定管理
  */
-
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import * as yaml from 'js-yaml';
 
 export interface SystemConfig {
   scheduler: {
     intervalMinutes: number;
-    maxDailyExecutions: number;
-    executionWindow: {
-      start: string;
-      end: string;
-    };
     timezone: string;
   };
   kaito_api: {
     base_url: string;
     timeout: number;
-    rate_limits: {
-      posts_per_hour: number;
-      retweets_per_hour: number;
-      likes_per_hour: number;
-    };
-    retry: {
-      max_attempts: number;
-      base_delay: number;
-      backoff_multiplier: number;
-    };
   };
   claude: {
     model: string;
@@ -40,14 +21,6 @@ export interface SystemConfig {
   system: {
     debug_mode: boolean;
     log_level: 'debug' | 'info' | 'warn' | 'error';
-    data_retention_days: number;
-    max_cache_size: number;
-  };
-  quality: {
-    min_confidence_threshold: number;
-    engagement_threshold: number;
-    content_min_length: number;
-    content_max_length: number;
   };
 }
 
@@ -62,19 +35,15 @@ export interface EnvironmentConfig {
 }
 
 /**
- * 設定管理システムクラス
- * システム全体の設定を一元管理し、環境別設定をサポート
+ * 設定管理システムクラス - 環境変数ベース
+ * システム全体の設定を環境変数から一元管理
  */
 export class Config {
   private static instance: Config;
   private config: SystemConfig;
   private envConfig: EnvironmentConfig;
-  private configPath: string;
-  private lastLoadTime: number = 0;
-  private readonly CACHE_TTL = 300000; // 5 minutes
 
   private constructor() {
-    this.configPath = path.join(process.cwd(), 'src', 'data', 'config', 'api-config.yaml');
     this.envConfig = this.loadEnvironmentConfig();
     this.config = this.getDefaultConfig();
   }
@@ -96,7 +65,6 @@ export class Config {
     try {
       console.log('⚙️ Initializing configuration system...');
       
-      await this.loadConfig();
       this.validateConfig();
       
       console.log('✅ Configuration system initialized');
@@ -122,8 +90,8 @@ export class Config {
    */
   getSchedulerConfig(): SystemConfig['scheduler'] {
     return {
-      ...this.config.scheduler,
-      timezone: this.envConfig.TIMEZONE || this.config.scheduler.timezone
+      intervalMinutes: 30,
+      timezone: this.envConfig.TIMEZONE || 'Asia/Tokyo'
     };
   }
 
@@ -148,12 +116,6 @@ export class Config {
     };
   }
 
-  /**
-   * 品質設定取得
-   */
-  getQualityConfig(): SystemConfig['quality'] {
-    return { ...this.config.quality };
-  }
 
   /**
    * 完全な設定オブジェクト取得
@@ -169,35 +131,6 @@ export class Config {
     return { ...this.envConfig };
   }
 
-  /**
-   * 設定値の更新
-   */
-  async updateConfig(path: string, value: any): Promise<void> {
-    try {
-      const pathParts = path.split('.');
-      let current = this.config as any;
-      
-      // ネストしたオブジェクトを辿る
-      for (let i = 0; i < pathParts.length - 1; i++) {
-        if (!current[pathParts[i]]) {
-          current[pathParts[i]] = {};
-        }
-        current = current[pathParts[i]];
-      }
-      
-      // 最終的な値を設定
-      current[pathParts[pathParts.length - 1]] = value;
-      
-      // ファイルに保存
-      await this.saveConfig();
-      
-      console.log(`✅ Configuration updated: ${path} = ${JSON.stringify(value)}`);
-      
-    } catch (error) {
-      console.error(`❌ Configuration update failed for ${path}:`, error);
-      throw new Error(`Configuration update failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
 
   /**
    * 設定のリロード
@@ -206,8 +139,7 @@ export class Config {
     try {
       console.log('🔄 Reloading configuration...');
       
-      this.lastLoadTime = 0; // キャッシュをクリア
-      await this.loadConfig();
+      this.envConfig = this.loadEnvironmentConfig();
       this.validateConfig();
       
       console.log('✅ Configuration reloaded successfully');
@@ -229,19 +161,7 @@ export class Config {
       errors.push('KAITO_API_TOKEN environment variable is required');
     }
 
-    // 数値範囲チェック
-    if (this.config.scheduler.intervalMinutes < 1) {
-      errors.push('Scheduler interval must be at least 1 minute');
-    }
-
-    if (this.config.quality.min_confidence_threshold < 0 || this.config.quality.min_confidence_threshold > 1) {
-      errors.push('Confidence threshold must be between 0 and 1');
-    }
-
-    // APIタイムアウトチェック
-    if (this.config.kaito_api.timeout < 1000) {
-      errors.push('API timeout must be at least 1000ms');
-    }
+    // 基本的な検証のみ
 
     if (errors.length > 0) {
       throw new Error(`Configuration validation failed:\n${errors.join('\n')}`);
@@ -252,15 +172,11 @@ export class Config {
    * 設定のデバッグ情報取得
    */
   getDebugInfo(): {
-    configPath: string;
-    lastLoadTime: string;
     environment: string;
     hasRequiredEnvVars: boolean;
     configSummary: any;
   } {
     return {
-      configPath: this.configPath,
-      lastLoadTime: new Date(this.lastLoadTime).toISOString(),
       environment: this.envConfig.NODE_ENV,
       hasRequiredEnvVars: !!this.envConfig.KAITO_API_TOKEN,
       configSummary: {
@@ -275,44 +191,6 @@ export class Config {
   // ============================================================================
   // PRIVATE METHODS
   // ============================================================================
-
-  private async loadConfig(): Promise<void> {
-    const now = Date.now();
-    
-    // キャッシュチェック
-    if (now - this.lastLoadTime < this.CACHE_TTL) {
-      return;
-    }
-
-    try {
-      const content = await fs.readFile(this.configPath, 'utf-8');
-      const yamlConfig = yaml.load(content) as Partial<SystemConfig>;
-      
-      // デフォルト設定とマージ
-      this.config = this.mergeConfigs(this.getDefaultConfig(), yamlConfig);
-      this.lastLoadTime = now;
-      
-    } catch (error) {
-      if ((error as any).code === 'ENOENT') {
-        console.warn('⚠️ Configuration file not found, creating default');
-        await this.saveConfig();
-      } else {
-        console.error('❌ Failed to load configuration:', error);
-        throw error;
-      }
-    }
-  }
-
-  private async saveConfig(): Promise<void> {
-    try {
-      const yamlStr = yaml.dump(this.config, { indent: 2 });
-      await fs.writeFile(this.configPath, yamlStr, 'utf-8');
-      
-    } catch (error) {
-      console.error('❌ Failed to save configuration:', error);
-      throw error;
-    }
-  }
 
   private loadEnvironmentConfig(): EnvironmentConfig {
     return {
@@ -330,26 +208,11 @@ export class Config {
     return {
       scheduler: {
         intervalMinutes: 30,
-        maxDailyExecutions: 48,
-        executionWindow: {
-          start: '07:00',
-          end: '23:00'
-        },
         timezone: 'Asia/Tokyo'
       },
       kaito_api: {
         base_url: 'https://api.kaito.ai',
-        timeout: 30000,
-        rate_limits: {
-          posts_per_hour: 10,
-          retweets_per_hour: 20,
-          likes_per_hour: 50
-        },
-        retry: {
-          max_attempts: 3,
-          base_delay: 1000,
-          backoff_multiplier: 2
-        }
+        timeout: 30000
       },
       claude: {
         model: 'claude-3-sonnet',
@@ -359,32 +222,11 @@ export class Config {
       },
       system: {
         debug_mode: false,
-        log_level: 'info',
-        data_retention_days: 30,
-        max_cache_size: 100
-      },
-      quality: {
-        min_confidence_threshold: 0.7,
-        engagement_threshold: 2.0,
-        content_min_length: 10,
-        content_max_length: 280
+        log_level: 'info'
       }
     };
   }
 
-  private mergeConfigs(defaultConfig: SystemConfig, userConfig: Partial<SystemConfig>): SystemConfig {
-    const merged = { ...defaultConfig };
-    
-    for (const [key, value] of Object.entries(userConfig)) {
-      if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-        (merged as any)[key] = { ...(merged as any)[key], ...value };
-      } else {
-        (merged as any)[key] = value;
-      }
-    }
-    
-    return merged;
-  }
 }
 
 // ============================================================================

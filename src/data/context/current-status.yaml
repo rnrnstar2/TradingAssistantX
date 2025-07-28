@@ -4,19 +4,19 @@ account_status:
   tweets_today: 0
   engagement_rate_24h: 0
 system_status:
-  last_execution: '2025-07-24T12:14:31.400Z'
+  last_execution: '2025-07-27T14:38:07.369Z'
   next_execution: ''
   errors_today: 0
   success_rate: 0.95
   shutdown_reason: graceful_shutdown
-  uptime_seconds: 7
+  uptime_seconds: 1
 rate_limits:
   posts_remaining: 10
   retweets_remaining: 20
   likes_remaining: 50
-  reset_time: '2025-07-24T13:14:31.400Z'
+  reset_time: '2025-07-27T15:38:07.369Z'
 shutdown_info:
-  timestamp: '2025-07-24T12:14:31.400Z'
-  process_id: 30685
-  memory_usage_mb: 13
-  uptime_seconds: 7
+  timestamp: '2025-07-27T14:38:07.369Z'
+  process_id: 68823
+  memory_usage_mb: 11
+  uptime_seconds: 1

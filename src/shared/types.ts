@@ -26,6 +26,14 @@ import type {
   SystemContext
 } from '../claude/types';
 
+// KaitoAPI Types for internal use
+import type { 
+  PostResult, 
+  RetweetResult, 
+  QuoteTweetResult, 
+  LikeResult 
+} from '../kaito-api/types';
+
 export type { 
   ClaudeDecision, 
   GeneratedContent, 
@@ -34,18 +42,26 @@ export type {
   SystemContext
 };
 
-// KaitoAPI Types
-import type {
-  AccountInfo,
-  PostResult,
-  CoreRetweetResult,
-  QuoteTweetResult,
-  LikeResult
-} from '../kaito-api';
-
-// Re-export types for use throughout the application
-export type { AccountInfo, PostResult, QuoteTweetResult, LikeResult };
-export type RetweetResult = CoreRetweetResult;
+// kaito-api型定義をre-exportして重複を解消
+export type {
+  // Core types from kaito-api
+  KaitoClientConfig,
+  TweetData,
+  UserData,
+  
+  // Response types from kaito-api
+  TweetCreateResponse,
+  TweetSearchResponse,
+  UserInfoResponse,
+  
+  // Legacy compatibility
+  TweetResult,
+  PostResult,      // 追加
+  RetweetResult,   // 追加  
+  QuoteTweetResult,// 追加
+  LikeResult,      // 追加
+  AccountInfo      // 追加
+} from '../kaito-api/types';
 
 // メインワークフロー型定義
 export interface ExecutionContext {
@@ -238,16 +254,6 @@ export interface RateLimitStatus {
   lastUpdated: string;
 }
 
-export interface ApiConfig {
-  baseUrl: string;
-  authToken: string;
-  timeout: number;
-  rateLimits: {
-    postsPerHour: number;
-    retweetsPerHour: number;
-    likesPerHour: number;
-  };
-}
 
 // ============================================================================
 // COLLECTION TYPES
@@ -682,22 +688,7 @@ export function createExecutionResult(
 // KAITO API INTEGRATION TYPES - types/kaito-api-types.ts統合部分
 // ============================================================================
 
-export interface KaitoClientConfig {
-  apiKey: string;
-  qpsLimit: number; // 200QPS上限
-  retryPolicy: {
-    maxRetries: number;
-    backoffMs: number;
-  };
-  costTracking: boolean; // $0.15/1k tweets追跡
-}
-
-export interface CostTrackingInfo {
-  tweetsProcessed: number;
-  estimatedCost: number; // USD
-  resetDate: string;
-  lastUpdated: string;
-}
+// KaitoClientConfig, CostTrackingInfoは../kaito-api/typesからre-export済み
 
 // PostResult, RetweetResult, QuoteTweetResult, LikeResult are now imported from kaito-api/core/client.ts to avoid duplication
 
@@ -832,15 +823,7 @@ export function isPostResult(result: any): result is PostResult {
   );
 }
 
-export function isKaitoClientConfig(config: any): config is KaitoClientConfig {
-  return (
-    typeof config === 'object' &&
-    typeof config.apiKey === 'string' &&
-    typeof config.qpsLimit === 'number' &&
-    typeof config.retryPolicy === 'object' &&
-    typeof config.costTracking === 'boolean'
-  );
-}
+// isKaitoClientConfig型ガードは../kaito-api/typesで定義済み
 
 // ユーティリティ型
 export type ActionType = 
