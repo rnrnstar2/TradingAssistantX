@@ -1,6 +1,8 @@
 /**
  * Claude Index エクスポート統合テスト - index.test.ts
  * REQUIREMENTS.md準拠 - エクスポート確認・統合動作テスト
+ * 
+ * @note 一部のテストでmakeDecision（非推奨）を使用しており、該当テストはスキップされています。
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
@@ -9,7 +11,6 @@ import * as ClaudeModule from '../../src/claude/index';
 // Import specific functions and types for testing
 import {
   // Endpoint functions
-  makeDecision,
   generateContent,
   generateQuoteComment,
   analyzePerformance,
@@ -24,11 +25,9 @@ import {
   generateQuoteQuery,
 
   // Types
-  ClaudeDecision,
   GeneratedContent,
   AnalysisResult,
   SearchQuery,
-  DecisionInput,
   ContentInput,
   AnalysisInput,
   SearchInput,
@@ -42,14 +41,12 @@ import {
   SEARCH_PURPOSES,
   ANALYSIS_TYPES,
   SYSTEM_LIMITS,
-  isClaudeDecision,
   isGeneratedContent,
   isAnalysisResult,
   isSearchQuery
 } from '../../src/claude/index';
 
 import {
-  createMockDecisionInput,
   createMockContentInput,
   createMockAnalysisInput,
   createMockSearchInput,
@@ -64,9 +61,6 @@ describe('Claude Index Export Integration Tests', () => {
 
   describe('エクスポート確認テスト', () => {
     test('全エンドポイント関数の正常エクスポート確認', () => {
-      // Decision endpoint
-      expect(typeof makeDecision).toBe('function');
-
       // Content endpoint
       expect(typeof generateContent).toBe('function');
       expect(typeof generateQuoteComment).toBe('function');
@@ -88,14 +82,12 @@ describe('Claude Index Export Integration Tests', () => {
 
     test('全型定義の正常エクスポート確認', () => {
       // Return types should be constructible (tested via type guards)
-      expect(typeof isClaudeDecision).toBe('function');
       expect(typeof isGeneratedContent).toBe('function');
       expect(typeof isAnalysisResult).toBe('function');
       expect(typeof isSearchQuery).toBe('function');
 
       // Input types are checked via TypeScript compilation
       // Here we verify they're accessible
-      const decisionInput: DecisionInput = createMockDecisionInput();
       const contentInput: ContentInput = createMockContentInput();
       const analysisInput: AnalysisInput = createMockAnalysisInput();
       const searchInput: SearchInput = createMockSearchInput();
@@ -124,13 +116,11 @@ describe('Claude Index Export Integration Tests', () => {
     });
 
     test('型ガード関数のエクスポート確認', () => {
-      expect(typeof isClaudeDecision).toBe('function');
       expect(typeof isGeneratedContent).toBe('function');
       expect(typeof isAnalysisResult).toBe('function');
       expect(typeof isSearchQuery).toBe('function');
 
       // Test that they work correctly
-      expect(isClaudeDecision(null)).toBe(false);
       expect(isGeneratedContent({})).toBe(false);
       expect(isAnalysisResult(undefined)).toBe(false);
       expect(isSearchQuery('string')).toBe(false);
@@ -140,7 +130,7 @@ describe('Claude Index Export Integration Tests', () => {
       // Verify all expected exports are present
       const expectedExports = [
         // Functions
-        'makeDecision', 'generateContent', 'generateQuoteComment',
+        'generateContent', 'generateQuoteComment',
         'analyzePerformance', 'analyzeMarketContext', 'recordExecution',
         'generateLearningInsights', 'getPerformanceMetrics', 'generateImprovementSuggestions',
         'generateSearchQuery', 'generateRetweetQuery', 'generateLikeQuery', 'generateQuoteQuery',
@@ -150,7 +140,7 @@ describe('Claude Index Export Integration Tests', () => {
         'SEARCH_PURPOSES', 'ANALYSIS_TYPES', 'SYSTEM_LIMITS',
         
         // Type guards
-        'isClaudeDecision', 'isGeneratedContent', 'isAnalysisResult', 'isSearchQuery'
+        'isGeneratedContent', 'isAnalysisResult', 'isSearchQuery'
       ];
 
       expectedExports.forEach(exportName => {
@@ -161,7 +151,7 @@ describe('Claude Index Export Integration Tests', () => {
   });
 
   describe('統合動作テスト', () => {
-    test('エンドポイント間の基本的な連携動作確認', async () => {
+    test.skip('エンドポイント間の基本的な連携動作確認 (DEPRECATED - uses makeDecision)', async () => {
       // 実際のAPIを使用
       const decisionInput = createMockDecisionInput();
       const decision = await makeDecision(decisionInput);
@@ -208,7 +198,7 @@ describe('Claude Index Export Integration Tests', () => {
       }
     }, 30000);
 
-    test('異なるエンドポイント間でのデータフロー確認', async () => {
+    test.skip('異なるエンドポイント間でのデータフロー確認 (DEPRECATED - uses makeDecision)', async () => {
       // Simulate a complete workflow
       const decisionInput = createMockDecisionInput();
       const decision = await makeDecision(decisionInput);
@@ -254,7 +244,7 @@ describe('Claude Index Export Integration Tests', () => {
       expect(analysisResult.confidence).toBeLessThanOrEqual(1);
     }, 30000);
 
-    test('エラー時の統合動作確認', async () => {
+    test.skip('エラー時の統合動作確認 (DEPRECATED - uses makeDecision)', async () => {
       // Test error propagation and handling across modules
       const decisionInput = createMockDecisionInput();
       
@@ -316,16 +306,38 @@ describe('Claude Index Export Integration Tests', () => {
 
     test('型の前方互換性確認', () => {
       // Verify that types can be used interchangeably where expected
-      const systemContext: SystemContext = createMockDecisionInput().context;
       const basicMarketContext: BasicMarketContext = {
-        sentiment: systemContext.market.sentiment,
-        volatility: systemContext.market.volatility,
-        trendingTopics: systemContext.market.trendingTopics,
+        sentiment: 'neutral',
+        volatility: 'medium',
+        trendingTopics: ['投資', 'NISA'],
         timestamp: new Date().toISOString()
       };
 
-      expect(basicMarketContext.sentiment).toBe(systemContext.market.sentiment);
-      expect(basicMarketContext.volatility).toBe(systemContext.market.volatility);
+      const systemContext: SystemContext = {
+        timestamp: new Date().toISOString(),
+        account: {
+          followerCount: 1000,
+          postsToday: 0,
+          engagementRate: 0.02
+        },
+        system: {
+          health: {
+            all_systems_operational: true,
+            api_status: 'healthy',
+            rate_limits_ok: true
+          },
+          executionCount: { today: 0, total: 0 }
+        },
+        market: {
+          sentiment: basicMarketContext.sentiment,
+          volatility: basicMarketContext.volatility,
+          trendingTopics: basicMarketContext.trendingTopics
+        }
+      };
+
+      expect(systemContext.market.sentiment).toBe(basicMarketContext.sentiment);
+      expect(systemContext.market.volatility).toBe(basicMarketContext.volatility);
+      expect(systemContext.market.trendingTopics).toEqual(basicMarketContext.trendingTopics);
     });
 
     test('定数とエンドポイントの一貫性最終確認', () => {

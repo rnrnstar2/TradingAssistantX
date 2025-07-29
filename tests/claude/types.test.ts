@@ -6,7 +6,6 @@
 import { describe, test, expect } from 'vitest';
 import {
   // Type guards
-  isClaudeDecision,
   isGeneratedContent,
   isAnalysisResult,
   isSearchQuery,
@@ -20,18 +19,15 @@ import {
   SYSTEM_LIMITS,
   
   // Types for testing
-  ClaudeDecision,
-  GeneratedContent,
-  AnalysisResult,
-  SearchQuery
+  type GeneratedContent,
+  type AnalysisResult,
+  type SearchQuery
 } from '../../src/claude/types';
 
 import {
-  createMockClaudeDecision,
   createMockGeneratedContent,
   createMockAnalysisResult,
   createMockSearchQuery,
-  createInvalidDecisionResponse,
   createInvalidContentResponse,
   createInvalidAnalysisResponse
 } from '../test-utils/claude-mock-data';
@@ -40,61 +36,6 @@ import { validateResponseStructure } from '../test-utils/test-helpers';
 
 describe('Claude Types Module', () => {
   describe('型ガード機能テスト', () => {
-    describe('isClaudeDecision', () => {
-      test('正常なClaudeDecisionでtrueを返す', () => {
-        const validDecision = createMockClaudeDecision('post');
-        expect(isClaudeDecision(validDecision)).toBe(true);
-      });
-
-      test('全てのアクションタイプでtrueを返す', () => {
-        VALID_ACTIONS.forEach(action => {
-          const decision = createMockClaudeDecision(action);
-          expect(isClaudeDecision(decision)).toBe(true);
-        });
-      });
-
-      test('confidence値の範囲（0-1）を検証', () => {
-        // 境界値テスト
-        const decision0 = { ...createMockClaudeDecision(), confidence: 0 };
-        const decision1 = { ...createMockClaudeDecision(), confidence: 1 };
-        const decisionOutOfRange = { ...createMockClaudeDecision(), confidence: 1.5 };
-        const decisionNegative = { ...createMockClaudeDecision(), confidence: -0.1 };
-
-        expect(isClaudeDecision(decision0)).toBe(true);
-        expect(isClaudeDecision(decision1)).toBe(true);
-        expect(isClaudeDecision(decisionOutOfRange)).toBe(false);
-        expect(isClaudeDecision(decisionNegative)).toBe(false);
-      });
-
-      test('無効なactionで false を返す', () => {
-        const invalidDecision = {
-          ...createMockClaudeDecision(),
-          action: 'invalid_action'
-        };
-        expect(isClaudeDecision(invalidDecision)).toBe(false);
-      });
-
-      test('必須フィールド不足時に false を返す', () => {
-        const incompleteDecision = createInvalidDecisionResponse();
-        expect(isClaudeDecision(incompleteDecision)).toBe(false);
-
-        // 個別フィールドテスト
-        expect(isClaudeDecision(null)).toBe(false);
-        expect(isClaudeDecision(undefined)).toBe(false);
-        expect(isClaudeDecision({})).toBe(false);
-        expect(isClaudeDecision({ action: 'post' })).toBe(false); // reasoning missing
-      });
-
-      test('型の不一致で false を返す', () => {
-        const wrongTypes = {
-          action: 123, // should be string
-          reasoning: true, // should be string  
-          confidence: 'high', // should be number
-          parameters: 'invalid' // should be object
-        };
-        expect(isClaudeDecision(wrongTypes)).toBe(false);
-      });
-    });
 
     describe('isGeneratedContent', () => {
       test('正常なGeneratedContentでtrueを返す', () => {
@@ -269,9 +210,6 @@ describe('Claude Types Module', () => {
 
   describe('型互換性テスト', () => {
     test('エンドポイント間での型の整合性確認', () => {
-      // ClaudeDecisionがdecision-endpointと互換性があることを確認
-      const decision = createMockClaudeDecision('post');
-      expect(validateResponseStructure(decision, ['action', 'reasoning', 'parameters', 'confidence'])).toBe(true);
 
       // GeneratedContentがcontent-endpointと互換性があることを確認  
       const content = createMockGeneratedContent();
@@ -287,11 +225,6 @@ describe('Claude Types Module', () => {
     });
 
     test('型ガードと定数の一貫性確認', () => {
-      // ClaudeDecisionのactionフィールドがVALID_ACTIONSと一致
-      VALID_ACTIONS.forEach(action => {
-        const decision = createMockClaudeDecision(action);
-        expect(isClaudeDecision(decision)).toBe(true);
-      });
 
       // AnalysisResultのanalysisTypeがANALYSIS_TYPESと一致
       ANALYSIS_TYPES.forEach(type => {
@@ -307,13 +240,6 @@ describe('Claude Types Module', () => {
     });
 
     test('境界値での型ガード動作確認', () => {
-      // confidence値の境界値テスト
-      const minConfidence = { ...createMockClaudeDecision(), confidence: 0 };
-      const maxConfidence = { ...createMockClaudeDecision(), confidence: 1 };
-      
-      expect(isClaudeDecision(minConfidence)).toBe(true);
-      expect(isClaudeDecision(maxConfidence)).toBe(true);
-
       // qualityScore値の境界値テスト  
       const minQuality = { ...createMockGeneratedContent(), qualityScore: 0 };
       const maxQuality = { ...createMockGeneratedContent(), qualityScore: 100 };
@@ -324,13 +250,11 @@ describe('Claude Types Module', () => {
 
     test('型定義の完全性確認', () => {
       // 各型の必須フィールドがすべて定義されていることを確認
-      const decision: ClaudeDecision = createMockClaudeDecision();
       const content: GeneratedContent = createMockGeneratedContent();
       const analysis: AnalysisResult = createMockAnalysisResult();
       const search: SearchQuery = createMockSearchQuery();
 
       // TypeScriptコンパイル時の型チェックが通ることで検証される
-      expect(decision).toBeDefined();
       expect(content).toBeDefined();
       expect(analysis).toBeDefined();
       expect(search).toBeDefined();
@@ -339,8 +263,6 @@ describe('Claude Types Module', () => {
 
   describe('エラーケース・堅牢性テスト', () => {
     test('null・undefined値での型ガード動作', () => {
-      expect(isClaudeDecision(null)).toBe(false);
-      expect(isClaudeDecision(undefined)).toBe(false);
       expect(isGeneratedContent(null)).toBe(false);
       expect(isGeneratedContent(undefined)).toBe(false);
       expect(isAnalysisResult(null)).toBe(false);
@@ -350,9 +272,9 @@ describe('Claude Types Module', () => {
     });
 
     test('プリミティブ型での型ガード動作', () => {
-      expect(isClaudeDecision('string')).toBe(false);
-      expect(isClaudeDecision(123)).toBe(false);
-      expect(isClaudeDecision(true)).toBe(false);
+      expect(isGeneratedContent('string')).toBe(false);
+      expect(isGeneratedContent(123)).toBe(false);
+      expect(isGeneratedContent(true)).toBe(false);
       expect(isGeneratedContent([])).toBe(false);
       expect(isAnalysisResult(() => {})).toBe(false);
       expect(isSearchQuery(new Date())).toBe(false);
@@ -360,13 +282,13 @@ describe('Claude Types Module', () => {
 
     test('部分的に不正なオブジェクトでの型ガード動作', () => {
       // 一部フィールドは正しいが、重要なフィールドが不正
-      const partiallyInvalid = {
-        action: 'post', // 正しい
-        reasoning: 'test', // 正しい
-        confidence: 'high', // 不正（文字列）
-        parameters: {} // 正しい
+      const partiallyInvalidContent = {
+        content: 'test', // 正しい
+        hashtags: ['#test'], // 正しい
+        qualityScore: 'high', // 不正（文字列）
+        metadata: {} // 形は正しいが中身が不完全
       };
-      expect(isClaudeDecision(partiallyInvalid)).toBe(false);
+      expect(isGeneratedContent(partiallyInvalidContent)).toBe(false);
     });
   });
 });

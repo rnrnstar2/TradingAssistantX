@@ -5,10 +5,10 @@
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { AuthManager } from '../../src/kaito-api/core/auth-manager';
-import { SessionManager } from '../../src/kaito-api/core/session-manager';
+import { SessionManager } from '../../src/kaito-api/core/session';
 import { ActionExecutor } from '../../src/workflows/action-executor';
 import { ComponentContainer, COMPONENT_KEYS } from '../../src/shared/component-container';
-import { DataManager } from '../../src/data/data-manager';
+import { DataManager } from '../../src/shared/data-manager';
 import type { ClaudeDecision } from '../../src/claude/types';
 import type { HttpClient, UserLoginV2Response } from '../../src/kaito-api/types';
 

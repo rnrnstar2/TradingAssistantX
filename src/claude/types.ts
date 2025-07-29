@@ -9,25 +9,6 @@
 // ============================================================================
 
 /**
- * Decision Endpoint 返却型
- * decision-endpoint.ts の専用返却型
- */
-export interface ClaudeDecision {
-  action: 'post' | 'retweet' | 'quote_tweet' | 'like' | 'wait';
-  reasoning: string;
-  parameters: {
-    topic?: string;
-    searchQuery?: string;
-    content?: string;
-    targetTweetId?: string;
-    duration?: number;
-    reason?: string;
-    retry_action?: string;
-  };
-  confidence: number;
-}
-
-/**
  * Content Endpoint 返却型
  * content-endpoint.ts の専用返却型
  */
@@ -82,19 +63,6 @@ export interface SearchQuery {
 // ENDPOINT INPUT TYPES - エンドポイント別入力型
 // ============================================================================
 
-/**
- * Decision Endpoint 入力型
- * decision-endpoint.ts への入力型
- */
-export interface DecisionInput {
-  context: SystemContext;
-  learningData?: any;
-  currentTime: Date;
-  constraints?: {
-    maxPostsPerDay?: number;
-    minWaitBetweenPosts?: number;
-  };
-}
 
 /**
  * Content Endpoint 入力型
@@ -280,24 +248,12 @@ export const SYSTEM_LIMITS = {
 // TYPE GUARDS - 型ガード（品質確保）
 // ============================================================================
 
-/**
- * ClaudeDecision 型ガード
- */
-export function isClaudeDecision(obj: any): obj is ClaudeDecision {
-  return obj && 
-         typeof obj.action === 'string' &&
-         VALID_ACTIONS.includes(obj.action) &&
-         typeof obj.reasoning === 'string' &&
-         typeof obj.confidence === 'number' &&
-         obj.confidence >= 0 && obj.confidence <= 1 &&
-         obj.parameters !== undefined;
-}
 
 /**
  * GeneratedContent 型ガード
  */
 export function isGeneratedContent(obj: any): obj is GeneratedContent {
-  return obj &&
+  return !!(obj &&
          typeof obj.content === 'string' &&
          Array.isArray(obj.hashtags) &&
          typeof obj.qualityScore === 'number' &&
@@ -305,35 +261,35 @@ export function isGeneratedContent(obj: any): obj is GeneratedContent {
          obj.metadata !== undefined &&
          typeof obj.metadata.wordCount === 'number' &&
          typeof obj.metadata.contentType === 'string' &&
-         typeof obj.metadata.generatedAt === 'string';
+         typeof obj.metadata.generatedAt === 'string');
 }
 
 /**
  * AnalysisResult 型ガード
  */
 export function isAnalysisResult(obj: any): obj is AnalysisResult {
-  return obj &&
+  return !!(obj &&
          typeof obj.analysisType === 'string' &&
          ANALYSIS_TYPES.includes(obj.analysisType) &&
          Array.isArray(obj.insights) &&
          Array.isArray(obj.recommendations) &&
          typeof obj.confidence === 'number' &&
          obj.confidence >= 0 && obj.confidence <= 1 &&
-         obj.metadata !== undefined;
+         obj.metadata !== undefined);
 }
 
 /**
  * SearchQuery 型ガード
  */
 export function isSearchQuery(obj: any): obj is SearchQuery {
-  return obj &&
+  return !!(obj &&
          typeof obj.query === 'string' &&
          typeof obj.priority === 'number' &&
          typeof obj.expectedResults === 'number' &&
          obj.filters !== undefined &&
          obj.metadata !== undefined &&
          typeof obj.metadata.purpose === 'string' &&
-         SEARCH_PURPOSES.includes(obj.metadata.purpose);
+         SEARCH_PURPOSES.includes(obj.metadata.purpose));
 }
 
 // ============================================================================
@@ -365,14 +321,6 @@ export interface TwitterContext {
   timestamp: string;
 }
 
-/**
- * 判断リクエスト
- */
-export interface DecisionRequest {
-  context: TwitterContext;
-  learningData?: any;
-  currentTime: Date;
-}
 
 /**
  * 検索リクエスト

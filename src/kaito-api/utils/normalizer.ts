@@ -10,7 +10,33 @@
  * - レスポンス構造の統一化
  */
 
-import { TweetData, UserData, TrendData, TrendLocation } from '../types';
+import { TweetData, UserData, TrendData, TrendLocation, isTweetData, isUserData } from './types';
+import { ValidationError } from './errors';
+
+// ============================================================================
+// NORMALIZATION CACHE
+// ============================================================================
+
+const normalizationCache = new Map<string, any>();
+const CACHE_SIZE = 1000;
+
+/**
+ * キャッシュサイズ制限管理
+ */
+function manageCacheSize(): void {
+  if (normalizationCache.size >= CACHE_SIZE) {
+    const firstKey = normalizationCache.keys().next().value;
+    normalizationCache.delete(firstKey);
+  }
+}
+
+/**
+ * キャッシュキー生成
+ */
+function generateCacheKey(type: string, id: string, options?: any): string {
+  const optionsStr = options ? JSON.stringify(options) : '';
+  return `${type}_${id}_${optionsStr}`;
+}
 
 // ============================================================================
 // NORMALIZATION INTERFACES
@@ -40,9 +66,25 @@ export interface NormalizationResult<T> {
  * @returns 正規化されたTweetData
  */
 export function normalizeTweetData(
-  apiTweet: any, 
+  apiTweet: unknown, 
   options: NormalizationOptions = {}
 ): TweetData {
+  // 型ガードで適切なデータか検証
+  if (!apiTweet || typeof apiTweet !== 'object') {
+    throw new ValidationError('Invalid tweet data: must be an object');
+  }
+
+  const tweet = apiTweet as any; // 検証後のキャスト
+  const tweetId = tweet.id || tweet.tweetId;
+  
+  // キャッシュチェック
+  if (tweetId) {
+    const cacheKey = generateCacheKey('tweet', tweetId, options);
+    if (normalizationCache.has(cacheKey)) {
+      return normalizationCache.get(cacheKey);
+    }
+  }
+
   const opts = {
     strictMode: false,
     fallbackValues: true,
@@ -51,23 +93,43 @@ export function normalizeTweetData(
     ...options
   };
 
-  return {
-    id: normalizeTwitterId(apiTweet.id || apiTweet.tweetId),
+  // 必須フィールドの検証
+  if (!tweet.id && !tweet.tweetId) {
+    throw new ValidationError('Tweet ID is required');
+  }
+  if (!tweet.text && !tweet.content) {
+    throw new ValidationError('Tweet text/content is required');
+  }
+  if (!tweet.author_id && !tweet.userId && !tweet.authorId) {
+    throw new ValidationError('Tweet author ID is required');
+  }
+
+  const normalized = {
+    id: normalizeTwitterId(tweet.id || tweet.tweetId),
     text: opts.sanitizeText ? 
-      sanitizeText(apiTweet.text || apiTweet.content || '') : 
-      String(apiTweet.text || apiTweet.content || ''),
-    author_id: normalizeTwitterId(apiTweet.author_id || apiTweet.userId || apiTweet.authorId),
-    created_at: normalizeTimestamp(apiTweet.created_at || apiTweet.createdAt || apiTweet.timestamp),
-    public_metrics: normalizePublicMetrics(apiTweet.public_metrics || apiTweet.metrics || apiTweet),
-    context_annotations: normalizeContextAnnotations(apiTweet.context_annotations || apiTweet.annotations),
-    lang: normalizeLanguageCode(apiTweet.lang || apiTweet.language),
-    in_reply_to_user_id: apiTweet.in_reply_to_user_id ? 
-      normalizeTwitterId(apiTweet.in_reply_to_user_id) : undefined,
-    conversation_id: apiTweet.conversation_id ? 
-      normalizeTwitterId(apiTweet.conversation_id) : undefined,
-    attachments: normalizeAttachments(apiTweet.attachments),
-    geo: normalizeGeoData(apiTweet.geo)
+      sanitizeText(tweet.text || tweet.content || '') : 
+      String(tweet.text || tweet.content || ''),
+    author_id: normalizeTwitterId(tweet.author_id || tweet.userId || tweet.authorId),
+    created_at: normalizeTimestamp(tweet.created_at || tweet.createdAt || tweet.timestamp),
+    public_metrics: normalizePublicMetrics(tweet.public_metrics || tweet.metrics || tweet),
+    context_annotations: normalizeContextAnnotations(tweet.context_annotations || tweet.annotations),
+    lang: normalizeLanguageCode(tweet.lang || tweet.language),
+    in_reply_to_user_id: tweet.in_reply_to_user_id ? 
+      normalizeTwitterId(tweet.in_reply_to_user_id) : undefined,
+    conversation_id: tweet.conversation_id ? 
+      normalizeTwitterId(tweet.conversation_id) : undefined,
+    attachments: normalizeAttachments(tweet.attachments),
+    geo: normalizeGeoData(tweet.geo)
   };
+
+  // キャッシュに保存
+  if (tweetId) {
+    manageCacheSize();
+    const cacheKey = generateCacheKey('tweet', tweetId, options);
+    normalizationCache.set(cacheKey, normalized);
+  }
+
+  return normalized;
 }
 
 /**
@@ -77,7 +139,7 @@ export function normalizeTweetData(
  * @returns 正規化されたTweetData配列
  */
 export function normalizeTweetArray(
-  apiTweets: any[], 
+  apiTweets: unknown, 
   options: NormalizationOptions = {}
 ): TweetData[] {
   if (!Array.isArray(apiTweets)) {
@@ -86,8 +148,17 @@ export function normalizeTweetArray(
   }
 
   return apiTweets
-    .filter(tweet => tweet && (tweet.id || tweet.tweetId))
-    .map(tweet => normalizeTweetData(tweet, options));
+    .filter((tweet): tweet is Record<string, any> => 
+      tweet && typeof tweet === 'object' && (tweet.id || tweet.tweetId))
+    .map(tweet => {
+      try {
+        return normalizeTweetData(tweet, options);
+      } catch (error) {
+        console.warn('⚠️ Failed to normalize tweet:', error);
+        return null;
+      }
+    })
+    .filter((tweet): tweet is TweetData => tweet !== null);
 }
 
 // ============================================================================
@@ -101,9 +172,25 @@ export function normalizeTweetArray(
  * @returns 正規化されたUserData
  */
 export function normalizeUserData(
-  apiUser: any, 
+  apiUser: unknown, 
   options: NormalizationOptions = {}
 ): UserData {
+  // 型ガードで適切なデータか検証
+  if (!apiUser || typeof apiUser !== 'object') {
+    throw new ValidationError('Invalid user data: must be an object');
+  }
+
+  const user = apiUser as any; // 検証後のキャスト
+  const userId = user.id || user.userId;
+  
+  // キャッシュチェック
+  if (userId) {
+    const cacheKey = generateCacheKey('user', userId, options);
+    if (normalizationCache.has(cacheKey)) {
+      return normalizationCache.get(cacheKey);
+    }
+  }
+
   const opts = {
     strictMode: false,
     fallbackValues: true,
@@ -112,36 +199,53 @@ export function normalizeUserData(
     ...options
   };
 
-  return {
-    id: normalizeTwitterId(apiUser.id || apiUser.userId),
-    username: normalizeUsername(apiUser.username || apiUser.screenName),
+  // 必須フィールドの検証
+  if (!user.id && !user.userId) {
+    throw new ValidationError('User ID is required');
+  }
+  if (!user.username && !user.screenName) {
+    throw new ValidationError('Username is required');
+  }
+
+  const normalized = {
+    id: normalizeTwitterId(user.id || user.userId),
+    username: normalizeUsername(user.username || user.screenName),
     name: opts.sanitizeText ? 
-      sanitizeText(apiUser.name || apiUser.displayName || '') : 
-      String(apiUser.name || apiUser.displayName || ''),
+      sanitizeText(user.name || user.displayName || '') : 
+      String(user.name || user.displayName || ''),
     description: opts.sanitizeText ? 
-      sanitizeText(apiUser.description || apiUser.bio || '') : 
-      String(apiUser.description || apiUser.bio || ''),
-    created_at: normalizeTimestamp(apiUser.created_at || apiUser.createdAt),
+      sanitizeText(user.description || user.bio || '') : 
+      String(user.description || user.bio || ''),
+    created_at: normalizeTimestamp(user.created_at || user.createdAt),
     location: opts.sanitizeText ? 
-      sanitizeText(apiUser.location || '') : 
-      String(apiUser.location || ''),
+      sanitizeText(user.location || '') : 
+      String(user.location || ''),
     url: opts.validateUrls ? 
-      normalizeUrl(apiUser.url || apiUser.website || '') : 
-      String(apiUser.url || apiUser.website || ''),
-    verified: normalizeBoolean(apiUser.verified || apiUser.verified_type === 'blue'),
-    verified_type: normalizeVerifiedType(apiUser.verified_type),
+      normalizeUrl(user.url || user.website || '') : 
+      String(user.url || user.website || ''),
+    verified: normalizeBoolean(user.verified || user.verified_type === 'blue'),
+    verified_type: normalizeVerifiedType(user.verified_type),
     profile_image_url: opts.validateUrls ? 
-      normalizeUrl(apiUser.profile_image_url || apiUser.profileImageUrl || '') : 
-      String(apiUser.profile_image_url || apiUser.profileImageUrl || ''),
+      normalizeUrl(user.profile_image_url || user.profileImageUrl || '') : 
+      String(user.profile_image_url || user.profileImageUrl || ''),
     profile_banner_url: opts.validateUrls ? 
-      normalizeUrl(apiUser.profile_banner_url || apiUser.bannerImageUrl || '') : 
-      String(apiUser.profile_banner_url || apiUser.bannerImageUrl || ''),
-    public_metrics: normalizeUserPublicMetrics(apiUser.public_metrics || apiUser.metrics || apiUser),
-    protected: normalizeBoolean(apiUser.protected),
-    pinned_tweet_id: apiUser.pinned_tweet_id ? 
-      normalizeTwitterId(apiUser.pinned_tweet_id) : undefined,
-    withheld: normalizeWithheldInfo(apiUser.withheld)
+      normalizeUrl(user.profile_banner_url || user.bannerImageUrl || '') : 
+      String(user.profile_banner_url || user.bannerImageUrl || ''),
+    public_metrics: normalizeUserPublicMetrics(user.public_metrics || user.metrics || user),
+    protected: normalizeBoolean(user.protected),
+    pinned_tweet_id: user.pinned_tweet_id ? 
+      normalizeTwitterId(user.pinned_tweet_id) : undefined,
+    withheld: normalizeWithheldInfo(user.withheld)
   };
+
+  // キャッシュに保存
+  if (userId) {
+    manageCacheSize();
+    const cacheKey = generateCacheKey('user', userId, options);
+    normalizationCache.set(cacheKey, normalized);
+  }
+
+  return normalized;
 }
 
 /**
@@ -151,7 +255,7 @@ export function normalizeUserData(
  * @returns 正規化されたUserData配列
  */
 export function normalizeUserArray(
-  apiUsers: any[], 
+  apiUsers: unknown, 
   options: NormalizationOptions = {}
 ): UserData[] {
   if (!Array.isArray(apiUsers)) {
@@ -160,8 +264,17 @@ export function normalizeUserArray(
   }
 
   return apiUsers
-    .filter(user => user && (user.id || user.userId))
-    .map(user => normalizeUserData(user, options));
+    .filter((user): user is Record<string, any> => 
+      user && typeof user === 'object' && (user.id || user.userId))
+    .map(user => {
+      try {
+        return normalizeUserData(user, options);
+      } catch (error) {
+        console.warn('⚠️ Failed to normalize user:', error);
+        return null;
+      }
+    })
+    .filter((user): user is UserData => user !== null);
 }
 
 // ============================================================================
@@ -174,11 +287,15 @@ export function normalizeUserArray(
  * @param index - トレンドの順位（0から開始）
  * @returns 正規化されたTrendData
  */
-export function normalizeTrendData(apiTrend: any, index: number): TrendData {
+export function normalizeTrendData(apiTrend: unknown, index: number): TrendData {
+  if (!apiTrend || typeof apiTrend !== 'object') {
+    throw new ValidationError('Invalid trend data: must be an object');
+  }
+  const trend = apiTrend as any;
   return {
-    name: sanitizeText(apiTrend.name || apiTrend.topic || ''),
-    query: sanitizeText(apiTrend.query || apiTrend.name || apiTrend.topic || ''),
-    tweetVolume: normalizeTweetVolume(apiTrend.tweet_volume || apiTrend.volume || apiTrend.count),
+    name: sanitizeText(trend.name || trend.topic || ''),
+    query: sanitizeText(trend.query || trend.name || trend.topic || ''),
+    tweetVolume: normalizeTweetVolume(trend.tweet_volume || trend.volume || trend.count),
     rank: Math.max(1, index + 1)
   };
 }
@@ -188,15 +305,25 @@ export function normalizeTrendData(apiTrend: any, index: number): TrendData {
  * @param apiTrends - TwitterAPI.io APIレスポンスのトレンド配列
  * @returns 正規化されたTrendData配列
  */
-export function normalizeTrendArray(apiTrends: any[]): TrendData[] {
+export function normalizeTrendArray(apiTrends: unknown): TrendData[] {
   if (!Array.isArray(apiTrends)) {
     console.warn('⚠️ Expected array for trend normalization, received:', typeof apiTrends);
     return [];
   }
 
   return apiTrends
-    .map((trend, index) => normalizeTrendData(trend, index))
-    .filter(trend => trend.name.trim() !== ''); // 空のトレンドを除外
+    .filter((trend): trend is Record<string, any> => 
+      trend && typeof trend === 'object')
+    .map((trend, index) => {
+      try {
+        return normalizeTrendData(trend, index);
+      } catch (error) {
+        console.warn('⚠️ Failed to normalize trend:', error);
+        return null;
+      }
+    })
+    .filter((trend): trend is TrendData => 
+      trend !== null && trend.name.trim() !== ''); // 空のトレンドを除外
 }
 
 /**
@@ -204,11 +331,15 @@ export function normalizeTrendArray(apiTrends: any[]): TrendData[] {
  * @param apiLocation - TwitterAPI.io APIレスポンスの場所データ
  * @returns 正規化されたTrendLocation
  */
-export function normalizeTrendLocation(apiLocation: any): TrendLocation {
+export function normalizeTrendLocation(apiLocation: unknown): TrendLocation {
+  if (!apiLocation || typeof apiLocation !== 'object') {
+    throw new ValidationError('Invalid trend location data: must be an object');
+  }
+  const location = apiLocation as any;
   return {
-    woeid: normalizeNumber(apiLocation.woeid, 0),
-    name: sanitizeText(apiLocation.name || ''),
-    countryCode: normalizeCountryCode(apiLocation.countryCode || apiLocation.country || '')
+    woeid: normalizeNumber(location.woeid, 0),
+    name: sanitizeText(location.name || ''),
+    countryCode: normalizeCountryCode(location.countryCode || location.country || '')
   };
 }
 
@@ -217,15 +348,25 @@ export function normalizeTrendLocation(apiLocation: any): TrendLocation {
  * @param apiLocations - TwitterAPI.io APIレスポンスの場所配列
  * @returns 正規化されたTrendLocation配列
  */
-export function normalizeTrendLocationArray(apiLocations: any[]): TrendLocation[] {
+export function normalizeTrendLocationArray(apiLocations: unknown): TrendLocation[] {
   if (!Array.isArray(apiLocations)) {
     console.warn('⚠️ Expected array for trend location normalization, received:', typeof apiLocations);
     return [];
   }
 
   return apiLocations
-    .map(location => normalizeTrendLocation(location))
-    .filter(location => location.woeid > 0 && location.name.trim() !== '');
+    .filter((location): location is Record<string, any> => 
+      location && typeof location === 'object')
+    .map(location => {
+      try {
+        return normalizeTrendLocation(location);
+      } catch (error) {
+        console.warn('⚠️ Failed to normalize trend location:', error);
+        return null;
+      }
+    })
+    .filter((location): location is TrendLocation => 
+      location !== null && location.woeid > 0 && location.name.trim() !== '');
 }
 
 // ============================================================================
@@ -237,7 +378,7 @@ export function normalizeTrendLocationArray(apiLocations: any[]): TrendLocation[
  * @param id - 正規化対象のID
  * @returns 正規化されたID文字列
  */
-export function normalizeTwitterId(id: any): string {
+export function normalizeTwitterId(id: unknown): string {
   if (id === null || id === undefined) return '';
   
   const idStr = String(id).trim();
@@ -256,7 +397,7 @@ export function normalizeTwitterId(id: any): string {
  * @param username - 正規化対象のユーザー名
  * @returns 正規化されたユーザー名
  */
-export function normalizeUsername(username: any): string {
+export function normalizeUsername(username: unknown): string {
   if (!username) return '';
   
   let normalized = String(username).trim().toLowerCase();
@@ -278,7 +419,7 @@ export function normalizeUsername(username: any): string {
  * @param timestamp - 正規化対象のタイムスタンプ
  * @returns ISO 8601形式のタイムスタンプ
  */
-export function normalizeTimestamp(timestamp: any): string {
+export function normalizeTimestamp(timestamp: unknown): string {
   if (!timestamp) return new Date().toISOString();
   
   try {
@@ -310,7 +451,7 @@ export function normalizeTimestamp(timestamp: any): string {
  * @param url - 正規化対象のURL
  * @returns 正規化されたURL
  */
-export function normalizeUrl(url: any): string {
+export function normalizeUrl(url: unknown): string {
   if (!url) return '';
   
   const urlStr = String(url).trim();
@@ -352,7 +493,7 @@ export function normalizeUrl(url: any): string {
  * @param fallback - フォールバック値
  * @returns 正規化された数値
  */
-export function normalizeNumber(value: any, fallback: number = 0): number {
+export function normalizeNumber(value: unknown, fallback: number = 0): number {
   if (value === null || value === undefined) return fallback;
   
   const num = Number(value);
@@ -369,7 +510,7 @@ export function normalizeNumber(value: any, fallback: number = 0): number {
  * @param value - 正規化対象の値
  * @returns 正規化されたブール値
  */
-export function normalizeBoolean(value: any): boolean {
+export function normalizeBoolean(value: unknown): boolean {
   if (typeof value === 'boolean') return value;
   if (value === 'true' || value === '1' || value === 1) return true;
   if (value === 'false' || value === '0' || value === 0) return false;
@@ -381,7 +522,7 @@ export function normalizeBoolean(value: any): boolean {
  * @param text - サニタイズ対象のテキスト
  * @returns サニタイズされたテキスト
  */
-export function sanitizeText(text: any): string {
+export function sanitizeText(text: unknown): string {
   if (!text) return '';
   
   return String(text)

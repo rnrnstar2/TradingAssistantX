@@ -8,6 +8,7 @@
     "start": "tsx src/main.ts",
     "manager": "ROLE=manager claude --dangerously-skip-permissions",
     "worker": "ROLE=worker claude --dangerously-skip-permissions",
+    "claude:watch": "CLAUDE_PLAN=MAX_200 bash .claude/context/claude-context-display.sh --watch",
     "test": "vitest",
     "test:run": "vitest run",
     "test:watch": "vitest watch",

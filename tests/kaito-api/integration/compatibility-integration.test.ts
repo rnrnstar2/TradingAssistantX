@@ -33,7 +33,7 @@ import type {
 
 // main-workflows互換性テスト用
 import { ComponentContainer, COMPONENT_KEYS } from '../../../src/shared/component-container';
-import { DataManager } from '../../../src/data/data-manager';
+import { DataManager } from '../../../src/shared/data-manager';
 
 describe('後方互換性統合テスト', () => {
   let client: KaitoTwitterAPIClient;

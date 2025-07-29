@@ -9,6 +9,10 @@
  * - API利用規約遵守
  */
 
+import { RateLimitInfo, TwitterAPIError } from './types';
+import { KaitoAPIError, RateLimitError, ValidationError, NetworkError, AuthenticationError } from './errors';
+import { REQUEST_TIMEOUT, MAX_RETRY_ATTEMPTS, RETRY_DELAY } from './constants';
+
 // ============================================================================
 // インターフェース定義
 // ============================================================================
@@ -16,18 +20,11 @@
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
-  error?: ApiError;
+  error?: KaitoAPIError;
   metadata: ResponseMetadata;
 }
 
-export interface ApiError {
-  code: string;
-  message: string;
-  type: 'rate_limit' | 'auth_error' | 'network_error' | 'validation_error' | 'unknown';
-  retryable: boolean;
-  retryAfter?: number; // milliseconds
-  details?: any;
-}
+// Using KaitoAPIError classes from errors.ts instead of custom interface
 
 export interface ResponseMetadata {
   timestamp: string;
@@ -42,12 +39,7 @@ export interface ResponseMetadata {
   };
 }
 
-export interface RateLimitInfo {
-  limit: number;
-  remaining: number;
-  resetTime: string;
-  retryAfter?: number;
-}
+// RateLimitInfo型はtypes.tsからimport
 
 export interface RetryConfig {
   maxRetries: number;
@@ -65,12 +57,14 @@ export class ResponseHandler {
   private retryConfig: RetryConfig;
   private requestLog: Map<string, ResponseMetadata[]> = new Map();
   private errorStats: Map<string, number> = new Map();
+  private readonly MAX_LOG_ENTRIES = 100;
+  private readonly LOG_RETENTION_MS = 3600000; // 1時間
 
   constructor(retryConfig?: Partial<RetryConfig>) {
     this.retryConfig = {
-      maxRetries: 3,
-      baseDelay: 1000,
-      maxDelay: 30000,
+      maxRetries: MAX_RETRY_ATTEMPTS,
+      baseDelay: RETRY_DELAY,
+      maxDelay: REQUEST_TIMEOUT,
       backoffMultiplier: 2,
       retryableErrors: ['rate_limit', 'network_error', 'timeout'],
       ...retryConfig
@@ -108,13 +102,12 @@ export class ResponseHandler {
       if (context.educational) {
         const safetyCheck = await this.performEducationalSafetyCheck(rawResponse);
         if (!safetyCheck.isSafe) {
-          return this.createErrorResponse(
-            'validation_error',
-            '教育システム安全基準に適合しません',
-            false,
-            { safetyCheck },
+          const validationError = new ValidationError('教育システム安全基準に適合しません');
+          return this.createErrorResponseFromError(
+            validationError,
             requestId,
-            processingTime
+            processingTime,
+            { safetyCheck }
           );
         }
       }
@@ -147,29 +140,26 @@ export class ResponseHandler {
       const processingTime = Date.now() - startTime;
       
       // エラー分析・分類
-      const apiError = this.analyzeError(error);
+      const kaitoError = this.analyzeError(error);
       
       // エラー統計更新
-      this.updateErrorStats(apiError.type);
+      this.updateErrorStats(kaitoError.constructor.name);
 
       // エラーレスポンス作成
-      const errorResponse = this.createErrorResponse(
-        apiError.type,
-        apiError.message,
-        apiError.retryable,
-        { originalError: error },
+      const errorResponse = this.createErrorResponseFromError(
+        kaitoError,
         requestId,
         processingTime,
-        apiError.retryAfter
+        { originalError: error }
       );
 
       // エラーログ記録
-      this.logError(context.endpoint, apiError, error);
+      this.logError(context.endpoint, kaitoError, error);
 
       console.error('❌ API応答処理失敗:', {
         endpoint: context.endpoint,
-        errorType: apiError.type,
-        retryable: apiError.retryable,
+        errorType: kaitoError.constructor.name,
+        retryable: this.isRetryableError(kaitoError),
         processingTime
       });
 
@@ -188,7 +178,7 @@ export class ResponseHandler {
       educational?: boolean;
     }
   ): Promise<ApiResponse<T>> {
-    let lastError: ApiError | null = null;
+    let lastError: KaitoAPIError | null = null;
     let attempt = 0;
 
     while (attempt <= this.retryConfig.maxRetries) {
@@ -207,7 +197,7 @@ export class ResponseHandler {
         });
 
         // 成功またはリトライ不可能なエラーの場合は結果を返す
-        if (response.success || (response.error && !response.error.retryable)) {
+        if (response.success || (response.error && !this.isRetryableError(response.error))) {
           return response;
         }
 
@@ -227,13 +217,15 @@ export class ResponseHandler {
       lastError: lastError?.message
     });
 
-    return this.createErrorResponse(
-      'unknown',
+    const maxRetriesError = new KaitoAPIError(
       `最大リトライ回数 (${this.retryConfig.maxRetries}) に達しました`,
-      false,
-      { lastError, totalAttempts: attempt },
+      'MAX_RETRIES_EXCEEDED'
+    );
+    return this.createErrorResponseFromError(
+      maxRetriesError,
       this.generateRequestId(),
-      0
+      0,
+      { lastError, totalAttempts: attempt }
     );
   }
 
@@ -273,6 +265,9 @@ export class ResponseHandler {
    * リクエストログ取得
    */
   getRequestLog(endpoint?: string): ResponseMetadata[] {
+    // 取得時にもクリーンアップ実行
+    this.cleanupOldLogs();
+    
     if (endpoint) {
       return this.requestLog.get(endpoint) || [];
     }
@@ -341,56 +336,35 @@ export class ResponseHandler {
   // プライベートメソッド
   // ============================================================================
 
-  private analyzeError(error: any): ApiError {
+  private analyzeError(error: any): KaitoAPIError {
     // HTTP ステータスコードベースの分析
     if (error.status || error.statusCode) {
       const status = error.status || error.statusCode;
       
       switch (status) {
         case 401:
-          return {
-            code: 'AUTH_ERROR',
-            message: '認証に失敗しました',
-            type: 'auth_error',
-            retryable: false
-          };
+          return new AuthenticationError('認証に失敗しました');
         
         case 403:
-          return {
-            code: 'FORBIDDEN',
-            message: 'アクセスが拒否されました',
-            type: 'auth_error', 
-            retryable: false
-          };
+          return new AuthenticationError('アクセスが拒否されました');
         
         case 429:
           const retryAfter = this.extractRetryAfter(error);
-          return {
-            code: 'RATE_LIMIT',
-            message: 'レート制限に達しました',
-            type: 'rate_limit',
-            retryable: true,
-            retryAfter
-          };
+          const resetTime = Date.now() + (retryAfter || 60000);
+          return new RateLimitError('unknown', resetTime, 0);
         
         case 500:
         case 502:
         case 503:
         case 504:
-          return {
-            code: 'SERVER_ERROR',
-            message: 'サーバーエラーが発生しました',
-            type: 'network_error',
-            retryable: true
-          };
+          return new NetworkError('サーバーエラーが発生しました', error);
         
         default:
-          return {
-            code: 'HTTP_ERROR',
-            message: `HTTPエラー: ${status}`,
-            type: 'unknown',
-            retryable: status >= 500
-          };
+          return new KaitoAPIError(
+            `HTTPエラー: ${status}`,
+            'HTTP_ERROR',
+            status
+          );
       }
     }
 
@@ -401,37 +375,37 @@ export class ResponseHandler {
         case 'ECONNREFUSED':
         case 'ETIMEDOUT':
         case 'ENOTFOUND':
-          return {
-            code: error.code,
-            message: 'ネットワーク接続エラー',
-            type: 'network_error',
-            retryable: true
-          };
+          return new NetworkError('ネットワーク接続エラー', error);
         
         default:
-          return {
-            code: error.code,
-            message: error.message || 'ネットワークエラー',
-            type: 'network_error',
-            retryable: true
-          };
+          return new NetworkError(error.message || 'ネットワークエラー', error);
       }
     }
 
     // その他のエラー
-    return {
-      code: 'UNKNOWN_ERROR',
-      message: error.message || '不明なエラーが発生しました',
-      type: 'unknown',
-      retryable: false,
-      details: error
-    };
+    return new KaitoAPIError(
+      error.message || '不明なエラーが発生しました',
+      'UNKNOWN_ERROR',
+      undefined,
+      error
+    );
   }
 
   private extractRateLimitInfo(response: any): RateLimitInfo | undefined {
     // レスポンスヘッダーからレート制限情報を抽出
     const headers = response.headers || {};
     
+    // 2025年最新のAnthropic APIヘッダー形式を優先
+    if (headers['anthropic-ratelimit-requests-limit'] || headers['anthropic-ratelimit-tokens-limit']) {
+      return {
+        limit: parseInt(headers['anthropic-ratelimit-requests-limit'] || headers['anthropic-ratelimit-tokens-limit']) || 0,
+        remaining: parseInt(headers['anthropic-ratelimit-requests-remaining'] || headers['anthropic-ratelimit-tokens-remaining']) || 0,
+        resetTime: headers['anthropic-ratelimit-requests-reset'] || headers['anthropic-ratelimit-tokens-reset'] || new Date().toISOString(),
+        retryAfter: headers['retry-after'] ? parseInt(headers['retry-after']) * 1000 : undefined
+      };
+    }
+    
+    // 従来のX-RateLimit形式もサポート（後方互換性）
     if (headers['x-rate-limit-limit'] || headers['X-RateLimit-Limit']) {
       return {
         limit: parseInt(headers['x-rate-limit-limit'] || headers['X-RateLimit-Limit']) || 0,
@@ -524,24 +498,20 @@ export class ResponseHandler {
     };
   }
 
-  private createErrorResponse(
-    errorType: ApiError['type'],
-    message: string,
-    retryable: boolean,
-    details: any,
+  private createErrorResponseFromError(
+    error: KaitoAPIError,
     requestId: string,
     processingTime: number,
-    retryAfter?: number
+    additionalDetails?: any
   ): ApiResponse {
     return {
       success: false,
       error: {
-        code: errorType.toUpperCase(),
-        message,
-        type: errorType,
-        retryable,
-        retryAfter,
-        details
+        ...error,
+        details: {
+          ...error.details,
+          ...additionalDetails
+        }
       },
       metadata: {
         timestamp: new Date().toISOString(),
@@ -549,6 +519,19 @@ export class ResponseHandler {
         processingTime
       }
     };
+  }
+
+  private createErrorResponse(
+    errorType: string,
+    message: string,
+    retryable: boolean,
+    details: any,
+    requestId: string,
+    processingTime: number,
+    retryAfter?: number
+  ): ApiResponse {
+    const error = new KaitoAPIError(message, errorType);
+    return this.createErrorResponseFromError(error, requestId, processingTime, details);
   }
 
   private calculateRetryDelay(attempt: number): number {
@@ -561,6 +544,9 @@ export class ResponseHandler {
   }
 
   private logRequest(endpoint: string, metadata: ResponseMetadata): void {
+    // 古いログの自動削除
+    this.cleanupOldLogs();
+    
     if (!this.requestLog.has(endpoint)) {
       this.requestLog.set(endpoint, []);
     }
@@ -568,21 +554,46 @@ export class ResponseHandler {
     const logs = this.requestLog.get(endpoint)!;
     logs.push(metadata);
     
-    // 最新100件のみ保持
-    if (logs.length > 100) {
-      logs.splice(0, logs.length - 100);
+    // 最大エントリ数制限
+    if (logs.length > this.MAX_LOG_ENTRIES) {
+      logs.splice(0, logs.length - this.MAX_LOG_ENTRIES);
     }
   }
 
-  private logError(endpoint: string, apiError: ApiError, originalError: any): void {
+  /**
+   * 古いログの自動削除
+   */
+  private cleanupOldLogs(): void {
+    const now = Date.now();
+    this.requestLog.forEach((logs, endpoint) => {
+      const filtered = logs.filter(log => {
+        const timestamp = new Date(log.timestamp).getTime();
+        return now - timestamp < this.LOG_RETENTION_MS;
+      });
+      
+      if (filtered.length === 0) {
+        this.requestLog.delete(endpoint);
+      } else {
+        this.requestLog.set(endpoint, filtered);
+      }
+    });
+  }
+
+  private logError(endpoint: string, error: KaitoAPIError, originalError: any): void {
     console.error(`API Error [${endpoint}]:`, {
-      type: apiError.type,
-      code: apiError.code,
-      message: apiError.message,
-      retryable: apiError.retryable,
-      retryAfter: apiError.retryAfter,
+      type: error.constructor.name,
+      code: error.code,
+      message: error.message,
+      retryable: this.isRetryableError(error),
+      statusCode: error.statusCode,
       originalError: originalError.message || originalError
     });
+  }
+
+  private isRetryableError(error: KaitoAPIError): boolean {
+    return error instanceof NetworkError || 
+           error instanceof RateLimitError || 
+           (error instanceof KaitoAPIError && error.statusCode && error.statusCode >= 500);
   }
 
   private updateErrorStats(errorType: string): void {
@@ -624,19 +635,20 @@ export function validateResponseSafety(response: any): boolean {
 /**
  * エラーの重要度判定
  */
-export function getErrorSeverity(error: ApiError): 'low' | 'medium' | 'high' | 'critical' {
-  switch (error.type) {
-    case 'rate_limit':
-      return 'medium';
-    case 'auth_error':
-      return 'high';
-    case 'network_error':
-      return error.retryable ? 'medium' : 'high';
-    case 'validation_error':
-      return 'high';
-    default:
-      return 'medium';
+export function getErrorSeverity(error: KaitoAPIError): 'low' | 'medium' | 'high' | 'critical' {
+  if (error instanceof RateLimitError) {
+    return 'medium';
   }
+  if (error instanceof AuthenticationError) {
+    return 'high';
+  }
+  if (error instanceof ValidationError) {
+    return 'high';
+  }
+  if (error instanceof NetworkError) {
+    return 'medium';
+  }
+  return 'medium';
 }
 
 /**

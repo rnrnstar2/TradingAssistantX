@@ -1,6 +1,6 @@
 import { Logger, systemLogger } from './logger';
 import { KaitoTwitterAPIClient } from '../kaito-api';
-import { DataManager } from '../data/data-manager';
+import { DataManager } from './data-manager';
 // エンドポイント別Claude SDK関数をインポート
 // import { ClaudeSDK } from '../claude'; // ClaudeSDKクラスが存在しないためコメントアウト
 

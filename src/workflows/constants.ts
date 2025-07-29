@@ -67,3 +67,56 @@ export const WORKFLOW_CONSTANTS = {
 // 型定義のエクスポート
 // ===================================================================
 export type ActionType = typeof WORKFLOW_CONSTANTS.ACTIONS[keyof typeof WORKFLOW_CONSTANTS.ACTIONS];
+
+// ===================================================================
+// ワークフロー実行関連型定義
+// ===================================================================
+export interface WorkflowOptions {
+  scheduledAction?: string;
+  scheduledTopic?: string;
+  scheduledQuery?: string;
+}
+
+export interface WorkflowResult {
+  success: boolean;
+  executionId: string;
+  decision: any;
+  actionResult?: any;
+  error?: string;
+  executionTime: number;
+}
+
+export interface ActionResult {
+  success: boolean;
+  action: ActionType;
+  timestamp: string;
+  executionTime?: number;
+  result?: any;
+  error?: string;
+}
+
+// ===================================================================
+// システムコンテキスト型定義
+// ===================================================================
+export interface SystemContext {
+  account: {
+    followerCount: number;
+    lastPostTime?: string;
+    postsToday: number;
+    engagementRate: number;
+    accountHealth?: any;
+  };
+  system: {
+    health: {
+      all_systems_operational: boolean;
+      api_status: 'healthy' | 'degraded' | 'error';
+      rate_limits_ok: boolean;
+    };
+    executionCount: { today: number; total: number };
+  };
+  market: {
+    trendingTopics: string[];
+    volatility: 'low' | 'medium' | 'high';
+    sentiment: 'bearish' | 'neutral' | 'bullish';
+  };
+}

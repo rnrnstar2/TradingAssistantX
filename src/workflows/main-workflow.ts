@@ -1,71 +1,34 @@
 /**
- * Main Workflow - Simplified 4-step execution flow
+ * Main Workflow - Simplified 3-step execution flow
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * 
  * 🎯 責任範囲:
- * • 4ステップのメインワークフロー実行
- * • データ収集 → Claude判断 → アクション実行 → 結果保存の制御
+ * • 3ステップのメインワークフロー実行
+ * • データ収集 → アクション実行 → 結果保存の制御
  * • 最小限のエラーハンドリング
  */
 
 import { KaitoApiClient } from '../kaito-api';
-import { makeDecision, generateContent } from '../claude';
-import { DataManager } from '../data/data-manager';
-import { WORKFLOW_CONSTANTS, ActionType } from './constants';
+import { KaitoAPIConfigManager } from '../kaito-api/core/config';
+import { generateContent } from '../claude';
+import { DataManager } from '../shared/data-manager';
+import { WORKFLOW_CONSTANTS, ActionType, WorkflowOptions, WorkflowResult, SystemContext } from './constants';
 
-// 型定義
-interface WorkflowOptions {
-  scheduledAction?: string;
-  scheduledTopic?: string;
-  scheduledQuery?: string;
-}
-
-interface WorkflowResult {
-  success: boolean;
-  executionId: string;
-  decision: any;
-  actionResult?: any;
-  error?: string;
-  executionTime: number;
-}
-
-interface SystemContext {
-  account: {
-    followerCount: number;
-    lastPostTime?: string;
-    postsToday: number;
-    engagementRate: number;
-    accountHealth?: any;
-  };
-  system: {
-    health: {
-      all_systems_operational: boolean;
-      api_status: 'healthy' | 'degraded' | 'error';
-      rate_limits_ok: boolean;
-    };
-    executionCount: { today: number; total: number };
-  };
-  market: {
-    trendingTopics: string[];
-    volatility: 'low' | 'medium' | 'high';
-    sentiment: 'bearish' | 'neutral' | 'bullish';
-  };
-}
 
 /**
  * MainWorkflow - MVP最小構成ワークフローエンジン
  */
 export class MainWorkflow {
   private static dataManager = new DataManager();
-  private static kaitoClient = new KaitoApiClient();
+  private static kaitoClient: KaitoApiClient;
+  private static kaitoClientInitialized = false;
 
   /**
-   * 4ステップのメインワークフロー実行
+   * 3ステップのメインワークフロー実行
    * 
    * ステップ1: データ収集（Kaito API + 学習データ）
-   * ステップ2: アクション決定（Claude）
-   * ステップ3: アクション実行（Kaito API）
-   * ステップ4: 結果保存（data/）
+   * ステップ2: アクション実行（固定アクション使用）
+   * ステップ3: 結果保存（data/）
    */
   static async execute(options?: WorkflowOptions): Promise<WorkflowResult> {
     const startTime = Date.now();
@@ -73,6 +36,12 @@ export class MainWorkflow {
 
     try {
       console.log('🚀 メインワークフロー実行開始');
+
+      // 初回実行時にKaitoApiClientを初期化
+      if (!this.kaitoClientInitialized) {
+        await this.initializeKaitoClient();
+        this.kaitoClientInitialized = true;
+      }
 
       // 新規実行サイクル初期化
       executionId = await this.dataManager.initializeExecutionCycle();
@@ -126,7 +95,7 @@ export class MainWorkflow {
       }
 
       // ===============================
-      // 手動実行モード（4ステップ）
+      // 手動実行モード（3ステップ）
       // ===============================
       
       // ステップ1: データ収集
@@ -144,31 +113,29 @@ export class MainWorkflow {
         currentStatus: !!currentStatus
       });
 
-      // ステップ2: アクション決定（Claude）
-      console.log('🧠 ステップ2: Claude判断開始');
+      // ステップ2: アクション実行（固定アクション使用）
+      console.log('⚡ ステップ2: アクション実行開始');
 
-      const decision = await makeDecision({
-        context: this.buildSystemContext(profile, currentStatus),
-        learningData,
-        currentTime: new Date()
-      });
+      // 固定アクション設定（dev実行時のデフォルト）
+      const decision = {
+        action: 'post',
+        parameters: {
+          topic: 'investment',
+          query: null
+        },
+        confidence: 1.0,
+        reasoning: '固定アクション実行: 手動実行モード'
+      };
 
-      if (!decision) {
-        throw new Error(WORKFLOW_CONSTANTS.ERROR_MESSAGES.CLAUDE_DECISION_FAILED);
-      }
-
-      // Claude出力保存
+      // 決定内容保存
       await this.dataManager.saveClaudeOutput('decision', decision);
-      console.log('✅ Claude判断完了', { action: decision.action, confidence: decision.confidence });
-
-      // ステップ3: アクション実行
-      console.log('⚡ ステップ3: アクション実行開始');
+      console.log('✅ 固定アクション設定完了', { action: decision.action, confidence: decision.confidence });
 
       const actionResult = await this.executeAction(decision);
       console.log('✅ アクション実行完了', { action: decision.action, success: actionResult.success });
 
-      // ステップ4: 結果保存
-      console.log('💾 ステップ4: 結果保存開始');
+      // ステップ3: 結果保存
+      console.log('💾 ステップ3: 結果保存開始');
 
       await this.saveResults(decision, actionResult);
       console.log('✅ 結果保存完了');
@@ -496,6 +463,29 @@ export class MainWorkflow {
     } catch (error) {
       console.error('❌ 結果保存エラー:', error);
       // 結果保存のエラーは致命的でないためスロー
+    }
+  }
+
+  /**
+   * KaitoApiClient初期化
+   */
+  private static async initializeKaitoClient(): Promise<void> {
+    try {
+      // KaitoAPIConfigManagerを使用して設定を生成
+      const configManager = new KaitoAPIConfigManager();
+      const apiConfig = await configManager.generateConfig('dev');
+      
+      // クライアントを作成
+      this.kaitoClient = new KaitoApiClient();
+      
+      // 重要: initializeWithConfigを呼んでhttpClientを初期化
+      this.kaitoClient.initializeWithConfig(apiConfig);
+      
+      console.log('✅ KaitoApiClient初期化完了');
+    } catch (error) {
+      console.error('❌ KaitoApiClient初期化エラー:', error);
+      // デフォルトクライアントを作成（エラー時でも動作継続）
+      this.kaitoClient = new KaitoApiClient();
     }
   }
 }

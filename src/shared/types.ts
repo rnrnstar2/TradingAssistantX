@@ -19,7 +19,6 @@
 
 // Claude SDK Types
 import type { 
-  ClaudeDecision, 
   GeneratedContent, 
   AnalysisResult, 
   SearchQuery,
@@ -32,10 +31,9 @@ import type {
   RetweetResult, 
   QuoteTweetResult, 
   LikeResult 
-} from '../kaito-api/types';
+} from '../kaito-api/utils/types';
 
 export type { 
-  ClaudeDecision, 
   GeneratedContent, 
   AnalysisResult, 
   SearchQuery,
@@ -61,7 +59,7 @@ export type {
   QuoteTweetResult,// 追加
   LikeResult,      // 追加
   AccountInfo      // 追加
-} from '../kaito-api/types';
+} from '../kaito-api/utils/types';
 
 // メインワークフロー型定義
 export interface ExecutionContext {
@@ -747,22 +745,6 @@ export interface TweetActionEndpoints {
   deleteTweet: (tweetId: string) => Promise<any>;
 }
 
-export interface ActionExecutorConfig {
-  endpoints: {
-    user: UserEndpoints;
-    tweet: TweetEndpoints;
-    communities: CommunityEndpoints;
-    list: ListEndpoints;
-    trend: TrendEndpoints;
-    login: LoginEndpoints;
-    tweetAction: TweetActionEndpoints;
-  };
-  reliability: {
-    enableRollback: boolean;
-    rollbackTimeoutMs: number;
-    healthCheckInterval: number;
-  };
-}
 
 export interface ActionContext {
   decision: any; // ClaudeDecision import circular避け
@@ -799,7 +781,6 @@ export interface QPSStatus {
 export interface KaitoAPIIntegration {
   client: any; // KaitoTwitterAPIClient circular避け
   searchEngine: any; // SearchEngine circular避け  
-  actionExecutor: any; // ActionExecutor circular避け
   isInitialized: boolean;
   lastHealthCheck: string;
 }

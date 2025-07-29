@@ -1,4 +1,8 @@
 import { TimeScheduler } from './scheduler/time-scheduler';
+import * as dotenv from 'dotenv';
+
+// 環境変数を読み込む
+dotenv.config();
 
 /**
  * pnpm start - スケジュール実行モード

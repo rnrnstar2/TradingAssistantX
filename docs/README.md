@@ -5,7 +5,7 @@
 ### 🏗️ アーキテクチャ・構造
 
 - **[directory-structure.md](./directory-structure.md)** - プロジェクト全体構造（src/, tests/, docs/, tasks/の詳細）
-- **[workflow.md](./workflow.md)** - メインワークフロー仕様書（3ステップ（スケジュール）/4ステップ（手動）実行、スケジュール設定）
+- **[workflow.md](./workflow.md)** - メインワークフロー仕様書（3ステップ（スケジュール）/3ステップ（dev）実行、スケジュール設定）
 - **[claude.md](./claude.md)** - Claude Code SDK仕様書（エンドポイント別設計、テスト仕様）
 - **[kaito-api.md](./kaito-api.md)** - KaitoTwitterAPI仕様書（2層認証、データ制限対策）
 
@@ -43,5 +43,10 @@
 ### 環境変数・機密情報の取り扱い
 
 - **禁止事項**: 実際のAPIキー、パスワード、秘密鍵の記載
-- **推奨形式**: `your_api_key`、`your_password` などのプレースホルダー使用
-- **2FA情報**: オプショナル/必須の条件を明記（例：2FA有効時のみ必須）
+- **推奨形式**: プレースホルダー使用
+  - X (Twitter) 認証:
+    - `X_USERNAME=your_twitter_username`
+    - `X_PASSWORD=your_twitter_password`
+    - `X_EMAIL=your_email_address`
+    - `X_PROXY=your_proxy_url`
+- **設定方法**: `.env`ファイルまたは環境変数として設定

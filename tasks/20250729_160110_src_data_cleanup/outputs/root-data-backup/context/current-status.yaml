@@ -1,0 +1,17 @@
+# Current System Status
+account:
+  followerCount: 0
+  postsToday: 0
+  engagementRate: 0
+  lastPostTime: null
+  
+system:
+  health:
+    all_systems_operational: true
+    api_status: "healthy"
+    rate_limits_ok: true
+    
+market:
+  trendingTopics: []
+  volatility: "medium"
+  sentiment: "neutral"

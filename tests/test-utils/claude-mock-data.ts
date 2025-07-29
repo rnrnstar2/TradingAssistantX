@@ -4,11 +4,9 @@
  */
 
 import type {
-  ClaudeDecision,
   GeneratedContent,
   AnalysisResult,
   SearchQuery,
-  DecisionInput,
   ContentInput,
   AnalysisInput,
   SearchInput,
@@ -18,48 +16,33 @@ import type {
 } from '../../src/claude/types';
 
 // ============================================================================
-// Decision Endpoint モックデータ
+// System Context モックデータ
 // ============================================================================
-
-export function createMockDecisionInput(): DecisionInput {
-  return {
-    context: createMockSystemContext(),
-    currentTime: new Date(),
-    constraints: {
-      maxPostsPerDay: 5,
-      minWaitBetweenPosts: 3600000
-    },
-    learningData: {
-      recentPerformance: {
-        posts: 10,
-        engagementRate: 0.05
-      }
-    }
-  };
-}
 
 export function createMockSystemContext(): SystemContext {
   return {
     account: {
-      followerCount: 1000,
-      engagementRate: 0.05,
-      postsToday: 2
-    },
-    market: {
-      sentiment: 'neutral',
-      volatility: 'medium',
-      trendingTopics: ['投資', 'NISA', '資産運用']
+      followerCount: 100,
+      lastPostTime: '2024-01-01T00:00:00Z',
+      postsToday: 0,
+      engagementRate: 2.5
     },
     system: {
       health: {
         all_systems_operational: true,
-        api_status: 'healthy',
+        api_status: 'healthy' as const,
         rate_limits_ok: true
       },
-      executionCount: { today: 5, total: 100 }
+      executionCount: { today: 0, total: 0 }
+    },
+    market: {
+      trendingTopics: ['投資', '資産形成', '仮想通貨'],
+      volatility: 'medium' as const,
+      sentiment: 'neutral' as const
     }
   };
 }
+
 
 export function createMockSystemContextUnhealthy(): SystemContext {
   return {
@@ -84,18 +67,6 @@ export function createMockSystemContextLimitReached(): SystemContext {
   };
 }
 
-export function createMockClaudeDecision(action: string = 'post'): ClaudeDecision {
-  return {
-    action: action as ClaudeDecision['action'],
-    reasoning: `${action}を選択した理由の説明`,
-    parameters: {
-      topic: action !== 'wait' ? '投資教育' : undefined,
-      duration: action === 'wait' ? 1800000 : undefined,
-      reason: action === 'wait' ? 'scheduled_wait' : undefined
-    },
-    confidence: 0.8
-  };
-}
 
 // ============================================================================
 // Content Endpoint モックデータ
@@ -287,12 +258,6 @@ export function createMockQuoteSearchInput() {
 // Invalid/Error モックデータ
 // ============================================================================
 
-export function createInvalidDecisionResponse() {
-  return {
-    action: 'post',
-    // Missing required fields: reasoning, confidence, parameters
-  };
-}
 
 export function createInvalidContentResponse() {
   return {

@@ -1,0 +1,11 @@
+timestamp: '2025-07-28T08:48:06.276Z'
+type: execution-error
+data:
+  error: アクション実行に失敗しました
+  executionId: execution-20250728-1747
+  timestamp: '2025-07-28T08:48:06.276Z'
+  stack: |-
+    Error: アクション実行に失敗しました
+        at ExecutionFlow.executeMainLoop (/Users/rnrnstar/github/TradingAssistantX/src/main-workflows/execution-flow.ts:146:15)
+        at async DevRunner.executeOnce (/Users/rnrnstar/github/TradingAssistantX/src/dev.ts:72:22)
+        at async runDev (/Users/rnrnstar/github/TradingAssistantX/src/dev.ts:107:3)

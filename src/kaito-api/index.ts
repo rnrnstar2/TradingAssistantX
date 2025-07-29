@@ -1,39 +1,62 @@
 // ============================================================================
-// KAITO API UNIFIED EXPORTS
+// KAITO API UNIFIED EXPORTS - V2 Standard Architecture
 // ============================================================================
 
 // Core exports
-export { KaitoApiClient, KaitoTwitterAPIClient } from './core/client';
+export { 
+  KaitoApiClient, 
+  KaitoTwitterAPIClient 
+} from './core/client';
 export { KaitoAPIConfigManager } from './core/config';
 export { AuthManager } from './core/auth-manager';
 
-// Type exports
+// Type exports (from utils)
 export type {
-  AccountInfo,
-  PostResult,
-  CoreRetweetResult,
-  QuoteTweetResult,
-  LikeResult,
-  KaitoClientConfig,
-  KaitoAPIConfig,
-  RateLimitStatus,
+  // Common types
+  HttpClient,
   RateLimitInfo,
   CostTrackingInfo,
+  KaitoClientConfig,
+  KaitoAPIConfig,
+  
+  // Auth types
   LoginCredentials,
   LoginResult,
-  AuthStatus
-} from './types';
+  AuthStatus,
+  
+  // Read-only types
+  UserInfoRequest,
+  UserInfoResponse,
+  SearchRequest,
+  SearchResponse,
+  TrendsResponse,
+  FollowerInfoResponse,
+  
+  // Authenticated types
+  PostRequest,
+  PostResponse,
+  EngagementRequest,
+  EngagementResponse,
+  FollowRequest,
+  FollowResponse,
+  
+  // Response types
+  TwitterAPIResponse,
+  ErrorResponse
+} from './utils/types';
 
-// Endpoint exports
-export { ActionEndpoints } from './endpoints/action-endpoints';
-export { TweetEndpoints } from './endpoints/tweet-endpoints';
-export { UserEndpoints } from './endpoints/user-endpoints';
-export { TrendEndpoints } from './endpoints/trend-endpoints';
-// Removed MVP non-compliant endpoints:
-// export { CommunityEndpoints } from './endpoints/community-endpoints';
-// export { ListEndpoints } from './endpoints/list-endpoints';
-// export { LoginEndpoints } from './endpoints/login-endpoints';
-// export { WebhookEndpoints } from './endpoints/webhook-endpoints';
+// Endpoint exports (structured)
+export * as readOnly from './endpoints/read-only';
+export * as authenticated from './endpoints/authenticated';
 
 // Utility exports
 export { ResponseHandler } from './utils/response-handler';
+export * as constants from './utils/constants';
+export * as errors from './utils/errors';
+
+// Re-export for backward compatibility (optional)
+export { 
+  KAITO_API_BASE_URL,
+  API_ENDPOINTS,
+  RATE_LIMITS 
+} from './utils/constants';

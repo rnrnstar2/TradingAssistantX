@@ -2,21 +2,36 @@
  * main.ts既存システム統合テスト - 3層認証システム互換性確認
  * 
  * テスト目的:
- * - 30分間隔実行での3層認証動作確認
- * - Claude判断システムとの統合動作確認
+ * - 3ステップワークフロー（データ収集→アクション実行→結果保存）の動作確認
+ * - YAML固定アクション使用での統合動作確認
  * - データ管理システム（current/history）との統合確認
  * - 既存メインループとの互換性確認
  * 
- * TASK-004対応: main.ts互換性検証
+ * TASK-004対応: Worker1-3修正後の3ステップワークフロー検証
+ * 注意: makeDecision機能は削除済み、YAML固定アクション方式に変更
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { AuthManager } from '../../src/kaito-api/core/auth-manager';
 import { ComponentContainer, COMPONENT_KEYS } from '../../src/shared/component-container';
-import { DataManager } from '../../src/data/data-manager';
+import { DataManager } from '../../src/shared/data-manager';
 import { ActionExecutor } from '../../src/workflows/action-executor';
 import { KaitoTwitterAPIClient } from '../../src/kaito-api';
-import type { ClaudeDecision, ActionResult } from '../../src/shared/types';
+import type { ActionResult } from '../../src/shared/types';
+
+// YAML固定アクション関連の型定義
+interface FixedAction {
+  action: 'post' | 'retweet' | 'quote_tweet' | 'like' | 'wait';
+  topic?: string;
+  target_query?: string;
+  reasoning: string;
+  confidence: number;
+  parameters?: {
+    content?: string;
+    tweetId?: string;
+    duration?: number;
+  };
+}
 
 // main.ts統合テスト設定
 const MAIN_INTEGRATION_TEST_CONFIG = {
@@ -51,10 +66,9 @@ describe('main.ts既存システム統合テスト', () => {
     // ComponentContainer初期化（main.tsパターン）
     container = new ComponentContainer();
     
-    // 3層認証システム初期化
+    // V2標準認証システム初期化
     authManager = new AuthManager({
-      apiKey: process.env.KAITO_API_TOKEN || 'test-api-key',
-      preferredAuthMethod: 'v2'
+      apiKey: process.env.KAITO_API_TOKEN || 'test-api-key'
     });
     
     // KaitoAPIClient初期化
@@ -124,7 +138,7 @@ describe('main.ts既存システム統合テスト', () => {
             const postLoginAuthLevel = authManager.getCurrentAuthLevel();
             authLevelHistory.push(`iteration${iteration + 1}-post-login:${postLoginAuthLevel}`);
             
-            expect(['v1-login', 'v2-login']).toContain(postLoginAuthLevel);
+            expect(['v2-login']).toContain(postLoginAuthLevel);
             
             // 3. 認証状態詳細確認
             const authStatus = authManager.getAuthStatus();
@@ -220,32 +234,34 @@ describe('main.ts既存システム統合テスト', () => {
     });
   });
   
-  describe('Claude判断システムとの統合', () => {
-    test('Claudeの判断に基づく認証レベル別アクション実行', async () => {
-      console.log('🤖 Claude判断統合テスト開始...');
+  describe('YAML固定アクションシステムとの統合', () => {
+    test('YAML固定アクションに基づく認証レベル別アクション実行', async () => {
+      console.log('📄 YAML固定アクション統合テスト開始...');
       
-      // モックClaude判断の作成
-      const mockClaudeDecisions: ClaudeDecision[] = [
+      // YAML固定アクションの作成（schedule.yamlから取得される形式をシミュレート）
+      const mockFixedActions: FixedAction[] = [
         {
           action: 'post',
-          reasoning: 'テスト投稿判断',
-          confidence: 0.8,
+          topic: 'investment',
+          reasoning: 'YAML固定アクション: 朝の投資教育投稿',
+          confidence: 1.0,
           parameters: {
-            content: 'テスト投稿コンテンツ'
+            content: 'YAML指定テスト投稿コンテンツ'
           }
         },
         {
           action: 'like',
-          reasoning: 'テストいいね判断',
-          confidence: 0.7,
+          target_query: 'investment education',
+          reasoning: 'YAML固定アクション: 高品質教育コンテンツへのいいね',
+          confidence: 1.0,
           parameters: {
             tweetId: 'test_tweet_123'
           }
         },
         {
           action: 'wait',
-          reasoning: 'テスト待機判断',
-          confidence: 0.9,
+          reasoning: 'YAML固定アクション: 待機モード',
+          confidence: 1.0,
           parameters: {
             duration: 1800000 // 30分
           }
@@ -254,48 +270,49 @@ describe('main.ts既存システム統合テスト', () => {
       
       const executionResults: ActionResult[] = [];
       
-      for (const decision of mockClaudeDecisions) {
+      for (const fixedAction of mockFixedActions) {
         try {
-          console.log(`🎯 Claude判断実行: ${decision.action} (信頼度: ${decision.confidence})`);
+          console.log(`🎯 YAML固定アクション実行: ${fixedAction.action} (topic: ${fixedAction.topic || 'N/A'})`);
           
           // 認証レベル要件確認
-          const requiredLevel = decision.action === 'wait' ? 'api-key' : 
-                               authManager.getRequiredAuthLevel(`/twitter/action/${decision.action}`);
+          const requiredLevel = fixedAction.action === 'wait' ? 'api-key' : 
+                               authManager.getRequiredAuthLevel(`/twitter/action/${fixedAction.action}`);
           
           // 必要な認証レベルの確保
           const authEnsured = await authManager.ensureAuthLevel(requiredLevel);
           
-          if (authEnsured || decision.action === 'wait') {
+          if (authEnsured || fixedAction.action === 'wait') {
             // ActionExecutorでの実行（モック）
             const actionResult: ActionResult = {
               success: true,
-              action: decision.action,
+              action: fixedAction.action,
               timestamp: new Date().toISOString(),
               authLevel: authManager.getCurrentAuthLevel(),
-              details: `${decision.action}アクション実行成功`
+              details: `${fixedAction.action}アクション実行成功 (YAML固定方式)`
             };
             
             executionResults.push(actionResult);
             
-            console.log(`✅ ${decision.action}アクション実行成功:`, {
+            console.log(`✅ ${fixedAction.action}アクション実行成功:`, {
               authLevel: actionResult.authLevel,
-              confidence: decision.confidence,
-              reasoning: decision.reasoning
+              confidence: fixedAction.confidence,
+              reasoning: fixedAction.reasoning,
+              yamlDriven: true
             });
             
           } else {
-            console.log(`⚠️ ${decision.action}アクション認証不足:`, {
+            console.log(`⚠️ ${fixedAction.action}アクション認証不足:`, {
               requiredLevel: requiredLevel,
               currentLevel: authManager.getCurrentAuthLevel()
             });
           }
           
         } catch (error) {
-          console.error(`❌ Claude判断実行エラー - ${decision.action}:`, error);
+          console.error(`❌ YAML固定アクション実行エラー - ${fixedAction.action}:`, error);
           
           executionResults.push({
             success: false,
-            action: decision.action,
+            action: fixedAction.action,
             timestamp: new Date().toISOString(),
             error: error.message
           });
@@ -303,14 +320,15 @@ describe('main.ts既存システム統合テスト', () => {
       }
       
       // 統合結果確認
-      expect(executionResults.length).toBe(mockClaudeDecisions.length);
+      expect(executionResults.length).toBe(mockFixedActions.length);
       
       const successfulActions = executionResults.filter(result => result.success);
       expect(successfulActions.length).toBeGreaterThan(0);
       
-      console.log('✅ Claude判断統合テスト完了:', {
-        totalDecisions: mockClaudeDecisions.length,
+      console.log('✅ YAML固定アクション統合テスト完了:', {
+        totalActions: mockFixedActions.length,
         successfulExecutions: successfulActions.length,
+        executionMethod: 'YAML固定アクション方式（makeDecision削除後）',
         executionResults: executionResults.map(result => ({
           action: result.action,
           success: result.success,
@@ -319,17 +337,17 @@ describe('main.ts既存システム統合テスト', () => {
       });
     });
     
-    test('Claude判断に基づく認証レベル自動昇格', async () => {
-      console.log('⬆️ 認証レベル自動昇格テスト開始...');
+    test('3ステップワークフロー対応認証レベル自動昇格', async () => {
+      console.log('⬆️ 3ステップワークフロー認証レベル自動昇格テスト開始...');
       
-      // 段階的な認証要求のテスト
-      const authEscalationTests = [
-        { action: 'search', requiredLevel: 'api-key', description: '検索（読み取り専用）' },
-        { action: 'post', requiredLevel: 'v1-login', description: '投稿（書き込み）' },
-        { action: 'dm', requiredLevel: 'v2-login', description: 'DM（高機能）' }
+      // 3ステップワークフロー（データ収集→アクション実行→結果保存）での認証要求テスト
+      const workflow3StepTests = [
+        { step: 'data-collection', action: 'search', requiredLevel: 'api-key', description: 'ステップ1: データ収集（検索）' },
+        { step: 'action-execution', action: 'post', requiredLevel: 'v2-login', description: 'ステップ2: アクション実行（投稿）' },
+        { step: 'result-saving', action: 'data-save', requiredLevel: 'api-key', description: 'ステップ3: 結果保存' }
       ];
       
-      for (const testCase of authEscalationTests) {
+      for (const testCase of workflow3StepTests) {
         try {
           console.log(`🔄 ${testCase.description}テスト...`);
           
@@ -346,24 +364,31 @@ describe('main.ts既存システム統合テスト', () => {
             const validLevels = authManager.getValidAuthLevels();
             expect(validLevels).toContain(testCase.requiredLevel);
             
-            console.log(`✅ ${testCase.action}認証昇格成功:`, {
+            console.log(`✅ ${testCase.step}認証昇格成功:`, {
+              step: testCase.step,
+              action: testCase.action,
               previousLevel: currentLevel,
               requiredLevel: testCase.requiredLevel,
               currentLevel: newLevel,
+              workflow: '3ステップ対応',
               escalationSuccess: true
             });
             
           } else {
-            console.log(`⚠️ ${testCase.action}認証昇格失敗（環境制限）:`, {
+            console.log(`⚠️ ${testCase.step}認証昇格失敗（環境制限）:`, {
+              step: testCase.step,
               requiredLevel: testCase.requiredLevel,
-              currentLevel: currentLevel
+              currentLevel: currentLevel,
+              workflow: '3ステップ'
             });
           }
           
         } catch (error) {
-          console.log(`⚠️ ${testCase.action}認証昇格テスト（制限環境）:`, error.message);
+          console.log(`⚠️ ${testCase.step}認証昇格テスト（制限環境）:`, error.message);
         }
       }
+      
+      console.log('✅ 3ステップワークフロー認証昇格テスト完了 (makeDecision削除後対応)');
     });
   });
   
@@ -471,10 +496,8 @@ describe('main.ts既存システム統合テスト', () => {
       
       // メタデータ構造確認
       expect(debugInfo).toHaveProperty('currentAuthLevel');
-      expect(debugInfo).toHaveProperty('preferredAuthMethod');
       expect(debugInfo).toHaveProperty('validAuthLevels');
       expect(debugInfo).toHaveProperty('apiKey');
-      expect(debugInfo).toHaveProperty('v1Login');
       expect(debugInfo).toHaveProperty('v2Login');
       expect(debugInfo).toHaveProperty('system');
       
@@ -488,7 +511,6 @@ describe('main.ts既存システム統合テスト', () => {
         level: 'INFO',
         component: '3LayerAuth',
         authLevel: debugInfo.currentAuthLevel,
-        preferredMethod: debugInfo.preferredAuthMethod,
         validLevels: debugInfo.validAuthLevels,
         message: '3層認証システム統合ログ'
       };
@@ -514,8 +536,7 @@ describe('main.ts既存システム統合テスト', () => {
       
       // 統合システムの初期化シミュレーション
       const newAuthManager = new AuthManager({
-        apiKey: 'test-key',
-        preferredAuthMethod: 'v2'
+        apiKey: 'test-key'
       });
       
       const newClient = new KaitoTwitterAPIClient({

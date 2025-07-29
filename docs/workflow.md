@@ -2,7 +2,7 @@
 
 ## 概要
 
-TradingAssistantXのメインワークフローは、Kaito API、Claude SDK、データ管理システムを統合した実行フローです。スケジュール実行時は3ステップ、手動実行時は4ステップで動作し、YAMLファイルで定義されたスケジュールに従って時刻ベースで自動実行されます。
+TradingAssistantXのメインワークフローは、Kaito API、Claude SDK、データ管理システムを統合した実行フローです。dev実行とmain実行はほぼ同じコードを使用し、違いはスケジュール実行か手動実行かのみです。両方のモードでYAMLファイルからデータを取得しますが、取得タイミングが異なります。
 
 > **📂 実装構造**: 詳細なディレクトリ構造は [directory-structure.md](directory-structure.md) を参照
 > **🤖 Claude SDK仕様**: [claude.md](claude.md) を参照
@@ -12,67 +12,54 @@ TradingAssistantXのメインワークフローは、Kaito API、Claude SDK、�
 
 ### 実行フロー概要
 
-#### スケジュール実行時（3ステップ）
+#### dev実行時（3ステップ）
 ```
-1. データ収集 → 2. アクション実行（事前決定） → 3. 結果保存
+1. データ収集 → 2. アクション実行（YAML指定） → 3. 結果保存
 ```
+**注意**: YAMLの中の1つを固定インプットとして使用し、Claude判断ステップは不要です。
 
-#### 手動実行時（4ステップ）
+#### スケジュール実行時（4ステップ）
 ```
-1. データ収集 → 2. アクション決定（Claude） → 3. アクション実行 → 4. 結果保存
+1. スケジュール判定（1分ごと） → 2. データ収集 → 3. アクション実行（時刻ベースYAML） → 4. 結果保存
 ```
+**注意**: 1分ごとに時刻をチェックし、対応する時刻になったらYAMLから特定のデータを取得して実行します。Claude判断ステップは不要です。
 
-### Step 1: データ収集
+### Step 1: スケジュール判定（スケジュール実行時のみ）
+**目的**: 1分ごとに時刻をチェックし、実行タイミングを判定
+
+**実行内容**:
+- 現在時刻を"HH:MM"形式で取得
+- schedule.yamlから対応するタスクを検索
+- 実行対象があればStep 2以降を実行
+- なければ1分待機して繰り返し
+
+**注意**: dev実行時はこのステップはスキップされ、直接Step 2から開始します。
+
+### Step 2: データ収集
 **目的**: 現在のコンテキストを取得し、判断材料を準備
-
-```typescript
-// 実行内容
-const twitterData = await kaitoClient.getAccountInfo();  // アカウント情報
-const learningData = await dataManager.loadLearningData(); // 学習データ
-const currentTime = new Date(); // 現在時刻
-```
 
 **収集データ**:
 - Twitterアカウント状態（フォロワー数、投稿履歴）
 - 過去の学習データ（decision-patterns.yaml）
 - 現在時刻と前回実行からの経過時間
 
-### Step 2: アクション決定（手動実行時のみ）
-**目的**: Claude SDKを使用して最適なアクションを決定
+### Step 3: アクション実行
+**目的**: YAMLから取得したアクションを実行（Claude判断不要）
 
-```typescript
-// 手動実行時のみ
-const decision = await makeDecision({
-  twitterData,
-  learningData,
-  currentTime
-});
-```
+#### dev実行時
+- YAMLの中の1つを固定で使用
+- 事前決定されたアクションを直接実行
 
-**決定可能アクション**:
+#### スケジュール実行時
+- 時刻に対応するYAML inputを取得
+- 時刻別に事前決定されたアクションを直接実行
+
+**実行可能アクション**:
 - `post`: 新規投稿（教育コンテンツ）
 - `retweet`: 関連ツイートのリツイート
 - `quote_tweet`: 引用リツイート
 - `like`: いいね
 - `wait`: 待機（何もしない）
-
-**注意**: スケジュール実行時はアクションが事前決定されているため、このステップは実行されません。
-
-### Step 3: アクション実行
-**目的**: 決定されたアクションをKaito API経由で実行
-
-```typescript
-switch (decision.action) {
-  case 'post':
-    const content = await generateContent(decision.parameters);
-    await kaitoClient.createPost(content.text);
-    break;
-  case 'retweet':
-    await kaitoClient.retweet(targetTweetId);
-    break;
-  // ... 他のアクション
-}
-```
 
 **実行詳細**:
 - **post**: Claude SDKでコンテンツ生成 → 投稿
@@ -84,17 +71,14 @@ switch (decision.action) {
 ### Step 4: 結果保存
 **目的**: 実行結果を履歴として保存
 
-```typescript
-await dataManager.saveResult({
-  timestamp: new Date(),
-  decision,
-  result: executionResult,
-  performance: analysisResult
-});
-```
+**保存内容**:
+- タイムスタンプ
+- アクション入力内容
+- 実行結果
+- パフォーマンス分析
 
 **保存先**: `data/history/YYYY-MM/DD-HHMM/`
-- `decision.yaml`: アクション決定内容
+- `actionInput.yaml`: アクション入力内容
 - `result.yaml`: 実行結果
 - `analysis.yaml`: パフォーマンス分析
 
@@ -105,28 +89,13 @@ YAMLファイルで定義された時刻に自動的にワークフローを実�
 
 ### スケジュール設定（schedule.yaml）
 
-```yaml
-daily_schedule:
-  - time: "07:00"
-    action: "post"
-    topic: "朝の投資教育"
-  - time: "08:00"
-    action: "retweet"
-    target_query: "投資初心者 lang:ja"
-  - time: "12:00"
-    action: "post"
-    topic: "市場動向解説"
-  - time: "12:30"
-    action: "like"
-    target_query: "投資教育 高品質"
-  - time: "18:00"
-    action: "quote_tweet"
-    target_query: "投資ニュース"
-    topic: "専門家視点の解説"
-  - time: "21:00"
-    action: "post"
-    topic: "明日の注目ポイント"
-```
+**設定例**:
+- 朝07:00: 投稿（朝の投資教育）
+- 朝08:00: リツイート（初心者向けコンテンツ）
+- 昼12:00: 投稿（市場動向解説）
+- 昼12:30: いいね（高品質教育コンテンツ）
+- 夜18:00: 引用RT（ニュース解説）
+- 夜21:00: 投稿（明日の注目ポイント）
 
 ### 設定項目説明
 
@@ -144,26 +113,11 @@ daily_schedule:
 
 ### スケジューラー動作仕様
 
-```typescript
-// src/scheduler/time-scheduler.ts
-class TimeScheduler {
-  // 1分間隔で時刻チェック
-  while (running) {
-    const currentTime = getCurrentTime("HH:MM");
-    const taskToRun = findScheduledTask(currentTime);
-    
-    if (taskToRun) {
-      await MainWorkflow.execute({
-        scheduledAction: taskToRun.action,
-        scheduledTopic: taskToRun.topic,
-        scheduledQuery: taskToRun.target_query
-      });
-    }
-    
-    await sleep(60000); // 1分待機
-  }
-}
-```
+**動作概要**:
+- 1分間隔で時刻チェック
+- 現在時刻で実行タスクを検索
+- 対象があればMainWorkflowを実行
+- なければ1分待機して繰り返し
 
 **特徴**:
 - 1分精度での時刻チェック
@@ -175,31 +129,34 @@ class TimeScheduler {
 ### 開発用: pnpm dev
 **ファイル**: `src/dev.ts`
 **用途**: 単一実行、即座にワークフローを1回実行して終了
+**特徴**: 
+- 環境変数を`.env`ファイルから自動読み込み（dotenv.config()）
+- MainWorkflowクラスを使用（mainとほぼ同じコード）
+- YAMLの中の1つを適当なインプットとして使用（Claude判断不要）
 
-```bash
-pnpm dev
-# → MainWorkflow.execute() → 終了
-```
+`pnpm dev` → 環境変数読み込み → ワークフロー実行 → 終了
 
 ### 本番用: pnpm start
 **ファイル**: `src/main.ts`  
 **用途**: スケジュール実行、YAMLファイルに従って継続実行
+**特徴**:
+- 環境変数を`.env`ファイルから自動読み込み（dotenv.config()）
+- TimeSchedulerによる時刻ベース実行
+- YAMLから特定の時刻のデータを取得してインプット
+- devとほぼ同じコード（違いはスケジュール実行か手動実行か）
 
-```bash
-pnpm start
-# → TimeScheduler.start() → 継続実行
-# Ctrl+C で終了
-```
+`pnpm start` → 環境変数読み込み → スケジューラー開始 → 継続実行（Ctrl+Cで終了）
 
 ## 実行フロー図
 
-### 手動実行（pnpm dev）
+### dev実行（pnpm dev）
 ```
 ┌─────────┐     ┌──────────────┐     ┌─────────────┐
-│ dev.ts  │ --> │ MainWorkflow │ --> │ 4ステップ   │ --> 終了
+│ dev.ts  │ --> │ MainWorkflow │ --> │ 3ステップ   │ --> 終了
 └─────────┘     │   .execute() │     │ 実行        │
                 └──────────────┘     └─────────────┘
-                                     │ Claude判断あり │
+                                     │固定YAML入力 │
+                                     │Claude判断なし│
 ```
 
 ### スケジュール実行（pnpm start）
@@ -215,8 +172,11 @@ pnpm start
                 │               │ --> │  .execute() │
                 └───────────────┘     └─────────────┘
                         ↓ No         │ 3ステップ   │
-                    次の1分待機        │ 事前決定   │
+                    次の1分待機        │時刻別YAML入力│
+                                     │Claude判断なし│
 ```
+
+**共通点**: 両方とも同じMainWorkflowクラスを3ステップ（データ収集→アクション実行→結果保存）で実行し、YAMLからデータを取得します。Claude判断ステップは両モードで不要になり、事前決定されたアクションを直接実行します。違いは取得タイミングとスケジュール判定の有無のみです。
 
 ## エラーハンドリング
 
@@ -237,28 +197,35 @@ pnpm start
 - `data/config/system-config.yaml`: システム設定
 
 ### 環境変数
-```bash
-CLAUDE_API_KEY=your_api_key      # Claude API認証（必須）
-TWITTER_USERNAME=your_username    # Twitter認証
-TWITTER_PASSWORD=your_password    # Twitter認証
-```
+
+**必要な環境変数**:
+- `X_USERNAME`: X（Twitter）ユーザー名
+- `X_PASSWORD`: X（Twitter）パスワード
+- `X_EMAIL`: X（Twitter）メールアドレス
+- `X_PROXY`: プロキシ設定（必要な場合）
+
+**注意**: 
+- 旧環境変数名（TWITTER_USERNAME等）は廃止
+- X_で始まる新しい環境変数名を使用
+- `.env`ファイルは自動的に読み込まれます
+
+## 実装詳細
+
+### KaitoApiClient初期化
+
+**初期化手順**:
+1. KaitoAPIConfigManagerで設定生成
+2. KaitoApiClientインスタンス作成
+3. 設定で初期化
+4. httpClientが正しく設定され、API通信が可能に
 
 ## パフォーマンス考慮事項
 
 ### API制限対応
 - Kaito API: 15分あたり15リクエスト制限
-- Claude API: 分あたりのトークン制限
 - 適切な間隔での実行スケジュール設定が重要
 
 ### メモリ効率
 - 単一ループでの時刻チェック
 - 大量のタイマー生成を回避
 - 実行結果の適切な保存とクリーンアップ
-
-## 今後の拡張予定
-
-### Phase 3以降
-- 複数スケジュールパターンのサポート
-- 曜日別スケジュール
-- 動的スケジュール調整
-- Webhookトリガー対応

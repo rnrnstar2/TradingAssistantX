@@ -3,7 +3,6 @@
  * REQUIREMENTS.md準拠版 - Claude強み活用MVP設計
  * 
  * 提供機能:
- * - 判断エンドポイント: makeDecision()
  * - コンテンツ生成エンドポイント: generateContent(), generateQuoteComment()
  * - 分析エンドポイント: analyzePerformance(), analyzeMarketContext(), recordExecution()
  * - 検索クエリエンドポイント: generateSearchQuery(), generateRetweetQuery(), generateLikeQuery(), generateQuoteQuery()
@@ -17,11 +16,6 @@
 // ============================================================================
 // ENDPOINT FUNCTIONS EXPORT - エンドポイント関数エクスポート
 // ============================================================================
-
-// Decision endpoint
-export { 
-  makeDecision
-} from './endpoints/decision-endpoint';
 
 // Content endpoint  
 export { 
@@ -53,7 +47,6 @@ export {
 
 // Return types - 返却型
 export type {
-  ClaudeDecision,
   GeneratedContent,
   AnalysisResult,
   SearchQuery
@@ -61,7 +54,6 @@ export type {
 
 // Input types - 入力型
 export type {
-  DecisionInput,
   ContentInput,
   AnalysisInput,
   SearchInput,
@@ -79,7 +71,6 @@ export type {
   PerformanceMetrics,
   ContentRequest,
   TwitterContext,
-  DecisionRequest,
   SearchRequest,
   ClaudeSDKConfig,
   ClaudeSDKError,
@@ -109,7 +100,6 @@ export {
 
 // Type guards
 export {
-  isClaudeDecision,
   isGeneratedContent,
   isAnalysisResult,
   isSearchQuery

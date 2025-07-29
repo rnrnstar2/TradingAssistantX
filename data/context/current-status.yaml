@@ -1,17 +1,22 @@
-# Current System Status
-account:
-  followerCount: 0
-  postsToday: 0
-  engagementRate: 0
-  lastPostTime: null
-  
-system:
-  health:
-    all_systems_operational: true
-    api_status: "healthy"
-    rate_limits_ok: true
-    
-market:
-  trendingTopics: []
-  volatility: "medium"
-  sentiment: "neutral"
+account_status:
+  followers: 0
+  following: 0
+  tweets_today: 0
+  engagement_rate_24h: 0
+system_status:
+  last_execution: '2025-07-28T08:51:25.512Z'
+  next_execution: ''
+  errors_today: 0
+  success_rate: 0.95
+  shutdown_reason: graceful_shutdown
+  uptime_seconds: 67
+rate_limits:
+  posts_remaining: 10
+  retweets_remaining: 20
+  likes_remaining: 50
+  reset_time: '2025-07-28T09:51:25.512Z'
+shutdown_info:
+  timestamp: '2025-07-28T08:51:25.512Z'
+  process_id: 15656
+  memory_usage_mb: 14
+  uptime_seconds: 67
