@@ -2,17 +2,24 @@
 
 ## 概要
 
-TradingAssistantXのメインワークフローは、Kaito API、Claude SDK、データ管理システムを統合した4ステップの自動実行フローです。YAMLファイルで定義されたスケジュールに従って、時刻ベースで自動実行されます。
+TradingAssistantXのメインワークフローは、Kaito API、Claude SDK、データ管理システムを統合した実行フローです。スケジュール実行時は3ステップ、手動実行時は4ステップで動作し、YAMLファイルで定義されたスケジュールに従って時刻ベースで自動実行されます。
 
 > **📂 実装構造**: 詳細なディレクトリ構造は [directory-structure.md](directory-structure.md) を参照
 > **🤖 Claude SDK仕様**: [claude.md](claude.md) を参照
 > **🔐 Kaito API仕様**: [kaito-api.md](kaito-api.md) を参照
 
-## メインワークフロー（4ステップ）
+## メインワークフロー
 
 ### 実行フロー概要
+
+#### スケジュール実行時（3ステップ）
 ```
-1. データ収集 → 2. アクション決定 → 3. アクション実行 → 4. 結果保存
+1. データ収集 → 2. アクション実行（事前決定） → 3. 結果保存
+```
+
+#### 手動実行時（4ステップ）
+```
+1. データ収集 → 2. アクション決定（Claude） → 3. アクション実行 → 4. 結果保存
 ```
 
 ### Step 1: データ収集
@@ -30,15 +37,15 @@ const currentTime = new Date(); // 現在時刻
 - 過去の学習データ（decision-patterns.yaml）
 - 現在時刻と前回実行からの経過時間
 
-### Step 2: アクション決定
+### Step 2: アクション決定（手動実行時のみ）
 **目的**: Claude SDKを使用して最適なアクションを決定
 
 ```typescript
+// 手動実行時のみ
 const decision = await makeDecision({
   twitterData,
   learningData,
-  currentTime,
-  scheduledAction // スケジュール実行時のみ
+  currentTime
 });
 ```
 
@@ -48,6 +55,8 @@ const decision = await makeDecision({
 - `quote_tweet`: 引用リツイート
 - `like`: いいね
 - `wait`: 待機（何もしない）
+
+**注意**: スケジュール実行時はアクションが事前決定されているため、このステップは実行されません。
 
 ### Step 3: アクション実行
 **目的**: 決定されたアクションをKaito API経由で実行
@@ -98,41 +107,32 @@ YAMLファイルで定義された時刻に自動的にワークフローを実�
 
 ```yaml
 daily_schedule:
-  morning:
-    - time: "07:00"
-      action: "post"
-      topic: "朝の投資教育"
-    - time: "08:00"
-      action: "retweet"
-      target_query: "投資初心者 lang:ja"
-  
-  lunch:
-    - time: "12:00"
-      action: "post"
-      topic: "市場動向解説"
-    - time: "12:30"
-      action: "like"
-      target_query: "投資教育 高品質"
-  
-  evening:
-    - time: "18:00"
-      action: "quote_tweet"
-      target_query: "投資ニュース"
-      topic: "専門家視点の解説"
-  
-  night:
-    - time: "21:00"
-      action: "post"
-      topic: "明日の注目ポイント"
+  - time: "07:00"
+    action: "post"
+    topic: "朝の投資教育"
+  - time: "08:00"
+    action: "retweet"
+    target_query: "投資初心者 lang:ja"
+  - time: "12:00"
+    action: "post"
+    topic: "市場動向解説"
+  - time: "12:30"
+    action: "like"
+    target_query: "投資教育 高品質"
+  - time: "18:00"
+    action: "quote_tweet"
+    target_query: "投資ニュース"
+    topic: "専門家視点の解説"
+  - time: "21:00"
+    action: "post"
+    topic: "明日の注目ポイント"
 ```
 
 ### 設定項目説明
 
-#### 時間帯区分
-- **morning**: 朝の部（7:00-11:59）
-- **lunch**: 昼の部（12:00-16:59）
-- **evening**: 夕方の部（17:00-20:59）
-- **night**: 夜の部（21:00-23:59）
+#### スケジュール構造
+- **フラット形式**: 時間帯区分なし、時刻リストによる設定
+- **アクション決定不要**: スケジュール実行時はアクションが事前決定されているため、Claude判断ステップをスキップ
 
 #### アクション別パラメータ
 | アクション | 必須パラメータ | 用途 |
@@ -199,6 +199,7 @@ pnpm start
 │ dev.ts  │ --> │ MainWorkflow │ --> │ 4ステップ   │ --> 終了
 └─────────┘     │   .execute() │     │ 実行        │
                 └──────────────┘     └─────────────┘
+                                     │ Claude判断あり │
 ```
 
 ### スケジュール実行（pnpm start）
@@ -213,8 +214,8 @@ pnpm start
                 │ 時刻到達？    │ Yes │MainWorkflow │
                 │               │ --> │  .execute() │
                 └───────────────┘     └─────────────┘
-                        ↓ No
-                    次の1分待機
+                        ↓ No         │ 3ステップ   │
+                    次の1分待機        │ 事前決定   │
 ```
 
 ## エラーハンドリング

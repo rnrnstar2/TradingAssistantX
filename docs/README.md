@@ -5,7 +5,7 @@
 ### 🏗️ アーキテクチャ・構造
 
 - **[directory-structure.md](./directory-structure.md)** - プロジェクト全体構造（src/, tests/, docs/, tasks/の詳細）
-- **[workflow.md](./workflow.md)** - メインワークフロー仕様書（4ステップ実行、スケジュール設定）
+- **[workflow.md](./workflow.md)** - メインワークフロー仕様書（3ステップ（スケジュール）/4ステップ（手動）実行、スケジュール設定）
 - **[claude.md](./claude.md)** - Claude Code SDK仕様書（エンドポイント別設計、テスト仕様）
 - **[kaito-api.md](./kaito-api.md)** - KaitoTwitterAPI仕様書（2層認証、データ制限対策）
 

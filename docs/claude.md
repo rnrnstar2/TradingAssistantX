@@ -62,25 +62,27 @@ interface ClaudeDecision {
 
 ## main.tsでのエンドポイント別使用例
 
+### 手動実行時（4ステップ）
+
 ```typescript
-// main.ts - エンドポイント別設計使用
+// main.ts - 手動実行時のエンドポイント使用
 import { makeDecision, generateContent, analyzePerformance, generateSearchQuery } from './claude';
 import type { ClaudeDecision, GeneratedContent, AnalysisResult } from './claude/types';
 
-// メインワークフロー - エンドポイント別使用
+// 手動実行メインワークフロー - 全エンドポイント使用
 async function executeWorkflow() {
   // 1. Kaito APIでデータ取得
   const twitterData = await kaitoAPI.getCurrentContext();
   const learningData = await dataManager.loadLearningData();
   
-  // 2. 判断エンドポイント使用
+  // 2. 判断エンドポイント使用（手動実行時のみ）
   const decision: ClaudeDecision = await makeDecision({
     twitterData,
     learningData,
     currentTime: new Date()
   });
   
-  // 3. 固定型に基づく分岐処理 - 各エンドポイント使用
+  // 3. 固定型に基づく分岐処理 - 各エンドポイント使用（手動実行時）
   switch (decision.action) {
     case 'post':
       const content: GeneratedContent = await generateContent({
@@ -117,6 +119,60 @@ async function executeWorkflow() {
 }
 ```
 
+### スケジュール実行時（3ステップ）
+
+```typescript
+// main.ts - スケジュール実行時のエンドポイント使用
+import { generateContent, analyzePerformance, generateSearchQuery } from './claude';
+import type { GeneratedContent, AnalysisResult } from './claude/types';
+// 注意: makeDecisionはスケジュール実行時は使用しない
+
+// スケジュール実行メインワークフロー - makeDecisionスキップ
+async function executeScheduledWorkflow(scheduledAction: ScheduledAction) {
+  // 1. Kaito APIでデータ取得
+  const twitterData = await kaitoAPI.getCurrentContext();
+  const learningData = await dataManager.loadLearningData();
+  
+  // 2. アクション決定スキップ（事前決定済み）
+  // makeDecisionエンドポイントは使用しない
+  
+  // 3. 事前決定されたアクションに基づく処理
+  switch (scheduledAction.action) {
+    case 'post':
+      const content: GeneratedContent = await generateContent({
+        topic: scheduledAction.topic,
+        style: 'educational',
+        targetAudience: 'investors'
+      });
+      await kaitoAPI.createPost(content.text);
+      break;
+      
+    case 'retweet':
+      const searchQuery = await generateSearchQuery({
+        topic: scheduledAction.topic,
+        intent: 'find_educational_content'
+      });
+      const candidates = await kaitoAPI.searchTweets(searchQuery.query);
+      await kaitoAPI.retweet(candidates[0].id);
+      break;
+      
+    case 'like':
+      await kaitoAPI.likeTweet(scheduledAction.targetTweetId);
+      break;
+  }
+  
+  // 4. 分析エンドポイント使用
+  const analysis: AnalysisResult = await analyzePerformance({
+    scheduledAction, // decisionの代わりにscheduledAction使用
+    result,
+    context: twitterData
+  });
+  
+  await dataManager.saveResult({ scheduledAction, result: analysis });
+  return { success: true, duration: Date.now() - startTime };
+}
+```
+
 ## エンドポイント別設計要件
 
 - **コマンド実行**: システムの基本動作
@@ -124,6 +180,7 @@ async function executeWorkflow() {
 - **専用型返却**: 各エンドポイントの専用返却型での確実な結果返却
 - **明確な責任分離**: 判断・生成・分析・検索の4エンドポイントで役割分離
 - **データフロー重視**: Kaito API → 特定エンドポイント → 専用型返却 → 分岐処理
+- **実行モード対応**: スケジュール実行時はmakeDecisionエンドポイント使用せず、3ステップで動作
 
 ## 単体テスト仕様
 

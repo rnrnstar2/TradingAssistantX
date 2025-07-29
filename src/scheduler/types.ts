@@ -5,13 +5,6 @@ export interface ScheduleItem {
   target_query?: string;  // retweet/quote_tweet用
 }
 
-export interface DailySchedule {
-  morning?: ScheduleItem[];
-  lunch?: ScheduleItem[];
-  evening?: ScheduleItem[];
-  night?: ScheduleItem[];
-}
-
 export interface ScheduleConfig {
-  daily_schedule: DailySchedule;
+  daily_schedule: ScheduleItem[];  // 階層なしの配列
 }

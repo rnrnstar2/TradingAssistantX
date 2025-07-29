@@ -13,16 +13,8 @@ export class ScheduleLoader {
   }
 
   static getTodaySchedule(config: ScheduleConfig): ScheduleItem[] {
-    const allItems: ScheduleItem[] = [];
-    
-    // 全時間帯のスケジュールを統合
-    Object.values(config.daily_schedule).forEach(timeSlot => {
-      if (timeSlot) {
-        allItems.push(...timeSlot);
-      }
-    });
-    
-    // 時刻順にソート
-    return allItems.sort((a, b) => a.time.localeCompare(b.time));
+    // 階層をフラット化する処理を削除
+    // 直接daily_scheduleを返す
+    return config.daily_schedule.sort((a, b) => a.time.localeCompare(b.time));
   }
 }

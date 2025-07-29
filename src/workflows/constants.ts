@@ -58,6 +58,7 @@ export const WORKFLOW_CONSTANTS = {
     POST: 'post',
     RETWEET: 'retweet',
     LIKE: 'like',
+    QUOTE_TWEET: 'quote_tweet',
     WAIT: 'wait'
   } as const
 } as const;

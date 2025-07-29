@@ -14,7 +14,7 @@ import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { AuthManager } from '../../src/kaito-api/core/auth-manager';
 import { ComponentContainer, COMPONENT_KEYS } from '../../src/shared/component-container';
 import { DataManager } from '../../src/data/data-manager';
-import { ActionExecutor } from '../../src/main-workflows/core/action-executor';
+import { ActionExecutor } from '../../src/workflows/action-executor';
 import { KaitoTwitterAPIClient } from '../../src/kaito-api';
 import type { ClaudeDecision, ActionResult } from '../../src/shared/types';
 

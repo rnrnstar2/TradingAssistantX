@@ -79,8 +79,57 @@ export class MainWorkflow {
       console.log(`📋 実行サイクル開始: ${executionId}`);
 
       // ===============================
-      // ステップ1: データ収集
+      // スケジュール実行モード（3ステップ）
       // ===============================
+      if (options?.scheduledAction) {
+        console.log(`📅 スケジュール実行モード: ${options.scheduledAction}`);
+        
+        // ステップ1: データ収集
+        console.log('📊 ステップ1: データ収集開始');
+        const [profile, learningData, currentStatus] = await Promise.all([
+          this.collectKaitoData(),
+          this.dataManager.loadLearningData(),
+          this.dataManager.loadCurrentStatus()
+        ]);
+        console.log('✅ データ収集完了');
+
+        // ステップ2: アクション実行（スケジュール指定）
+        console.log('⚡ ステップ2: アクション実行開始');
+        const decision = {
+          action: options.scheduledAction,
+          parameters: {
+            topic: options.scheduledTopic,
+            query: options.scheduledQuery
+          },
+          confidence: 1.0,
+          reasoning: `スケジュール指定によるアクション: ${options.scheduledAction}`
+        };
+        
+        const actionResult = await this.executeAction(decision);
+        console.log('✅ アクション実行完了', { action: decision.action, success: actionResult.success });
+
+        // ステップ3: 結果保存
+        console.log('💾 ステップ3: 結果保存開始');
+        await this.saveResults(decision, actionResult);
+        console.log('✅ 結果保存完了');
+
+        const executionTime = Date.now() - startTime;
+        console.log(`🎉 スケジュール実行完了 (${executionTime}ms)`);
+
+        return {
+          success: true,
+          executionId,
+          decision,
+          actionResult,
+          executionTime
+        };
+      }
+
+      // ===============================
+      // 手動実行モード（4ステップ）
+      // ===============================
+      
+      // ステップ1: データ収集
       console.log('📊 ステップ1: データ収集開始');
       
       const [profile, learningData, currentStatus] = await Promise.all([
@@ -95,31 +144,14 @@ export class MainWorkflow {
         currentStatus: !!currentStatus
       });
 
-      // ===============================
       // ステップ2: アクション決定（Claude）
-      // ===============================
       console.log('🧠 ステップ2: Claude判断開始');
 
-      // スケジュール指定がある場合は、それを優先
-      let decision;
-      if (options?.scheduledAction) {
-        console.log(`📅 スケジュール指定アクション: ${options.scheduledAction}`);
-        decision = {
-          action: options.scheduledAction,
-          parameters: {
-            topic: options.scheduledTopic,
-            query: options.scheduledQuery
-          },
-          confidence: 1.0,
-          reasoning: `スケジュール指定によるアクション: ${options.scheduledAction}`
-        };
-      } else {
-        decision = await makeDecision({
-          context: this.buildSystemContext(profile, currentStatus),
-          learningData,
-          currentTime: new Date()
-        });
-      }
+      const decision = await makeDecision({
+        context: this.buildSystemContext(profile, currentStatus),
+        learningData,
+        currentTime: new Date()
+      });
 
       if (!decision) {
         throw new Error(WORKFLOW_CONSTANTS.ERROR_MESSAGES.CLAUDE_DECISION_FAILED);
@@ -129,17 +161,13 @@ export class MainWorkflow {
       await this.dataManager.saveClaudeOutput('decision', decision);
       console.log('✅ Claude判断完了', { action: decision.action, confidence: decision.confidence });
 
-      // ===============================
       // ステップ3: アクション実行
-      // ===============================
       console.log('⚡ ステップ3: アクション実行開始');
 
       const actionResult = await this.executeAction(decision);
       console.log('✅ アクション実行完了', { action: decision.action, success: actionResult.success });
 
-      // ===============================
       // ステップ4: 結果保存
-      // ===============================
       console.log('💾 ステップ4: 結果保存開始');
 
       await this.saveResults(decision, actionResult);
@@ -249,7 +277,7 @@ export class MainWorkflow {
       case WORKFLOW_CONSTANTS.ACTIONS.LIKE:
         return await this.executeLikeAction(decision);
 
-      case 'quote_tweet':
+      case WORKFLOW_CONSTANTS.ACTIONS.QUOTE_TWEET:
         return await this.executeQuoteTweetAction(decision);
 
       case WORKFLOW_CONSTANTS.ACTIONS.WAIT:
@@ -407,7 +435,7 @@ export class MainWorkflow {
       const content = await generateContent({
         request: {
           topic: decision.parameters?.topic || 'investment commentary',
-          contentType: 'commentary',
+          contentType: 'general',
           targetAudience: 'intermediate'
         }
       });
@@ -425,7 +453,7 @@ export class MainWorkflow {
 
       return {
         success: true,
-        action: 'quote_tweet',
+        action: WORKFLOW_CONSTANTS.ACTIONS.QUOTE_TWEET,
         targetTweet: targetTweetId,
         content: content.content,
         result: quoteTweetResult,
