@@ -3,7 +3,7 @@
  * REQUIREMENTS.md準拠 - セッション管理機能
  */
 
-import type { LoginResult, SessionData } from "../utils/types";
+import type { LoginResult, SessionData } from "./types";
 
 export class SessionManager {
   private sessionData: SessionData | null = null;

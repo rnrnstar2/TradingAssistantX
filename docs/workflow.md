@@ -202,7 +202,11 @@ YAMLファイルで定義された時刻に自動的にワークフローを実�
 - `X_USERNAME`: X（Twitter）ユーザー名
 - `X_PASSWORD`: X（Twitter）パスワード
 - `X_EMAIL`: X（Twitter）メールアドレス
-- `X_PROXY`: プロキシ設定（必要な場合）
+- `X_TOTP_SECRET`: 2FA用のTOTPシークレット
+
+**プロキシ設定**:
+- プロキシは`data/config/proxies.yaml`で管理
+- 複数プロキシの自動ローテーション対応
 
 **注意**: 
 - 旧環境変数名（TWITTER_USERNAME等）は廃止

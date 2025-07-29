@@ -205,7 +205,7 @@ export class KaitoAPIConfigManager {
         search: "/twitter/user/search",
       },
       tweet: {
-        create: "/twitter/tweet/create",
+        create: "/twitter/create_tweet_v2",
         retweet: "/twitter/action/retweet",
         quote: "/twitter/action/quote",
         search: "/twitter/tweet/advanced_search",
@@ -309,7 +309,7 @@ function isValidProxyUrl(url: string): boolean {
  * X認証に必要な4つの環境変数を検証
  */
 export function validateEnvironmentVariables(): EnvironmentValidationResult {
-  const requiredVariables = ["X_USERNAME", "X_PASSWORD", "X_EMAIL", "X_PROXY"];
+  const requiredVariables = ["X_USERNAME", "X_PASSWORD", "X_EMAIL", "X_TOTP_SECRET"];
   const missingVariables: string[] = [];
   const invalidVariables: string[] = [];
 
@@ -321,9 +321,7 @@ export function validateEnvironmentVariables(): EnvironmentValidationResult {
       missingVariables.push(variable);
     } else {
       // 値の形式チェック
-      if (variable === "X_PROXY" && !isValidProxyUrl(value)) {
-        invalidVariables.push(`${variable} (不正なプロキシURL形式)`);
-      } else if (variable === "X_EMAIL" && !value.includes("@")) {
+      if (variable === "X_EMAIL" && !value.includes("@")) {
         invalidVariables.push(`${variable} (不正なメールアドレス形式)`);
       }
     }
@@ -374,8 +372,8 @@ export function validateEnvironmentOrThrow(): void {
     errorMessage += `export X_USERNAME="your_username"\n`;
     errorMessage += `export X_PASSWORD="your_password"\n`;
     errorMessage += `export X_EMAIL="your_email@example.com"\n`;
-    errorMessage += `export X_PROXY="http://username:password@proxy_host:port"\n`;
-    errorMessage += `\nプロキシはhttp://またはhttps://形式で指定してください\n`;
+    errorMessage += `export X_TOTP_SECRET="your_totp_secret_key"\n`;
+    errorMessage += `\nプロキシはdata/config/proxies.yamlで管理されます\n`;
 
     throw new Error(errorMessage);
   }
@@ -389,7 +387,7 @@ export interface XAuthConfig {
   username: string;
   password: string;
   email: string;
-  proxy: string;
+  totp_secret: string;
 }
 
 export function getXAuthConfig(): XAuthConfig {
@@ -400,7 +398,7 @@ export function getXAuthConfig(): XAuthConfig {
     username: process.env.X_USERNAME!,
     password: process.env.X_PASSWORD!,
     email: process.env.X_EMAIL!,
-    proxy: process.env.X_PROXY!,
+    totp_secret: process.env.X_TOTP_SECRET!,
   };
 }
 

@@ -14,13 +14,13 @@ export const API_ENDPOINTS = {
   
   // Authenticated endpoints (V2)
   createTweet: '/twitter/create_tweet_v2',
-  deleteTweet: '/twitter/delete_tweet',
-  likeTweet: '/twitter/like_tweet',
-  unlikeTweet: '/twitter/unlike_tweet',
-  retweet: '/twitter/retweet_tweet',
-  unretweet: '/twitter/unretweet_tweet',
-  followUser: '/twitter/follow_user',
-  unfollowUser: '/twitter/unfollow_user',
+  deleteTweet: '/twitter/delete_tweet_v2',
+  likeTweet: '/twitter/like_tweet_v2',
+  unlikeTweet: '/twitter/unlike_tweet_v2',
+  retweet: '/twitter/retweet_tweet_v2',
+  unretweet: '/twitter/unretweet_tweet_v2',
+  followUser: '/twitter/follow_user_v2',
+  unfollowUser: '/twitter/unfollow_user_v2',
   
   // Auth endpoints
   userLoginV2: '/twitter/user_login_v2'

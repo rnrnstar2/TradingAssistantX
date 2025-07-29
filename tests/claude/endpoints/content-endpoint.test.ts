@@ -12,7 +12,7 @@ import {
   createMockContentInputLowQuality,
   createMockGeneratedContent
 } from '../../test-utils/claude-mock-data';
-import { validateResponseStructure, validateStringLength, validateRange } from '../../test-utils/test-helpers';
+import { validateResponseStructure, validateStringLength, validateRange } from '../../test-utils/claude-test-helpers';
 
 // モック設定を削除 - 実際のClaude APIを使用
 

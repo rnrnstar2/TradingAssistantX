@@ -8,7 +8,7 @@
     "start": "tsx src/main.ts",
     "manager": "ROLE=manager claude --dangerously-skip-permissions",
     "worker": "ROLE=worker claude --dangerously-skip-permissions",
-    "claude:watch": "CLAUDE_PLAN=MAX_200 bash .claude/context/claude-context-display.sh --watch",
+    "claude:watch": "claude-monitor --plan max20 --timezone Asia/Tokyo",
     "test": "vitest",
     "test:run": "vitest run",
     "test:watch": "vitest watch",
@@ -18,7 +18,9 @@
     "test:api:claude": "vitest run tests/claude",
     "test:kaito": "tsx tests/kaito-api/run-tests.ts",
     "test:kaito:watch": "vitest watch tests/kaito-api",
-    "test:kaito:coverage": "vitest run --coverage --coverage.include='src/kaito-api/**/*.ts' --coverage.exclude='src/kaito-api/types.ts' --coverage.exclude='src/kaito-api/index.ts' --coverage.reportsDirectory=tasks/outputs/coverage tests/kaito-api"
+    "test:kaito:coverage": "vitest run --coverage --coverage.include='src/kaito-api/**/*.ts' --coverage.exclude='src/kaito-api/types.ts' --coverage.exclude='src/kaito-api/index.ts' --coverage.reportsDirectory=tasks/outputs/coverage tests/kaito-api",
+    "test:login": "node scripts/test-login-only.js",
+    "test:login:debug": "vitest run tests/kaito-api/auth/login-only.test.ts --reporter=verbose"
   },
   "dependencies": {
     "@inquirer/prompts": "^3.0.0",
@@ -33,6 +35,7 @@
     "date-fns-tz": "^3.2.0",
     "js-yaml": "^4.1.0",
     "node-fetch": "^3.3.2",
+    "otplib": "^12.0.1",
     "rss-parser": "^3.13.0",
     "tsx": "^4.20.0"
   },

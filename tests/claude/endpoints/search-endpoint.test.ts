@@ -18,7 +18,7 @@ import {
   createMockQuoteSearchInput,
   createMockBasicMarketContext
 } from '../../test-utils/claude-mock-data';
-import { validateResponseStructure, validateRange } from '../../test-utils/test-helpers';
+import { validateResponseStructure, validateRange } from '../../test-utils/claude-test-helpers';
 
 // 実際のClaude APIを使用したテスト
 

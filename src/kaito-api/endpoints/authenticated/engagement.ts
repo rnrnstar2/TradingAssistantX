@@ -21,7 +21,7 @@ interface ValidationResult {
 }
 
 interface QuoteTweetRequest {
-  tweetId: string;
+  tweet_id: string;
   quoteText: string;
   mediaIds?: string[];
 }
@@ -47,10 +47,10 @@ interface QuoteTweetResponse {
  */
 export class EngagementManagement {
   private readonly ENDPOINTS = {
-    likeTweet: '/twitter/user/like',
-    unlikeTweet: '/twitter/user/unlike',
-    retweetTweet: '/twitter/user/retweet',
-    unretweetTweet: '/twitter/user/unretweet',
+    likeTweet: '/twitter/like_tweet_v2',
+    unlikeTweet: '/twitter/unlike_tweet_v2',
+    retweetTweet: '/twitter/retweet_tweet_v2',
+    unretweetTweet: '/twitter/unretweet_tweet_v2',
     quoteTweet: '/twitter/create_tweet_v2'
   } as const;
 
@@ -80,7 +80,7 @@ export class EngagementManagement {
    * V2ログイン認証（login_cookie）必須
    */
   async likeTweet(tweetId: string): Promise<EngagementResponse> {
-    return this.performEngagement({ tweet_id: tweetId, action: 'like', login_cookies: '', proxy: '' });
+    return this.performEngagement({ tweet_id: tweetId, action: 'like', proxy: '' });
   }
 
   /**
@@ -94,10 +94,13 @@ export class EngagementManagement {
       return {
         success: false,
         action: 'unlike',
-        tweetId,
+        tweet_id: tweetId,
         timestamp: new Date().toISOString(),
         data: { liked: false, retweeted: false },
-        error: validation.errors.join(', ')
+        error: {
+          code: "VALIDATION_ERROR",
+          message: validation.errors.join(', ')
+        }
       };
     }
 
@@ -118,12 +121,12 @@ export class EngagementManagement {
       return {
         success: true,
         action: 'unlike',
-        tweetId,
+        tweet_id: tweetId,
         timestamp: new Date().toISOString(),
         data: { liked: false, retweeted: false }
       };
     } catch (error: any) {
-      return this.handleEngagementError(error, { tweetId, action: 'unlike' });
+      return this.handleEngagementError(error, { tweet_id: tweetId, action: 'unlike' });
     }
   }
 
@@ -136,7 +139,7 @@ export class EngagementManagement {
    * V2ログイン認証（login_cookie）必須
    */
   async retweetTweet(tweetId: string): Promise<EngagementResponse> {
-    return this.performEngagement({ tweet_id: tweetId, action: 'retweet', login_cookies: '', proxy: '' });
+    return this.performEngagement({ tweet_id: tweetId, action: 'retweet', proxy: '' });
   }
 
   /**
@@ -150,10 +153,13 @@ export class EngagementManagement {
       return {
         success: false,
         action: 'unretweet',
-        tweetId,
+        tweet_id: tweetId,
         timestamp: new Date().toISOString(),
         data: { liked: false, retweeted: false },
-        error: validation.errors.join(', ')
+        error: {
+          code: "VALIDATION_ERROR",
+          message: validation.errors.join(', ')
+        }
       };
     }
 
@@ -174,12 +180,12 @@ export class EngagementManagement {
       return {
         success: true,
         action: 'unretweet',
-        tweetId,
+        tweet_id: tweetId,
         timestamp: new Date().toISOString(),
         data: { liked: false, retweeted: false }
       };
     } catch (error: any) {
-      return this.handleEngagementError(error, { tweetId, action: 'unretweet' });
+      return this.handleEngagementError(error, { tweet_id: tweetId, action: 'unretweet' });
     }
   }
 
@@ -214,7 +220,7 @@ export class EngagementManagement {
       console.log('💬 Creating quote tweet with V2 authentication...');
 
       // 引用ツイートURL構築
-      const quotedTweetUrl = `https://twitter.com/i/status/${request.tweetId}`;
+      const quotedTweetUrl = `https://twitter.com/i/status/${request.tweet_id}`;
       const fullText = request.quoteText 
         ? `${request.quoteText} ${quotedTweetUrl}`
         : quotedTweetUrl;
@@ -225,16 +231,22 @@ export class EngagementManagement {
         ...(request.mediaIds && { media_ids: request.mediaIds })
       });
 
-      if (response.success && response.data) {
+      // 型ガードで安全にアクセス
+      if (this.isAPIResponse(response) && response.success && response.data) {
         return {
           success: true,
           quoteTweetId: response.data.id,
           createdAt: response.data.created_at
         };
-      } else {
+      } else if (this.isAPIResponse(response)) {
         return {
           success: false,
           error: response.error || 'Quote tweet creation failed'
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Invalid response format'
         };
       }
     } catch (error: any) {
@@ -257,10 +269,13 @@ export class EngagementManagement {
       return {
         success: false,
         action: request.action,
-        tweetId: request.tweetId,
+        tweet_id: request.tweet_id,
         timestamp: new Date().toISOString(),
         data: { liked: false, retweeted: false },
-        error: validation.errors.join(', ')
+        error: {
+          code: "VALIDATION_ERROR",
+          message: validation.errors.join(', ')
+        }
       };
     }
 
@@ -271,7 +286,7 @@ export class EngagementManagement {
         throw new Error('No valid V2 login session available');
       }
 
-      console.log(`🚀 Performing ${request.action} on tweet ${request.tweetId} with V2 authentication...`);
+      console.log(`🚀 Performing ${request.action} on tweet ${request.tweet_id} with V2 authentication...`);
       
       let endpoint: string;
       let requestData: any;
@@ -279,11 +294,11 @@ export class EngagementManagement {
       switch (request.action) {
         case 'like':
           endpoint = this.ENDPOINTS.likeTweet;
-          requestData = { tweet_id: request.tweetId, login_cookie: loginCookie };
+          requestData = { tweet_id: request.tweet_id, login_cookie: loginCookie };
           break;
         case 'retweet':
           endpoint = this.ENDPOINTS.retweetTweet;
-          requestData = { tweet_id: request.tweetId, login_cookie: loginCookie };
+          requestData = { tweet_id: request.tweet_id, login_cookie: loginCookie };
           break;
         default:
           throw new Error(`Unsupported action: ${request.action}`);
@@ -294,7 +309,7 @@ export class EngagementManagement {
       return {
         success: true,
         action: request.action,
-        tweetId: request.tweetId,
+        tweet_id: request.tweet_id,
         timestamp: new Date().toISOString(),
         data: {
           liked: request.action === 'like',
@@ -313,11 +328,11 @@ export class EngagementManagement {
   private validateEngagementRequest(request: EngagementRequest): ValidationResult {
     const errors: string[] = [];
 
-    if (!request.tweetId?.trim()) {
+    if (!request.tweet_id?.trim()) {
       errors.push('Tweet ID is required');
     }
 
-    if (request.tweetId && !this.validateTweetId(request.tweetId).isValid) {
+    if (request.tweet_id && !this.validateTweetId(request.tweet_id).isValid) {
       errors.push('Invalid tweet ID format');
     }
 
@@ -350,7 +365,7 @@ export class EngagementManagement {
     const errors: string[] = [];
 
     // Tweet ID validation
-    const tweetIdValidation = this.validateTweetId(request.tweetId);
+    const tweetIdValidation = this.validateTweetId(request.tweet_id);
     if (!tweetIdValidation.isValid) {
       errors.push(...tweetIdValidation.errors);
     }
@@ -375,7 +390,7 @@ export class EngagementManagement {
   // PRIVATE METHODS - ERROR HANDLING
   // ============================================================================
 
-  private handleEngagementError(error: any, request: { tweetId: string; action: string }): EngagementResponse {
+  private handleEngagementError(error: any, request: { tweet_id: string; action: string }): EngagementResponse {
     console.error(`❌ Engagement ${request.action} error:`, error);
 
     let errorMessage = 'Unknown error occurred';
@@ -397,13 +412,28 @@ export class EngagementManagement {
     return {
       success: false,
       action: request.action,
-      tweetId: request.tweetId,
+      tweet_id: request.tweet_id,
       timestamp: new Date().toISOString(),
       data: {
         liked: false,
         retweeted: false
       },
-      error: errorMessage
+      error: {
+        code: "API_ERROR",
+        message: errorMessage
+      }
     };
+  }
+
+  // ============================================================================
+  // TYPE GUARDS
+  // ============================================================================
+
+  /**
+   * API応答の型ガード
+   * unknown型のレスポンスを安全にチェック
+   */
+  private isAPIResponse(obj: unknown): obj is { success?: boolean; data?: any; error?: any } {
+    return typeof obj === 'object' && obj !== null;
   }
 }

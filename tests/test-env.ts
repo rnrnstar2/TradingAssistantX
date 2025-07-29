@@ -4,6 +4,10 @@
  */
 
 import { vi } from 'vitest';
+import dotenv from 'dotenv';
+
+// .envファイルから環境変数を読み込み
+dotenv.config();
 
 // テスト環境変数設定
 process.env.NODE_ENV = 'test';

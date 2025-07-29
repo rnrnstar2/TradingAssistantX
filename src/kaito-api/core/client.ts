@@ -21,6 +21,8 @@ import {
   UserData,
   PostResult,
 } from "../utils/types";
+import { AuthManager } from "./auth-manager";
+import { API_ENDPOINTS } from "../utils/constants";
 
 // TwitterAPI.io specific types
 type TwitterAPIResponse<T> = TwitterAPIBaseResponse<T>;
@@ -369,7 +371,7 @@ class TwitterAPIErrorHandler {
       };
     }
 
-    if (errorObj.response?.status >= 500) {
+    if (errorObj.response && typeof errorObj.response.status === 'number' && errorObj.response.status >= 500) {
       return {
         error: {
           code: "SERVER_ERROR",
@@ -411,6 +413,12 @@ class TwitterAPIErrorHandler {
 
         // エラータイプによる戦略変更
         const mappedError = this.mapError(error, "retry");
+
+        // 重複投稿エラーの場合はリトライしない
+        if (lastError.message.includes('DUPLICATE_TWEET:') || lastError.message.includes('DUPLICATE_CONTENT:')) {
+          console.log('❌ Duplicate content detected - stopping retries to avoid further duplicates');
+          throw lastError;
+        }
 
         // Rate limitエラーの場合は長めに待機
         if (mappedError.error.type === "rate_limit") {
@@ -549,103 +557,8 @@ class CostTracker {
 /**
  * Enhanced Authentication Manager with auto-retry and validation
  */
-class AuthenticationManager {
-  private readonly apiKey: string;
-  private authValidated = false;
-  private lastValidation = 0;
-  private readonly VALIDATION_INTERVAL = 3600000; // 1時間
+// Old AuthenticationManager class removed - using AuthManager instead
 
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
-  }
-
-  async validateAuthentication(httpClient: HttpClient): Promise<boolean> {
-    const now = Date.now();
-
-    // キャッシュされた認証状態をチェック
-    if (
-      this.authValidated &&
-      now - this.lastValidation < this.VALIDATION_INTERVAL
-    ) {
-      return true;
-    }
-
-    try {
-      // Bearer Token検証の強化
-      if (!this.apiKey || this.apiKey.trim() === "") {
-        throw new Error("API key is required for authentication");
-      }
-
-      if (
-        !this.apiKey.startsWith("Bearer ") &&
-        !this.apiKey.match(/^[a-zA-Z0-9_-]+$/)
-      ) {
-        throw new Error("Invalid API key format");
-      }
-
-      // TwitterAPI.io APIキー有効性確認
-      const testUrl = "/health";
-      await httpClient.get(testUrl);
-
-      this.authValidated = true;
-      this.lastValidation = now;
-      console.log("✅ TwitterAPI.io APIキー有効性確認完了");
-      return true;
-    } catch (error) {
-      this.authValidated = false;
-
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-
-      if (
-        errorMessage.includes("401") ||
-        errorMessage.includes("Unauthorized")
-      ) {
-        throw new Error("Invalid API key - authentication failed");
-      }
-
-      if (errorMessage.includes("403") || errorMessage.includes("Forbidden")) {
-        throw new Error("API key lacks required permissions");
-      }
-
-      throw new Error(`API key validation failed: ${errorMessage}`);
-    }
-  }
-
-  async autoReauthenticate(httpClient: HttpClient): Promise<void> {
-    console.log("🔄 自動再認証実行中...");
-
-    try {
-      await this.validateAuthentication(httpClient);
-      console.log("✅ 自動再認証成功");
-    } catch (error) {
-      console.error("❌ 自動再認証失敗:", error);
-      throw error;
-    }
-  }
-
-  isAuthenticated(): boolean {
-    const now = Date.now();
-    return (
-      this.authValidated && now - this.lastValidation < this.VALIDATION_INTERVAL
-    );
-  }
-
-  getAuthStatus(): {
-    validated: boolean;
-    lastValidation: string;
-    expiresIn: number;
-  } {
-    const now = Date.now();
-    const expiresIn = this.VALIDATION_INTERVAL - (now - this.lastValidation);
-
-    return {
-      validated: this.authValidated,
-      lastValidation: new Date(this.lastValidation).toISOString(),
-      expiresIn: Math.max(0, expiresIn),
-    };
-  }
-}
 
 // ============================================================================
 // KAITO TWITTER API CLIENT - 実API統合版
@@ -667,16 +580,29 @@ export class KaitoTwitterAPIClient {
   // configからエンドポイントを取得
   private get endpoints() {
     const defaultEndpoints = {
-      user: { info: "/twitter/user/info" },
-      tweet: {
-        create: "/twitter/tweet/create",
-        retweet: "/twitter/action/retweet",
-        search: "/twitter/tweet/advanced_search",
-        quote: "/twitter/action/quote",
+      user: { 
+        info: API_ENDPOINTS.userInfo,
+        follow: API_ENDPOINTS.followUser,
+        unfollow: API_ENDPOINTS.unfollowUser
       },
-      engagement: { like: "/twitter/action/like" },
-      auth: { verify: "/twitter/user/info" },
-      health: "/twitter/tweet/advanced_search",
+      tweet: {
+        create: API_ENDPOINTS.createTweet,
+        delete: API_ENDPOINTS.deleteTweet,
+        retweet: API_ENDPOINTS.retweet,
+        search: API_ENDPOINTS.tweetSearch,
+        quote: API_ENDPOINTS.createTweet,
+      },
+      engagement: { 
+        like: API_ENDPOINTS.likeTweet,
+        unlike: API_ENDPOINTS.unlikeTweet,
+        retweet: API_ENDPOINTS.retweet,
+        unretweet: API_ENDPOINTS.unretweet
+      },
+      auth: { 
+        verify: API_ENDPOINTS.userInfo,
+        loginV2: API_ENDPOINTS.userLoginV2
+      },
+      health: API_ENDPOINTS.tweetSearch,
     };
 
     if (this.apiConfig?.endpointConfig) {
@@ -699,7 +625,7 @@ export class KaitoTwitterAPIClient {
   private httpClient: HttpClient | null = null;
   private qpsController: EnhancedQPSController;
   private costTracker: CostTracker;
-  private authManager: AuthenticationManager;
+  private authManager: AuthManager;
   private rateLimits: RateLimitStatus = {
     remaining: 300,
     limit: 300,
@@ -739,7 +665,7 @@ export class KaitoTwitterAPIClient {
     lastUpdated: new Date().toISOString(),
   };
   private lastRequestTime: number = 0;
-  private isAuthenticated: boolean = false;
+  // isAuthenticated property removed - using AuthManager.getAuthStatus() instead
 
   constructor(config: Partial<KaitoClientConfig> = {}) {
     this.config = {
@@ -755,7 +681,7 @@ export class KaitoTwitterAPIClient {
 
     this.qpsController = new EnhancedQPSController();
     this.costTracker = new CostTracker();
-    this.authManager = new AuthenticationManager(this.config.apiKey || "");
+    this.authManager = new AuthManager({ apiKey: this.config.apiKey || "" });
     this.initializeRateLimits();
     this.initializeCostTracking();
 
@@ -812,7 +738,7 @@ export class KaitoTwitterAPIClient {
         throw new Error(`API key validation failed: ${errorMessage}`);
       }
 
-      this.isAuthenticated = true;
+      // Authentication status now managed by AuthManager
       console.log("✅ KaitoTwitterAPI認証完了");
     } catch (error) {
       throw TwitterAPIErrorHandler.handleError(error, "authentication");
@@ -1241,9 +1167,14 @@ export class KaitoTwitterAPIClient {
   }
 
   async reAuthenticate(): Promise<void> {
-    if (this.httpClient) {
-      await this.authManager.autoReauthenticate(this.httpClient);
-      this.isAuthenticated = this.authManager.isAuthenticated();
+    try {
+      const loginResult = await this.authManager.login();
+      if (!loginResult.success) {
+        throw new Error(`Re-authentication failed: ${loginResult.error}`);
+      }
+      console.log("✅ Re-authentication successful");
+    } catch (error) {
+      throw new Error(`Re-authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -1281,6 +1212,80 @@ export class KaitoTwitterAPIClient {
   // MVP要件 - 詳細メトリクス機能を削除（過剰実装のため）
 
   // ============================================================================
+  // SESSION MANAGEMENT - TwitterAPI.io Authentication
+  // ============================================================================
+
+  private sessionData: string | null = null;
+  private sessionExpiry: number = 0;
+
+  /**
+   * TwitterAPI.io session authentication flow
+   * Implements login -> 2FA -> session creation
+   */
+  private async getOrCreateSession(): Promise<string> {
+    // First check if AuthManager has a valid session
+    const existingSession = this.authManager.getUserSession();
+    if (existingSession) {
+      console.log("🔄 Using existing AuthManager session");
+      return existingSession;
+    }
+
+    // Check if we have a valid cached session (fallback)
+    if (this.sessionData && Date.now() < this.sessionExpiry) {
+      return this.sessionData;
+    }
+
+    try {
+      console.log("🔐 TwitterAPI.io session authentication starting...");
+
+      // Step 1: Initial login
+      const loginData = await this.performLogin();
+      
+      // Step 2: Complete 2FA authentication
+      const sessionResult = await this.complete2FA(loginData);
+      
+      // Cache session with 30-minute expiry
+      this.sessionData = sessionResult;
+      this.sessionExpiry = Date.now() + (30 * 60 * 1000);
+      
+      console.log("✅ TwitterAPI.io session authentication completed");
+      return sessionResult;
+    } catch (error) {
+      console.error("❌ TwitterAPI.io session authentication failed:", error);
+      throw new Error(`Session authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * TwitterAPI.io V2 Login - Uses AuthManager for authentication
+   */
+  private async performLogin(): Promise<string> {
+    try {
+      console.log("🔐 TwitterAPI.io V2 login starting via AuthManager...");
+      
+      const loginResult = await this.authManager.login();
+      
+      if (!loginResult.success || !loginResult.login_cookie) {
+        throw new Error(`Authentication failed: ${loginResult.error || 'login failed'}`);
+      }
+
+      console.log("✅ TwitterAPI.io V2 login successful via AuthManager");
+      return loginResult.login_cookie;
+    } catch (error) {
+      console.error("❌ TwitterAPI.io V2 login failed:", error);
+      throw new Error("V2 Login authentication failed. Please ensure your Twitter account has 2FA enabled with an authentication app and all environment variables (X_USERNAME, X_PASSWORD, X_EMAIL, X_TOTP_SECRET) are properly configured.");
+    }
+  }
+
+  /**
+   * V2 authentication doesn't need separate 2FA step
+   */
+  private async complete2FA(loginData: string): Promise<string> {
+    // V2 authentication is single-step, just return the login cookie
+    return loginData;
+  }
+
+  // ============================================================================
   // PRIVATE METHODS - 実API統合実装
   // ============================================================================
 
@@ -1288,26 +1293,135 @@ export class KaitoTwitterAPIClient {
     content: string,
     options?: { mediaIds?: string[]; inReplyTo?: string },
   ): Promise<PostResult> {
-    const postData = {
-      text: content,
-      ...(options?.mediaIds && { media: { media_ids: options.mediaIds } }),
-      ...(options?.inReplyTo && { in_reply_to_tweet_id: options.inReplyTo }),
-    };
+    // TwitterAPI.io V2 requires login_cookie authentication
+    try {
+      // Get login cookie from V2 authentication
+      const loginCookie = await this.getOrCreateSession();
+      
+      // Get current proxy from AuthManager
+      const currentProxy = this.authManager.getCurrentProxy();
+      if (!currentProxy) {
+        throw new Error('No available proxy for posting');
+      }
+      
+      const postData = {
+        login_cookies: loginCookie,
+        tweet_text: content,
+        proxy: currentProxy,
+        ...(options?.mediaIds && { media: { media_ids: options.mediaIds } }),
+        ...(options?.inReplyTo && { in_reply_to_tweet_id: options.inReplyTo }),
+      };
 
-    const response = await this.httpClient!.post<
-      TwitterAPIResponse<{
-        id: string;
-        text: string;
-        created_at: string;
-      }>
-    >(String(this.endpoints.tweet.create), postData);
+      const response = await this.httpClient!.post<
+        TwitterAPIResponse<{
+          id: string;
+          text: string;
+          created_at: string;
+        }>
+      >(String(this.endpoints.tweet.create), postData);
 
-    return {
-      id: response.data.id,
-      url: `https://twitter.com/i/status/${response.data.id}`,
-      timestamp: response.data.created_at,
-      success: true,
-    };
+      // Debug: Log the full response for troubleshooting
+      console.log('🔍 Full API Response:', JSON.stringify(response, null, 2));
+
+      // Check for TwitterAPI.io success response first
+      if (response?.status === 'success') {
+        const tweetId = response.tweet_id;
+        if (tweetId) {
+          console.log('✅ TwitterAPI.io success response detected');
+          return {
+            id: tweetId,
+            url: `https://twitter.com/i/status/${tweetId}`,
+            timestamp: new Date().toISOString(),
+            success: true,
+          };
+        } else {
+          console.error('❌ Success response missing tweet_id:', response);
+          throw new Error('Invalid success response: missing tweet_id field');
+        }
+      }
+
+      // Check for error responses
+      if (response?.status === 'error') {
+        const errorMessage = response.message || 'Unknown API error';
+        
+        // Handle duplicate tweet error (187)
+        if (errorMessage.includes('Status is a duplicate') || errorMessage.includes('(187)')) {
+          console.log('⚠️ Duplicate tweet detected - this content was already posted recently');
+          throw new Error('DUPLICATE_TWEET: This content has already been posted recently. Please wait or modify the content.');
+        }
+        
+        // Handle other error cases
+        console.error('❌ API returned error:', errorMessage);
+        throw new Error(`API_ERROR: ${errorMessage}`);
+      }
+
+      // Handle alternative successful response formats (fallback)
+      let tweetId: string | undefined;
+      let tweetText: string | undefined;
+      let createdAt: string | undefined;
+
+      if (response?.data?.id) {
+        // Standard Twitter API v2 format
+        tweetId = response.data.id;
+        tweetText = response.data.text;
+        createdAt = response.data.created_at;
+        console.log('📊 Using standard Twitter API v2 format');
+      } else if (response?.id) {
+        // Direct format (some APIs return data directly at root level)
+        tweetId = response.id;
+        tweetText = response.text;
+        createdAt = response.created_at;
+        console.log('📊 Using direct response format');
+      } else if (response?.data?.tweet_id) {
+        // TwitterAPI.io might use custom field names
+        tweetId = response.data.tweet_id;
+        tweetText = response.data.tweet_text;
+        createdAt = response.data.timestamp;
+        console.log('📊 Using TwitterAPI.io custom format');
+      } else {
+        console.error('❌ Cannot parse API response structure:', response);
+        throw new Error('Invalid API response: unable to extract tweet ID from response');
+      }
+
+      if (!tweetId) {
+        console.error('❌ Tweet ID not found in response:', response);
+        throw new Error('Invalid API response: missing tweet ID in all expected formats');
+      }
+
+      return {
+        id: tweetId,
+        url: `https://twitter.com/i/status/${tweetId}`,
+        timestamp: createdAt || new Date().toISOString(),
+        success: true,
+      };
+    } catch (error) {
+      // Enhanced error handling for TwitterAPI.io session authentication
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      if (errorMessage.includes('DUPLICATE_TWEET:')) {
+        console.log('⚠️ Handling duplicate tweet error gracefully');
+        throw new Error('DUPLICATE_CONTENT: The content you are trying to post has already been shared recently. Please modify the content or wait before posting again.');
+      }
+      
+      if (errorMessage.includes('API_ERROR:')) {
+        console.error('❌ TwitterAPI.io returned an error:', errorMessage);
+        throw error; // Re-throw API errors as-is
+      }
+      
+      if (errorMessage.includes('login_cookies is required')) {
+        throw new Error('Session authentication required. Please ensure X_USERNAME, X_PASSWORD, and X_EMAIL are properly configured.');
+      }
+      
+      if (errorMessage.includes('proxy is required')) {
+        throw new Error('Proxy authentication required. Please ensure proxy configuration is available.');
+      }
+      
+      if (errorMessage.includes('404') || errorMessage.includes('Not Found')) {
+        throw new Error(`Tweet creation endpoint not found: ${String(this.endpoints.tweet.create)}`);
+      }
+      
+      throw error;
+    }
   }
 
   private async executeRealRetweet(tweetId: string): Promise<RetweetResult> {
@@ -1370,9 +1484,24 @@ export class KaitoTwitterAPIClient {
   }
 
   private async ensureAuthenticated(): Promise<void> {
-    if (!this.authManager.isAuthenticated() && this.httpClient) {
-      await this.authManager.validateAuthentication(this.httpClient);
-      this.isAuthenticated = this.authManager.isAuthenticated();
+    const authStatus = this.authManager.getAuthStatus();
+    
+    if (!authStatus.apiKeyValid) {
+      throw new Error("API key is not valid - ensure KAITO_API_TOKEN is set correctly");
+    }
+    
+    // For authenticated operations, ensure user session is valid
+    if (!authStatus.userSessionValid) {
+      console.log("🔐 User session not valid, attempting login...");
+      try {
+        const loginResult = await this.authManager.login();
+        if (!loginResult.success) {
+          throw new Error(`Login failed: ${loginResult.error}`);
+        }
+        console.log("✅ Authentication successful");
+      } catch (error) {
+        throw new Error(`Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }
   }
 

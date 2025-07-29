@@ -238,8 +238,85 @@ async function executeScheduledWorkflow(scheduledAction: ScheduledAction) {
 ## 認証・実装上の重要事項
 
 ### Claude Code SDK認証方式
-- **ローカル認証使用**: Claude Code SDK TypeScriptはローカル認証を使用
+- **使用SDK**: `@instantlyeasy/claude-code-sdk-ts`を使用（Claude Code Max Plan利用のため）
+- **ローカル認証必須**: Claude CLIでのローカルログイン認証（`claude login`）を使用
 - **CLAUDE_API_KEY不要**: 環境変数CLAUDE_API_KEYの設定は不要
-- **ドキュメント一致**: 認証方式に関するドキュメント記載は実装と一致させる必要がある
+- **認証手順**: 
+  1. `npm install -g @anthropic-ai/claude-code`
+  2. `claude login`でブラウザ認証
+  3. Claude Code Max Planの機能をフル活用
 
-**注意**: 他のClaude SDK（例：Python版）とは認証方式が異なるため、混同しないよう注意すること。
+**重要**: Claude Code Max Planの契約を最大限活用するため、必ず`@instantlyeasy/claude-code-sdk-ts`とローカル認証を使用すること。
+
+### 🚨 重要：Claude SDK実装の問題と対応
+
+**現在の問題**:
+- `@instantlyeasy/claude-code-sdk-ts` パッケージが正しく動作していない
+- `claude()` 関数の呼び出しでワークフローが停止する
+
+**対応方針**:
+
+#### 1. エラーハンドリングの強化（推奨）
+Claude SDK呼び出し部分に適切なエラーハンドリングを実装：
+
+```typescript
+// src/claude/endpoints/content-endpoint.ts での実装例
+async function generateWithClaudeQualityCheck(
+  prompt: string, 
+  topic: string, 
+  qualityThreshold: number
+): Promise<string> {
+  try {
+    // Claude SDK 呼び出し
+    const response = await claude()
+      .withModel('sonnet')
+      .withTimeout(CLAUDE_TIMEOUT)
+      .query(prompt)
+      .asText();
+      
+    return response.trim();
+  } catch (error) {
+    console.error('Claude SDK呼び出しエラー:', error);
+    // エラー詳細をログに記録
+    console.error('エラー詳細:', {
+      topic,
+      promptLength: prompt.length,
+      timestamp: new Date().toISOString()
+    });
+    
+    // 適切なエラーを再スロー
+    throw new Error(`Claude API呼び出しに失敗しました: ${error.message}`);
+  }
+}
+```
+
+#### 2. SDK問題の根本解決
+
+1. **短期対応（高優先度）**:
+   - Claude SDK の最新バージョン確認と更新
+   - ローカル認証状態の確認（`claude login`の再実行）
+   - エラーログの詳細分析
+
+2. **中期対応**:
+   - Claude公式ドキュメントの確認
+   - 代替SDKパッケージの調査
+   - コミュニティフォーラムでの問題報告
+
+3. **長期対応**:
+   - Claude API直接呼び出しの実装検討
+   - カスタムAPIクライアントの開発
+   - リトライ機構とフォールバック戦略の実装
+
+#### 3. テスト環境での対応
+
+テスト実行時のみ、実際のAPIをスキップする最小限の対応：
+
+```typescript
+// テストファイル内でのみ使用
+if (process.env.NODE_ENV === 'test') {
+  // テスト用のスタブを使用
+  vi.mock('@instantlyeasy/claude-code-sdk-ts');
+}
+```
+
+**重要**: 本番環境でのモック使用は厳禁。CLAUDE.mdの規約により、実際のClaude APIを使用することが必須。

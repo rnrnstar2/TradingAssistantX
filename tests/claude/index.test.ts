@@ -92,7 +92,6 @@ describe('Claude Index Export Integration Tests', () => {
       const analysisInput: AnalysisInput = createMockAnalysisInput();
       const searchInput: SearchInput = createMockSearchInput();
 
-      expect(decisionInput).toBeDefined();
       expect(contentInput).toBeDefined();
       expect(analysisInput).toBeDefined();
       expect(searchInput).toBeDefined();
@@ -151,27 +150,6 @@ describe('Claude Index Export Integration Tests', () => {
   });
 
   describe('統合動作テスト', () => {
-    test.skip('エンドポイント間の基本的な連携動作確認 (DEPRECATED - uses makeDecision)', async () => {
-      // 実際のAPIを使用
-      const decisionInput = createMockDecisionInput();
-      const decision = await makeDecision(decisionInput);
-
-      expect(isClaudeDecision(decision)).toBe(true);
-
-      if (decision.action === 'post') {
-        const contentInput = createMockContentInput();
-        const content = await generateContent(contentInput);
-
-        expect(isGeneratedContent(content)).toBe(true);
-
-        // Record execution for analysis
-        const executionRecord = createMockExecutionRecord(true);
-        recordExecution(executionRecord);
-
-        const metrics = getPerformanceMetrics();
-        expect(metrics.total_executions).toBeGreaterThan(0);
-      }
-    });
 
     test('型システムの互換性確認', async () => {
       const searchInput = createMockSearchInput('retweet');
@@ -198,37 +176,6 @@ describe('Claude Index Export Integration Tests', () => {
       }
     }, 30000);
 
-    test.skip('異なるエンドポイント間でのデータフロー確認 (DEPRECATED - uses makeDecision)', async () => {
-      // Simulate a complete workflow
-      const decisionInput = createMockDecisionInput();
-      const decision = await makeDecision(decisionInput);
-
-      expect(isClaudeDecision(decision)).toBe(true);
-
-      // Record the decision
-      const record = {
-        id: 'test_workflow_1',
-        timestamp: new Date().toISOString(),
-        action: decision.action,
-        success: true,
-        confidence: decision.confidence,
-        reasoning: decision.reasoning,
-        result: { engagement: 10, reach: 100, errors: [] }
-      };
-
-      recordExecution(record);
-
-      // Analyze performance
-      const insights = generateLearningInsights();
-      expect(Array.isArray(insights)).toBe(true);
-
-      const suggestions = generateImprovementSuggestions();
-      expect(Array.isArray(suggestions)).toBe(true);
-
-      // Market context analysis
-      const marketContext = await analyzeMarketContext({ timeframe: '24h' });
-      expect(marketContext.sentiment).toMatch(/^(bearish|neutral|bullish)$/);
-    }, 30000);
 
     test('型ガードとエンドポイント間の整合性', async () => {
       const analysisInput = createMockAnalysisInput('market');
@@ -244,23 +191,6 @@ describe('Claude Index Export Integration Tests', () => {
       expect(analysisResult.confidence).toBeLessThanOrEqual(1);
     }, 30000);
 
-    test.skip('エラー時の統合動作確認 (DEPRECATED - uses makeDecision)', async () => {
-      // Test error propagation and handling across modules
-      const decisionInput = createMockDecisionInput();
-      
-      const decision = await makeDecision(decisionInput);
-
-      // Even with errors, should return valid decision
-      expect(isClaudeDecision(decision)).toBe(true);
-      expect(VALID_ACTIONS.includes(decision.action)).toBe(true);
-
-      // Record the failed execution
-      const failedRecord = createMockExecutionRecord(false);
-      recordExecution(failedRecord);
-
-      const metrics = getPerformanceMetrics();
-      expect(metrics.total_executions).toBeGreaterThan(0);
-    }, 30000);
 
     test('並行処理での統合確認', async () => {
       const searchInputs = [

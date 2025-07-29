@@ -228,7 +228,6 @@ describe('エンドポイント認証レベル統合テスト', () => {
     test('全てのV2エンドポイントがlogin_cookieで動作', async () => {
       const v2Endpoints = [
         '/v2-auth/tweet-actions-v2',
-        '/v2-auth/dm-management',
         '/v2-auth/community-management',
         '/v2-auth/advanced-features'
       ];
@@ -270,23 +269,6 @@ describe('エンドポイント認証レベル統合テスト', () => {
         console.log('✅ tweet-actions-v2 認証確認完了');
       } else {
         console.log('⚠️ V2セッション無効のため tweet-actions-v2 アクセス不可');
-      }
-    });
-    
-    test('dm-management エンドポイント動作確認', async () => {
-      // V2 DM機能確認（V2専用機能）
-      const requiredLevel = authManager.getRequiredAuthLevel('/v2-auth/dm-management');
-      expect(['v1-login', 'v2-login']).toContain(requiredLevel);
-      
-      const canAccess = authManager.canAccessEndpoint('/v2-auth/dm-management');
-      const hasV2Session = authManager.getAuthStatus().v2SessionValid;
-      
-      if (hasV2Session) {
-        expect(canAccess).toBe(true);
-        console.log('✅ dm-management V2専用機能アクセス可能');
-      } else {
-        expect(canAccess).toBe(false);
-        console.log('⚠️ V2セッション無効のため dm-management アクセス不可');
       }
     });
     
@@ -404,7 +386,7 @@ describe('エンドポイント認証レベル統合テスト', () => {
           // V2は全機能利用可能
           const canAccessPublic = authManager.canAccessEndpoint('/public/user-info');
           const canAccessV1 = authManager.canAccessEndpoint('/v1-auth/tweet-actions-v1');
-          const canAccessV2 = authManager.canAccessEndpoint('/v2-auth/dm-management');
+          const canAccessV2 = authManager.canAccessEndpoint('/v2-auth/tweet-actions-v2');
           
           const hasV2Session = authManager.getAuthStatus().v2SessionValid;
           if (hasV2Session) {
@@ -483,7 +465,7 @@ describe('エンドポイント認証レベル統合テスト', () => {
       // 権限不足エラーの確認
       const unauthorizedEndpoints = [
         '/v1-auth/tweet-actions-v1',
-        '/v2-auth/dm-management'
+        '/v2-auth/tweet-actions-v2'
       ];
       
       unauthorizedEndpoints.forEach(endpoint => {

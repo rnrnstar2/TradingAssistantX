@@ -722,8 +722,7 @@ class StepByStepValidator {
       { path: '/public/user-info', expectedLevels: ['api-key'] },
       { path: '/public/tweet-search', expectedLevels: ['api-key'] },
       { path: '/v1-auth/tweet-actions-v1', expectedLevels: ['v1-login', 'v2-login'] },
-      { path: '/v2-auth/tweet-actions-v2', expectedLevels: ['v1-login', 'v2-login'] },
-      { path: '/v2-auth/dm-management', expectedLevels: ['v1-login', 'v2-login'] }
+      { path: '/v2-auth/tweet-actions-v2', expectedLevels: ['v1-login', 'v2-login'] }
     ];
     
     let correctSeparations = 0;

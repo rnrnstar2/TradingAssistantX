@@ -665,6 +665,268 @@ export function createEducationalResponseHandler(): ResponseHandler {
 }
 
 // ============================================================================
+// データ正規化機能 (normalizer.tsから統合)
+// ============================================================================
+
+// Normalization interfaces from normalizer.ts
+export interface NormalizationOptions {
+  strictMode?: boolean;
+  fallbackValues?: boolean;
+  validateUrls?: boolean;
+  sanitizeText?: boolean;
+}
+
+export interface NormalizationResult<T> {
+  data: T;
+  warnings: string[];
+  hasErrors: boolean;
+}
+
+// Normalization cache
+const normalizationCache = new Map<string, any>();
+const CACHE_SIZE = 1000;
+
+function manageCacheSize(): void {
+  if (normalizationCache.size >= CACHE_SIZE) {
+    const firstKey = normalizationCache.keys().next().value;
+    normalizationCache.delete(firstKey);
+  }
+}
+
+function generateCacheKey(type: string, id: string, options?: any): string {
+  const optionsStr = options ? JSON.stringify(options) : '';
+  return `${type}_${id}_${optionsStr}`;
+}
+
+/**
+ * TwitterIDの正規化
+ */
+export function normalizeTwitterId(id: unknown): string {
+  if (id === null || id === undefined) return '';
+  
+  const idStr = String(id).trim();
+  
+  if (!/^\d{1,20}$/.test(idStr)) {
+    console.warn(`⚠️ Invalid Twitter ID format: ${idStr}`);
+    return '';
+  }
+  
+  return idStr;
+}
+
+/**
+ * Twitterユーザー名の正規化
+ */
+export function normalizeUsername(username: unknown): string {
+  if (!username) return '';
+  
+  let normalized = String(username).trim().toLowerCase();
+  
+  normalized = normalized.replace(/^@/, '');
+  
+  if (!/^[a-zA-Z0-9_]{1,15}$/.test(normalized)) {
+    console.warn(`⚠️ Invalid username format: ${username}`);
+    return '';
+  }
+  
+  return normalized;
+}
+
+/**
+ * タイムスタンプの正規化
+ */
+export function normalizeTimestamp(timestamp: unknown): string {
+  if (!timestamp) return new Date().toISOString();
+  
+  try {
+    if (typeof timestamp === 'number') {
+      const date = timestamp > 946684800000 ? 
+        new Date(timestamp) : 
+        new Date(timestamp * 1000);
+      return date.toISOString();
+    }
+    
+    const date = new Date(String(timestamp));
+    if (isNaN(date.getTime())) {
+      console.warn(`⚠️ Invalid timestamp format: ${timestamp}`);
+      return new Date().toISOString();
+    }
+    
+    return date.toISOString();
+  } catch (error) {
+    console.warn(`⚠️ Error normalizing timestamp: ${timestamp}`, error);
+    return new Date().toISOString();
+  }
+}
+
+/**
+ * URLの正規化
+ */
+export function normalizeUrl(url: unknown): string {
+  if (!url) return '';
+  
+  const urlStr = String(url).trim();
+  if (urlStr === '') return '';
+  
+  try {
+    let fullUrl = urlStr;
+    if (!/^https?:\/\//.test(urlStr)) {
+      if (urlStr.startsWith('//')) {
+        fullUrl = 'https:' + urlStr;
+      } else if (urlStr.startsWith('/')) {
+        console.warn(`⚠️ Relative URL not supported: ${urlStr}`);
+        return '';
+      } else {
+        fullUrl = 'https://' + urlStr;
+      }
+    }
+    
+    const urlObj = new URL(fullUrl);
+    
+    if (!['http:', 'https:'].includes(urlObj.protocol)) {
+      console.warn(`⚠️ Unsupported URL protocol: ${urlObj.protocol}`);
+      return '';
+    }
+    
+    return urlObj.toString();
+  } catch (error) {
+    console.warn(`⚠️ Invalid URL format: ${urlStr}`, error);
+    return '';
+  }
+}
+
+/**
+ * 数値の正規化
+ */
+export function normalizeNumber(value: unknown, fallback: number = 0): number {
+  if (value === null || value === undefined) return fallback;
+  
+  const num = Number(value);
+  if (isNaN(num)) {
+    console.warn(`⚠️ Invalid number format: ${value}`);
+    return fallback;
+  }
+  
+  return Math.max(0, num);
+}
+
+/**
+ * ブール値の正規化
+ */
+export function normalizeBoolean(value: unknown): boolean {
+  if (typeof value === 'boolean') return value;
+  if (value === 'true' || value === '1' || value === 1) return true;
+  if (value === 'false' || value === '0' || value === 0) return false;
+  return Boolean(value);
+}
+
+/**
+ * テキストのサニタイゼーション
+ */
+export function sanitizeText(text: unknown): string {
+  if (!text) return '';
+  
+  return String(text)
+    .replace(/[\x00-\x1F\x7F-\x9F]/g, '') // 制御文字除去
+    .replace(/<[^>]*>/g, '') // HTMLタグ除去
+    .replace(/\s+/g, ' ') // 連続空白の正規化
+    .trim();
+}
+
+/**
+ * 言語コードの正規化
+ */
+export function normalizeLanguageCode(lang: any): string {
+  if (!lang) return 'und';
+  
+  const langStr = String(lang).toLowerCase().trim();
+  
+  if (!/^[a-z]{2}$/.test(langStr)) {
+    return 'und';
+  }
+  
+  return langStr;
+}
+
+/**
+ * 国コードの正規化
+ */
+export function normalizeCountryCode(country: any): string {
+  if (!country) return '';
+  
+  const countryStr = String(country).toUpperCase().trim();
+  
+  if (!/^[A-Z]{2}$/.test(countryStr)) {
+    return '';
+  }
+  
+  return countryStr;
+}
+
+/**
+ * 敏感なデータのマスキング
+ */
+export function maskSensitiveData(data: string): string {
+  if (!data || data.length <= 4) return '***';
+  
+  return data.substring(0, 2) + '*'.repeat(data.length - 4) + data.substring(data.length - 2);
+}
+
+/**
+ * APIレスポンスの構造検証
+ */
+export function validateResponseStructure(response: any, expectedStructure: string[]): boolean {
+  if (!response || typeof response !== 'object') return false;
+  
+  return expectedStructure.every(field => {
+    const keys = field.split('.');
+    let current = response;
+    
+    for (const key of keys) {
+      if (!current || typeof current !== 'object' || !(key in current)) {
+        return false;
+      }
+      current = current[key];
+    }
+    
+    return true;
+  });
+}
+
+/**
+ * 正規化結果の統計情報生成
+ */
+export function generateNormalizationStats(originalData: any, normalizedData: any): {
+  originalFields: number;
+  normalizedFields: number;
+  emptyFields: number;
+  modifiedFields: number;
+} {
+  const originalFields = Object.keys(originalData || {}).length;
+  const normalizedFields = Object.keys(normalizedData || {}).length;
+  
+  let emptyFields = 0;
+  let modifiedFields = 0;
+  
+  for (const [key, value] of Object.entries(normalizedData || {})) {
+    if (value === '' || value === null || value === undefined) {
+      emptyFields++;
+    }
+    
+    if (originalData && originalData[key] !== value) {
+      modifiedFields++;
+    }
+  }
+  
+  return {
+    originalFields,
+    normalizedFields,
+    emptyFields,
+    modifiedFields
+  };
+}
+
+// ============================================================================
 // エクスポート
 // ============================================================================
 

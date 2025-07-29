@@ -1,0 +1,8 @@
+timestamp: '2025-07-29T14:17:35.724Z'
+type: workflow-error
+data:
+  error: >-
+    UNKNOWN_ERROR: Unknown error in post: Cannot read properties of undefined
+    (reading 'id')
+  executionTime: 19290
+  timestamp: '2025-07-29T14:17:35.724Z'

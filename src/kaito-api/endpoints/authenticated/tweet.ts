@@ -42,7 +42,7 @@ interface SecurityCheckResult {
 export class TweetManagement {
   private readonly ENDPOINTS = {
     createTweet: '/twitter/create_tweet_v2',
-    deleteTweet: '/tweets/:tweetId'
+    deleteTweet: '/twitter/delete_tweet_v2'
   } as const;
 
   private readonly RATE_LIMITS = {
@@ -158,13 +158,9 @@ export class TweetManagement {
 
       console.log('🗑️ Deleting tweet with V2 authentication...', { tweetId });
 
-      // APIエンドポイントの構築
-      const endpoint = this.ENDPOINTS.deleteTweet.replace(':tweetId', tweetId);
-      
-      const response = await this.httpClient.delete(endpoint, {
-        headers: {
-          'x-login-cookie': loginCookie
-        }
+      const response = await this.httpClient.post(this.ENDPOINTS.deleteTweet, {
+        tweet_id: tweetId,
+        login_cookie: loginCookie
       }) as any;
 
       const result: DeleteTweetResult = {

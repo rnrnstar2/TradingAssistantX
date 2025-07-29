@@ -5,47 +5,6 @@
  */
 
 // ============================================================================
-// DM (Direct Message) 関連型
-// ============================================================================
-
-/**
- * ダイレクトメッセージ送信リクエスト
- * 
- * @interface DirectMessageRequest
- * @description V2ログイン認証でのDM送信に必要なパラメータ
- */
-export interface DirectMessageRequest {
-  /** 受信者のTwitterユーザーID（数字文字列） */
-  recipientId: string;
-  
-  /** 送信するメッセージテキスト（最大10000文字） */
-  text: string;
-  
-  /** 添付メディアID配列（最大4個、オプション） */
-  mediaIds?: string[];
-}
-
-/**
- * ダイレクトメッセージ送信レスポンス
- * 
- * @interface DirectMessageResponse
- * @description DM送信APIからの応答データ
- */
-export interface DirectMessageResponse {
-  /** 送信成功フラグ */
-  success: boolean;
-  
-  /** 送信されたメッセージのID（成功時のみ） */
-  messageId?: string;
-  
-  /** メッセージ作成日時（成功時のみ） */
-  createdAt?: string;
-  
-  /** エラーメッセージ（失敗時のみ） */
-  error?: string;
-}
-
-// ============================================================================
 // V2認証共通型
 // ============================================================================
 
@@ -242,7 +201,7 @@ export interface SecurityCheckResult {
  */
 export interface AuthenticatedOperationRequest extends V2AuthenticationRequest {
   /** 操作タイプ識別子 */
-  operation: 'tweet' | 'dm' | 'engagement' | 'follow';
+  operation: 'tweet' | 'engagement' | 'follow';
   
   /** リクエストID（トレーシング用） */
   requestId?: string;
@@ -293,10 +252,6 @@ export interface AuthenticatedOperationResponse<T = any> {
  * テストファイルや外部モジュールからの利用を想定
  */
 export type AuthenticatedTypes = {
-  // DM関連
-  DirectMessageRequest: DirectMessageRequest;
-  DirectMessageResponse: DirectMessageResponse;
-  
   // 認証関連
   V2AuthenticationRequest: V2AuthenticationRequest;
   V2AuthValidationResult: V2AuthValidationResult;

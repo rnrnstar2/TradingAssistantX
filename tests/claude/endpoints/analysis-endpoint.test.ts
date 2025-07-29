@@ -10,7 +10,8 @@ import {
   recordExecution,
   generateLearningInsights,
   getPerformanceMetrics,
-  generateImprovementSuggestions
+  generateImprovementSuggestions,
+  clearExecutionRecords
 } from '../../../src/claude/endpoints/analysis-endpoint';
 import { ANALYSIS_TYPES, isAnalysisResult } from '../../../src/claude/types';
 import {
@@ -20,7 +21,7 @@ import {
   createMockPerformanceMetrics
 } from '../../test-utils/claude-mock-data';
 // モック設定を削除 - 実際のClaude APIを使用
-import { validateResponseStructure, validateRange, validateISODateString } from '../../test-utils/test-helpers';
+import { validateResponseStructure, validateRange, validateISODateString } from '../../test-utils/claude-test-helpers';
 
 
 describe('Analysis Endpoint Tests', () => {
@@ -28,6 +29,7 @@ describe('Analysis Endpoint Tests', () => {
     // モック削除 - 実際のAPIを使用
     // Clear execution records for each test
     vi.clearAllMocks();
+    clearExecutionRecords();
   });
 
   describe('analyzePerformanceメイン機能テスト', () => {

@@ -725,6 +725,138 @@ export function validateInput<T>(
 }
 
 // ============================================================================
+// 型チェック機能 (type-checker.tsから統合)
+// ============================================================================
+
+/**
+ * TwitterAPI.io型安全性チェッカークラス
+ */
+export class TwitterAPITypeChecker {
+  /**
+   * ツイートデータの型検証
+   */
+  static validateTweetData(data: unknown): boolean {
+    if (!data || typeof data !== 'object') return false;
+    const tweet = data as any;
+    return !!(tweet.id && tweet.text && tweet.author_id);
+  }
+
+  /**
+   * ユーザーデータの型検証
+   */
+  static validateUserData(data: unknown): boolean {
+    if (!data || typeof data !== 'object') return false;
+    const user = data as any;
+    return !!(user.id && user.username);
+  }
+
+  /**
+   * TwitterAPI.ioエラーの型検証
+   */
+  static validateTwitterAPIError(data: unknown): boolean {
+    if (!data || typeof data !== 'object') return false;
+    const error = data as any;
+    return !!(error.error && error.error.code && error.error.message);
+  }
+
+  /**
+   * TwitterAPIベースレスポンスの型検証
+   */
+  static validateTwitterAPIBaseResponse<T>(data: unknown): boolean {
+    if (!data || typeof data !== 'object') return false;
+    const response = data as any;
+    return response.hasOwnProperty('data') || response.hasOwnProperty('error');
+  }
+
+  /**
+   * レスポンス型の実行時検証
+   */
+  static validateResponse<T>(
+    data: unknown,
+    validator: (item: unknown) => boolean
+  ): boolean {
+    if (!data || typeof data !== 'object') {
+      return false;
+    }
+
+    const response = data as any;
+    if (Array.isArray(response.data)) {
+      return response.data.every(validator);
+    } else {
+      return validator(response.data);
+    }
+  }
+
+  /**
+   * 型安全なデータ検証（エラー投げる版）
+   */
+  static validateOrThrow<T>(
+    data: unknown,
+    validator: (item: unknown) => boolean,
+    errorMessage: string
+  ): asserts data is T {
+    if (!validator(data)) {
+      throw new ValidationError(errorMessage);
+    }
+  }
+
+  /**
+   * ツイートデータの厳密な検証
+   */
+  static validateTweetDataStrict(data: unknown): void {
+    this.validateOrThrow(data, this.validateTweetData, 'Invalid tweet data structure');
+  }
+
+  /**
+   * ユーザーデータの厳密な検証
+   */
+  static validateUserDataStrict(data: unknown): void {
+    this.validateOrThrow(data, this.validateUserData, 'Invalid user data structure');
+  }
+
+  /**
+   * Twitter APIエラーの厳密な検証
+   */
+  static validateTwitterAPIErrorStrict(data: unknown): void {
+    this.validateOrThrow(data, this.validateTwitterAPIError, 'Invalid Twitter API error structure');
+  }
+
+  /**
+   * デバッグ用: データ構造の詳細情報を取得
+   */
+  static analyzeDataStructure(data: unknown): {
+    type: string;
+    properties: string[];
+    isTweetData: boolean;
+    isUserData: boolean;
+    isTwitterAPIError: boolean;
+    isTwitterAPIBaseResponse: boolean;
+  } {
+    const type = typeof data;
+    const properties = data && typeof data === 'object' ? Object.keys(data as object) : [];
+    
+    return {
+      type,
+      properties,
+      isTweetData: this.validateTweetData(data),
+      isUserData: this.validateUserData(data),
+      isTwitterAPIError: this.validateTwitterAPIError(data),
+      isTwitterAPIBaseResponse: this.validateTwitterAPIBaseResponse(data)
+    };
+  }
+}
+
+// Alias functions for backward compatibility
+/** @deprecated Use TwitterAPITypeChecker.validateTweetData instead */
+export const validateTweetData = TwitterAPITypeChecker.validateTweetData;
+
+/** @deprecated Use TwitterAPITypeChecker.validateUserData instead */
+export const validateUserData = TwitterAPITypeChecker.validateUserData;
+
+/** @deprecated Use TwitterAPITypeChecker.validateTwitterAPIError instead */
+export const validateTwitterAPIError = TwitterAPITypeChecker.validateTwitterAPIError;
+
+// ============================================================================
 // REGEX CACHE - パフォーマンス最適化
 // ============================================================================
 

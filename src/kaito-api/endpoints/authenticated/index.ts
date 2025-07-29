@@ -6,5 +6,4 @@
 export * from './tweet';
 export * from './engagement';
 export * from './follow';
-export * from './dm';
 export * from './types';

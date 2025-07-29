@@ -18,10 +18,12 @@ TwitterAPI.io統合による投資教育コンテンツ自動投稿システム
 KAITO_API_TOKEN=your_twitterapi_io_token
 
 # オプション: 投稿機能用（V2ログイン認証）
-X_PROXY=http://username:password@ip:port
 X_USERNAME=your_twitter_username
 X_EMAIL=your_twitter_email  
 X_PASSWORD=your_twitter_password
+X_TOTP_SECRET=your_twitter_totp_secret
+
+# プロキシ設定は data/config/proxies.yaml で管理
 ```
 
 ### 実装例
@@ -66,69 +68,47 @@ try {
 
 ## 📁 ディレクトリ構造
 
-```
-src/kaito-api/
-├── core/                    # コア機能
-│   ├── client.ts           # メインクライアント
-│   ├── auth-manager.ts     # 認証管理（V2ログイン）
-│   ├── session-manager.ts  # セッション管理
-│   └── config.ts           # 設定管理
-├── endpoints/              
-│   ├── read-only/          # APIキー認証のみ
-│   │   ├── user-info.ts    # ユーザー情報取得
-│   │   ├── tweet-search.ts # ツイート検索
-│   │   ├── trends.ts       # トレンド取得
-│   │   └── follower-info.ts# フォロワー情報
-│   └── authenticated/      # V2ログイン必須
-│       ├── tweet.ts        # 投稿作成・削除
-│       ├── engagement.ts   # いいね・RT
-│       ├── follow.ts       # フォロー管理
-│       └── dm.ts          # DM送信
-└── utils/                  # ユーティリティ
-    ├── types.ts           # 型定義
-    ├── validator.ts       # バリデーション
-    ├── errors.ts          # エラー処理
-    └── constants.ts       # 定数定義
-```
+詳細なディレクトリ構造は [directory-structure.md](./directory-structure.md#-srckato-api-ディレクトリ新ワークフローアーキテクチャ版-phase-2実装完了) を参照してください。
 
 ## 📚 実装時参照
 
 各APIエンドポイントの詳細は以下の公式ドキュメントを参照してください：
 
 ### 🔐 認証関連
-- **V2ログイン**: `/twitter/user_login_v2` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/user_login_v2)
-- **ユーザー情報取得**: `/twitter/user/info` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/get_user_by_username)
-- **マイアカウント情報**: `/twitter/my/account_info` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/get_my_info)
+- **V2ログイン**: `/twitter/user_login_v2` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/user_login_v2)
+  - レスポンス形式: `{ "status": "success", "message": "login success.", "login_cookies": "..." }`
+  - 注意: `status`フィールドと`login_cookies`（複数形）を使用
+- **ユーザー情報取得**: `/twitter/user/info` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/user-info)
+- **マイアカウント情報**: `/twitter/my/account_info` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/my-account-info)
 
 ### 📝 投稿・アクション系（V2ログイン必須）
-- **ツイート作成**: `/twitter/create_tweet_v2` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/create_tweet_v2)
-- **ツイート削除**: `/twitter/delete_tweet` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/delete_tweet_v2)
-- **いいね**: `/twitter/like_tweet` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/like_tweet_v2)
-- **いいね取消**: `/twitter/unlike_tweet` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/unlike_tweet_v2)
-- **リツイート**: `/twitter/retweet_tweet` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/retweet_tweet_v2)
+- **ツイート作成**: `/twitter/create_tweet_v2` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/create_tweet_v2)
+- **ツイート削除**: `/twitter/delete_tweet_v2` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/delete_tweet_v2)
+- **いいね**: `/twitter/like_tweet_v2` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/like_tweet_v2)
+- **いいね取消**: `/twitter/unlike_tweet_v2` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/unlike_tweet_v2)
+- **リツイート**: `/twitter/retweet_tweet_v2` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/retweet_tweet_v2)
 
 ### 👥 ユーザー管理
-- **フォロー**: `/twitter/follow_user` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/follow_user_v2)
-- **フォロー解除**: `/twitter/unfollow_user` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/unfollow_user_v2)
-- **フォロワー取得**: `/twitter/user/followers` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/get_user_followers)
-- **フォロー中取得**: `/twitter/user/followings` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/get_user_followings)
+- **フォロー**: `/twitter/follow_user_v2` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/follow_user_v2)
+- **フォロー解除**: `/twitter/unfollow_user_v2` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/unfollow_user_v2)
+- **フォロワー取得**: `/twitter/user/followers` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/user-followers)
+- **フォロー中取得**: `/twitter/user/followings` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/user-followings)
 
 ### 🔍 検索・データ取得
-- **高度検索**: `/twitter/tweet/advanced_search` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/tweet_advanced_search)
-- **トレンド**: `/twitter/trends` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/get_trends)
-- **ユーザー検索**: `/twitter/user/search` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/search_user)
+- **高度検索**: `/twitter/tweet/advanced_search` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/tweet-advanced-search)
+- **トレンド**: `/twitter/trends` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/trends)
+- **ユーザー検索**: `/twitter/user/search` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/user-search)
 
-### 💬 その他
-- **DM送信**: `/twitter/send_dm_v2` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/send_dm_v2)
 
 ## ⚠️ 実装時の注意
 
 1. **パラメータ名の確認**: 公式ドキュメントと完全一致必須（例: `userName` ≠ `username`）
 2. **認証レベル確認**: 
-   - 読み取り操作 → APIキーのみ
+   - 読み取り操作 → APIキーのみ（ヘッダー: `x-api-key`）
    - 投稿・アクション → V2ログイン必須
 3. **プロキシ設定**: V2ログインにはプロキシが必須
 4. **レート制限**: 200 QPS、各エンドポイント別制限あり
+5. **レスポンス形式**: V2ログインのレスポンスは`status`と`login_cookies`（複数形）を使用
 
 ## 🧪 テスト
 

@@ -13,9 +13,11 @@
 import type { LoginResult, AuthStatus, SessionData } from "../utils/types";
 import { validateEnvironmentVariables } from "./config";
 import { SessionManager } from "./session";
+import { ProxyManager } from "./proxy-manager";
 
 export class AuthManager {
   private sessionManager: SessionManager;
+  private proxyManager: ProxyManager;
   private currentAuthLevel: "none" | "api-key" | "v2-login" = "none";
 
   // APIキー認証プロパティ（旧APIKeyAuth）
@@ -36,6 +38,7 @@ export class AuthManager {
 
     // セッション管理初期化
     this.sessionManager = new SessionManager();
+    this.proxyManager = new ProxyManager();
 
     console.log("✅ AuthManager初期化完了 - 統合認証対応");
   }
@@ -286,71 +289,112 @@ export class AuthManager {
   // ============================================================================
 
   /**
-   * V2ログイン実行（user_login_v2）
+   * V2ログイン実行（user_login_v2）- プロキシローテーション対応
    */
   async login(): Promise<LoginResult> {
-    try {
-      console.log("🔐 TwitterAPI.io user_login_v2 ログイン開始...");
+    const maxRetries = this.proxyManager.getProxyStatus().total;
+    let lastError: string = "";
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        console.log(`🔐 TwitterAPI.io user_login_v2 ログイン開始... (試行 ${attempt + 1}/${maxRetries})`);
 
-      // 環境変数確認
-      const credentials = this.validateCredentials();
-      if (!credentials.valid) {
-        return {
-          success: false,
-          error: credentials.error,
-        };
+        // 環境変数確認
+        const credentials = this.validateCredentials();
+        if (!credentials.valid) {
+          return {
+            success: false,
+            error: credentials.error,
+          };
+        }
+        
+        // プロキシをProxyManagerから取得
+        const currentProxy = this.proxyManager.getCurrentProxy();
+        if (!currentProxy) {
+          return {
+            success: false,
+            error: "No available proxy",
+          };
+        }
+
+        const loginUrl = `${this.API_BASE_URL}/twitter/user_login_v2`;
+        
+        const response = await fetch(loginUrl, {
+          method: "POST",
+          headers: this.getApiKeyAuthHeaders(),
+          body: JSON.stringify({
+            user_name: credentials.data!.username,
+            email: credentials.data!.email,
+            password: credentials.data!.password,
+            totp_secret: process.env.X_TOTP_SECRET,
+            proxy: currentProxy, // ProxyManagerから取得したプロキシを使用
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        // login_cookie取得・保存
+        if (result.status === "success" && result.login_cookies) {
+          const loginResult = {
+            success: true,
+            login_cookie: result.login_cookies,
+            session_expires: Date.now() + 24 * 60 * 60 * 1000, // 24時間
+          };
+
+          // SessionManagerを使用してセッション保存
+          this.sessionManager.saveSession(loginResult);
+
+          // 後方互換性のため従来プロパティも更新
+          this.userSession = loginResult.login_cookie;
+          this.sessionExpiry = loginResult.session_expires;
+          this.currentAuthLevel = "v2-login";
+
+          console.log("✅ TwitterAPI.io user_login_v2 ログイン成功");
+          return loginResult;
+        }
+        
+        // ログイン失敗時
+        lastError = result.error || result.message || "V2 login failed";
+        console.log(`⚠️ ログイン失敗: ${lastError}`);
+        
+        // プロキシを失敗とマークして次に切り替え
+        this.proxyManager.markProxyFailed(currentProxy);
+        this.proxyManager.rotateProxy();
+        
+        // 最後の試行でなければ少し待機
+        if (attempt < maxRetries - 1) {
+          console.log(`⏳ 5秒待機して次のプロキシでリトライ...`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+
+      } catch (error) {
+        console.error("❌ TwitterAPI.io user_login_v2 ログインエラー:", error);
+        lastError = error instanceof Error ? error.message : "V2 login error";
+        
+        // プロキシを失敗とマークして次に切り替え
+        const currentProxy = this.proxyManager.getCurrentProxy();
+        if (currentProxy) {
+          this.proxyManager.markProxyFailed(currentProxy);
+          this.proxyManager.rotateProxy();
+        }
+        
+        // 最後の試行でなければ少し待機
+        if (attempt < maxRetries - 1) {
+          console.log(`⏳ 5秒待機して次のプロキシでリトライ...`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
       }
-
-      const loginUrl = `${this.API_BASE_URL}/twitter/user_login_v2`;
-
-      const response = await fetch(loginUrl, {
-        method: "POST",
-        headers: this.getApiKeyAuthHeaders(),
-        body: JSON.stringify({
-          username: credentials.data!.username,
-          email: credentials.data!.email,
-          password: credentials.data!.password,
-          proxy: credentials.data!.proxy,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-
-      // login_cookie取得・保存
-      if (result.success && result.login_cookie) {
-        const loginResult = {
-          success: true,
-          login_cookie: result.login_cookie,
-          session_expires: Date.now() + 24 * 60 * 60 * 1000, // 24時間
-        };
-
-        // SessionManagerを使用してセッション保存
-        this.sessionManager.saveSession(loginResult);
-
-        // 後方互換性のため従来プロパティも更新
-        this.userSession = loginResult.login_cookie;
-        this.sessionExpiry = loginResult.session_expires;
-        this.currentAuthLevel = "v2-login";
-
-        console.log("✅ TwitterAPI.io user_login_v2 ログイン成功");
-        return loginResult;
-      }
-
-      return {
-        success: false,
-        error: result.error || "V2 login failed",
-      };
-    } catch (error) {
-      console.error("❌ TwitterAPI.io user_login_v2 ログインエラー:", error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "V2 login error",
-      };
     }
+    
+    // すべてのプロキシで失敗
+    return {
+      success: false,
+      error: `All proxies failed. Last error: ${lastError}`,
+    };
   }
 
   /**
@@ -528,13 +572,11 @@ export class AuthManager {
       username: string;
       email: string;
       password: string;
-      proxy?: string;
     };
   } {
     const username = process.env.X_USERNAME;
     const email = process.env.X_EMAIL;
     const password = process.env.X_PASSWORD;
-    const proxy = process.env.X_PROXY;
 
     if (!username) {
       return {
@@ -559,7 +601,7 @@ export class AuthManager {
 
     return {
       valid: true,
-      data: { username, email, password, proxy },
+      data: { username, email, password },
     };
   }
 
@@ -572,12 +614,11 @@ export class AuthManager {
     present: string[];
   } {
     const required = ["X_USERNAME", "X_EMAIL", "X_PASSWORD"];
-    const optional = ["X_PROXY"];
 
     const missing: string[] = [];
     const present: string[] = [];
 
-    [...required, ...optional].forEach((envVar) => {
+    required.forEach((envVar) => {
       if (process.env[envVar]) {
         present.push(envVar);
       } else if (required.includes(envVar)) {
@@ -908,5 +949,12 @@ export class AuthManager {
       console.error("❌ 認証状態強制更新エラー:", error);
       return false;
     }
+  }
+
+  /**
+   * 現在のプロキシ情報取得
+   */
+  getCurrentProxy(): string | null {
+    return this.proxyManager.getCurrentProxy();
   }
 }

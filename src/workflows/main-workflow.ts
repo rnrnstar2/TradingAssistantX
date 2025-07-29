@@ -189,7 +189,18 @@ export class MainWorkflow {
       const profile = await this.kaitoClient.getAccountInfo();
       return profile;
     } catch (error) {
-      console.warn('⚠️ Kaitoデータ収集でエラー、デフォルト値使用:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'dev') {
+        if (errorMessage.includes('Authentication failed') || errorMessage.includes('Login failed')) {
+          console.log('🔧 開発モード: 認証エラーのため模擬アカウント情報を使用');
+        } else {
+          console.warn('⚠️ Kaitoデータ収集でエラー、デフォルト値使用:', error);
+        }
+      } else {
+        console.warn('⚠️ Kaitoデータ収集でエラー、デフォルト値使用:', error);
+      }
+      
       return {
         followers: 100,
         following: 50,
@@ -285,7 +296,10 @@ export class MainWorkflow {
       const postResult = await this.kaitoClient.post(content.content);
 
       if (!postResult?.success) {
-        throw new Error(postResult?.error || '投稿実行失敗');
+        const errorMessage = typeof postResult?.error === 'string' 
+          ? postResult.error 
+          : postResult?.error?.message || '投稿実行失敗';
+        throw new Error(errorMessage);
       }
 
       // 投稿データ保存
@@ -305,6 +319,8 @@ export class MainWorkflow {
 
     } catch (error) {
       console.error('❌ 投稿アクション失敗:', error);
+      
+      
       throw error;
     }
   }
@@ -402,7 +418,7 @@ export class MainWorkflow {
       const content = await generateContent({
         request: {
           topic: decision.parameters?.topic || 'investment commentary',
-          contentType: 'general',
+          contentType: 'educational',
           targetAudience: 'intermediate'
         }
       });

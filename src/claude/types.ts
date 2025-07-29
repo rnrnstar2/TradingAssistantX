@@ -158,7 +158,7 @@ export interface QuoteSearchInput {
 export interface ContentRequest {
   topic: string;
   context?: any;
-  contentType?: 'educational' | 'market_analysis' | 'trending' | 'general';
+  contentType?: 'educational' | 'market_analysis' | 'trending' | 'announcement' | 'reply';
   targetAudience?: 'beginner' | 'intermediate' | 'advanced';
   maxLength?: number;
 }
@@ -215,7 +215,7 @@ export const VALID_ACTIONS = ['post', 'retweet', 'quote_tweet', 'like', 'wait'] 
 /**
  * コンテンツタイプ
  */
-export const CONTENT_TYPES = ['educational', 'market_analysis', 'trending', 'general'] as const;
+export const CONTENT_TYPES = ['educational', 'market_analysis', 'trending', 'announcement', 'reply'] as const;
 
 /**
  * 対象読者

@@ -1,0 +1,8 @@
+timestamp: '2025-07-29T10:09:02.642Z'
+type: workflow-error
+data:
+  error: >-
+    UNKNOWN_ERROR: Unknown error in post: this.authManager.isAuthenticated is
+    not a function
+  executionTime: 16724
+  timestamp: '2025-07-29T10:09:02.642Z'

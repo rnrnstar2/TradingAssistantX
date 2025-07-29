@@ -52,8 +52,8 @@ interface FollowListResponse {
  */
 export class FollowManagement {
   private readonly ENDPOINTS = {
-    followUser: '/twitter/user/follow',
-    unfollowUser: '/twitter/user/unfollow',
+    followUser: '/twitter/follow_user_v2',
+    unfollowUser: '/twitter/unfollow_user_v2',
     checkFollowing: '/twitter/user/following/check'
   } as const;
 

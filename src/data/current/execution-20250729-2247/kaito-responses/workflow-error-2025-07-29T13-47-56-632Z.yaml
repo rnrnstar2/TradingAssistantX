@@ -1,0 +1,8 @@
+timestamp: '2025-07-29T13:47:56.632Z'
+type: workflow-error
+data:
+  error: >-
+    UNKNOWN_ERROR: Unknown error in post: HTTP 400: Bad Request -
+    {"detail":"tweet_text is required"}
+  executionTime: 39012
+  timestamp: '2025-07-29T13:47:56.632Z'

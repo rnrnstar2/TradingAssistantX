@@ -445,10 +445,10 @@ export class FollowerInfoEndpoint {
       }
 
       // フォロワー数フィルタ
-      if (filter.minFollowers !== undefined && user.followersCount < filter.minFollowers) {
+      if (filter.minFollowers !== undefined && (user.followersCount ?? 0) < filter.minFollowers) {
         return false;
       }
-      if (filter.maxFollowers !== undefined && user.followersCount > filter.maxFollowers) {
+      if (filter.maxFollowers !== undefined && (user.followersCount ?? 0) > filter.maxFollowers) {
         return false;
       }
 

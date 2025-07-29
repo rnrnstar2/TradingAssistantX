@@ -265,27 +265,6 @@ describe('3層認証統合テスト', () => {
         console.log('⚠️ V2セッション無効のため高機能投稿不可');
       }
     });
-    
-    test('DM送信が成功する', async () => {
-      // V2専用のDM機能確認
-      const dmEndpoint = '/v2-auth/dm-management';
-      const canSendDM = authManager.canAccessEndpoint(dmEndpoint);
-      
-      const hasV2Session = authManager.getAuthStatus().v2SessionValid;
-      
-      if (hasV2Session) {
-        expect(canSendDM).toBe(true);
-        
-        // V2のみの高度機能確認
-        const requiredLevel = authManager.getRequiredAuthLevel(dmEndpoint);
-        expect(requiredLevel).toBe('v2-login');
-        
-        console.log('✅ V2認証でのDM機能確認完了');
-      } else {
-        expect(canSendDM).toBe(false);
-        console.log('⚠️ V2セッション無効のためDM送信不可');
-      }
-    });
   });
   
   describe('認証フロー統合テスト', () => {

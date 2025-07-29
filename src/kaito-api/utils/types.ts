@@ -502,9 +502,6 @@ export interface EngagementRequest {
   /** エンゲージメント操作 */
   action: 'like' | 'unlike' | 'retweet' | 'unretweet' | 'bookmark' | 'unbookmark';
   
-  /** V2認証クッキー */
-  login_cookies: string;
-  
   /** プロキシ設定（オプション） */
   proxy: string;
   

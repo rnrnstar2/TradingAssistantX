@@ -48,5 +48,5 @@
     - `X_USERNAME=your_twitter_username`
     - `X_PASSWORD=your_twitter_password`
     - `X_EMAIL=your_email_address`
-    - `X_PROXY=your_proxy_url`
+    - プロキシは`data/config/proxies.yaml`で管理
 - **設定方法**: `.env`ファイルまたは環境変数として設定

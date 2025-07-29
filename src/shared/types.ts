@@ -28,7 +28,7 @@ import type {
 // KaitoAPI Types for internal use
 import type { 
   PostResult, 
-  RetweetResult, 
+  TweetResult, 
   QuoteTweetResult, 
   LikeResult 
 } from '../kaito-api/utils/types';
@@ -55,7 +55,6 @@ export type {
   // Legacy compatibility
   TweetResult,
   PostResult,      // 追加
-  RetweetResult,   // 追加  
   QuoteTweetResult,// 追加
   LikeResult,      // 追加
   AccountInfo      // 追加
@@ -737,7 +736,7 @@ export interface LoginEndpoints {
 
 export interface TweetActionEndpoints {
   post: (content: string, options?: any) => Promise<PostResult>;
-  retweet: (tweetId: string) => Promise<RetweetResult>;
+  retweet: (tweetId: string) => Promise<TweetResult>;
   quoteTweet: (tweetId: string, comment: string) => Promise<QuoteTweetResult>;
   like: (tweetId: string) => Promise<LikeResult>;
   unlike: (tweetId: string) => Promise<any>;

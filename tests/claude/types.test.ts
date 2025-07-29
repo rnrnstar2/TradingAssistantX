@@ -32,7 +32,7 @@ import {
   createInvalidAnalysisResponse
 } from '../test-utils/claude-mock-data';
 
-import { validateResponseStructure } from '../test-utils/test-helpers';
+import { validateResponseStructure } from '../test-utils/claude-test-helpers';
 
 describe('Claude Types Module', () => {
   describe('型ガード機能テスト', () => {
@@ -173,8 +173,8 @@ describe('Claude Types Module', () => {
     });
 
     test('CONTENT_TYPES定数値確認', () => {
-      expect(CONTENT_TYPES).toEqual(['educational', 'market_analysis', 'trending', 'general']);
-      expect(CONTENT_TYPES).toHaveLength(4);
+      expect(CONTENT_TYPES).toEqual(['educational', 'market_analysis', 'trending', 'announcement', 'reply']);
+      expect(CONTENT_TYPES).toHaveLength(5);
     });
 
     test('TARGET_AUDIENCES定数値確認', () => {

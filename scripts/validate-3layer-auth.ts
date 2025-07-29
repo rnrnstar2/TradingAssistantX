@@ -518,8 +518,7 @@ class ThreeLayerAuthValidator {
       { path: '/public/user-info', expectedLevel: 'api-key' },
       { path: '/public/tweet-search', expectedLevel: 'api-key' },
       { path: '/twitter/tweet/create', expectedLevel: ['v1-login', 'v2-login'] },
-      { path: '/twitter/action/like', expectedLevel: ['v1-login', 'v2-login'] },
-      { path: '/v2-auth/dm-management', expectedLevel: ['v1-login', 'v2-login'] }
+      { path: '/twitter/action/like', expectedLevel: ['v1-login', 'v2-login'] }
     ];
     
     let correctRequirements = 0;

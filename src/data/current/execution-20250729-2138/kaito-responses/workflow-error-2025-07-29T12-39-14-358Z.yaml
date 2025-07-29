@@ -1,0 +1,8 @@
+timestamp: '2025-07-29T12:39:14.358Z'
+type: workflow-error
+data:
+  error: >-
+    UNKNOWN_ERROR: Unknown error in post: Tweet creation endpoint not found. The
+    endpoint path has been updated to /twitter/create_tweet.
+  executionTime: 37944
+  timestamp: '2025-07-29T12:39:14.358Z'
