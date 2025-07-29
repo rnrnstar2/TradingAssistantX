@@ -1,0 +1,27 @@
+daily_schedule:
+  morning:
+    - time: "07:00"
+      action: "post"
+      topic: "朝の投資教育"
+    - time: "08:00"
+      action: "retweet"
+      target_query: "投資初心者 lang:ja"
+  
+  lunch:
+    - time: "12:00"
+      action: "post"
+      topic: "市場動向解説"
+    - time: "12:30"
+      action: "like"
+      target_query: "投資教育 高品質"
+  
+  evening:
+    - time: "18:00"
+      action: "quote_tweet"
+      target_query: "投資ニュース"
+      topic: "専門家視点の解説"
+  
+  night:
+    - time: "21:00"
+      action: "post"
+      topic: "明日の注目ポイント"

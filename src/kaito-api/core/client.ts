@@ -702,7 +702,7 @@ export class KaitoTwitterAPIClient {
       console.log('✅ KaitoTwitterAPI認証完了');
 
     } catch (error) {
-      throw TwitterTwitterAPIErrorHandler.handleError(error, 'authentication');
+      throw TwitterAPIErrorHandler.handleError(error, 'authentication');
     }
   }
 

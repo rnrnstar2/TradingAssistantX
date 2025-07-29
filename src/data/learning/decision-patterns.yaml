@@ -1,0 +1,69 @@
+patterns:
+  - timestamp: '2025-07-28T11:43:15.177Z'
+    context:
+      followers: 0
+      last_post_hours_ago: 0
+      market_trend: neutral
+    decision:
+      action: wait
+      reasoning: Account context missing
+      confidence: 0.7
+    result:
+      engagement_rate: 0
+      new_followers: 0
+      success: false
+  - timestamp: '2025-07-28T11:54:20.933Z'
+    context:
+      followers: 0
+      last_post_hours_ago: 0
+      market_trend: neutral
+    decision:
+      action: wait
+      reasoning: Account context missing
+      confidence: 0.7
+    result:
+      engagement_rate: 0
+      new_followers: 0
+      success: false
+  - timestamp: '2025-07-28T12:02:17.525Z'
+    context:
+      followers: 0
+      last_post_hours_ago: 0
+      market_trend: neutral
+    decision:
+      action: wait
+      reasoning: Account context missing
+      confidence: 0.7
+    result:
+      engagement_rate: 0
+      new_followers: 0
+      success: false
+  - timestamp: '2025-07-29T01:58:16.227Z'
+    context:
+      followers: 0
+      last_post_hours_ago: 0
+      market_trend: neutral
+    decision:
+      action: wait
+      reasoning: Account context missing
+      confidence: 0.7
+    result:
+      engagement_rate: 0
+      new_followers: 0
+      success: false
+  - timestamp: '2025-07-29T02:45:20.669Z'
+    context:
+      followers: 0
+      last_post_hours_ago: 0
+      market_trend: neutral
+    decision:
+      action: wait
+      reasoning: >-
+        現在時刻2:45AMは投稿に適さない時間帯。学習データによると高エンゲージメント時間は09:00、12:00、18:00。アカウント状況は良好（100フォロワー、18時間前の最終投稿、今日0投稿）で投稿制約に問題なし。市場状況も「投資」「資産形成」「仮想通貨」がトレンド入りしており投稿内容に適している。しかし深夜帯での投稿はエンゲージメント率低下が予想されるため、朝9時頃まで待機し教育的コンテンツで投稿する戦略が最適。
+      confidence: 0.85
+    result:
+      engagement_rate: 0
+      new_followers: 0
+      success: true
+results: []
+strategies: {}

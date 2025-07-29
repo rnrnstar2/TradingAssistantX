@@ -3,7 +3,7 @@
  * REQUIREMENTS.md準拠 - makeDecision関数の包括的テスト
  */
 
-import { vi } from 'vitest';
+import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { makeDecision } from '../../../src/claude/endpoints/decision-endpoint';
 import { SYSTEM_LIMITS, VALID_ACTIONS, isClaudeDecision } from '../../../src/claude/types';
 import {

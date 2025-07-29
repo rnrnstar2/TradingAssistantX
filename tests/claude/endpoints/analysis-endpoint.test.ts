@@ -3,7 +3,7 @@
  * REQUIREMENTS.md準拠 - 分析エンドポイント関数の包括的テスト
  */
 
-import { vi } from 'vitest';
+import { describe, test, expect, beforeEach, vi } from 'vitest';
 import {
   analyzePerformance,
   analyzeMarketContext,
@@ -224,7 +224,7 @@ describe('Analysis Endpoint Tests', () => {
         analysisType: 'invalid_type' as any,
         data: null,
         timeframe: '',
-        context: null
+        context: undefined
       };
 
       await expect(analyzePerformance(invalidInput)).rejects.toThrow();

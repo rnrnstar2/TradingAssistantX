@@ -17,8 +17,10 @@ import {
   EngagementRequest, 
   EngagementResponse,
   HttpClient,
-  TwitterAPITweetResponse
+  TwitterAPITweetResponse,
+  CreateTweetV2Response
 } from '../types';
+import { AuthManager } from '../core/auth-manager';
 
 // ============================================================================
 // VALIDATION TYPES
@@ -36,7 +38,7 @@ interface SecurityCheckResult {
 
 export class ActionEndpoints {
   private readonly ENDPOINTS = {
-    createTweet: '/twitter/tweet/create',
+    createTweet: '/twitter/create_tweet_v2',
     likeTweet: '/twitter/user/like',
     retweetTweet: '/twitter/user/retweet',
     uploadMedia: '/twitter/media/upload'
@@ -48,8 +50,11 @@ export class ActionEndpoints {
     engagement: { limit: 500, window: 3600 } // 500/hour
   } as const;
 
-  constructor(private httpClient: HttpClient) {
-    console.log('✅ ActionEndpoints initialized - TwitterAPI.io最適化版');
+  constructor(
+    private httpClient: HttpClient,
+    private authManager: AuthManager
+  ) {
+    console.log('✅ ActionEndpoints initialized with AuthManager integration');
   }
 
   async createPost(request: PostRequest): Promise<PostResponse> {
@@ -72,24 +77,42 @@ export class ActionEndpoints {
     }
 
     try {
-      console.log('📝 Creating post with TwitterAPI.io:', request.content.substring(0, 50) + '...');
+      // login_cookie取得
+      const loginCookie = this.authManager.getUserSession();
+      if (!loginCookie) {
+        return {
+          success: false,
+          error: 'No valid login session available'
+        };
+      }
+
+      console.log('📝 Creating post with login_cookie...');
       
       // サニタイズされたコンテンツで投稿
       const sanitizedContent = this.sanitizeContent(request.content);
       
-      const response = await this.httpClient.post<TwitterAPITweetResponse>(
+      const response = await this.httpClient.post<CreateTweetV2Response>(
         this.ENDPOINTS.createTweet,
         {
           text: sanitizedContent,
+          login_cookie: loginCookie,  // 追加
           ...(request.mediaIds && { media_ids: request.mediaIds })
         }
       );
 
-      return {
-        success: true,
-        tweetId: response.data.id,
-        createdAt: response.data.created_at
-      };
+      // create_tweet_v2の新レスポンス形式に対応
+      if (response.success && response.data) {
+        return {
+          success: true,
+          tweetId: response.data.id,
+          createdAt: response.data.created_at
+        };
+      } else {
+        return {
+          success: false,
+          error: response.error || 'Tweet creation failed'
+        };
+      }
     } catch (error) {
       return this.handleActionError(error, 'createPost');
     }
@@ -291,7 +314,7 @@ export class ActionEndpoints {
     if (upperCaseRatio > 0.7) return true;
     
     // 過度な絵文字
-    const emojiRegex = /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu;
+    const emojiRegex = /[\uD83C-\uDBFF\uDC00-\uDFFF]+/g;
     const emojiCount = (content.match(emojiRegex) || []).length;
     if (emojiCount > content.length * 0.3) return true;
 
@@ -324,9 +347,9 @@ export class ActionEndpoints {
   // ============================================================================
 
   private handleActionError(error: any, context: string): PostResponse {
-    console.error(`❌ ${context} error:`, error);
+    console.error(`❌ ${context} error (v2 API):`, error);
 
-    // TwitterAPI.io特有エラーハンドリング
+    // TwitterAPI.io v2 API特有エラーハンドリング
     if (error.response?.status === 429) {
       return {
         success: false,
@@ -337,27 +360,35 @@ export class ActionEndpoints {
     if (error.response?.status === 401) {
       return {
         success: false,
-        error: 'Authentication failed. Please check your API key.'
+        error: 'Authentication failed. Please check your API key or login_cookie.'
       };
     }
 
     if (error.response?.status === 403) {
       return {
         success: false,
-        error: 'Action forbidden. Check account permissions or content policy.'
+        error: 'Action forbidden. Check account permissions, login_cookie validity, or content policy.'
       };
     }
 
     if (error.response?.status === 422) {
       return {
         success: false,
-        error: 'Invalid request data. Please check your input.'
+        error: 'Invalid request data for v2 API. Please check your input format.'
+      };
+    }
+
+    // v2 API特有エラー（login_cookie関連）
+    if (error.message?.includes('login_cookie')) {
+      return {
+        success: false,
+        error: 'Login session expired or invalid. Please re-authenticate.'
       };
     }
 
     return {
       success: false,
-      error: error.message || 'Unknown error occurred'
+      error: error.message || 'Unknown error occurred in v2 API'
     };
   }
 

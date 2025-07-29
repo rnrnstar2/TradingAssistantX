@@ -3,7 +3,7 @@
  * REQUIREMENTS.md準拠 - エクスポート確認・統合動作テスト
  */
 
-import { vi } from 'vitest';
+import { describe, test, expect, beforeEach } from 'vitest';
 import * as ClaudeModule from '../../src/claude/index';
 
 // Import specific functions and types for testing

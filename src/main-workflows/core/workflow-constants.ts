@@ -3,26 +3,11 @@
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * 
  * 🎯 責任範囲:
- * • スケジューラー関連定数の統一管理
  * • API制限・タイムアウト値の一元化
  * • ログメッセージ・エラーメッセージの統一
  * • 実行制御パラメータの集約
  */
 export const WORKFLOW_CONSTANTS = {
-  // ===================================================================
-  // スケジューラー関連
-  // ===================================================================
-  SCHEDULER: {
-    DEFAULT_INTERVAL_MINUTES: 30,
-    MAX_DAILY_EXECUTIONS: 48,
-    EXECUTION_WINDOW: { 
-      start: '07:00', 
-      end: '23:00' 
-    },
-    TIMEZONE: 'Asia/Tokyo',
-    GRACEFUL_SHUTDOWN_ENABLED: true
-  },
-
   // ===================================================================
   // リトライ・エラーハンドリング関連
   // ===================================================================
@@ -102,12 +87,6 @@ export const WORKFLOW_CONSTANTS = {
     SYSTEM_SHUTDOWN: 'システムシャットダウン開始',
     SYSTEM_STOPPED: 'システム停止完了',
 
-    // スケジューラー
-    SCHEDULER_START: 'スケジューラー開始',
-    SCHEDULER_STOP: 'スケジューラー停止',
-    SCHEDULER_PAUSED: 'スケジューラー一時停止',
-    SCHEDULER_RESUMED: 'スケジューラー再開',
-
     // ワークフロー実行
     WORKFLOW_START: 'メインループ実行開始',
     WORKFLOW_COMPLETE: 'メインループ実行完了',
@@ -135,11 +114,6 @@ export const WORKFLOW_CONSTANTS = {
     OPERATION_TIMEOUT: 'Operation timeout',
     INVALID_CONFIG: 'Invalid configuration',
     MISSING_DEPENDENCY: 'Missing required dependency',
-
-    // スケジューラーエラー
-    SCHEDULER_ALREADY_RUNNING: 'Scheduler is already running',
-    SCHEDULER_NOT_RUNNING: 'Scheduler is not running',
-    EXECUTION_CALLBACK_MISSING: 'Execution callback is required',
 
     // データエラー
     DATA_LOAD_FAILED: 'Failed to load data',

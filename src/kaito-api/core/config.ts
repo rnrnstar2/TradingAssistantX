@@ -291,6 +291,85 @@ export class KaitoAPIConfigManager {
 }
 
 // ============================================================================
+// ENVIRONMENT VARIABLE VALIDATION - TASK-001対応
+// ============================================================================
+
+/**
+ * 必須環境変数の検証結果
+ */
+export interface EnvironmentValidationResult {
+  isValid: boolean;
+  missingVariables: string[];
+  validatedAt: string;
+}
+
+/**
+ * 必須環境変数検証関数
+ * X認証に必要な4つの環境変数を検証
+ */
+export function validateEnvironmentVariables(): EnvironmentValidationResult {
+  const requiredVariables = ['X_USERNAME', 'X_PASSWORD', 'X_EMAIL', 'X_PROXY'];
+  const missingVariables: string[] = [];
+
+  // 各環境変数の存在確認
+  for (const variable of requiredVariables) {
+    const value = process.env[variable];
+    if (!value || value.trim() === '') {
+      missingVariables.push(variable);
+    }
+  }
+
+  return {
+    isValid: missingVariables.length === 0,
+    missingVariables,
+    validatedAt: new Date().toISOString()
+  };
+}
+
+/**
+ * 環境変数検証とエラーメッセージ生成
+ * 未設定時に明確なエラーメッセージを提供
+ */
+export function validateEnvironmentOrThrow(): void {
+  const validation = validateEnvironmentVariables();
+  
+  if (!validation.isValid) {
+    const missingVars = validation.missingVariables.join(', ');
+    throw new Error(
+      `必須環境変数未設定: ${missingVars}\n` +
+      `以下の環境変数を設定してください:\n` +
+      `export X_USERNAME=rnrnstar\n` +
+      `export X_PASSWORD=Rinstar_520\n` +
+      `export X_EMAIL=suzumura@rnrnstar.com\n` +
+      `export X_PROXY=http://etilmzge:ina8vl2juf1w@23.95.150.145:6114`
+    );
+  }
+}
+
+/**
+ * X認証設定データ取得
+ * 環境変数から認証情報を安全に取得
+ */
+export interface XAuthConfig {
+  username: string;
+  password: string;
+  email: string;
+  proxy: string;
+}
+
+export function getXAuthConfig(): XAuthConfig {
+  // 事前検証実行
+  validateEnvironmentOrThrow();
+  
+  return {
+    username: process.env.X_USERNAME!,
+    password: process.env.X_PASSWORD!,
+    email: process.env.X_EMAIL!,
+    proxy: process.env.X_PROXY!
+  };
+}
+
+// ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
 

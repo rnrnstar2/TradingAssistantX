@@ -2,6 +2,9 @@ import { systemLogger } from '../../shared/logger';
 import { ComponentContainer, COMPONENT_KEYS } from '../../shared/component-container';
 import { DataManager } from '../../data/data-manager';
 import { KaitoApiClient } from '../../kaito-api';
+import { TweetEndpoints } from '../../kaito-api/endpoints/tweet-endpoints';
+import { ActionEndpoints } from '../../kaito-api/endpoints/action-endpoints';
+import { AuthManager } from '../../kaito-api/core/auth-manager';
 import { ClaudeDecision, ActionResult } from '../../shared/types';
 
 // 最適化されたユーティリティクラス
@@ -120,29 +123,92 @@ export class ActionExecutor {
       
       WorkflowLogger.logInfo(`生成コンテンツ: "${content.content.substring(0, 50)}..."`);
       
-      // KaitoAPI呼び出し
-      const kaitoClient = this.container.get<KaitoApiClient>(COMPONENT_KEYS.KAITO_CLIENT);
-      let postResult;
+      // AuthManager取得・ログイン状態確認
+      const authManager = this.container.has('AUTH_MANAGER') 
+        ? this.container.get<AuthManager>('AUTH_MANAGER') 
+        : undefined;
       
-      try {
-        postResult = await kaitoClient.post(content.content);
-      } catch (error) {
-        // 開発環境用フォールバック
-        if (!process.env.KAITO_API_TOKEN) {
-          systemLogger.warn('⚠️ 開発環境: 投稿APIモック使用');
-          postResult = {
-            id: `dev_${Date.now()}`,
-            text: content.content,
-            createdAt: new Date().toISOString(),
-            success: true
-          };
+      if (authManager) {
+        WorkflowLogger.logInfo('🔐 投稿前ログイン状態確認中...');
+        
+        if (!authManager.isUserSessionValid()) {
+          WorkflowLogger.logInfo('⚠️ セッション期限切れ - 再ログイン実行中...');
+          
+          // リトライ機構付きログイン実行
+          let loginAttempts = 0;
+          const maxLoginAttempts = 2;
+          let loginResult;
+          
+          while (loginAttempts < maxLoginAttempts) {
+            loginAttempts++;
+            WorkflowLogger.logInfo(`🔄 投稿前ログイン試行 ${loginAttempts}/${maxLoginAttempts}`);
+            
+            loginResult = await authManager.login();
+            if (loginResult.success) {
+              WorkflowLogger.logInfo(`✅ 投稿前再ログイン成功 (試行${loginAttempts})`);
+              break;
+            }
+            
+            WorkflowLogger.logError(`❌ 投稿前ログイン試行 ${loginAttempts} 失敗:`, loginResult.error);
+            
+            if (loginAttempts < maxLoginAttempts) {
+              const retryDelay = 3000; // 3秒の遅延
+              WorkflowLogger.logInfo(`⏱️ ${retryDelay/1000}秒後に再試行...`);
+              await new Promise(resolve => setTimeout(resolve, retryDelay));
+            }
+          }
+          
+          if (!loginResult?.success) {
+            const errorMsg = `投稿前全ログイン試行失敗 (${maxLoginAttempts}回): ${loginResult?.error}`;
+            WorkflowLogger.logError('❌ 投稿実行不可 - ログイン認証エラー', {
+              attempts: maxLoginAttempts,
+              lastError: loginResult?.error,
+              impact: '投稿スキップ、次回実行時に再試行'
+            });
+            throw new Error(errorMsg);
+          }
         } else {
-          throw error;
+          WorkflowLogger.logInfo('✅ セッション有効 - 投稿実行継続');
         }
       }
+
+      // KaitoAPI実投稿実行
+      WorkflowLogger.logInfo('📝 実際の投稿を実行中...');
+      const kaitoClient = this.container.get<KaitoApiClient>(COMPONENT_KEYS.KAITO_CLIENT);
       
-      if (!postResult) {
-        throw new Error('投稿実行に失敗しました');
+      let postResult;
+      try {
+        postResult = await kaitoClient.post(content.content);
+        
+        if (!postResult) {
+          throw new Error('投稿APIから無効なレスポンス');
+        }
+        
+        if (!postResult.success) {
+          throw new Error(postResult.error || '投稿実行が失敗しました');
+        }
+        
+        WorkflowLogger.logInfo('✅ 投稿実行成功', {
+          tweetId: postResult.id,
+          content: content.content.substring(0, 50) + '...'
+        });
+        
+      } catch (postError) {
+        WorkflowLogger.logError('❌ 投稿実行エラー', {
+          error: postError instanceof Error ? postError.message : 'Unknown error',
+          content: content.content.substring(0, 50) + '...',
+          authStatus: authManager ? authManager.isUserSessionValid() : 'no_auth_manager'
+        });
+        
+        // 投稿エラー情報をデータマネージャーに保存
+        await dataManager.saveKaitoResponse('post-error', {
+          error: postError instanceof Error ? postError.message : 'Unknown error',
+          content: content.content,
+          timestamp: new Date().toISOString(),
+          authValid: authManager?.isUserSessionValid() || false
+        });
+        
+        throw postError;
       }
       
       // データ保存フック: KaitoAPI応答後
@@ -181,12 +247,29 @@ export class ActionExecutor {
       
       systemLogger.info(`🔍 生成検索クエリ: "${searchQuery.query}"`);
       
-      // 検索実行とリツイート
-      const kaitoClient = this.container.get<KaitoApiClient>(COMPONENT_KEYS.KAITO_CLIENT);
-      const searchResult = await kaitoClient.searchTweets(searchQuery.query);
+      // AuthManager取得・ログイン状態確認
+      const authManager = this.container.has('AUTH_MANAGER') 
+        ? this.container.get<AuthManager>('AUTH_MANAGER') 
+        : undefined;
       
-      if (searchResult && searchResult.data && searchResult.data.length > 0) {
-        const retweetResult = await kaitoClient.retweet(searchResult.data[0].id);
+      if (authManager && !authManager.isUserSessionValid()) {
+        systemLogger.info('⚠️ リツイート前再ログイン実行中...');
+        const loginResult = await authManager.login();
+        
+        if (!loginResult.success) {
+          throw new Error(`リツイート前再ログイン失敗: ${loginResult.error}`);
+        }
+        
+        systemLogger.info('✅ リツイート前再ログイン成功');
+      }
+      
+      // 検索実行とリツイート
+      const tweetEndpoints = this.container.get<TweetEndpoints>(COMPONENT_KEYS.SEARCH_ENGINE);
+      const searchResult = await tweetEndpoints.searchTweets({ query: searchQuery.query });
+      
+      if (searchResult && searchResult.tweets && searchResult.tweets.length > 0) {
+        const actionEndpoints = this.container.get<ActionEndpoints>(COMPONENT_KEYS.ACTION_EXECUTOR);
+        const retweetResult = await actionEndpoints.retweet(searchResult.tweets[0].id);
         
         // データ保存フック: KaitoAPI応答後
         await dataManager.saveKaitoResponse('retweet-result', retweetResult);
@@ -234,6 +317,22 @@ export class ActionExecutor {
         await dataManager.saveClaudeOutput('content', content);
         systemLogger.info('[DataManager] 引用コンテンツを保存');
         
+        // AuthManager取得・ログイン状態確認
+        const authManager = this.container.has('AUTH_MANAGER') 
+          ? this.container.get<AuthManager>('AUTH_MANAGER') 
+          : undefined;
+        
+        if (authManager && !authManager.isUserSessionValid()) {
+          systemLogger.info('⚠️ 引用ツイート前再ログイン実行中...');
+          const loginResult = await authManager.login();
+          
+          if (!loginResult.success) {
+            throw new Error(`引用ツイート前再ログイン失敗: ${loginResult.error}`);
+          }
+          
+          systemLogger.info('✅ 引用ツイート前再ログイン成功');
+        }
+        
         const actionExecutor = this.container.get<ActionEndpoints>(COMPONENT_KEYS.ACTION_EXECUTOR);
         // quoteTweetメソッドが存在しないため、postで代用
         const quoteTweetResult = await actionExecutor.post(`${content.content} https://twitter.com/x/status/${searchResult.tweets[0].id}`);
@@ -260,6 +359,22 @@ export class ActionExecutor {
       const targetTweetId = decision.parameters.targetTweetId;
       if (!targetTweetId) {
         throw new Error('いいね実行に必要なツイートIDが提供されていません');
+      }
+      
+      // AuthManager取得・ログイン状態確認
+      const authManager = this.container.has('AUTH_MANAGER') 
+        ? this.container.get<AuthManager>('AUTH_MANAGER') 
+        : undefined;
+      
+      if (authManager && !authManager.isUserSessionValid()) {
+        systemLogger.info('⚠️ いいね前再ログイン実行中...');
+        const loginResult = await authManager.login();
+        
+        if (!loginResult.success) {
+          throw new Error(`いいね前再ログイン失敗: ${loginResult.error}`);
+        }
+        
+        systemLogger.info('✅ いいね前再ログイン成功');
       }
       
       const actionExecutor = this.container.get<ActionEndpoints>(COMPONENT_KEYS.ACTION_EXECUTOR);

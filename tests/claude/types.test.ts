@@ -3,6 +3,7 @@
  * REQUIREMENTS.md準拠 - 型ガード・定数・型互換性の完全テスト
  */
 
+import { describe, test, expect } from 'vitest';
 import {
   // Type guards
   isClaudeDecision,

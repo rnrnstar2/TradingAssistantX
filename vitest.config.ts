@@ -5,6 +5,9 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    typecheck: {
+      tsconfig: './tsconfig.test.json'
+    },
     coverage: {
       include: [
         'src/claude/**/*.ts',

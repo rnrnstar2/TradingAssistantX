@@ -3,7 +3,7 @@
  * REQUIREMENTS.md準拠 - generateContent, generateQuoteComment関数の包括的テスト
  */
 
-import { vi } from 'vitest';
+import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { generateContent, generateQuoteComment } from '../../../src/claude/endpoints/content-endpoint';
 import { CONTENT_TYPES, TARGET_AUDIENCES, isGeneratedContent } from '../../../src/claude/types';
 import {

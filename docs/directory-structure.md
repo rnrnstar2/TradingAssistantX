@@ -12,11 +12,28 @@ TradingAssistantX/
 └── 🗂️ その他                         # バックアップ・一時ファイル
 ```
 
-## 📁 /src ディレクトリ（エンドポイント別設計版）
-**基本実装ファイル + 動的データファイル構成 - エンドポイント別設計（役割分離+使いやすさ）**
+## 📁 /src ディレクトリ（新ワークフローアーキテクチャ版）✅ **Phase 2実装完了**
+**シンプルな4ステップワークフロー + スケジュール実行機能**
+
+### 🚀 実装完了状況（2025-07-29更新）
+- ✅ **Phase 1（完了）**: workflows/ディレクトリ実装・エントリーポイント簡素化
+- ✅ **Phase 2（完了）**: scheduler/ディレクトリ実装・YAML設定によるスケジュール実行
+- ✅ **Claude エンドポイント**: 4エンドポイント完全実装・統合システム動作確認済み
+- ✅ **KaitoAPI 3層認証**: 完全実装・実API接続確認済み（2025-07-29再確認）
+- ✅ **データ管理システム**: current/history 2層アーキテクチャ完全動作
 
 ```
 src/
+├── workflows/                        # ワークフロー中核機能（NEW）
+│   ├── main-workflow.ts              # メインワークフロー実行クラス
+│   ├── constants.ts                  # ワークフロー定数定義
+│   └── action-executor.ts            # アクション実行ロジック
+│
+├── scheduler/                        # スケジューラー機能（NEW）
+│   ├── time-scheduler.ts             # 時刻ベーススケジューラー
+│   ├── schedule-loader.ts            # YAML設定読込
+│   └── types.ts                      # スケジューラー型定義
+│
 ├── claude/                           # Claude Code SDK - エンドポイント別設計 (6ファイル)
 │   ├── endpoints/                     # 役割別エンドポイント (4ファイル)
 │   │   ├── decision-endpoint.ts       # 判断: プロンプト+変数+ClaudeDecision返却
@@ -26,37 +43,48 @@ src/
 │   ├── types.ts                       # 各エンドポイントの返却型定義
 │   └── index.ts                       # エクスポート統合
 │
-├── kaito-api/                 # KaitoTwitterAPI 2層認証アーキテクチャ
-│   ├── core/                  # 基盤機能（認証・設定・リクエスト管理）
-│   │   ├── client.ts          # API認証・リクエスト管理・QPS制御
-│   │   ├── config.ts          # 設定管理・バリデーション
-│   │   └── error-handler.ts   # エラーハンドリング・レート制限対応
-│   ├── endpoints/             # エンドポイント別分離（user/tweet/trend/action）
-│   │   ├── user-endpoints.ts   # ユーザー管理・アカウント情報
-│   │   ├── tweet-endpoints.ts  # 投稿・エンゲージメント（いいね、RT、引用）
-│   │   ├── trend-endpoints.ts  # トレンド・検索機能
-│   │   └── action-endpoints.ts # アクション実行・統合機能
-│   ├── types.ts               # KaitoAPI型定義統合（Request/Response/Error型定義）
-│   └── utils/                 # レスポンス処理・エラーハンドリング・ユーティリティ関数
-│       ├── response-handler.ts    # API応答処理・型変換・エラー解析
-│       ├── retry-handler.ts       # リトライ処理・指数バックオフ・失敗回復
-│       └── validation-utils.ts    # 入力検証・データ正規化・サニタイズ
+├── kaito-api/                 # KaitoTwitterAPI 統合認証システム（V2標準）
+│   ├── core/                  # 認証システム（最小構成）
+│   │   ├── auth-manager.ts          # 統合認証管理
+│   │   ├── client.ts                # HTTPクライアント・API通信
+│   │   ├── config.ts                # 設定管理・環境変数
+│   │   ├── session.ts               # セッション・Cookie管理
+│   │   └── index.ts                 # coreエクスポート
+│   ├── endpoints/             # 機能別エンドポイント
+│   │   ├── read-only/         # 📖 読み取り専用（APIキー認証のみ）
+│   │   │   ├── user-info.ts         # ユーザー情報取得
+│   │   │   ├── tweet-search.ts      # ツイート検索
+│   │   │   ├── trends.ts            # トレンド取得
+│   │   │   ├── follower-info.ts     # フォロワー情報
+│   │   │   └── index.ts             # read-onlyエクスポート
+│   │   ├── authenticated/     # 🔐 認証必須（V2ログイン必要）
+│   │   │   ├── tweet.ts             # 投稿管理（作成・削除）
+│   │   │   ├── engagement.ts        # エンゲージメント（いいね・RT・解除）
+│   │   │   ├── follow.ts            # フォロー管理（フォロー・アンフォロー）
+│   │   │   └── index.ts             # authenticatedエクスポート
+│   │   └── index.ts           # 全エンドポイントエクスポート
+│   ├── utils/                 # ユーティリティ
+│   │   ├── types.ts                 # 全型定義
+│   │   ├── constants.ts             # API URL・レート制限値等の定数
+│   │   ├── errors.ts                # Twitter API特有のエラークラス
+│   │   ├── response-handler.ts      # レスポンス処理・正規化
+│   │   ├── validator.ts             # 入力検証
+│   │   └── index.ts                 # utilsエクスポート
+│   └── index.ts               # kaito-api全体エクスポート
 │
-├── main-workflows/            # システム実行フロー管理 (9ファイル・Phase 2 分割完了)
-│   ├── core/                  # 分割されたコア機能（Phase 2 リファクタリング済み）
-│   │   ├── scheduler-core.ts        # スケジューラー基本機能（内蔵スケジューラー・実行制御）
-│   │   ├── scheduler-maintenance.ts # メンテナンス機能（データ管理・定期クリーンアップ）
-│   │   ├── context-loader.ts        # システムコンテキスト読み込み機能（118行）
-│   │   ├── action-executor.ts       # アクション実行機能（247行）
-│   │   └── execution-utils.ts       # エラーハンドリング・リトライ・最適化機能（548行）
-│   ├── execution-flow.ts      # メイン実行フロー制御（統合クラス・321行 ※1136行から分割完了）
-│   ├── scheduler-manager.ts   # 統合スケジューラー管理（分割リファクタリング済み・640行）
-│   ├── status-controller.ts   # ステータス制御
-│   └── system-lifecycle.ts    # システムライフサイクル管理
+├── main-workflows/            # （削除予定 - レガシー）
+│   └── core/                  # コア機能ツール群（7ファイル）
+│       ├── action-executor.ts       # アクション実行機能
+│       ├── common-error-handler.ts  # エラーハンドリング統合
+│       ├── context-loader.ts        # システムコンテキスト読み込み
+│       ├── execution-utils.ts       # 実行ユーティリティ・リトライ機能
+│       ├── type-guards.ts           # 型ガード・検証機能
+│       ├── workflow-constants.ts    # ワークフロー定数管理
+│       └── workflow-logger.ts       # ワークフロー専用ログ機能
 │
 ├── data/                      # データ管理統合 - MVP最小構成
 │   ├── data-manager.ts        # データ管理クラス
-│   ├── current/               # 🔄 現在実行サイクル（30分毎更新）【新規追加】
+│   ├── current/               # 🔄 現在実行サイクル（実行毎更新）【新規追加】
 │   │   ├── execution-YYYYMMDD-HHMM/  # タイムスタンプ付き実行ディレクトリ
 │   │   │   ├── claude-outputs/       # Claude各エンドポイント結果
 │   │   │   │   ├── decision.yaml     # makeDecision()結果
@@ -84,7 +112,9 @@ src/
 │   ├── config.ts              # 設定管理
 │   └── logger.ts              # ログ管理
 │
-└── main.ts                    # システム起動スクリプト - エンドポイント別使用 (1ファイル)
+├── dev.ts                     # 開発用エントリーポイント（単一実行）
+├── main.ts                    # 本番用エントリーポイント（スケジュール実行）
+└── index.ts                   # 共通エクスポート
 ```
 
 ## 🧪 /tests ディレクトリ（単体テスト）
@@ -100,54 +130,16 @@ tests/
 │   │   └── search-endpoint.test.ts      # 検索クエリエンドポイントテスト
 │   ├── types.test.ts                    # 型定義テスト
 │   └── index.test.ts                    # エクスポート統合テスト
-├── kaito-api/                        # KaitoAPI 単体テスト
-│   ├── core/                         # 基盤機能テスト (9ファイル)
-│   │   ├── client.test.ts            # API認証・リクエスト管理テスト
-│   │   ├── config.test.ts            # API設定管理テスト
-│   │   ├── config-manager.test.ts    # 設定マネージャーテスト
-│   │   ├── config-validation.test.ts # バリデーションテスト
-│   │   ├── error-handler.test.ts     # エラーハンドリングテスト
-│   │   ├── http-client.test.ts       # HTTPクライアントテスト
-│   │   ├── integration.test.ts       # 統合テスト
-│   │   ├── qps-controller.test.ts    # QPS制御テスト
-│   │   └── simple.test.ts            # 基本機能テスト
-│   ├── endpoints/                    # エンドポイント別テスト (8ファイル)
-│   │   ├── action-endpoints.test.ts      # アクション実行エンドポイントテスト
-│   │   ├── endpoints-integration.test.ts # エンドポイント統合テスト
-│   │   ├── tweet-endpoints.test.ts       # ツイート関連エンドポイントテスト
-│   │   ├── tweet-endpoints-integration.test.ts # ツイート統合テスト
-│   │   ├── tweet-creation.test.ts        # ツイート作成テスト
-│   │   ├── tweet-retweet.test.ts         # リツイートテスト
-│   │   ├── tweet-validation.test.ts      # ツイートバリデーションテスト
-│   │   └── user-endpoints.test.ts        # ユーザーエンドポイントテスト
-│   ├── integration/                  # 統合テスト (6ファイル)
-│   │   ├── core-integration.test.ts      # コア統合テスト
-│   │   ├── endpoints-integration.test.ts # エンドポイント統合テスト
-│   │   ├── error-recovery-integration.test.ts # エラー回復統合テスト
-│   │   ├── full-stack-integration.test.ts # フルスタック統合テスト
-│   │   ├── real-api-integration.test.ts  # 実API統合テスト
-│   │   └── workflow-integration.test.ts  # ワークフロー統合テスト
-│   ├── performance/                  # パフォーマンステスト (1ファイル)
-│   │   └── performance.test.ts       # パフォーマンス検証テスト
-│   ├── real-api/                     # 実APIテスト (1ファイル)
-│   │   └── real-integration.test.ts  # 実API統合テスト
-│   ├── scripts/                      # テストスクリプト (1ファイル)
-│   │   └── integration-check.ts      # 統合テストチェックスクリプト
-│   ├── types/                        # 型安全性テスト (1ファイル)
-│   │   └── type-safety.test.ts       # 型安全性検証テスト
-│   ├── run-integration-tests.ts     # 統合テスト実行スクリプト
-│   ├── types.test.ts                 # KaitoAPI型定義テスト
-│   ├── config-types.test.ts          # 設定型テスト
-│   ├── core-types.test.ts            # コア型テスト
-│   ├── tweet-types.test.ts           # ツイート型テスト
-│   ├── user-types.test.ts            # ユーザー型テスト
-│   └── type-compatibility.test.ts    # 型互換性テスト
+├── kaito-api/                        # KaitoAPI テスト
+│   ├── core/                         # コア機能テスト
+│   │   └── client.test.ts            # HTTPクライアントテスト
+│   ├── endpoints/                    # エンドポイントテスト
+│   │   ├── action-endpoints.test.ts  # アクションエンドポイントテスト
+│   │   └── tweet-endpoints.test.ts   # ツイートエンドポイントテスト
 ├── test-utils/                       # テストユーティリティ
-│   ├── mock-data.ts                  # モックデータ生成
-│   ├── test-helpers.ts               # テストヘルパー関数
-│   └── claude-mock.ts                # Claude API モック
-└── setup/                            # テスト環境設定
-    └── test-env.ts                   # テスト環境初期化
+│   └── claude-mock-data.ts           # Claude API モックデータ
+├── test-env.ts                       # テスト環境設定
+└── README.md                         # テスト概要ドキュメント
 ```
 
 ## 📚 /docs ディレクトリ（ドキュメント）
@@ -191,40 +183,60 @@ TradingAssistantX/
 
 ## アーキテクチャ設計原則
 
-### エンドポイント別設計（Claude SDK）
-- **🎯 明確な責任分離**: 各エンドポイント = 1つの役割（判断・生成・分析・検索）
-- **📊 型安全**: エンドポイントごとの専用入力/出力型で確実な連携
-- **🔧 使いやすさ**: どのファイルがどの返却型かが明確、直感的な使用
-- **🏗️ 一貫性**: kaito-apiと同様のendpoints/構造で統一感
-- **🚀 拡張性**: 新機能 = 新エンドポイント追加のみ、既存に影響なし
-- **📋 保守性**: プロンプト・変数・返却型が1ファイルで完結管理
-- **🔄 明確なデータフロー**: Kaito API → 特定エンドポイント → 固定型返却 → 分岐
+### 新しいワークフローアーキテクチャ
+- **workflows/**: シンプルな4ステップワークフロー実装
+  - データ収集 → Claude判断 → アクション実行 → 結果保存
+- **scheduler/**: 時刻ベースの自動実行機能
+  - YAMLファイルからスケジュール読込
+  - 1分間隔での時刻チェック
 
-### 統合アーキテクチャ（Phase 2 リファクタリング済み）
-- **🔧 重複解消**: scheduler/ディレクトリの冗長性を完全排除
-- **📝 分割統合**: SchedulerManagerでコア機能を適切に分割・統合管理
-- **🏗️ 保守性向上**: 1000行超ファイルを機能別に分割（単一責任原則）
-- **🚀 依存関係簡素化**: main-workflows/core/での機能分離と疎結合設計
-- **⚡ ファイル分割効果**: 
-  - scheduler-manager.ts (1064行 → 640行 + core/2ファイル)
-  - execution-flow.ts (1136行 → 321行 + core/3ファイル)
-- **🎯 設計原則**: 単一責任・疎結合・高凝集を実現した分割アーキテクチャ
+### エントリーポイントの役割
+- **dev.ts**: `pnpm dev` - 開発用単一実行
+- **main.ts**: `pnpm start` - スケジュール実行モード
 
-### 分散型型定義
-- **🎯 モジュール独立性**: 各モジュールが独自の型定義を持ち、依存関係が局所化
-- **📋 保守容易性**: 型変更の影響範囲が明確、モジュール内で完結
-- **🔍 型の発見性**: 関連する型が同じ場所にあり、開発効率が向上
+### 基本設計原則
+- **エンドポイント別設計**: Claude SDKとKaitoAPIで統一されたendpoints/構造
+- **2層認証構造**: 読み取り専用（APIキー）と認証必須（V2ログイン）で明確な機能分離
+- **シンプルアーキテクチャ**: workflows/での統合実行制御、レガシーコードは段階的削除
+- **型安全性**: モジュールごとの独立した型定義で依存関係を局所化
 
-## データ管理方針
+> **詳細設計**: [claude.md](./claude.md)、[kaito-api.md](./kaito-api.md) を参照
 
-### 2層アーキテクチャ（current/history）
-- **Current層**: 現在実行サイクル（30分毎更新）
+
+## データ管理構造
+
+```
+data/
+├── config/
+│   ├── schedule.yaml         # スケジュール設定（NEW）
+│   └── system.yaml           # システム設定
+├── context/
+│   └── current-status.yaml   # 現在の実行状況
+├── current/                  # 現在実行サイクル
+├── history/                  # 過去実行アーカイブ
+├── intelligence/
+│   └── learning-data.yaml    # 学習データ
+└── learning/                 # 学習用データ格納
+```
+
+- **Current層**: 現在実行サイクル（実行毎更新）
 - **History層**: 過去実行アーカイブ（YYYY-MM/DD-HHMM形式）
 - **Context層**: 実行状況・セッション情報（既存維持）
+- **Schedule設定**: YAML形式でのスケジュール定義（NEW）
+- **データ制限**: QPS制御、レート制限監視、自動リトライ機能
 
-### データ整合性
-- **1投稿1ファイル**: post-TIMESTAMP.yaml形式で管理、投稿データの原子性保証
-- **自動インデックス**: 投稿作成時に自動でインデックス更新、検索性能向上
-- **KaitoAPI制限対策**: QPS制御（1秒間隔）・レート制限監視・自動リトライ・失敗時フォールバック
-- **データ検証**: YAML構造検証・必須フィールドチェック・型安全性確保
-- **バックアップ戦略**: 自動アーカイブ・履歴保持・データ復旧機能
+## 今後の計画
+
+### 次期改善予定
+- main-workflows/ ディレクトリの完全削除
+- TypeScript型定義の整合性改善
+- テストカバレッジの向上
+
+### 削除されたファイル（過剰実装）
+以下のファイルは過剰実装として削除されました：
+- main-workflows/execution-flow.ts
+- main-workflows/scheduler-manager.ts
+- main-workflows/status-controller.ts
+- main-workflows/system-lifecycle.ts
+- main-workflows/core/scheduler-core.ts
+- main-workflows/core/scheduler-maintenance.ts
