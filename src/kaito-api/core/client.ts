@@ -52,7 +52,7 @@ interface LikeResult {
   error?: string;
 }
 
-export interface AccountInfo {
+interface LocalAccountInfo {
   id: string;
   username: string;
   displayName: string;
@@ -998,7 +998,7 @@ export class KaitoTwitterAPIClient {
    *
    * @throws {Error} API認証エラー、レート制限エラー
    */
-  async getAccountInfo(): Promise<AccountInfo> {
+  async getAccountInfo(): Promise<LocalAccountInfo> {
     try {
       await this.ensureAuthenticated();
       await this.qpsController.enforceQPS();
@@ -1036,7 +1036,7 @@ export class KaitoTwitterAPIClient {
           async () => {
             // 実際のユーザー名でアカウント情報を取得 - TwitterAPI.io形式
             const endpoint = `${String(this.endpoints.user.info)}?userName=${username}`;
-            return await this.httpClient!.get<TwitterAPIResponse<AccountInfo>>(
+            return await this.httpClient!.get<TwitterAPIResponse<LocalAccountInfo>>(
               endpoint,
             );
           },
@@ -1048,12 +1048,12 @@ export class KaitoTwitterAPIClient {
       this.costTracker.trackRequest("user");
 
       console.log("✅ アカウント情報取得完了:", {
-        followers: accountInfo.data.followersCount || accountInfo.data.followers || 0,
-        following: accountInfo.data.followingCount || accountInfo.data.following || 0,
+        followers: (accountInfo.data as any).followersCount || (accountInfo.data as any).followers || 0,
+        following: (accountInfo.data as any).followingCount || (accountInfo.data as any).following || 0,
       });
 
       // TwitterAPI.ioのレスポンス形式に対応
-      const responseData = accountInfo.data;
+      const responseData = accountInfo.data as any;
       return {
         id: responseData.id || "unknown",
         username: responseData.userName || responseData.username || username,
@@ -1128,6 +1128,7 @@ export class KaitoTwitterAPIClient {
       }
 
       const searchResult = await this.tweetSearchEndpoint.searchTweets(cleanQuery, {
+        query: cleanQuery,
         max_results: options?.maxResults || 15,
         lang: extractedLang
       });

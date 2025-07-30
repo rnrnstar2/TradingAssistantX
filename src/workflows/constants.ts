@@ -117,7 +117,7 @@ export interface SystemContext {
     };
     executionCount: { today: number; total: number };
   };
-  market: {
+  market?: {
     trendingTopics: string[];
     volatility: 'low' | 'medium' | 'high';
     sentiment: 'bearish' | 'neutral' | 'bullish';
@@ -125,7 +125,8 @@ export interface SystemContext {
   timestamp?: string;
   learningData?: {
     recentTopics: string[];
-    totalPatterns: number;
+    totalPatterns?: number;
     avgEngagement: number;
+    optimalTimeSlot?: string;
   };
 }

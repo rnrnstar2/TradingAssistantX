@@ -6,10 +6,33 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
+import type { DailyInsight, TomorrowStrategy, PerformanceSummary } from './types';
 
 // ============================================================================
 // 簡素化されたインターフェース（MVP版）
 // ============================================================================
+
+export interface EngagementMetrics {
+  successRate: number;
+  avgEngagement: number;
+  sampleSize: number;
+}
+
+export interface LearningData {
+  engagementPatterns: {
+    timeSlots: { [timeSlot: string]: EngagementMetrics };
+    contentTypes: { [type: string]: EngagementMetrics };
+    topics: { [topic: string]: EngagementMetrics };
+  };
+  successfulTopics: {
+    topics: Array<{
+      topic: string;
+      successRate: number;
+      avgEngagement: number;
+      bestTimeSlots: string[];
+    }>;
+  };
+}
 
 // ============================================================================
 // 既存インターフェース（レガシー互換性維持）
@@ -115,13 +138,25 @@ export interface ExecutionSummary {
 }
 
 export interface PostData {
-  id: string;
+  executionId: string;
+  actionType: 'post' | 'retweet' | 'quote_tweet' | 'like' | 'follow';
   timestamp: string;
-  content: string;
-  metrics?: {
+  content?: string;
+  targetTweetId?: string;
+  result: {
+    success: boolean;
+    message: string;
+    data: any;
+  };
+  engagement: {
     likes: number;
     retweets: number;
     replies: number;
+  };
+  claudeSelection?: {
+    score: number;
+    reasoning: string;
+    expectedImpact: string;
   };
 }
 
@@ -148,38 +183,25 @@ export class DataManager {
   // ============================================================================
 
   /**
-   * 学習データの読み込み
+   * 学習データの読み込み（2ファイル構成対応）
    */
-  async loadLearningData(): Promise<{
-    decisionPatterns: DecisionPattern[];
-    successStrategies: SuccessStrategy;
-    actionResults: ActionResult[];
-  }> {
+  async loadLearningData(): Promise<LearningData> {
     try {
-      const [decisionPatterns, successStrategies, actionResults] = await Promise.all([
-        this.loadDecisionPatterns(),
-        this.loadSuccessStrategies(),
-        this.loadActionResults()
+      const [engagementPatterns, successfulTopics] = await Promise.all([
+        this.loadEngagementPatterns(),
+        this.loadSuccessfulTopics()
       ]);
 
-      console.log('✅ 学習データ読み込み完了:', {
-        patterns: decisionPatterns.length,
-        results: actionResults.length
-      });
-
+      console.log('✅ 学習データ読み込み完了 (2ファイル構成)');
+      
       return {
-        decisionPatterns,
-        successStrategies,
-        actionResults
+        engagementPatterns,
+        successfulTopics
       };
 
     } catch (error) {
       console.error('❌ 学習データ読み込み失敗:', error);
-      return {
-        decisionPatterns: [],
-        successStrategies: this.getDefaultSuccessStrategies(),
-        actionResults: []
-      };
+      return this.getDefaultLearningData();
     }
   }
 
@@ -216,231 +238,73 @@ export class DataManager {
   }
 
   /**
-   * 成功パターンの更新
+   * 成功トピックスの更新（successful-topics.yaml専用）
    */
-  async updateSuccessPatterns(patterns: any): Promise<void> {
+  async updateSuccessPatterns(successfulTopics: LearningData['successfulTopics']): Promise<void> {
     try {
-      const strategiesPath = path.join(this.learningDir, 'success-strategies.yaml');
-      const yamlStr = yaml.dump(patterns, { indent: 2 });
-      await fs.writeFile(strategiesPath, yamlStr, 'utf-8');
+      const topicsPath = path.join(this.learningDir, 'successful-topics.yaml');
+      const yamlStr = yaml.dump(successfulTopics, { indent: 2 });
+      await fs.writeFile(topicsPath, yamlStr, 'utf-8');
 
-      console.log('✅ 成功パターン更新完了');
+      console.log('✅ 成功トピックス更新完了');
 
     } catch (error) {
-      console.error('❌ 成功パターン更新失敗:', error);
+      console.error('❌ 成功トピックス更新失敗:', error);
     }
   }
 
   /**
-   * アクション結果の記録
+   * アクション結果の記録（engagement-patterns.yamlに統合）
    */
-  async recordActionResult(action: string, content: string, metrics: any): Promise<void> {
+  async recordActionResult(action: string, content: string, metrics: any, timeSlot?: string, topic?: string): Promise<void> {
     try {
-      const result: ActionResult = {
-        timestamp: new Date().toISOString(),
-        action,
-        content: content.substring(0, 200), // 最初の200文字のみ保存
-        metrics: {
-          likes: metrics.likes || 0,
-          retweets: metrics.retweets || 0,
-          replies: metrics.replies || 0,
-          engagement_rate: metrics.engagement_rate || 0
-        },
-        success: metrics.engagement_rate > 2.0 // 2%以上をサクセスと判定
-      };
-
-      await this.appendToLearningFile('action-results.yaml', result);
-      console.log('✅ アクション結果記録完了:', { action, engagement: result.metrics.engagement_rate });
-
-    } catch (error) {
-      console.error('❌ アクション結果記録失敗:', error);
-    }
-  }
-
-  // ============================================================================
-  // 新学習データ管理メソッド（深夜大規模分析システム対応）
-  // ============================================================================
-
-  /**
-   * 日次大規模分析結果の保存
-   */
-  async saveDailyInsights(insights: DailyInsight): Promise<void> {
-    const filename = `daily-insights-${insights.date.replace(/-/g, '')}.yaml`;
-    const filepath = path.join(this.dataRoot, 'learning', filename);
-    
-    try {
-      const yamlContent = yaml.dump(insights, { 
-        flowLevel: 2,
-        indent: 2,
-        lineWidth: 120
-      });
+      // エンゲージメントパターンデータを読み込み
+      let engagementPatterns = await this.loadEngagementPatterns();
       
-      await fs.writeFile(filepath, yamlContent, 'utf8');
-      console.log(`✅ 日次分析結果保存完了: ${filename}`);
+      const engagementRate = metrics.engagement_rate || 0;
+      const success = engagementRate > 2.0;
       
-      // 古いファイルのクリーンアップ（30日以上古いファイル削除）
-      await this.cleanupOldDailyInsights();
-      
-    } catch (error) {
-      console.error(`❌ 日次分析結果保存エラー: ${filename}`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * 翌日戦略の保存
-   */
-  async saveTomorrowStrategy(strategy: TomorrowStrategy): Promise<void> {
-    const filepath = path.join(this.dataRoot, 'current', 'tomorrow-strategy.yaml');
-    
-    try {
-      const yamlContent = yaml.dump(strategy, {
-        flowLevel: 2,
-        indent: 2,
-        lineWidth: 120
-      });
-      
-      await fs.writeFile(filepath, yamlContent, 'utf8');
-      console.log('✅ 翌日戦略保存完了: tomorrow-strategy.yaml');
-      
-    } catch (error) {
-      console.error('❌ 翌日戦略保存エラー:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * 日次パフォーマンス集計の保存
-   */
-  async savePerformanceSummary(summary: PerformanceSummary): Promise<void> {
-    const filename = `performance-summary-${summary.date.replace(/-/g, '')}.yaml`;
-    const filepath = path.join(this.dataRoot, 'learning', filename);
-    
-    try {
-      const yamlContent = yaml.dump(summary, {
-        flowLevel: 2,
-        indent: 2,
-        lineWidth: 120
-      });
-      
-      await fs.writeFile(filepath, yamlContent, 'utf8');
-      console.log(`✅ パフォーマンス集計保存完了: ${filename}`);
-      
-    } catch (error) {
-      console.error(`❌ パフォーマンス集計保存エラー: ${filename}`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * 翌日戦略の読み込み
-   */
-  async loadTomorrowStrategy(): Promise<TomorrowStrategy | null> {
-    const filepath = path.join(this.dataRoot, 'current', 'tomorrow-strategy.yaml');
-    
-    try {
-      const content = await fs.readFile(filepath, 'utf8');
-      const strategy = yaml.load(content) as TomorrowStrategy;
-      
-      // 有効期限チェック
-      if (new Date() > new Date(strategy.validUntil)) {
-        console.warn('⚠️ 翌日戦略の有効期限が切れています');
-        return null;
-      }
-      
-      console.log('✅ 翌日戦略読み込み完了');
-      return strategy;
-      
-    } catch (error: any) {
-      if (error.code === 'ENOENT') {
-        console.log('📝 翌日戦略ファイルが存在しません（初回実行）');
-        return null;
-      }
-      console.error('❌ 翌日戦略読み込みエラー:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * 日次分析結果の読み込み（指定日または最新）
-   */
-  async loadDailyInsights(date?: string): Promise<DailyInsight | null> {
-    const targetDate = date || new Date().toISOString().split('T')[0];
-    const filename = `daily-insights-${targetDate.replace(/-/g, '')}.yaml`;
-    const filepath = path.join(this.dataRoot, 'learning', filename);
-    
-    try {
-      const content = await fs.readFile(filepath, 'utf8');
-      const insights = yaml.load(content) as DailyInsight;
-      
-      console.log(`✅ 日次分析結果読み込み完了: ${filename}`);
-      return insights;
-      
-    } catch (error: any) {
-      if (error.code === 'ENOENT') {
-        console.log(`📝 日次分析結果ファイルが存在しません: ${filename}`);
-        return null;
-      }
-      console.error(`❌ 日次分析結果読み込みエラー: ${filename}`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * 最近N日間の日次分析結果を取得
-   */
-  async loadRecentDailyInsights(days: number = 7): Promise<DailyInsight[]> {
-    const insights: DailyInsight[] = [];
-    const today = new Date();
-    
-    for (let i = 0; i < days; i++) {
-      const date = new Date(today);
-      date.setUTCDate(date.getUTCDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      
-      const dailyInsight = await this.loadDailyInsights(dateStr);
-      if (dailyInsight) {
-        insights.push(dailyInsight);
-      }
-    }
-    
-    console.log(`✅ 最近${days}日間の分析結果読み込み完了: ${insights.length}件`);
-    return insights;
-  }
-
-  /**
-   * 古い日次分析ファイルのクリーンアップ（30日以上前）
-   */
-  private async cleanupOldDailyInsights(): Promise<void> {
-    const learningDir = path.join(this.dataRoot, 'learning');
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 30);
-    
-    try {
-      const files = await fs.readdir(learningDir);
-      const insightFiles = files.filter(file => 
-        file.startsWith('daily-insights-') && file.endsWith('.yaml')
-      );
-      
-      for (const file of insightFiles) {
-        // ファイル名から日付を抽出 (daily-insights-YYYYMMDD.yaml)
-        const dateMatch = file.match(/daily-insights-(\d{8})\.yaml/);
-        if (dateMatch) {
-          const fileDateStr = dateMatch[1];
-          const fileDate = new Date(
-            `${fileDateStr.slice(0,4)}-${fileDateStr.slice(4,6)}-${fileDateStr.slice(6,8)}`
-          );
-          
-          if (fileDate < thirtyDaysAgo) {
-            const filepath = path.join(learningDir, file);
-            await fs.unlink(filepath);
-            console.log(`🗑️ 古い分析ファイルを削除: ${file}`);
-          }
+      // 時間スロットパターンの更新
+      if (timeSlot) {
+        if (!engagementPatterns.timeSlots[timeSlot]) {
+          engagementPatterns.timeSlots[timeSlot] = { successRate: 0, avgEngagement: 0, sampleSize: 0 };
         }
+        const slot = engagementPatterns.timeSlots[timeSlot];
+        slot.avgEngagement = ((slot.avgEngagement * slot.sampleSize) + engagementRate) / (slot.sampleSize + 1);
+        slot.sampleSize += 1;
+        slot.successRate = success ? ((slot.successRate * (slot.sampleSize - 1)) + 1) / slot.sampleSize 
+                                  : (slot.successRate * (slot.sampleSize - 1)) / slot.sampleSize;
       }
+      
+      // トピックパターンの更新
+      if (topic) {
+        if (!engagementPatterns.topics[topic]) {
+          engagementPatterns.topics[topic] = { successRate: 0, avgEngagement: 0, sampleSize: 0 };
+        }
+        const topicData = engagementPatterns.topics[topic];
+        topicData.avgEngagement = ((topicData.avgEngagement * topicData.sampleSize) + engagementRate) / (topicData.sampleSize + 1);
+        topicData.sampleSize += 1;
+        topicData.successRate = success ? ((topicData.successRate * (topicData.sampleSize - 1)) + 1) / topicData.sampleSize 
+                                        : (topicData.successRate * (topicData.sampleSize - 1)) / topicData.sampleSize;
+      }
+      
+      // コンテンツタイプパターンの更新
+      const contentType = action; // actionをコンテンツタイプとして使用
+      if (!engagementPatterns.contentTypes[contentType]) {
+        engagementPatterns.contentTypes[contentType] = { successRate: 0, avgEngagement: 0, sampleSize: 0 };
+      }
+      const typeData = engagementPatterns.contentTypes[contentType];
+      typeData.avgEngagement = ((typeData.avgEngagement * typeData.sampleSize) + engagementRate) / (typeData.sampleSize + 1);
+      typeData.sampleSize += 1;
+      typeData.successRate = success ? ((typeData.successRate * (typeData.sampleSize - 1)) + 1) / typeData.sampleSize 
+                                     : (typeData.successRate * (typeData.sampleSize - 1)) / typeData.sampleSize;
+      
+      // engagement-patterns.yamlに保存
+      await this.saveEngagementPatterns(engagementPatterns);
+      console.log('✅ エンゲージメントパターン更新完了:', { action, engagement: engagementRate });
+
     } catch (error) {
-      console.warn('⚠️ 古いファイルクリーンアップでエラー:', error);
-      // クリーンアップエラーは致命的でない
+      console.error('❌ エンゲージメントパターン更新失敗:', error);
     }
   }
 
@@ -477,25 +341,40 @@ export class DataManager {
   async savePost(postData: {
     actionType: 'post' | 'retweet' | 'quote_tweet' | 'like' | 'follow';
     content?: string;
-    tweetId?: string;
-    result: any;
-    engagement?: any;
+    targetTweetId?: string;
+    result: {
+      success: boolean;
+      message: string;
+      data: any;
+    };
+    engagement?: {
+      likes: number;
+      retweets: number;
+      replies: number;
+    };
+    claudeSelection?: {
+      score: number;
+      reasoning: string;
+      expectedImpact: string;
+    };
   }): Promise<void> {
     if (!this.currentExecutionId) {
       throw new Error('No active execution cycle');
     }
 
-    const post = {
+    const post: PostData = {
       executionId: this.currentExecutionId,
       actionType: postData.actionType,
       timestamp: new Date().toISOString(),
-      content: postData.content || '',
+      content: postData.content,
+      targetTweetId: postData.targetTweetId,
       result: postData.result,
       engagement: postData.engagement || {
         likes: 0,
         retweets: 0,
         replies: 0
-      }
+      },
+      claudeSelection: postData.claudeSelection
     };
 
     const postPath = path.join(
@@ -510,7 +389,7 @@ export class DataManager {
       'utf-8'
     );
 
-    console.log(`✅ 投稿データ保存完了: ${postData.actionType}`);
+    console.log(`✅ 投稿データ保存完了: ${postData.actionType} (統合形式)`);
   }
 
   async loadCurrentStatus(): Promise<CurrentStatus> {
@@ -624,6 +503,40 @@ export class DataManager {
     }
   }
 
+  private async loadEngagementPatterns(): Promise<LearningData['engagementPatterns']> {
+    try {
+      const engagementPath = path.join(this.learningDir, 'engagement-patterns.yaml');
+      const content = await fs.readFile(engagementPath, 'utf-8');
+      const data = yaml.load(content) as { engagementPatterns: LearningData['engagementPatterns'] };
+      return data.engagementPatterns || this.getDefaultEngagementPatterns();
+    } catch (error) {
+      return this.getDefaultEngagementPatterns();
+    }
+  }
+
+  private async loadSuccessfulTopics(): Promise<LearningData['successfulTopics']> {
+    try {
+      const topicsPath = path.join(this.learningDir, 'successful-topics.yaml');
+      const content = await fs.readFile(topicsPath, 'utf-8');
+      const data = yaml.load(content) as { successfulTopics: LearningData['successfulTopics'] };
+      return data.successfulTopics || this.getDefaultSuccessfulTopics();
+    } catch (error) {
+      return this.getDefaultSuccessfulTopics();
+    }
+  }
+
+  private async saveEngagementPatterns(engagementPatterns: LearningData['engagementPatterns']): Promise<void> {
+    try {
+      const engagementPath = path.join(this.learningDir, 'engagement-patterns.yaml');
+      const data = { engagementPatterns };
+      const yamlStr = yaml.dump(data, { indent: 2 });
+      await fs.writeFile(engagementPath, yamlStr, 'utf-8');
+    } catch (error) {
+      console.error('❌ エンゲージメントパターン保存失敗:', error);
+      throw error;
+    }
+  }
+
   private async loadSuccessStrategies(): Promise<SuccessStrategy> {
     try {
       const strategiesPath = path.join(this.learningDir, 'success-strategies.yaml');
@@ -694,6 +607,51 @@ export class DataManager {
     };
   }
 
+  private getDefaultLearningData(): LearningData {
+    return {
+      engagementPatterns: this.getDefaultEngagementPatterns(),
+      successfulTopics: this.getDefaultSuccessfulTopics()
+    };
+  }
+
+  private getDefaultEngagementPatterns(): LearningData['engagementPatterns'] {
+    return {
+      timeSlots: {
+        '09:00': { successRate: 0.75, avgEngagement: 2.8, sampleSize: 10 },
+        '12:00': { successRate: 0.65, avgEngagement: 2.2, sampleSize: 8 },
+        '18:00': { successRate: 0.80, avgEngagement: 3.1, sampleSize: 12 }
+      },
+      contentTypes: {
+        'post': { successRate: 0.70, avgEngagement: 2.5, sampleSize: 15 },
+        'retweet': { successRate: 0.60, avgEngagement: 1.8, sampleSize: 20 },
+        'quote_tweet': { successRate: 0.75, avgEngagement: 2.9, sampleSize: 10 }
+      },
+      topics: {
+        'market_analysis': { successRate: 0.78, avgEngagement: 2.8, sampleSize: 12 },
+        'educational_content': { successRate: 0.82, avgEngagement: 3.0, sampleSize: 8 }
+      }
+    };
+  }
+
+  private getDefaultSuccessfulTopics(): LearningData['successfulTopics'] {
+    return {
+      topics: [
+        {
+          topic: 'market_analysis',
+          successRate: 0.78,
+          avgEngagement: 2.8,
+          bestTimeSlots: ['09:00', '18:00']
+        },
+        {
+          topic: 'educational_content',
+          successRate: 0.82,
+          avgEngagement: 3.0,
+          bestTimeSlots: ['18:00']
+        }
+      ]
+    };
+  }
+
   private getDefaultSessionMemory(): SessionMemory {
     return {
       current_session: {
@@ -733,252 +691,12 @@ export class DataManager {
     };
   }
 
-  /**
-   * KaitoAPIアカウント情報をCurrentStatus.account_status形式に正規化
-   */
-  private normalizeKaitoAccountInfo(kaitoAccountInfo: any): Partial<CurrentStatus['account_status']> {
-    // KaitoAPIの様々なレスポンス形式に対応
-    const normalized: Partial<CurrentStatus['account_status']> = {};
 
-    // フォロワー数の正規化
-    if (kaitoAccountInfo.followers_count !== undefined) {
-      normalized.followers = parseInt(kaitoAccountInfo.followers_count, 10) || 0;
-    } else if (kaitoAccountInfo.followersCount !== undefined) {
-      normalized.followers = parseInt(kaitoAccountInfo.followersCount, 10) || 0;
-    } else if (kaitoAccountInfo.followers !== undefined) {
-      normalized.followers = parseInt(kaitoAccountInfo.followers, 10) || 0;
-    }
 
-    // フォロー数の正規化
-    if (kaitoAccountInfo.friends_count !== undefined) {
-      normalized.following = parseInt(kaitoAccountInfo.friends_count, 10) || 0;
-    } else if (kaitoAccountInfo.followingCount !== undefined) {
-      normalized.following = parseInt(kaitoAccountInfo.followingCount, 10) || 0;
-    } else if (kaitoAccountInfo.following !== undefined) {
-      normalized.following = parseInt(kaitoAccountInfo.following, 10) || 0;
-    }
 
-    // ツイート数の正規化（今日分は計算が複雑なので、とりあえず総ツイート数から推定）
-    if (kaitoAccountInfo.statuses_count !== undefined) {
-      normalized.tweets_today = this.estimateTodayTweets(kaitoAccountInfo.statuses_count);
-    } else if (kaitoAccountInfo.tweetsCount !== undefined) {
-      normalized.tweets_today = this.estimateTodayTweets(kaitoAccountInfo.tweetsCount);
-    }
 
-    // エンゲージメント率の計算（可能な場合）
-    if (normalized.followers && normalized.followers > 0) {
-      // 簡易的なエンゲージメント率計算
-      normalized.engagement_rate_24h = Math.min(
-        (normalized.followers / 1000) * 2.5, // フォロワー1000人につき2.5%
-        10.0 // 最大10%
-      );
-    }
 
-    return normalized;
-  }
 
-  /**
-   * 今日のツイート数推定（簡易版）
-   * 実際のAPIでは日付別のツイート情報が必要だが、とりあえずの推定値
-   */
-  private estimateTodayTweets(totalTweets: number): number {
-    // 総ツイート数から今日の推定値を計算（非常に簡易的）
-    // アクティブユーザーは平均1日5-10ツイートと仮定
-    const dailyAverage = Math.max(1, Math.min(totalTweets / 365, 10));
-    return Math.floor(Math.random() * dailyAverage); // 0-平均の範囲でランダム
-  }
 
-  private async loadExecutionSummary(): Promise<ExecutionSummary> {
-    if (!this.currentExecutionId) {
-      throw new Error('No active execution cycle');
-    }
 
-    const summaryPath = path.join(
-      this.currentDir,
-      this.currentExecutionId,
-      'execution-summary.yaml'
-    );
-
-    try {
-      const content = await fs.readFile(summaryPath, 'utf-8');
-      return yaml.load(content) as ExecutionSummary;
-    } catch (error) {
-      throw new Error(`Failed to load execution summary: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  private async saveExecutionSummary(summary: ExecutionSummary): Promise<void> {
-    if (!this.currentExecutionId) {
-      throw new Error('No active execution cycle');
-    }
-
-    const summaryPath = path.join(
-      this.currentDir,
-      this.currentExecutionId,
-      'execution-summary.yaml'
-    );
-
-    await fs.writeFile(
-      summaryPath,
-      yaml.dump(summary, { indent: 2 }),
-      'utf-8'
-    );
-  }
-
-  private async updatePostIndex(post: PostData): Promise<void> {
-    if (!this.currentExecutionId) {
-      throw new Error('No active execution cycle');
-    }
-
-    const indexPath = path.join(
-      this.currentDir,
-      this.currentExecutionId,
-      'posts',
-      'post-index.yaml'
-    );
-
-    let index: { posts: Array<{ id: string; timestamp: string; summary: string }> } = { posts: [] };
-
-    // 既存インデックスの読み込み
-    try {
-      const content = await fs.readFile(indexPath, 'utf-8');
-      index = yaml.load(content) as typeof index;
-    } catch {
-      // ファイルが存在しない場合は新規作成
-    }
-
-    // 新規投稿を追加
-    index.posts.push({
-      id: post.id,
-      timestamp: post.timestamp,
-      summary: post.content.substring(0, 100) + (post.content.length > 100 ? '...' : '')
-    });
-
-    // インデックスを保存
-    await fs.writeFile(
-      indexPath,
-      yaml.dump(index, { indent: 2 }),
-      'utf-8'
-    );
-  }
-
-  private async loadPostsFromDirectory(directory: string): Promise<PostData[]> {
-    const posts: PostData[] = [];
-
-    try {
-      const files = await fs.readdir(directory);
-      
-      for (const file of files) {
-        if (file.startsWith('post-') && file.endsWith('.yaml')) {
-          try {
-            const content = await fs.readFile(path.join(directory, file), 'utf-8');
-            const post = yaml.load(content) as PostData;
-            posts.push(post);
-          } catch (error) {
-            console.warn(`⚠️ 投稿ファイル読み込みスキップ: ${file}`);
-          }
-        }
-      }
-    } catch (error) {
-      // ディレクトリが存在しない場合は空配列を返す
-    }
-
-    return posts;
-  }
-
-  private async getRecentPostsFromHistory(limit: number): Promise<PostData[]> {
-    const posts: PostData[] = [];
-
-    try {
-      // 最新月から順に検索
-      const monthDirs = await fs.readdir(this.historyDir);
-      const sortedMonths = monthDirs
-        .filter(dir => /^\d{4}-\d{2}$/.test(dir))
-        .sort((a, b) => b.localeCompare(a)); // 新しい月順
-
-      for (const monthDir of sortedMonths) {
-        if (posts.length >= limit) break;
-
-        const monthPath = path.join(this.historyDir, monthDir);
-        const execDirs = await fs.readdir(monthPath);
-        const sortedExecs = execDirs
-          .filter(dir => /^\d{2}-\d{4}$/.test(dir))
-          .sort((a, b) => b.localeCompare(a)); // 新しい実行順
-
-        for (const execDir of sortedExecs) {
-          if (posts.length >= limit) break;
-
-          const postsDir = path.join(monthPath, execDir, 'posts');
-          const execPosts = await this.loadPostsFromDirectory(postsDir);
-          
-          // 新しい順にソートして必要な分だけ追加
-          execPosts.sort((a, b) => 
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-          );
-          
-          const needed = limit - posts.length;
-          posts.push(...execPosts.slice(0, needed));
-        }
-      }
-    } catch (error) {
-      console.warn('⚠️ History層からの投稿取得でエラー:', error);
-    }
-
-    return posts;
-  }
-
-  private async checkFileCountLimit(directory: string, maxFiles: number): Promise<void> {
-    try {
-      const files = await fs.readdir(directory);
-      const yamlFiles = files.filter(f => f.endsWith('.yaml'));
-      
-      if (yamlFiles.length >= maxFiles) {
-        console.warn(`⚠️ ファイル数が上限に達しています: ${yamlFiles.length}/${maxFiles}`);
-        // 最も古いファイルを削除
-        const sortedFiles = yamlFiles.sort((a, b) => a.localeCompare(b));
-        const toDelete = sortedFiles[0];
-        await fs.unlink(path.join(directory, toDelete));
-        console.log(`🧹 古いファイルを削除: ${toDelete}`);
-      }
-    } catch (error) {
-      // ディレクトリが存在しない場合は無視
-    }
-  }
-
-  private async checkDirectorySize(directory: string, maxSizeMB: number): Promise<boolean> {
-    try {
-      let totalSize = 0;
-      
-      const calculateDirSize = async (dir: string): Promise<number> => {
-        let size = 0;
-        const items = await fs.readdir(dir);
-        
-        for (const item of items) {
-          const itemPath = path.join(dir, item);
-          const stat = await fs.stat(itemPath);
-          
-          if (stat.isDirectory()) {
-            size += await calculateDirSize(itemPath);
-          } else {
-            size += stat.size;
-          }
-        }
-        
-        return size;
-      };
-      
-      totalSize = await calculateDirSize(directory);
-      const sizeMB = totalSize / (1024 * 1024);
-      
-      if (sizeMB > maxSizeMB) {
-        console.warn(`⚠️ ディレクトリサイズが制限を超えています: ${sizeMB.toFixed(2)}MB / ${maxSizeMB}MB`);
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      // ディレクトリが存在しない場合はtrue
-      return true;
-    }
-  }
 }

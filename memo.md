@@ -2,9 +2,10 @@ REQUIREMENTS.md
 この要件定義を実現したい。
 
 あなたの役割は tests/kaito-apiの実装を完璧にしてほしい。
-docs/directory-structure.md, docs/workflow.md, docs/kaito-api.md
+    
+
+docs/directory-structure.md, docs/workflow.md, docs/kaito-api.md, docs/claude.md
 これらのドキュメントの中で関連ファイルは必ず参照すること。
-docs/kaito-api.md　これのウェブドキュメントのリンクは必ず、ワーカーにも確認させること。
 
 複数のワーカーを並列、直列を駆使しながら効率的に指揮して実現に向けて進めてください。
 Worker にも 関連するドキュメントを読み込ませること。

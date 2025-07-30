@@ -1,0 +1,92 @@
+# 投資教育特化成功トピック分析
+# エンゲージメント実績と最適投稿時間帯
+
+topics:
+  - topic: "NISA活用法"
+    successRate: 0.89
+    avgEngagement: 4.8
+    bestTimeSlots: ["10:00-12:00", "16:00-18:00"]
+    totalPosts: 5
+    highEngagementPosts: 4
+    keywords: ["NISA", "税制優遇", "長期投資", "つみたてNISA"]
+    lastSuccess: "2025-07-29T16:44:09.640Z"
+    contentTypes: ["educational", "strategy_sharing"]
+    
+  - topic: "投資信託選び方"
+    successRate: 0.92
+    avgEngagement: 4.2
+    bestTimeSlots: ["14:00-16:00", "16:00-18:00"]
+    totalPosts: 6
+    highEngagementPosts: 5
+    keywords: ["投資信託", "信託報酬", "分散投資", "インデックスファンド"]
+    lastSuccess: "2025-07-29T15:46:57.446Z"
+    contentTypes: ["educational", "market_commentary"]
+
+  - topic: "リスク管理基礎"
+    successRate: 0.87
+    avgEngagement: 3.9
+    bestTimeSlots: ["05:00-07:00", "10:00-12:00"]
+    totalPosts: 4
+    highEngagementPosts: 3
+    keywords: ["リスク管理", "ポートフォリオ", "資産配分", "リスク許容度"]
+    lastSuccess: "2025-07-30T05:45:04.363Z"
+    contentTypes: ["educational", "strategy_sharing"]
+
+  - topic: "初心者向け株式投資"
+    successRate: 0.91
+    avgEngagement: 4.1
+    bestTimeSlots: ["10:00-12:00", "14:00-16:00"]
+    totalPosts: 8
+    highEngagementPosts: 7
+    keywords: ["初心者", "株式投資", "基礎知識", "投資入門"]
+    lastSuccess: "2025-07-29T17:13:09.929Z"
+    contentTypes: ["educational"]
+
+  - topic: "市場動向解説"
+    successRate: 0.83
+    avgEngagement: 3.5
+    bestTimeSlots: ["14:00-16:00"]
+    totalPosts: 7
+    highEngagementPosts: 5
+    keywords: ["市場動向", "経済指標", "相場分析", "トレンド"]
+    lastSuccess: "2025-07-29T15:31:04.577Z"
+    contentTypes: ["market_commentary"]
+
+  - topic: "長期投資戦略"
+    successRate: 0.88
+    avgEngagement: 4.3
+    bestTimeSlots: ["16:00-18:00"]
+    totalPosts: 6
+    highEngagementPosts: 5
+    keywords: ["長期投資", "複利効果", "ドルコスト平均法", "資産形成"]
+    lastSuccess: "2025-07-30T06:31:41.307Z"
+    contentTypes: ["strategy_sharing", "educational"]
+
+topicInsights:
+  mostSuccessfulTopic: "投資信託選び方"
+  highestEngagementTopic: "NISA活用法"
+  mostConsistentTopic: "初心者向け株式投資"
+  emergingTopic: "長期投資戦略"
+  recommendedFocus: ["NISA活用法", "投資信託選び方", "初心者向け株式投資"]
+
+contentStrategy:
+  optimalTopicMix:
+    educational: 0.6
+    strategy_sharing: 0.25
+    market_commentary: 0.15
+  dailyTopicRotation:
+    morning: ["リスク管理基礎", "長期投資戦略"]
+    afternoon: ["初心者向け株式投資", "市場動向解説"]
+    evening: ["NISA活用法", "投資信託選び方"]
+
+metadata:
+  totalTopics: 6
+  averageSuccessRate: 0.88
+  averageEngagement: 4.13
+  mostSuccessfulTimeSlot: "16:00-18:00"
+  totalAnalyzedPosts: 36
+  highEngagementPostRatio: 0.81
+  lastUpdated: "2025-07-30T19:29:34Z"
+  analysisVersion: "mvp_v1"
+  dataSource: "synthesized_from_decision_patterns"
+  migrationDate: "2025-07-30T19:29:34Z"

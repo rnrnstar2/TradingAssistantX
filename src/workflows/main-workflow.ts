@@ -92,7 +92,7 @@ export class MainWorkflow {
 
         // ステップ3: 結果保存
         console.log('💾 ステップ3: 結果保存開始');
-        await this.saveResults(decision, actionResult);
+        await this.saveResults(decision, actionResult, options);
         console.log('✅ 結果保存完了');
 
         const executionTime = Date.now() - startTime;
@@ -142,7 +142,7 @@ export class MainWorkflow {
       console.log('✅ データ収集完了', {
         profile: !!profile,
         followers: profile?.followersCount || profile?.followers || 0,
-        learningPatterns: learningData.decisionPatterns?.length || 0
+        learningPatterns: Object.keys(learningData.engagementPatterns?.topics || {}).length
       });
 
       // ステップ2: アクション実行（固定アクション使用）
@@ -168,7 +168,7 @@ export class MainWorkflow {
       // ステップ3: 結果保存
       console.log('💾 ステップ3: 結果保存開始');
 
-      await this.saveResults(decision, actionResult);
+      await this.saveResults(decision, actionResult, options);
       console.log('✅ 結果保存完了');
 
       // 実行完了
@@ -269,7 +269,7 @@ export class MainWorkflow {
   }
 
   /**
-   * システムコンテキスト構築
+   * システムコンテキスト構築（MVP最適化版）
    */
   private static buildSystemContext(profile: any): SystemContext {
     return {
@@ -277,7 +277,7 @@ export class MainWorkflow {
         followerCount: profile?.followersCount || profile?.followers || 100,
         lastPostTime: undefined,
         postsToday: profile?.tweetsCount || 0,
-        engagementRate: 2.5
+        engagementRate: this.calculateEngagementRate(profile)
       },
       system: {
         health: {
@@ -289,11 +289,6 @@ export class MainWorkflow {
           today: 0,
           total: 1
         }
-      },
-      market: {
-        trendingTopics: ['投資', '資産形成', '仮想通貨'],
-        volatility: 'medium',
-        sentiment: 'neutral'
       }
     };
   }
@@ -318,6 +313,60 @@ export class MainWorkflow {
     const followers = accountInfo.followers_count || accountInfo.followersCount || accountInfo.followers || 1;
     const tweets = accountInfo.statuses_count || accountInfo.tweetsCount || 1;
     return Math.min((followers / tweets) * 0.1, 10); // 0-10%の範囲
+  }
+
+  /**
+   * 現在時刻に最適な時間帯パターンを取得
+   */
+  private static getCurrentTimeSlotPattern(engagementPatterns: any): string {
+    try {
+      if (!engagementPatterns?.timeSlots) {
+        console.warn('⚠️ エンゲージメントパターンが不備、フォールバック使用');
+        return 'optimal_fallback';
+      }
+
+      const currentHour = new Date().getHours();
+      const timeSlot = this.getTimeSlotForHour(currentHour);
+      const successRate = engagementPatterns.timeSlots[timeSlot]?.successRate || 0;
+      
+      console.log(`📊 時間帯分析: ${timeSlot} (成功率: ${successRate})`);
+      return successRate > 0.8 ? timeSlot : 'optimal_fallback';
+    } catch (error) {
+      console.warn('⚠️ 時間帯パターン取得エラー、フォールバック使用:', error);
+      return 'optimal_fallback';
+    }
+  }
+
+  /**
+   * 現在の時間帯でのエンゲージメント期待値計算
+   */
+  private static calculateCurrentEngagementExpectation(engagementPatterns: any): number {
+    try {
+      if (!engagementPatterns?.timeSlots) {
+        console.warn('⚠️ エンゲージメントパターンが不備、デフォルト値使用');
+        return 2.5;
+      }
+
+      const currentHour = new Date().getHours();
+      const timeSlot = this.getTimeSlotForHour(currentHour);
+      const avgEngagement = engagementPatterns.timeSlots[timeSlot]?.avgEngagement || 2.5;
+      
+      console.log(`📈 エンゲージメント期待値: ${avgEngagement} (${timeSlot})`);
+      return avgEngagement;
+    } catch (error) {
+      console.warn('⚠️ エンゲージメント期待値計算エラー、デフォルト値使用:', error);
+      return 2.5;
+    }
+  }
+
+  /**
+   * 時刻から時間帯スロットを決定
+   */
+  private static getTimeSlotForHour(hour: number): string {
+    if (hour >= 7 && hour < 10) return '07:00-10:00';
+    if (hour >= 12 && hour < 14) return '12:00-14:00';
+    if (hour >= 20 && hour < 22) return '20:00-22:00';
+    return 'other';
   }
 
   /**
@@ -379,21 +428,33 @@ export class MainWorkflow {
       // システムコンテキストの構築
       const systemContext = this.buildSystemContext(profile);
       
-      // 学習データから追加情報を抽出
-      const recentPatterns = learningData.decisionPatterns?.slice(-5) || [];
-      const successfulTopics = recentPatterns
-        .filter((p: any) => p.result?.success && p.result?.engagement_rate > 3)
-        .map((p: any) => p.context?.topic || p.decision?.topic)
-        .filter(Boolean) as string[];
-      
-      // 時間帯情報を追加
-      systemContext.timestamp = new Date().toISOString();
-      systemContext.learningData = {
-        recentTopics: Array.from(new Set(successfulTopics)).slice(0, 3),
-        totalPatterns: learningData.decisionPatterns?.length || 0,
-        avgEngagement: recentPatterns.reduce((sum: number, p: any) => 
-          sum + (p.result?.engagement_rate || 0), 0) / (recentPatterns.length || 1)
-      };
+      // 新構造：直接的で明確な学習データ使用（エラーハンドリング付き）
+      try {
+        const { engagementPatterns, successfulTopics } = learningData || {};
+
+        // 時間帯情報を追加
+        systemContext.timestamp = new Date().toISOString();
+        systemContext.learningData = {
+          recentTopics: successfulTopics?.topics?.slice(0, 3).map(t => t.topic) || [],
+          optimalTimeSlot: this.getCurrentTimeSlotPattern(engagementPatterns),
+          avgEngagement: this.calculateCurrentEngagementExpectation(engagementPatterns)
+        };
+
+        console.log('✅ 学習データ統合完了', {
+          topics: systemContext.learningData.recentTopics.length,
+          timeSlot: systemContext.learningData.optimalTimeSlot,
+          avgEngagement: systemContext.learningData.avgEngagement
+        });
+      } catch (learningDataError) {
+        console.warn('⚠️ 学習データ処理エラー、フォールバック使用:', learningDataError);
+        // グレースフルデグラデーション: フォールバック値
+        systemContext.timestamp = new Date().toISOString();
+        systemContext.learningData = {
+          recentTopics: ['investment', 'finance', 'crypto'],
+          optimalTimeSlot: 'optimal_fallback',
+          avgEngagement: 2.5
+        };
+      }
 
       // コンテンツ生成
       const content = await generateContent({
@@ -843,26 +904,27 @@ export class MainWorkflow {
   /**
    * 結果保存
    */
-  private static async saveResults(decision: any, actionResult: any): Promise<void> {
+  private static async saveResults(decision: any, actionResult: any, options?: any): Promise<void> {
     try {
-      // 新しい単一ファイル形式での保存
+      // post.yaml統合形式での保存（既存のPostData型に準拠）
       await this.getDataManager().savePost({
-        actionType: decision.action as 'post' | 'retweet' | 'quote_tweet' | 'like' | 'follow',
-        content: actionResult.content || actionResult.text || '',
-        tweetId: actionResult.tweetId || actionResult.id,
-        result: {
-          success: actionResult.success,
+        actionType: decision.action,
+        content: actionResult.content,
+        targetTweetId: actionResult.targetTweetId || actionResult.tweetId,
+        result: actionResult.result || {
+          success: actionResult.success || false,
           message: actionResult.message || '',
           data: actionResult.data || {}
         },
-        engagement: actionResult.engagement || actionResult.metrics || {
+        engagement: actionResult.engagement || {
           likes: 0,
           retweets: 0,
           replies: 0
-        }
+        },
+        claudeSelection: actionResult.claudeSelection
       });
 
-      console.log('✅ 結果保存完了（新形式）');
+      console.log('✅ 結果保存完了（post.yaml統合形式）');
     } catch (error) {
       console.error('❌ 結果保存失敗:', error);
       throw error;

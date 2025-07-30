@@ -845,3 +845,53 @@ export const KAITO_API_CONSTANTS = {
   MAX_BATCH_SIZE: 10,
   ROLLBACK_TIMEOUT_MS: 300000 // 5 minutes
 } as const;
+
+// ============================================================================
+// 深夜分析システム型定義 (未実装機能用)
+// ============================================================================
+
+/**
+ * 日次分析結果
+ * 深夜分析で生成される包括的な分析データ
+ */
+export interface DailyInsight {
+  date: string;
+  totalPosts: number;
+  avgEngagement: number;
+  bestPerformingContent: string[];
+  insights: string[];
+  recommendations: string[];
+}
+
+/**
+ * 翌日戦略
+ * 深夜分析に基づく翌日の実行戦略
+ */
+export interface TomorrowStrategy {
+  date: string;
+  validUntil: string;
+  scheduledActions: {
+    time: string;
+    action: string;
+    parameters: Record<string, any>;
+  }[];
+  focusTopics: string[];
+  targetMetrics: {
+    engagement: number;
+    followers: number;
+  };
+}
+
+/**
+ * パフォーマンスサマリー
+ * 期間別のパフォーマンス統計
+ */
+export interface PerformanceSummary {
+  date: string;
+  period: string;
+  totalActions: number;
+  successRate: number;
+  avgEngagement: number;
+  topPerformers: string[];
+  improvements: string[];
+}
