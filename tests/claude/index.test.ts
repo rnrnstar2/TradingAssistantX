@@ -13,12 +13,6 @@ import {
   // Endpoint functions
   generateContent,
   generateQuoteComment,
-  analyzePerformance,
-  analyzeMarketContext,
-  recordExecution,
-  generateLearningInsights,
-  getPerformanceMetrics,
-  generateImprovementSuggestions,
   generateSearchQuery,
   generateRetweetQuery,
   generateLikeQuery,
@@ -49,8 +43,7 @@ import {
 import {
   createMockContentInput,
   createMockAnalysisInput,
-  createMockSearchInput,
-  createMockExecutionRecord
+  createMockSearchInput
 } from '../test-utils/claude-mock-data';
 // モック設定を削除 - 実際のClaude APIを使用
 
@@ -64,14 +57,6 @@ describe('Claude Index Export Integration Tests', () => {
       // Content endpoint
       expect(typeof generateContent).toBe('function');
       expect(typeof generateQuoteComment).toBe('function');
-
-      // Analysis endpoint
-      expect(typeof analyzePerformance).toBe('function');
-      expect(typeof analyzeMarketContext).toBe('function');
-      expect(typeof recordExecution).toBe('function');
-      expect(typeof generateLearningInsights).toBe('function');
-      expect(typeof getPerformanceMetrics).toBe('function');
-      expect(typeof generateImprovementSuggestions).toBe('function');
 
       // Search endpoint
       expect(typeof generateSearchQuery).toBe('function');
@@ -130,8 +115,6 @@ describe('Claude Index Export Integration Tests', () => {
       const expectedExports = [
         // Functions
         'generateContent', 'generateQuoteComment',
-        'analyzePerformance', 'analyzeMarketContext', 'recordExecution',
-        'generateLearningInsights', 'getPerformanceMetrics', 'generateImprovementSuggestions',
         'generateSearchQuery', 'generateRetweetQuery', 'generateLikeQuery', 'generateQuoteQuery',
         
         // Constants
@@ -177,19 +160,6 @@ describe('Claude Index Export Integration Tests', () => {
     }, 30000);
 
 
-    test('型ガードとエンドポイント間の整合性', async () => {
-      const analysisInput = createMockAnalysisInput('market');
-      const analysisResult = await analyzePerformance(analysisInput);
-
-      // Verify type guard works with actual endpoint result
-      expect(isAnalysisResult(analysisResult)).toBe(true);
-      expect(ANALYSIS_TYPES.includes(analysisResult.analysisType)).toBe(true);
-
-      // Cross-validate with constants
-      expect(analysisResult.analysisType).toBe(analysisInput.analysisType);
-      expect(analysisResult.confidence).toBeGreaterThanOrEqual(0);
-      expect(analysisResult.confidence).toBeLessThanOrEqual(1);
-    }, 30000);
 
 
     test('並行処理での統合確認', async () => {
@@ -212,27 +182,6 @@ describe('Claude Index Export Integration Tests', () => {
       });
     }, 30000);
 
-    test('メモリリークと状態管理の確認', async () => {
-      // Add multiple execution records
-      for (let i = 0; i < 10; i++) {
-        recordExecution(createMockExecutionRecord(i % 2 === 0));
-      }
-
-      const metrics1 = getPerformanceMetrics();
-      expect(metrics1.total_executions).toBe(10);
-
-      // Add more records to test memory management
-      for (let i = 0; i < 10; i++) {
-        recordExecution(createMockExecutionRecord(true));
-      }
-
-      const metrics2 = getPerformanceMetrics();
-      expect(metrics2.total_executions).toBe(20);
-
-      // Verify insights generation still works
-      const insights = generateLearningInsights();
-      expect(Array.isArray(insights)).toBe(true);
-    });
 
     test('型の前方互換性確認', () => {
       // Verify that types can be used interchangeably where expected

@@ -14,7 +14,7 @@ export class SessionManager {
   private readonly SESSION_FILE_PATH = path.join(
     process.cwd(),
     "data",
-    "current",
+    "config",
     "twitter-session.yaml"
   );
 

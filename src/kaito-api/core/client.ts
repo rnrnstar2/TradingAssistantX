@@ -52,7 +52,7 @@ interface LikeResult {
   error?: string;
 }
 
-interface AccountInfo {
+export interface AccountInfo {
   id: string;
   username: string;
   displayName: string;

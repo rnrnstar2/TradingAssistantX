@@ -58,14 +58,7 @@ export class MainWorkflow {
       executionId = await this.getDataManager().initializeExecutionCycle();
       console.log(`📋 実行サイクル開始: ${executionId}`);
 
-      // 現在時刻の取得と深夜分析判定
-      const currentTime = new Date();
-      const timeString = `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`;
-      const isDeepNightAnalysisTime = timeString === '23:55';
-      
-      if (isDeepNightAnalysisTime) {
-        console.log('🌙 深夜大規模分析時刻を検出: Step 4実行モード');
-      }
+      // TODO: 深夜分析機能の実装待ち
 
       // ===============================
       // スケジュール実行モード（3ステップ）
@@ -75,10 +68,9 @@ export class MainWorkflow {
         
         // ステップ1: データ収集
         console.log('📊 ステップ1: データ収集開始');
-        const [profile, learningData, currentStatus] = await Promise.all([
+        const [profile, learningData] = await Promise.all([
           this.collectKaitoData(),
-          this.getDataManager().loadLearningData(),
-          this.getDataManager().loadCurrentStatus()
+          this.getDataManager().loadLearningData()
         ]);
         console.log('✅ データ収集完了');
 
@@ -95,7 +87,7 @@ export class MainWorkflow {
         };
         
         // ステップ1で収集したデータを渡す
-        const actionResult = await this.executeAction(decision, { profile, learningData, currentStatus });
+        const actionResult = await this.executeAction(decision, { profile, learningData });
         console.log('✅ アクション実行完了', { action: decision.action, success: actionResult.success });
 
         // ステップ3: 結果保存
@@ -122,49 +114,7 @@ export class MainWorkflow {
           actionDetails = ` - いいね: "${targetPreview}${targetPreview.length >= 50 ? '...' : ''}"`;
         }
         
-        // Step 4: 深夜大規模分析（23:55のみ）
-        if (isDeepNightAnalysisTime) {
-          console.log('🌙 Step 4: 深夜大規模分析開始');
-          try {
-            const analysisResult = await this.executeDeepNightAnalysis(executionId);
-            console.log('✅ Step 4: 深夜大規模分析完了');
-            
-            console.log(`🎉 スケジュール実行完了 (${executionTime}ms)${actionDetails}`);
-            
-            // 結果にanalysisResultを追加
-            return {
-              success: true,
-              executionId,
-              decision,
-              actionResult,
-              deepNightAnalysis: analysisResult, // 新規追加
-              executionTime
-            };
-          } catch (analysisError) {
-            // 深夜分析エラーは警告として扱い、ワークフローは継続
-            console.warn('⚠️ 深夜大規模分析でエラーが発生しましたが、ワークフローは継続します:', analysisError);
-            
-            console.log(`🎉 スケジュール実行完了 (${executionTime}ms)${actionDetails}`);
-            
-            return {
-              success: true, // ワークフロー全体は成功扱い
-              executionId,
-              decision,
-              actionResult,
-              deepNightAnalysis: {
-                success: false,
-                error: analysisError instanceof Error ? analysisError.message : String(analysisError),
-                analysisTime: 0,
-                insights: 0,
-                opportunities: 0,
-                strategies: 0,
-                confidence: 0,
-                filesGenerated: []
-              },
-              executionTime
-            };
-          }
-        }
+        // TODO: Step 4: 深夜大規模分析（23:55のみ） - 実装待ち
         
         console.log(`🎉 スケジュール実行完了 (${executionTime}ms)${actionDetails}`);
 
@@ -184,17 +134,15 @@ export class MainWorkflow {
       // ステップ1: データ収集
       console.log('📊 ステップ1: データ収集開始');
       
-      const [profile, learningData, currentStatus] = await Promise.all([
+      const [profile, learningData] = await Promise.all([
         this.collectKaitoData(),
-        this.getDataManager().loadLearningData(),
-        this.getDataManager().loadCurrentStatus()
+        this.getDataManager().loadLearningData()
       ]);
 
       console.log('✅ データ収集完了', {
         profile: !!profile,
         followers: profile?.followersCount || profile?.followers || 0,
-        learningPatterns: learningData.decisionPatterns.length,
-        currentStatus: !!currentStatus
+        learningPatterns: learningData.decisionPatterns?.length || 0
       });
 
       // ステップ2: アクション実行（固定アクション使用）
@@ -211,12 +159,10 @@ export class MainWorkflow {
         reasoning: '固定アクション実行: 手動実行モード'
       };
 
-      // 決定内容保存
-      await this.getDataManager().saveClaudeOutput('decision', decision);
       console.log('✅ 固定アクション設定完了', { action: decision.action, confidence: decision.confidence });
 
       // ステップ1で収集したデータを渡す
-      const actionResult = await this.executeAction(decision, { profile, learningData, currentStatus });
+      const actionResult = await this.executeAction(decision, { profile, learningData });
       console.log('✅ アクション実行完了', { action: decision.action, success: actionResult.success });
 
       // ステップ3: 結果保存
@@ -245,49 +191,7 @@ export class MainWorkflow {
         actionDetails = ` - いいね: "${targetPreview}${targetPreview.length >= 50 ? '...' : ''}"`;
       }
       
-      // Step 4: 深夜大規模分析（23:55のみ）
-      if (isDeepNightAnalysisTime) {
-        console.log('🌙 Step 4: 深夜大規模分析開始');
-        try {
-          const analysisResult = await this.executeDeepNightAnalysis(executionId);
-          console.log('✅ Step 4: 深夜大規模分析完了');
-          
-          console.log(`🎉 メインワークフロー実行完了 (${executionTime}ms)${actionDetails}`);
-
-          // 結果にanalysisResultを追加
-          return {
-            success: true,
-            executionId,
-            decision,
-            actionResult,
-            deepNightAnalysis: analysisResult, // 新規追加
-            executionTime
-          };
-        } catch (analysisError) {
-          // 深夜分析エラーは警告として扱い、ワークフローは継続
-          console.warn('⚠️ 深夜大規模分析でエラーが発生しましたが、ワークフローは継続します:', analysisError);
-          
-          console.log(`🎉 メインワークフロー実行完了 (${executionTime}ms)${actionDetails}`);
-          
-          return {
-            success: true, // ワークフロー全体は成功扱い
-            executionId,
-            decision,
-            actionResult,
-            deepNightAnalysis: {
-              success: false,
-              error: analysisError instanceof Error ? analysisError.message : String(analysisError),
-              analysisTime: 0,
-              insights: 0,
-              opportunities: 0,
-              strategies: 0,
-              confidence: 0,
-              filesGenerated: []
-            },
-            executionTime
-          };
-        }
-      }
+      // TODO: Step 4: 深夜大規模分析（23:55のみ） - 実装待ち
       
       console.log(`🎉 メインワークフロー実行完了 (${executionTime}ms)${actionDetails}`);
 
@@ -308,13 +212,14 @@ export class MainWorkflow {
       // エラー情報保存
       if (executionId!) {
         try {
-          await this.getDataManager().saveKaitoResponse('workflow-error', {
+          // エラー情報は基本的なログ出力のみ
+          console.error('❌ ワークフローエラー詳細:', {
             error: errorMessage,
             executionTime,
             timestamp: new Date().toISOString()
           });
-        } catch (saveError) {
-          console.error('❌ エラー情報保存失敗:', saveError);
+        } catch (logError) {
+          console.error('❌ ログ出力失敗:', logError);
         }
       }
 
@@ -336,14 +241,6 @@ export class MainWorkflow {
     try {
       const profile = await this.kaitoClient.getAccountInfo();
       
-      // 取得したアカウント情報でcurrent-status.yamlを自動更新
-      try {
-        await this.getDataManager().updateAccountStatus(profile);
-        console.log('✅ アカウント情報でcurrent-status.yaml更新完了');
-      } catch (updateError) {
-        console.warn('⚠️ current-status.yaml更新失敗:', updateError);
-        // 更新エラーがあっても処理継続
-      }
       
       return profile;
     } catch (error) {
@@ -366,12 +263,6 @@ export class MainWorkflow {
         tweets_today: 0
       };
       
-      try {
-        await this.getDataManager().updateAccountStatus(fallbackProfile);
-        console.log('✅ デフォルト値でcurrent-status.yaml更新完了');
-      } catch (updateError) {
-        console.warn('⚠️ デフォルト値でのcurrent-status.yaml更新失敗:', updateError);
-      }
       
       return fallbackProfile;
     }
@@ -380,13 +271,13 @@ export class MainWorkflow {
   /**
    * システムコンテキスト構築
    */
-  private static buildSystemContext(profile: any, currentStatus: any): SystemContext {
+  private static buildSystemContext(profile: any): SystemContext {
     return {
       account: {
         followerCount: profile?.followersCount || profile?.followers || 100,
-        lastPostTime: currentStatus?.system_status?.last_execution,
-        postsToday: profile?.tweetsCount || currentStatus?.account_status?.tweets_today || 0,
-        engagementRate: currentStatus?.account_status?.engagement_rate_24h || 2.5
+        lastPostTime: undefined,
+        postsToday: profile?.tweetsCount || 0,
+        engagementRate: 2.5
       },
       system: {
         health: {
@@ -395,7 +286,7 @@ export class MainWorkflow {
           rate_limits_ok: true
         },
         executionCount: {
-          today: currentStatus?.system_status?.errors_today || 0,
+          today: 0,
           total: 1
         }
       },
@@ -432,7 +323,7 @@ export class MainWorkflow {
   /**
    * アクション実行（switch文での分岐）
    */
-  private static async executeAction(decision: any, collectedData?: { profile: any, learningData: any, currentStatus: any }): Promise<any> {
+  private static async executeAction(decision: any, collectedData?: { profile: any, learningData: any }): Promise<any> {
     const action = decision.action as ActionType;
 
     switch (action) {
@@ -470,24 +361,23 @@ export class MainWorkflow {
   /**
    * 投稿アクション実行
    */
-  private static async executePostAction(decision: any, collectedData?: { profile: any, learningData: any, currentStatus: any }): Promise<any> {
+  private static async executePostAction(decision: any, collectedData?: { profile: any, learningData: any }): Promise<any> {
     try {
       // コンテキスト情報の使用（既に収集済みの場合は再利用）
-      let profile, learningData, currentStatus;
+      let profile, learningData;
       
       if (collectedData) {
-        ({ profile, learningData, currentStatus } = collectedData);
+        ({ profile, learningData } = collectedData);
       } else {
         // 収集されていない場合のみ取得
-        [profile, learningData, currentStatus] = await Promise.all([
+        [profile, learningData] = await Promise.all([
           this.collectKaitoData(),
-          this.getDataManager().loadLearningData(),
-          this.getDataManager().loadCurrentStatus()
+          this.getDataManager().loadLearningData()
         ]);
       }
 
       // システムコンテキストの構築
-      const systemContext = this.buildSystemContext(profile, currentStatus);
+      const systemContext = this.buildSystemContext(profile);
       
       // 学習データから追加情報を抽出
       const recentPatterns = learningData.decisionPatterns?.slice(-5) || [];
@@ -499,7 +389,7 @@ export class MainWorkflow {
       // 時間帯情報を追加
       systemContext.timestamp = new Date().toISOString();
       systemContext.learningData = {
-        recentTopics: [...new Set(successfulTopics)].slice(0, 3),
+        recentTopics: Array.from(new Set(successfulTopics)).slice(0, 3),
         totalPatterns: learningData.decisionPatterns?.length || 0,
         avgEngagement: recentPatterns.reduce((sum: number, p: any) => 
           sum + (p.result?.engagement_rate || 0), 0) / (recentPatterns.length || 1)
@@ -519,8 +409,6 @@ export class MainWorkflow {
         throw new Error(WORKFLOW_CONSTANTS.ERROR_MESSAGES.CLAUDE_CONTENT_GENERATION_FAILED);
       }
 
-      // コンテンツ保存
-      await this.getDataManager().saveClaudeOutput('content', content);
 
       // 投稿実行
       const postResult = await this.kaitoClient.post(content.content);
@@ -532,12 +420,6 @@ export class MainWorkflow {
         throw new Error(errorMessage);
       }
 
-      // 投稿データ保存
-      await this.getDataManager().savePost({
-        content: content.content,
-        result: postResult,
-        timestamp: new Date().toISOString()
-      });
 
       return {
         success: true,
@@ -581,7 +463,7 @@ export class MainWorkflow {
       );
 
       if (!searchResult.success) {
-        return searchResult.waitAction;
+        return 'waitAction' in searchResult ? searchResult.waitAction : { success: false, action: 'wait' };
       }
 
       const otherstweets = searchResult.tweets;
@@ -656,7 +538,7 @@ export class MainWorkflow {
   /**
    * いいねアクション実行
    */
-  private static async executeLikeAction(decision: any, collectedData?: { profile: any, learningData: any, currentStatus: any }): Promise<any> {
+  private static async executeLikeAction(decision: any, collectedData?: { profile: any, learningData: any }): Promise<any> {
     try {
       // 検索クエリの取得
       const targetQuery = decision.parameters?.query;
@@ -680,7 +562,7 @@ export class MainWorkflow {
       );
 
       if (!searchResult.success) {
-        return searchResult.waitAction;
+        return 'waitAction' in searchResult ? searchResult.waitAction : { success: false, action: 'wait' };
       }
 
       const otherstweets = searchResult.tweets;
@@ -778,7 +660,7 @@ export class MainWorkflow {
       );
 
       if (!searchResult.success) {
-        return searchResult.waitAction;
+        return 'waitAction' in searchResult ? searchResult.waitAction : { success: false, action: 'wait' };
       }
 
       const otherstweets = searchResult.tweets;
@@ -830,52 +712,14 @@ export class MainWorkflow {
 
   /**
    * 分析アクション実行
+   * TODO: 深夜分析機能の実装待ち
    */
-  private static async executeAnalyzeAction(decision: any, collectedData?: { profile: any, learningData: any, currentStatus: any }): Promise<any> {
+  private static async executeAnalyzeAction(decision: any, collectedData?: { profile: any, learningData: any }): Promise<any> {
     try {
       console.log('📊 分析アクション実行開始');
       
-      // Claude SDKの深夜大規模分析を実行
-      const { executeDeepNightAnalysis } = await import('../claude/endpoints/analysis-endpoint');
-      const analysisResult = await executeDeepNightAnalysis();
-      
-      console.log(`✅ 分析完了: ${analysisResult.performanceInsights.length}個の洞察, ${analysisResult.marketOpportunities.length}個の機会`);
-      
-      // データ管理システムに結果保存
-      const dataManager = this.getDataManager();
-      
-      // 今日の日付でinsights保存
-      const dailyInsights = {
-        date: analysisResult.analysisDate,
-        performancePatterns: this.convertToPerformancePatterns(analysisResult.performanceInsights),
-        marketOpportunities: analysisResult.marketOpportunities,
-        optimizationInsights: this.convertToOptimizationInsights(analysisResult.optimizationStrategies),
-        generatedAt: new Date().toISOString(),
-        analysisVersion: 'v1.0'
-      };
-      
-      await dataManager.saveDailyInsights(dailyInsights);
-      
-      // 翌日戦略保存
-      const tomorrowStrategy = {
-        ...analysisResult.tomorrowStrategy,
-        targetDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        generatedAt: new Date().toISOString(),
-        validUntil: new Date(new Date().getTime() + 48 * 60 * 60 * 1000).toISOString()
-      };
-      await dataManager.saveTomorrowStrategy(tomorrowStrategy);
-      
-      return {
-        success: true,
-        action: WORKFLOW_CONSTANTS.ACTIONS.ANALYZE,
-        analysisDate: analysisResult.analysisDate,
-        insights: analysisResult.performanceInsights.length,
-        opportunities: analysisResult.marketOpportunities.length,
-        strategies: analysisResult.optimizationStrategies.length,
-        confidence: analysisResult.confidence,
-        result: analysisResult,
-        timestamp: new Date().toISOString()
-      };
+      // TODO: 深夜分析機能の実装待ち
+      throw new Error('分析アクションは未実装です');
 
     } catch (error) {
       console.error('❌ 分析アクション失敗:', error);
@@ -909,7 +753,7 @@ export class MainWorkflow {
       );
 
       if (!searchResult.success) {
-        return searchResult.waitAction;
+        return 'waitAction' in searchResult ? searchResult.waitAction : { success: false, action: 'wait' };
       }
 
       const otherstweets = searchResult.tweets;
@@ -1001,31 +845,27 @@ export class MainWorkflow {
    */
   private static async saveResults(decision: any, actionResult: any): Promise<void> {
     try {
-      // Kaito応答保存
-      await this.getDataManager().saveKaitoResponse('action-result', actionResult);
-
-      // 決定結果記録
-      await this.getDataManager().saveDecisionResult(decision, {
-        success: actionResult.success,
-        engagement_rate: 0, // 実際のメトリクスは後で更新
-        timestamp: new Date().toISOString()
+      // 新しい単一ファイル形式での保存
+      await this.getDataManager().savePost({
+        actionType: decision.action as 'post' | 'retweet' | 'quote_tweet' | 'like' | 'follow',
+        content: actionResult.content || actionResult.text || '',
+        tweetId: actionResult.tweetId || actionResult.id,
+        result: {
+          success: actionResult.success,
+          message: actionResult.message || '',
+          data: actionResult.data || {}
+        },
+        engagement: actionResult.engagement || actionResult.metrics || {
+          likes: 0,
+          retweets: 0,
+          replies: 0
+        }
       });
 
-      // 実行サマリー更新
-      const summary = await this.getDataManager().getCurrentExecutionData();
-      summary.summary.metrics.totalActions += 1;
-      
-      if (actionResult.success) {
-        summary.summary.metrics.successCount += 1;
-      } else {
-        summary.summary.metrics.errorCount += 1;
-      }
-
-      await this.getDataManager().updateExecutionSummary(summary.summary);
-
+      console.log('✅ 結果保存完了（新形式）');
     } catch (error) {
-      console.error('❌ 結果保存エラー:', error);
-      // 結果保存のエラーは致命的でないためスロー
+      console.error('❌ 結果保存失敗:', error);
+      throw error;
     }
   }
 
@@ -1116,225 +956,9 @@ export class MainWorkflow {
 
   /**
    * 深夜大規模分析の実行（Step 4）
-   * 23:55時のみ実行される特別処理
+   * TODO: 深夜分析機能の実装待ち
    */
   private static async executeDeepNightAnalysis(executionId: string): Promise<any> {
-    const analysisStartTime = Date.now();
-    
-    try {
-      console.log(`🌙 深夜大規模分析開始 - ExecutionID: ${executionId}`);
-      
-      // 1. 深夜大規模分析の実行（TASK-001で実装されるメソッドを使用）
-      const { executeDeepNightAnalysis } = await import('../claude/endpoints/analysis-endpoint');
-      const analysisResult = await executeDeepNightAnalysis();
-      
-      console.log(`📊 大規模分析完了: ${analysisResult.performanceInsights.length}個の洞察, ${analysisResult.marketOpportunities.length}個の機会`);
-      
-      // 2. 分析結果の保存（TASK-002で実装されるメソッドを使用）
-      const dataManager = this.getDataManager();
-      
-      // 日次分析結果の保存
-      const dailyInsights = {
-        date: analysisResult.analysisDate,
-        performancePatterns: this.convertToPerformancePatterns(analysisResult.performanceInsights),
-        marketOpportunities: analysisResult.marketOpportunities.map((opportunity: any) => ({
-          ...opportunity,
-          recommendedAction: opportunity.recommendedAction || 'post',
-          expectedEngagement: opportunity.expectedEngagement || 0,
-          timeframeWindow: opportunity.timeframeWindow || '24h'
-        })),
-        optimizationInsights: this.convertToOptimizationInsights(analysisResult.optimizationStrategies),
-        generatedAt: new Date().toISOString(),
-        analysisVersion: 'v1.0'
-      };
-      
-      await dataManager.saveDailyInsights(dailyInsights);
-      console.log('✅ 日次分析結果保存完了');
-      
-      // 3. 翌日戦略の保存
-      const tomorrowStrategyWithDefaults = {
-        ...analysisResult.tomorrowStrategy,
-        targetDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        generatedAt: new Date().toISOString(),
-        validUntil: new Date(new Date().getTime() + 48 * 60 * 60 * 1000).toISOString(),
-        priorityActions: (analysisResult.tomorrowStrategy.priorityActions || []).map((action: any) => ({
-          ...action,
-          priority: action.priority || 'medium' as 'high' | 'medium' | 'low'
-        }))
-      };
-      await dataManager.saveTomorrowStrategy(tomorrowStrategyWithDefaults);
-      console.log('✅ 翌日戦略保存完了');
-      
-      // 4. パフォーマンス集計の生成・保存
-      const performanceSummary = await this.generatePerformanceSummary(analysisResult);
-      await dataManager.savePerformanceSummary(performanceSummary);
-      console.log('✅ パフォーマンス集計保存完了');
-      
-      // 5. 実行ログ保存
-      await dataManager.saveKaitoResponse('deep-night-analysis-result', {
-        executionId,
-        analysisTime: Date.now() - analysisStartTime,
-        insights: analysisResult.performanceInsights.length,
-        opportunities: analysisResult.marketOpportunities.length,
-        strategiesGenerated: analysisResult.optimizationStrategies.length,
-        confidence: analysisResult.confidence,
-        timestamp: new Date().toISOString()
-      });
-      
-      const totalTime = Date.now() - analysisStartTime;
-      console.log(`🎉 深夜大規模分析完全完了 (${totalTime}ms) - 翌日戦略準備完了`);
-      
-      return {
-        success: true,
-        analysisTime: totalTime,
-        insights: analysisResult.performanceInsights.length,
-        opportunities: analysisResult.marketOpportunities.length,
-        strategies: analysisResult.optimizationStrategies.length,
-        confidence: analysisResult.confidence,
-        filesGenerated: [
-          `daily-insights-${analysisResult.analysisDate.replace(/-/g, '')}.yaml`,
-          'tomorrow-strategy.yaml',
-          `performance-summary-${analysisResult.analysisDate.replace(/-/g, '')}.yaml`
-        ]
-      };
-      
-    } catch (error) {
-      const totalTime = Date.now() - analysisStartTime;
-      console.error(`❌ 深夜大規模分析エラー (${totalTime}ms):`, error);
-      
-      // エラー情報保存
-      await this.getDataManager().saveKaitoResponse('deep-night-analysis-error', {
-        executionId,
-        error: error instanceof Error ? error.message : String(error),
-        analysisTime: totalTime,
-        timestamp: new Date().toISOString()
-      });
-      
-      // エラーでもワークフローは継続（重要）
-      console.warn('⚠️ 深夜大規模分析は失敗しましたが、ワークフローは継続します');
-      
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-        analysisTime: totalTime
-      };
-    }
-  }
-
-  /**
-   * パフォーマンス洞察をパフォーマンスパターンに変換
-   */
-  private static convertToPerformancePatterns(insights: any[]): any[] {
-    return insights.map(insight => ({
-      timeSlot: insight.timeSlot,
-      successRate: insight.successRate,
-      optimalTopics: insight.optimalTopics || [],
-      avgEngagementRate: insight.avgEngagementRate || 0,
-      sampleSize: insight.sampleSize || 1
-    }));
-  }
-
-  /**
-   * 最適化戦略を最適化洞察に変換
-   */
-  private static convertToOptimizationInsights(strategies: any[]): any[] {
-    return strategies.map(strategy => ({
-      pattern: strategy.pattern,
-      implementation: strategy.implementation,
-      expectedImpact: strategy.expectedImpact,
-      confidence: strategy.confidence || 0.5,
-      priority: this.calculatePriority(strategy.confidence)
-    }));
-  }
-
-  /**
-   * 信頼度から優先度を計算
-   */
-  private static calculatePriority(confidence: number): 'high' | 'medium' | 'low' {
-    if (confidence >= 0.8) return 'high';
-    if (confidence >= 0.6) return 'medium';
-    return 'low';
-  }
-
-  /**
-   * パフォーマンス集計の生成
-   */
-  private static async generatePerformanceSummary(analysisResult: any): Promise<any> {
-    const today = new Date().toISOString().split('T')[0];
-    
-    // 今日の実行データから集計情報を生成
-    const currentData = await this.getDataManager().getCurrentExecutionData();
-    
-    return {
-      date: today,
-      totalActions: currentData.summary?.metrics?.totalActions || 0,
-      successfulActions: currentData.summary?.metrics?.successCount || 0,
-      successRate: this.calculateSuccessRate(
-        currentData.summary?.metrics?.successCount || 0,
-        currentData.summary?.metrics?.totalActions || 1
-      ),
-      engagementMetrics: {
-        totalLikes: 0, // 実際のメトリクスは今後実装
-        totalRetweets: 0,
-        totalReplies: 0,
-        avgEngagementRate: analysisResult.tomorrowStrategy?.expectedMetrics?.targetEngagementRate || 0
-      },
-      followerGrowth: analysisResult.tomorrowStrategy?.expectedMetrics?.targetFollowerGrowth || 0,
-      topPerformingActions: this.extractTopActions(analysisResult.performanceInsights),
-      insights: this.generateSummaryInsights(analysisResult),
-      generatedAt: new Date().toISOString()
-    };
-  }
-
-  /**
-   * 成功率の計算
-   */
-  private static calculateSuccessRate(successCount: number, totalCount: number): number {
-    if (totalCount === 0) return 0;
-    return Math.round((successCount / totalCount) * 100) / 100;
-  }
-
-  /**
-   * トップパフォーマンスアクションの抽出
-   */
-  private static extractTopActions(insights: any[]): any[] {
-    return insights
-      .filter(insight => insight.successRate > 0.7)
-      .map(insight => ({
-        action: 'mixed', // 実際の分析結果に基づいて決定
-        topic: insight.optimalTopics?.[0] || 'general',
-        engagementRate: insight.avgEngagementRate || 0
-      }))
-      .slice(0, 3);
-  }
-
-  /**
-   * サマリー洞察の生成
-   */
-  private static generateSummaryInsights(analysisResult: any): string[] {
-    const insights: string[] = [];
-    
-    // パフォーマンス洞察から主要な発見をテキスト化
-    if (analysisResult.performanceInsights?.length > 0) {
-      const bestTimeSlot = analysisResult.performanceInsights
-        .sort((a: any, b: any) => b.successRate - a.successRate)[0];
-      insights.push(`最高成功率時間帯: ${bestTimeSlot.timeSlot} (${Math.round(bestTimeSlot.successRate * 100)}%)`);
-    }
-    
-    // 市場機会から主要な発見をテキスト化
-    if (analysisResult.marketOpportunities?.length > 0) {
-      const topOpportunity = analysisResult.marketOpportunities
-        .sort((a: any, b: any) => b.relevance - a.relevance)[0];
-      insights.push(`注目トピック: ${topOpportunity.topic} (関連度${Math.round(topOpportunity.relevance * 100)}%)`);
-    }
-    
-    // 最適化戦略から主要な推奨事項をテキスト化
-    if (analysisResult.optimizationStrategies?.length > 0) {
-      const topStrategy = analysisResult.optimizationStrategies
-        .sort((a: any, b: any) => b.confidence - a.confidence)[0];
-      insights.push(`推奨改善: ${topStrategy.implementation}`);
-    }
-    
-    return insights;
+    throw new Error('Deep night analysis is not implemented yet');
   }
 }

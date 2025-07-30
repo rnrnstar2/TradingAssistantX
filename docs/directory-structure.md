@@ -205,58 +205,19 @@ TradingAssistantX/
 data/
 ├── config/                           # 設定ファイル（MVP最小構成）
 │   ├── system.yaml                   # システム設定（実行間隔・タイムゾーン等）
-│   └── schedule.yaml                 # スケジュール設定（時刻別アクション）
+│   ├── schedule.yaml                 # スケジュール設定（時刻別アクション）
+│   └── twitter-session.yaml          # KaitoAPI認証セッション（24時間有効）
 │
 ├── current/                          # 🔄 現在実行サイクル（実行毎更新）
 │   ├── execution-YYYYMMDD-HHMM/      # タイムスタンプ付き実行ディレクトリ
-│   │   ├── claude-outputs/           # Claude各エンドポイント結果
-│   │   │   ├── content.yaml          # generateContent()結果
-│   │   │   ├── analysis.yaml         # analyzePerformance()結果
-│   │   │   └── search-query.yaml     # 検索クエリ結果（※現在未使用）
-│   │   ├── kaito-responses/          # Kaito API応答（最新20件制限）
-│   │   │   ├── account-info.yaml
-│   │   │   ├── post-result.yaml
-│   │   │   └── engagement-data.yaml
-│   │   ├── posts/                    # 投稿データ（1投稿1ファイル）
-│   │   │   ├── post-TIMESTAMP.yaml
-│   │   │   └── post-index.yaml       # 投稿一覧インデックス
-│   │   └── execution-summary.yaml     # 実行サマリー
-│   ├── active-session.yaml           # 現在セッション状況
-│   └── tomorrow-strategy.yaml         # 🌙 翌日実行戦略（深夜23:55分析で生成）
+│   │   └── post.yaml                 # 投稿データ（全実行情報統合）
+│   └── strategy-analysis.yaml        # 🌙 戦略分析結果（深夜23:55分析で生成）
 │
 ├── history/                          # 📚 過去実行サイクル（アーカイブ）
 │   └── YYYY-MM/                      # 月別フォルダ
 │       └── DD-HHMM/                  # 日時別実行履歴（currentと同構造）
 │
-├── context/                          # 🔄 実行コンテキスト
-│   ├── current-status.yaml           # 現在の実行状況（アカウント・システム・レート制限）
-│   └── session-memory.yaml           # セッション間引き継ぎ（現在セッション・実行履歴）
-│
-└── learning/                         # 📊 学習用データ格納
-    ├── daily-insights-YYYYMMDD.yaml  # 🌙 日次分析結果（23:55生成）
-    ├── performance-summary-YYYYMMDD.yaml # 日次パフォーマンス集計
-    ├── success-strategies.yaml       # 成功戦略の学習データ
-    ├── action-results.yaml           # アクション結果の学習データ
-    └── 🔄 decision-patterns.yaml (旧構造) # 段階的廃止予定（意味のないデータ）
+└── learning/                         # 📊 学習用データ格納（累積更新・MVP版）
+    ├── engagement-patterns.yaml      # エンゲージメント分析（時間帯・形式・パターン統合）
+    └── successful-topics.yaml        # 成功したトピック集計（投資教育特化）
 ```
-
-### データ管理アーキテクチャ
-- **ルートレベル配置**: コードとデータの明確な分離
-- **src/shared/data-manager.ts**: ルートレベル/data/にアクセスするデータ管理クラス
-- **階層別サイズ制限**: current: 1MB、learning: 10MB
-- **自動アーカイブ**: currentからhistoryへの定期移動
-
-### 🌙 深夜分析システム（新設計）
-- **実行時刻**: 毎日23:55（日次分析の最適化タイミング）
-- **分析対象**: 1日分の実行データ（data/current/及びdata/learning/）
-- **生成ファイル**:
-  - `daily-insights-YYYYMMDD.yaml`: 時間帯別成功率・トピック効果・市場機会分析
-  - `performance-summary-YYYYMMDD.yaml`: 日次パフォーマンス集計
-  - `tomorrow-strategy.yaml`: 翌日実行戦略（07:00以降自動適用）
-- **学習データ進化**: 従来の意味のない反復データから実用的な洞察データへ移行
-
-## 今後の計画
-
-### 次期改善予定
-- TypeScript型定義の整合性改善（詳細: [claude.md](./claude.md)、[kaito-api.md](./kaito-api.md)）
-- テストカバレッジの向上

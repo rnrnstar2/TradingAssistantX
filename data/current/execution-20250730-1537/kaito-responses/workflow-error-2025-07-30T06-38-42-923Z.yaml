@@ -1,6 +1,0 @@
-timestamp: '2025-07-30T06:38:42.923Z'
-type: workflow-error
-data:
-  error: 'REQUEST_TIMEOUT: Request timeout in retweet'
-  executionTime: 76131
-  timestamp: '2025-07-30T06:38:42.923Z'

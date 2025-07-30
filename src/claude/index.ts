@@ -4,7 +4,7 @@
  * 
  * 提供機能:
  * - コンテンツ生成エンドポイント: generateContent(), generateQuoteComment()
- * - 分析エンドポイント: analyzePerformance(), analyzeMarketContext(), recordExecution()
+ * - 分析エンドポイント: （深夜分析機能実装時に追加予定）
  * - 選択エンドポイント: selectOptimalTweet() - Claude AI を使用した最適ツイート選択
  * 
  * 設計原則:
@@ -23,15 +23,6 @@ export {
   generateQuoteComment
 } from './endpoints/content-endpoint';
 
-// Analysis endpoint
-export { 
-  analyzePerformance,
-  analyzeMarketContext,
-  recordExecution,
-  generateLearningInsights,
-  getPerformanceMetrics,
-  generateImprovementSuggestions
-} from './endpoints/analysis-endpoint';
 
 // Selection endpoint
 export { 
@@ -75,12 +66,6 @@ export type {
   CompactTweetCandidate
 } from './types';
 
-// Additional analysis types - 追加分析型
-export type {
-  MarketContext,
-  MarketOpportunity,
-  MarketAnalysisInput
-} from './endpoints/analysis-endpoint';
 
 // ============================================================================
 // CONSTANTS & UTILITIES EXPORT - 定数・ユーティリティエクスポート

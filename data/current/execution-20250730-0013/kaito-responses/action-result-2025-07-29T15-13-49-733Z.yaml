@@ -1,7 +1,0 @@
-timestamp: '2025-07-29T15:13:49.733Z'
-type: action-result
-data:
-  success: true
-  action: wait
-  reason: No target tweet ID for retweet
-  timestamp: '2025-07-29T15:13:49.732Z'

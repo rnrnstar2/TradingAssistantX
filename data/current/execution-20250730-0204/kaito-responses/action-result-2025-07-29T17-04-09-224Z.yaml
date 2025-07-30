@@ -1,8 +1,0 @@
-timestamp: '2025-07-29T17:04:09.224Z'
-type: action-result
-data:
-  success: true
-  action: wait
-  reason: 'No tweets found for query: 投資情報 lang:ja'
-  query: 投資情報 lang:ja
-  timestamp: '2025-07-29T17:04:09.224Z'

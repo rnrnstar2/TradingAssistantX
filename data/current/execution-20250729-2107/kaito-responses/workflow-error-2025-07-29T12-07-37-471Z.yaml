@@ -1,8 +1,0 @@
-timestamp: '2025-07-29T12:07:37.472Z'
-type: workflow-error
-data:
-  error: >-
-    UNKNOWN_ERROR: Unknown error in post: Authentication failed: Login failed:
-    V2 login failed
-  executionTime: 5091
-  timestamp: '2025-07-29T12:07:37.471Z'

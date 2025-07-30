@@ -24,7 +24,7 @@ X（旧Twitter）上での投資教育コンテンツを自動投稿し、高品
 - **引用リツイート (quote_tweet)**: 独自視点による価値追加
 - **いいね (like)**: 関係構築・品質評価
 - **フォロー (follow)**: 投資教育関連アカウントとのネットワーク構築
-- **分析 (analyze)**: 日次パフォーマンス分析・翌日戦略生成（23:55限定）
+- **分析 (analyze)**: 深夜分析・翌日戦略生成（23:55限定）
 - **待機 (wait)**: 最適タイミング調整
 
 ## 🏗️ システムアーキテクチャ
@@ -36,10 +36,8 @@ X（旧Twitter）上での投資教育コンテンツを自動投稿し、高品
 
 **アクション実行詳細**:
 - **通常アクション（post, retweet, like等）**: 通常の3ステップで完了
-- **analyzeアクション（23:55のみ）**: 以下の特別処理を実行
-  - 本日の全実行データを集約
-  - Claude SDK analyzePerformanceエンドポイント呼び出し
-  - 翌日戦略・日次分析・パフォーマンス集計ファイル生成
+- **analyzeアクション（23:55のみ）**: 深夜分析を実行
+  - **詳細仕様**: [docs/deep-night-analysis.md](docs/deep-night-analysis.md)
 
 ### 核心コンポーネント
 - **Claude Code SDK**: AI判断・コンテンツ生成
@@ -53,14 +51,13 @@ X（旧Twitter）上での投資教育コンテンツを自動投稿し、高品
 
 ### エンドポイント別設計
 - `generateContent`: 教育コンテンツ生成
-- `selectOptimalTweet`: **AI最適選択**（投資教育価値・信頼性・エンゲージメント総合判断）
+- `selectOptimalTweet`: AI最適選択（投資教育価値・信頼性・エンゲージメント総合判断）
 - `generateQuoteComment`: 価値追加コメント生成
 - `analyzePerformance`: 実行結果分析・戦略最適化
 
 ### 深夜分析システム
-- **実行時刻**: 毎日23:55（15-30分処理）
-- **分析対象**: 1日分の全実行データ
-- **成果物**: 翌日戦略ファイル（時間帯別最適化）
+- **実行時刻**: 毎日23:55
+- **詳細仕様**: [docs/deep-night-analysis.md](docs/deep-night-analysis.md)
 
 ## 🌐 KaitoTwitterAPI連携
 

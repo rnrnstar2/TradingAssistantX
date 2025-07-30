@@ -1,8 +1,0 @@
-timestamp: '2025-07-29T16:42:24.485Z'
-type: workflow-error
-data:
-  error: >-
-    UNKNOWN_ERROR: Unknown error in quoteTweet: HTTP 400: Bad Request -
-    {"detail":"tweet_text is required"}
-  executionTime: 11534
-  timestamp: '2025-07-29T16:42:24.484Z'

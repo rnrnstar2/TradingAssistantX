@@ -26,7 +26,9 @@ export enum ActionType {
   POST = 'post',
   RETWEET = 'retweet',
   QUOTE_TWEET = 'quote_tweet',
-  LIKE = 'like'
+  LIKE = 'like',
+  FOLLOW = 'follow',
+  ANALYZE = 'analyze'
 }
 
 /**
@@ -42,16 +44,11 @@ export interface ExecutionStats {
 }
 
 /**
- * 拡張された実行統計 - 深夜大規模分析統計を含む
+ * 拡張された実行統計
+ * TODO: 深夜大規模分析統計 - 実装待ち
  */
 export interface ExtendedExecutionStats extends ExecutionStats {
-  deepNightAnalysis?: {
-    totalAttempts: number;
-    successfulAnalysis: number;
-    averageAnalysisTime: number;
-    lastAnalysisDate: string;
-    lastAnalysisSuccess: boolean;
-  };
+  // TODO: deepNightAnalysis - 実装待ち
 }
 
 /**

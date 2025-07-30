@@ -84,16 +84,7 @@ export interface WorkflowResult {
   executionId: string;
   decision: any;
   actionResult?: any;
-  deepNightAnalysis?: {  // 新規追加
-    success: boolean;
-    analysisTime: number;
-    insights: number;
-    opportunities: number;
-    strategies: number;
-    confidence: number;
-    filesGenerated: string[];
-    error?: string;
-  };
+  // TODO: deepNightAnalysis - 深夜分析機能の実装待ち
   error?: string;
   executionTime: number;
 }

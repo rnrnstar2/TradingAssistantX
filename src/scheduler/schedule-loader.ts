@@ -259,6 +259,17 @@ export class ScheduleLoader {
         // likeアクションには特別な検証なし
         break;
         
+      case 'follow':
+        // followアクションにはtarget_queryが推奨
+        if (!item.target_query) {
+          console.warn(`⚠️  スケジュールアイテム[${index}]: ${item.action}アクションですがtarget_queryが未設定です`);
+        }
+        break;
+        
+      case 'analyze':
+        // analyzeアクションには特別な検証なし（深夜分析専用）
+        break;
+        
       default:
         throw new ConfigValidationError(
           `スケジュールアイテム[${index}]: 未対応のアクション種別です: ${item.action}`

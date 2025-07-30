@@ -1,8 +1,0 @@
-timestamp: '2025-07-29T12:49:19.705Z'
-type: workflow-error
-data:
-  error: >-
-    UNKNOWN_ERROR: Unknown error in post: Session authentication required.
-    Please ensure X_USERNAME, X_PASSWORD, and X_EMAIL are properly configured.
-  executionTime: 50948
-  timestamp: '2025-07-29T12:49:19.705Z'

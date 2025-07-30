@@ -1,8 +1,0 @@
-timestamp: '2025-07-29T15:35:01.322Z'
-type: workflow-error
-data:
-  error: >-
-    UNKNOWN_ERROR: Unknown error in retweet: HTTP 400: Bad Request -
-    {"detail":"login_cookies is required"}
-  executionTime: 12917
-  timestamp: '2025-07-29T15:35:01.322Z'

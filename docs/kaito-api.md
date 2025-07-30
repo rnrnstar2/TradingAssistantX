@@ -9,89 +9,53 @@ TwitterAPI.io統合による投資教育コンテンツ自動投稿システム
 - **制限**: 200 QPS
 - **ベースURL**: `https://api.twitterapi.io`
 
-## 🚨 重要な仕様変更（2025年7月更新）
-
-### TwitterAPI.io created_at フィールド仕様
-**問題**: TwitterAPI.ioのドキュメントではフィールド名が`createdAt`（キャメルケース）だが、レスポンスで一部ツイートは空になることがある。
-
-**対応**: 
-- フィールド名優先順位: `apiTweet.createdAt` → `apiTweet.created_at`（フォールバック）
-- 空の場合は現在時刻を使用
-- 警告は初回のみ表示（頻度制限実装）
-
 ## 🚀 クイックスタート
 
 ### 環境変数設定
 
-```bash
-# 必須: APIキー認証
-KAITO_API_TOKEN=your_twitterapi_io_token
+**必須**: `KAITO_API_TOKEN` - TwitterAPI.ioのAPIトークン
 
-# オプション: 投稿機能用（V2ログイン認証）
-X_USERNAME=your_twitter_username
-X_EMAIL=your_twitter_email  
-X_PASSWORD=your_twitter_password
-X_TOTP_SECRET=your_twitter_totp_secret
+**投稿機能用（オプション）**: 
+- `X_USERNAME`, `X_EMAIL`, `X_PASSWORD`, `X_TOTP_SECRET` - V2ログイン認証用
 
-# プロキシ設定は data/config/proxies.yaml で管理
-```
+**プロキシ設定**: `data/config/proxies.yaml`で管理（V2ログイン時必須）
+
+### MVP重点機能: 投稿エンゲージメント分析
+
+MVPでは`getTweetsByIds`エンドポイントを使用して投稿エンゲージメントの最新メトリクスを一括取得します。
+
+**重要パラメータ**:
+- **最大取得数**: 100個のTweet IDまで一度に処理可能
+- **必須フィールド**: `tweet.fields=public_metrics,created_at,id,text`
+- **認証レベル**: APIキーのみ（読み取り専用操作）
+- **用途**: 最新50件の自分の投稿のエンゲージメント率計算・分析
+
+詳細な実装方法は[公式ドキュメント](https://docs.twitterapi.io/api-reference/endpoint/get_tweet_by_ids)を参照してください。
 
 ### アカウント情報設定
 
-**環境変数**: `X_USERNAME`（既存のTwitter認証用環境変数を使用）
+**環境変数**: `X_USERNAME` - Twitter認証用環境変数を使用
 
-**動作**:
-- `X_USERNAME`が設定されている場合: TwitterAPI.ioの`/twitter/user/info`エンドポイントで実際のアカウント情報を取得
-- 空または未設定の場合: デフォルトアカウント情報を使用（フォロワー数0等）
-- APIエラー時: 自動的にデフォルト値にフォールバック
+**動作モード**:
+- **設定済み**: `/twitter/user/info`エンドポイントで実際のアカウント情報を取得
+- **未設定**: デフォルト値を使用（フォロワー数0等）
+- **APIエラー**: 自動的にデフォルト値にフォールバック
 
-**ログ例**:
-```
-🔍 環境変数からユーザー名を取得: your_twitter_handle
-✅ 実際のアカウント情報を取得完了
-✅ アカウント情報取得完了: { followers: 1234 }
-```
+詳細な実装は[ユーザー情報取得](https://twitterapi.io/api-reference/endpoint/user-info)の公式ドキュメントを参照してください。
 
-### 実装例
+### 基本的な使用方法
 
-```typescript
-import { KaitoTwitterAPIClient } from './kaito-api';
+**初期化**: 環境変数`KAITO_API_TOKEN`にTwitterAPI.ioトークンを設定
+**認証レベル**: 
+- 読み取り専用操作（検索、情報取得、ツイート詳細取得）→ APIキーのみ
+- 投稿・アクション操作（ツイート、いいね、フォロー等）→ V2ログイン必須
 
-// クライアント初期化
-const client = new KaitoTwitterAPIClient({
-  apiKey: process.env.KAITO_API_TOKEN,
-  qpsLimit: 200,
-  costTracking: true
-});
+**主な操作**:
+- ユーザー情報取得、ツイート検索、トレンド取得 → 公式ドキュメント参照
+- 投稿エンゲージメント分析用のツイート詳細一括取得 → `getTweetsByIds`使用
+- 投稿・エンゲージメント操作 → V2ログイン後に各種アクション実行
 
-// 認証
-await client.authenticate();
-
-// === 読み取り専用操作（APIキーのみ） ===
-const userInfo = await client.getUserInfo('elonmusk');
-const searchResults = await client.searchTweets('投資教育', { max_results: 10 });
-const trends = await client.getTrends();
-
-// === 投稿・アクション操作（V2ログイン必須） ===
-// 環境変数設定済みの場合、投稿時に自動でV2ログイン実行
-const postResult = await client.post('投資教育コンテンツ');
-const retweetResult = await client.retweet('tweetId');
-const likeResult = await client.like('tweetId');
-const quoteTweet = await client.quoteTweet('tweetId', 'コメント');
-const followResult = await client.follow('userId');
-
-// エラーハンドリング
-try {
-  await client.post('投稿内容');
-} catch (error) {
-  if (error.message.includes('Rate limit exceeded')) {
-    // レート制限対応
-  } else if (error.message.includes('Authentication failed')) {
-    // 再認証
-    await client.authenticate();
-  }
-}
-```
+具体的な実装方法は各エンドポイントの公式ドキュメントを参照してください。
 
 ## 📁 ディレクトリ構造
 
@@ -103,8 +67,7 @@ try {
 
 ### 🔐 認証関連
 - **V2ログイン**: `/twitter/user_login_v2` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/user_login_v2)
-  - レスポンス形式: `{ "status": "success", "message": "login success.", "login_cookies": "..." }`
-  - 注意: `status`フィールドと`login_cookies`（複数形）を使用
+  - 注意: レスポンスは`status`フィールドと`login_cookies`（複数形）を使用
 - **ユーザー情報取得**: `/twitter/user/info` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/user-info)
 - **マイアカウント情報**: `/twitter/my/account_info` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/my-account-info)
 
@@ -123,6 +86,7 @@ try {
 
 ### 🔍 検索・データ取得
 - **高度検索**: `/twitter/tweet/advanced_search` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/tweet-advanced-search)
+- **ツイートID一括取得**: `/twitter/tweet/get_by_ids` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/get_tweet_by_ids)
 - **トレンド**: `/twitter/trends` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/trends)
 - **ユーザー検索**: `/twitter/user/search` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/user-search)
 
@@ -136,13 +100,15 @@ try {
 3. **プロキシ設定**: V2ログインにはプロキシが必須
 4. **レート制限**: 200 QPS、各エンドポイント別制限あり
 5. **レスポンス形式**: V2ログインのレスポンスは`status`と`login_cookies`（複数形）を使用
+6. **getTweetsByIds制限**: 
+   - 最大100個のTweet IDを一度に取得可能
+   - `tweet.fields`パラメータで取得メトリクスを指定（`public_metrics`必須）
+   - APIキーのみで実行可能（認証レベル: 読み取り専用）
 
 ## 🧪 テスト
 
-```bash
-# 単体・統合テスト
-npm test kaito-api
+**単体テスト**: KaitoAPIクライアントの各エンドポイント動作確認
+**統合テスト**: ワークフローとの連携動作確認
+**実APIテスト**: APIトークン設定後の実環境テスト
 
-# 実API動作確認（APIトークン必須）
-KAITO_API_TOKEN=your_token npm run test:real-api
-```
+詳細なテストコマンドはpackage.jsonの`scripts`セクションを参照してください。

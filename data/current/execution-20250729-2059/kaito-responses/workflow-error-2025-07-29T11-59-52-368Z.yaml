@@ -1,6 +1,0 @@
-timestamp: '2025-07-29T11:59:52.368Z'
-type: workflow-error
-data:
-  error: Content generation failed after all retry attempts
-  executionTime: 7832
-  timestamp: '2025-07-29T11:59:52.367Z'

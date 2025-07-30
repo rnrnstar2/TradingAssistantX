@@ -24,9 +24,9 @@ Claude Code SDKは、TradingAssistantXの**知的中枢**として機能し、�
 | エンドポイント | 知的責任 | 価値提供 |
 |---|---|---|
 | `generateContent` | 教育的コンテンツ創造 | 時間帯・対象者に最適化された価値あるコンテンツ |
-| `selectOptimalTweet` | **知的選択判断** | 膨大な候補から最高品質ツイートの選択 |
+| `selectOptimalTweet` | 知的選択判断 | 膨大な候補から最高品質ツイートの選択 |
 | `generateQuoteComment` | 価値追加コメント | 独自視点による教育的価値の付加 |
-| `analyzePerformance` | 戦略分析・改善 | 実行結果からの学習と戦略最適化 |
+| `analyzePerformance` | 戦略分析・改善 | （深夜分析機能実装時に追加予定） |
 
 ### 設計の競争優位性
 - **責任分離**: 各機能が独立し、変更影響を局所化
@@ -114,200 +114,14 @@ Claude SDKは独立したツールではなく、KaitoAPIとDataManagerと統合
 
 ## 🌙 深夜分析システム：24時間学習サイクル
 
-### 分析実行スケジュール
-- **実行時刻**: 毎日23:55（日次分析の最適化タイミング）
-- **実行頻度**: 1日1回（コスト効率化と深い洞察の両立）
-- **処理時間**: 約15-30分（翌日戦略生成完了：00:30頃）
+毎日23:55に実行される深夜分析機能により、1日の実行データを分析し、翌日戦略を自動生成します。
 
-### 詳細実行ステップ（23:55実行時の拡張フロー）
+**詳細仕様**: [docs/deep-night-analysis.md](../deep-night-analysis.md)
 
-**Step 1: データ収集（通常と同じ）**
-```
-アカウント情報取得 → 直近実行履歴読み込み → 現在時刻コンテキスト取得
-```
+### 📝 実装状況注記
+- 深夜分析機能（analyzePerformance, analyzeMarketContext等）は仕様策定済みですが、実装は保留中です
+- 詳細仕様は[deep-night-analysis.md](./deep-night-analysis.md)を参照してください
 
-**Step 2: アクション実行（通常と同じ）**
-```
-schedule.yamlの23:55定義アクション実行（例：深夜向け投稿）
-```
-
-**Step 3: 結果保存（通常と同じ）**
-```
-実行結果をdata/current/execution-YYYYMMDD-2355/に保存
-```
-
-**Step 4: 分析（23:55限定の追加ステップ）**
-
-#### 4-1: 分析データ収集フェーズ
-```
-収集対象:
-- data/current/execution-*/execution-summary.yaml（本日全実行）
-- data/current/execution-*/kaito-responses/*.yaml（全API応答）
-- data/current/execution-*/posts/*.yaml（全投稿データ）
-- data/learning/decision-patterns.yaml（過去の学習パターン）
-- data/current/active-session.yaml（現在のアカウント状態）
-```
-
-#### 4-2: Claude SDK分析実行フェーズ
-
-**analyzePerformance入力仕様**:
-```typescript
-{
-  // 本日の全実行データ
-  todayExecutions: {
-    totalActions: number,
-    actionBreakdown: {
-      post: { count: number, avgEngagement: number },
-      retweet: { count: number, successRate: number },
-      quote_tweet: { count: number, avgReach: number },
-      like: { count: number, relationshipBuilt: number },
-      follow: { count: number, followBackRate: number }
-    },
-    timeSlotPerformance: {
-      [timeSlot: string]: {
-        actions: string[],
-        engagementRate: number,
-        followerGrowth: number
-      }
-    }
-  },
-  
-  // アカウント成長メトリクス
-  accountMetrics: {
-    startFollowers: number,
-    endFollowers: number,
-    totalEngagements: number,
-    topPerformingPosts: Array<{
-      content: string,
-      engagement: number,
-      time: string
-    }>
-  },
-  
-  // 過去7日間のトレンド
-  weeklyTrends: {
-    averageEngagement: number,
-    growthRate: number,
-    bestPerformingTopics: string[],
-    worstPerformingTopics: string[]
-  },
-  
-  // 分析指示
-  analysisPrompt: "1日の実行データから以下を分析してください：
-    1. 時間帯別の最適アクション組み合わせ
-    2. エンゲージメント向上に効果的だったトピック
-    3. フォロワー増加に寄与した要因
-    4. 明日実行すべき優先アクション（時刻付き）
-    5. 避けるべき時間帯・トピック
-    6. 新たに試すべき戦略提案"
-}
-```
-
-**analyzePerformance返却仕様**:
-```typescript
-{
-  dailyInsights: {
-    performancePatterns: Array<{
-      timeSlot: string,
-      successRate: number,
-      optimalTopics: string[],
-      recommendedActions: string[]
-    }>,
-    
-    topicAnalysis: {
-      highPerformance: Array<{
-        topic: string,
-        avgEngagement: number,
-        bestTimeSlots: string[]
-      }>,
-      lowPerformance: Array<{
-        topic: string,
-        reason: string,
-        improvement: string
-      }>
-    },
-    
-    followerGrowthFactors: Array<{
-      factor: string,
-      impact: number,
-      recommendation: string
-    }>
-  },
-  
-  tomorrowStrategy: {
-    prioritySchedule: Array<{
-      time: string,
-      action: string,
-      topic?: string,
-      targetQuery?: string,
-      reasoning: string
-    }>,
-    
-    avoidanceList: Array<{
-      timeSlot?: string,
-      topic?: string,
-      reason: string
-    }>,
-    
-    experimentalStrategies: Array<{
-      strategy: string,
-      expectedOutcome: string,
-      riskLevel: 'low' | 'medium' | 'high'
-    }>
-  }
-}
-```
-
-#### 4-3: 戦略ファイル生成フェーズ
-```
-生成ファイル:
-1. data/learning/daily-insights-YYYYMMDD.yaml（日次分析結果）
-2. data/current/tomorrow-strategy.yaml（翌日自動適用戦略）
-3. data/learning/performance-summary-YYYYMMDD.yaml（パフォーマンス集計）
-```
-
-### 学習データ構造の進化
-
-**従来の課題**: `decision-patterns.yaml`
-```yaml
-# 意味のない反復データ
-followers: 0
-engagement_rate: 0
-market_trend: neutral
-```
-
-**新構造**: 意味のある学習データ
-```yaml
-# data/learning/daily-insights-YYYYMMDD.yaml
-performance_patterns:
-  - time_slot: "07:00-10:00"
-    success_rate: 0.85
-    optimal_topics: ["朝の投資情報", "市場開始前準備"]
-  - time_slot: "20:00-22:00" 
-    success_rate: 0.92
-    optimal_topics: ["今日の振り返り", "明日の戦略"]
-
-market_opportunities:
-  - topic: "NISA制度改正"
-    relevance: 0.9
-    recommended_action: "educational_post"
-    expected_engagement: 4.2
-
-optimization_insights:
-  - pattern: "quote_tweet_evening_high_success"
-    implementation: "夕方の引用ツイートを30%増加"
-    expected_impact: "+15% engagement"
-```
-
-### 翌日戦略自動生成
-
-**戦略配信**: `data/current/tomorrow-strategy.yaml`
-- 優先アクション順序
-- 時間帯別最適コンテンツ
-- 回避すべきトピック・時間帯
-- 期待成果指標
-
-**自動適用**: 翌日の実行ワークフローが戦略を自動読み込み・適用
 
 ## 📊 プロンプト変数システム：コンテクスト最適化
 

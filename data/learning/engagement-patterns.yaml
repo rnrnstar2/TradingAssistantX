@@ -1,0 +1,83 @@
+# 時間帯・コンテンツ形式・アクションパターン統合分析
+# 既存decision-patterns.yamlから抽出・最適化
+
+timeSlots:
+  "05:00-07:00":
+    successRate: 0.88
+    avgEngagement: 3.2
+    optimalTopics: ["早朝の投資情報", "市場開始前準備", "朝の戦略確認"]
+    sampleSize: 3
+    lastUpdated: "2025-07-30T06:31:41.307Z"
+  "10:00-12:00":
+    successRate: 0.92
+    avgEngagement: 4.1
+    optimalTopics: ["市場開始後の状況", "午前の投資動向", "リアルタイム分析"]
+    sampleSize: 2
+    lastUpdated: "2025-07-29T11:51:59.752Z"
+  "14:00-16:00":
+    successRate: 0.89
+    avgEngagement: 3.8
+    optimalTopics: ["午後の市場分析", "実践的テクニック", "投資戦略"]
+    sampleSize: 15
+    lastUpdated: "2025-07-29T15:46:57.446Z"
+  "16:00-18:00":
+    successRate: 0.91
+    avgEngagement: 4.5
+    optimalTopics: ["引け後分析", "一日の振り返り", "明日への戦略"]
+    sampleSize: 10
+    lastUpdated: "2025-07-29T17:13:09.929Z"
+
+contentTypes:
+  educational:
+    successRate: 0.87
+    avgEngagement: 3.9
+    bestTimeSlots: ["10:00-12:00", "16:00-18:00"]
+    description: "投資教育コンテンツ"
+  market_commentary:
+    successRate: 0.83
+    avgEngagement: 3.2
+    bestTimeSlots: ["14:00-16:00"]
+    description: "市場解説・分析"
+  strategy_sharing:
+    successRate: 0.91
+    avgEngagement: 4.2
+    bestTimeSlots: ["05:00-07:00", "16:00-18:00"]
+    description: "投資戦略共有"
+
+actionPatterns:
+  post:
+    successRate: 1.0
+    avgEngagement: 3.7
+    optimalFrequency: "2-3 times per day"
+    totalCount: 11
+    bestTimeSlots: ["10:00-12:00", "14:00-16:00"]
+  retweet:
+    successRate: 1.0
+    avgEngagement: 2.8
+    optimalFrequency: "3-4 times per day"
+    totalCount: 16
+    bestTimeSlots: ["14:00-16:00"]
+  quote_tweet:
+    successRate: 1.0
+    avgEngagement: 4.2
+    optimalFrequency: "2-3 times per day"
+    totalCount: 10
+    bestTimeSlots: ["16:00-18:00"]
+  like:
+    successRate: 1.0
+    avgEngagement: 2.1
+    optimalFrequency: "1-2 times per day"
+    totalCount: 3
+    bestTimeSlots: ["16:00-18:00"]
+
+performanceInsights:
+  mostSuccessfulTimeSlot: "10:00-12:00"
+  mostEngagingAction: "quote_tweet"
+  recommendedDailyActions: 8-12
+  peakEngagementPeriod: "16:00-18:00"
+
+lastUpdated: "2025-07-30T19:29:34Z"
+analysisVersion: "mvp_v1"
+dataSource: "migrated_from_decision_patterns"
+totalAnalyzedActions: 40
+migrationDate: "2025-07-30T19:29:34Z"

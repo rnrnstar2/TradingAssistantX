@@ -1,8 +1,0 @@
-timestamp: '2025-07-29T14:13:09.896Z'
-type: workflow-error
-data:
-  error: >-
-    UNKNOWN_ERROR: Unknown error in post: HTTP 400: Bad Request -
-    {"detail":"proxy is required"}
-  executionTime: 83598
-  timestamp: '2025-07-29T14:13:09.895Z'

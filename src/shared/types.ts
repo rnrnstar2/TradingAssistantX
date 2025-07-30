@@ -21,7 +21,6 @@
 import type { 
   GeneratedContent, 
   AnalysisResult, 
-  SearchQuery,
   SystemContext
 } from '../claude/types';
 
@@ -36,7 +35,6 @@ import type {
 export type { 
   GeneratedContent, 
   AnalysisResult, 
-  SearchQuery,
   SystemContext
 };
 

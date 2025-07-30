@@ -25,7 +25,7 @@ export interface GeneratedContent {
 
 /**
  * Analysis Endpoint 返却型
- * analysis-endpoint.ts の専用返却型
+ * 深夜分析機能の返却型（実装予定）
  */
 export interface AnalysisResult {
   analysisType: 'market' | 'performance' | 'trend';
@@ -69,7 +69,7 @@ export interface ContentInput {
 
 /**
  * Analysis Endpoint 入力型
- * analysis-endpoint.ts への入力型
+ * 深夜分析機能への入力型（実装予定）
  */
 export interface AnalysisInput {
   analysisType: 'market' | 'performance' | 'trend';
