@@ -836,6 +836,10 @@ export interface UserInfo {
   tweetCount?: number;
   /** いいね数 */
   likeCount?: number;
+  /** 所在地（オプション） */
+  location?: string;
+  /** 保護されたアカウント */
+  protected?: boolean;
 }
 
 /**
@@ -1221,3 +1225,62 @@ export type LikeResponse = EngagementResponse;
 
 /** @deprecated Use EngagementResponse instead */
 export type RetweetResponse = EngagementResponse;
+
+// ============================================================================
+// 緊急修正用型定義（最小限のみ）
+// ============================================================================
+
+export interface FollowResult {
+  success: boolean;
+  userId: string;
+  following?: boolean;
+  timestamp: string;
+  error?: string;
+}
+
+export interface UnfollowResult {
+  success: boolean;
+  userId: string;
+  unfollowed?: boolean;
+  timestamp: string;
+  error?: string;
+}
+
+export interface DeleteTweetResult {
+  success: boolean;
+  tweetId: string;
+  timestamp: string;
+  error?: string;
+}
+
+// ============================================================================
+// 型エラー修正用の追加型定義
+// ============================================================================
+
+/**
+ * 簡略化されたTwitterAPIError型（handleTweetSearchError用）
+ */
+export interface SimpleTwitterAPIError {
+  code: string;
+  message: string;
+  operation?: string;
+  context?: any;
+}
+
+/**
+ * RateLimitInfo型の定義
+ */
+export interface RateLimitInfo {
+  limit: number;
+  remaining: number;
+  reset: number;
+}
+
+/**
+ * CreateTweetV2Response型の修正
+ */
+export interface CreateTweetV2Response extends TwitterAPIBaseResponse<{
+  id: string;
+  text: string;
+  created_at: string;
+}> {}

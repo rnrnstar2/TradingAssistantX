@@ -1,7 +1,6 @@
 // Simple test script to verify the auth_session parameter fix
 import { KaitoTwitterAPIClient } from '../src/kaito-api/index';
 import { KaitoAPIConfigManager } from '../src/kaito-api/core/config';
-import { DataManager } from '../src/data/manager';
 
 async function testLogin() {
   try {

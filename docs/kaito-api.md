@@ -9,6 +9,16 @@ TwitterAPI.io統合による投資教育コンテンツ自動投稿システム
 - **制限**: 200 QPS
 - **ベースURL**: `https://api.twitterapi.io`
 
+## 🚨 重要な仕様変更（2025年7月更新）
+
+### TwitterAPI.io created_at フィールド仕様
+**問題**: TwitterAPI.ioのドキュメントではフィールド名が`createdAt`（キャメルケース）だが、レスポンスで一部ツイートは空になることがある。
+
+**対応**: 
+- フィールド名優先順位: `apiTweet.createdAt` → `apiTweet.created_at`（フォールバック）
+- 空の場合は現在時刻を使用
+- 警告は初回のみ表示（頻度制限実装）
+
 ## 🚀 クイックスタート
 
 ### 環境変数設定
@@ -24,6 +34,22 @@ X_PASSWORD=your_twitter_password
 X_TOTP_SECRET=your_twitter_totp_secret
 
 # プロキシ設定は data/config/proxies.yaml で管理
+```
+
+### アカウント情報設定
+
+**環境変数**: `X_USERNAME`（既存のTwitter認証用環境変数を使用）
+
+**動作**:
+- `X_USERNAME`が設定されている場合: TwitterAPI.ioの`/twitter/user/info`エンドポイントで実際のアカウント情報を取得
+- 空または未設定の場合: デフォルトアカウント情報を使用（フォロワー数0等）
+- APIエラー時: 自動的にデフォルト値にフォールバック
+
+**ログ例**:
+```
+🔍 環境変数からユーザー名を取得: your_twitter_handle
+✅ 実際のアカウント情報を取得完了
+✅ アカウント情報取得完了: { followers: 1234 }
 ```
 
 ### 実装例
@@ -52,6 +78,7 @@ const postResult = await client.post('投資教育コンテンツ');
 const retweetResult = await client.retweet('tweetId');
 const likeResult = await client.like('tweetId');
 const quoteTweet = await client.quoteTweet('tweetId', 'コメント');
+const followResult = await client.follow('userId');
 
 // エラーハンドリング
 try {

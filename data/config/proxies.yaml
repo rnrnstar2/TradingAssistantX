@@ -1,0 +1,65 @@
+# プロキシ設定ファイル
+# TwitterAPI.io用の複数プロキシを管理
+# 失敗時に自動的に次のプロキシに切り替え
+
+proxies:
+  # 現在動作確認済みのプロキシ（優先度1）
+  - url: "http://etilmzge:ina8vl2juf1w@198.23.239.134:6540"
+    name: "proxy1"
+    priority: 1
+    active: true
+    
+  # その他の利用可能プロキシ
+  - url: "http://etilmzge:ina8vl2juf1w@23.95.150.145:6114"
+    name: "proxy2"
+    priority: 2
+    active: true
+    
+  - url: "http://etilmzge:ina8vl2juf1w@45.38.107.97:6014"
+    name: "proxy3"
+    priority: 3
+    active: true
+    
+  - url: "http://etilmzge:ina8vl2juf1w@207.244.217.165:6712"
+    name: "proxy4"
+    priority: 4
+    active: true
+    
+  - url: "http://etilmzge:ina8vl2juf1w@107.172.163.27:6543"
+    name: "proxy5"
+    priority: 5
+    active: true
+    
+  - url: "http://etilmzge:ina8vl2juf1w@104.222.161.211:6343"
+    name: "proxy6"
+    priority: 6
+    active: true
+    
+  - url: "http://etilmzge:ina8vl2juf1w@64.137.96.74:6641"
+    name: "proxy7"
+    priority: 7
+    active: true
+    
+  - url: "http://etilmzge:ina8vl2juf1w@216.10.27.159:6837"
+    name: "proxy8"
+    priority: 8
+    active: true
+    
+  - url: "http://etilmzge:ina8vl2juf1w@136.0.207.84:6661"
+    name: "proxy9"
+    priority: 9
+    active: true
+    
+  - url: "http://etilmzge:ina8vl2juf1w@142.147.128.93:6593"
+    name: "proxy10"
+    priority: 10
+    active: true
+
+# プロキシローテーション設定
+rotation:
+  # 失敗時に次のプロキシに切り替えるか
+  enabled: true
+  # 最大リトライ回数（全プロキシ試行）
+  max_retries: 3
+  # プロキシ失敗時の一時無効化時間（分）
+  cooldown_minutes: 30

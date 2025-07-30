@@ -1,0 +1,8 @@
+timestamp: '2025-07-29T16:46:12.454Z'
+type: workflow-error
+data:
+  error: >-
+    UNKNOWN_ERROR: Unknown error in like: Cannot read properties of undefined
+    (reading 'liked')
+  executionTime: 15044
+  timestamp: '2025-07-29T16:46:12.454Z'

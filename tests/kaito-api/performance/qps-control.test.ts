@@ -33,7 +33,7 @@ const QPS_TEST_CONFIG = {
   MIN_SAMPLE_SIZE: 20   // 最小サンプル数
 };
 
-describe('QPS制御テスト', () => {
+describe.skip('QPS制御テスト（コスト発生のためスキップ）', () => {
   let authManager: AuthManager;
   let client: KaitoTwitterAPIClient;
   

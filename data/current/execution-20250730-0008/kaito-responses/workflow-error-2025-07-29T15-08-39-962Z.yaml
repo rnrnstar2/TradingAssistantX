@@ -1,0 +1,9 @@
+timestamp: '2025-07-29T15:08:39.962Z'
+type: workflow-error
+data:
+  error: >-
+    UNKNOWN_ERROR: Unknown error in post: DUPLICATE_CONTENT: The content you are
+    trying to post has already been shared recently. Please modify the content
+    or wait before posting again.
+  executionTime: 23860
+  timestamp: '2025-07-29T15:08:39.962Z'

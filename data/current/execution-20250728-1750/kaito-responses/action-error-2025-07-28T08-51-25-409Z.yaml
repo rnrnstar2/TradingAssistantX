@@ -1,6 +1,0 @@
-timestamp: '2025-07-28T08:51:25.409Z'
-type: action-error
-data:
-  action: post
-  error: kaitoClient.createPost is not a function
-  timestamp: '2025-07-28T08:51:25.409Z'

@@ -390,7 +390,7 @@ export class EngagementManagement {
   // PRIVATE METHODS - ERROR HANDLING
   // ============================================================================
 
-  private handleEngagementError(error: any, request: { tweet_id: string; action: string }): EngagementResponse {
+  private handleEngagementError(error: any, request: { tweet_id: string; action: 'like' | 'unlike' | 'retweet' | 'unretweet' | 'bookmark' | 'unbookmark' }): EngagementResponse {
     console.error(`❌ Engagement ${request.action} error:`, error);
 
     let errorMessage = 'Unknown error occurred';

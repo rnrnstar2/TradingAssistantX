@@ -38,7 +38,7 @@ const RATE_LIMIT_TEST_CONFIG = {
   TEST_TIMEOUT_MS: 300000     // 5分
 };
 
-describe('レート制限テスト', () => {
+describe.skip('レート制限テスト（コスト発生のためスキップ）', () => {
   let authManager: AuthManager;
   let client: KaitoTwitterAPIClient;
   let requestCount: number = 0;

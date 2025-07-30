@@ -40,29 +40,56 @@ import {
  * ユーザー情報取得レスポンス
  * APIResult型との整合性を保った統一レスポンス形式
  */
-interface UserInfoResponse extends APIResult<UserInfo> {
-  /** レート制限情報 */
+// APIResultはUnion型なので直接継承できない
+interface UserInfoResponseSuccess {
+  success: true;
+  data: UserInfo;
+  timestamp: string;
   rateLimit?: RateLimitInfo;
 }
+
+interface UserInfoResponseError {
+  success: false;
+  error: TwitterAPIError;
+  timestamp: string;
+  rateLimit?: RateLimitInfo;
+}
+
+type UserInfoResponse = UserInfoResponseSuccess | UserInfoResponseError;
 
 /**
  * フォロワー情報レスポンス
  * APIResult型との整合性を保った統一レスポンス形式
  */
-interface UserFollowerResponse extends APIResult<{
-  followers: UserInfo[];
-  following: UserInfo[];
-  followerCount: number;
-  followingCount: number;
-}> {
-  /** ページネーション情報 */
+// APIResultはUnion型なので直接継承できない
+interface UserFollowerResponseSuccess {
+  success: true;
+  data: {
+    followers: UserInfo[];
+    following: UserInfo[];
+    followerCount: number;
+    followingCount: number;
+  };
+  timestamp: string;
   pagination?: {
     nextCursor?: string;
     hasMore: boolean;
   };
-  /** レート制限情報 */
   rateLimit?: RateLimitInfo;
 }
+
+interface UserFollowerResponseError {
+  success: false;
+  error: TwitterAPIError;
+  timestamp: string;
+  pagination?: {
+    nextCursor?: string;
+    hasMore: boolean;
+  };
+  rateLimit?: RateLimitInfo;
+}
+
+type UserFollowerResponse = UserFollowerResponseSuccess | UserFollowerResponseError;
 
 // ============================================================================
 // VALIDATION TYPES - 統一バリデーション
@@ -706,8 +733,6 @@ export class UserInfoEndpoint {
       tweetCount: safeNumber(apiUser.statuses_count || apiUser.tweet_count),
       likeCount: safeNumber(apiUser.favourites_count || apiUser.like_count),
       location: apiUser.location || undefined,
-      url: safeUrl(apiUser.url),
-      createdAt: safeDate(apiUser.created_at),
       protected: Boolean(apiUser.protected)
     };
   }

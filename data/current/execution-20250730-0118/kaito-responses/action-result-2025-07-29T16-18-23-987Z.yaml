@@ -1,0 +1,7 @@
+timestamp: '2025-07-29T16:18:23.988Z'
+type: action-result
+data:
+  success: true
+  action: wait
+  reason: No target tweet ID for quote tweet
+  timestamp: '2025-07-29T16:18:23.987Z'

@@ -5,8 +5,8 @@
  */
 
 import { claude } from '@instantlyeasy/claude-code-sdk-ts';
-import { ContentInput, GeneratedContent } from '../types';
-import { shouldUseMock, generateMockContent as genMockContent, generateMockQuoteComment } from '../utils/mock-responses';
+import { ContentInput, GeneratedContent, SystemContext } from '../types';
+import { ContentBuilder } from '../prompts/builders/content-builder';
 
 // 警告表示フラグ（初回のみ表示）
 let devModeWarningShown = false;
@@ -18,38 +18,121 @@ const isTestEnvironment = process.env.NODE_ENV === 'test';
 // CONSTANTS - 定数定義
 // ============================================================================
 
-const MAX_CONTENT_LENGTH = 280;
+const MAX_CONTENT_LENGTH = 140; // TwitterAPIの実際の制限に合わせて140文字に制限
 const QUALITY_THRESHOLD = 70;
 const MAX_RETRIES = 2;
 const CLAUDE_TIMEOUT = 15000;
+
+// ============================================================================
+// UTILITY FUNCTIONS - ユーティリティ関数
+// ============================================================================
+
+/**
+ * Twitter文字数計算（絵文字対応）- KaitoAPIと統一
+ */
+function calculateTwitterLength(text: string): number {
+  // 絵文字を2文字としてカウント
+  // KaitoAPIのgetTwitterTextLengthと同じロジックを使用
+  let length = 0;
+  const chars = Array.from(text);
+  
+  for (const char of chars) {
+    // 絵文字判定
+    const codePoint = char.codePointAt(0) || 0;
+    
+    // 絵文字範囲（KaitoAPIと同じ判定）
+    if (
+      (codePoint >= 0x1F300 && codePoint <= 0x1F9FF) || // Misc Symbols and Pictographs
+      (codePoint >= 0x2600 && codePoint <= 0x26FF) ||   // Misc symbols
+      (codePoint >= 0x2700 && codePoint <= 0x27BF) ||   // Dingbats
+      (codePoint >= 0x1F600 && codePoint <= 0x1F64F) || // Emoticons
+      (codePoint >= 0x1F900 && codePoint <= 0x1F9FF) || // Supplemental Symbols
+      char === '✅' || char === '💪' || char === '📈' || char === '🌅' // 特定の絵文字
+    ) {
+      length += 2; // 絵文字は2文字としてカウント
+    } else {
+      length += 1;
+    }
+  }
+  
+  return length;
+}
+
+/**
+ * Twitter文字数制限に合わせてコンテンツを短縮
+ */
+function truncateForTwitter(content: string): string {
+  const maxLength = MAX_CONTENT_LENGTH - 5; // 安全マージンを含めて155文字
+  
+  if (calculateTwitterLength(content) <= maxLength) {
+    return content;
+  }
+  
+  // 行ごとに分割して処理
+  const lines = content.split('\n');
+  let result = '';
+  
+  for (const line of lines) {
+    const testResult = result + (result ? '\n' : '') + line;
+    if (calculateTwitterLength(testResult) <= maxLength) {
+      result = testResult;
+    } else {
+      // この行を追加すると制限を超える場合
+      if (result) {
+        // 既存の内容があれば、そこで終了
+        break;
+      } else {
+        // 最初の行が長い場合、短縮して追加
+        const segments = Array.from(line);
+        let truncatedLine = '';
+        
+        for (const char of segments) {
+          const testLine = truncatedLine + char;
+          if (calculateTwitterLength(testLine) <= maxLength - 3) { // "..." の分を考慮
+            truncatedLine = testLine;
+          } else {
+            break;
+          }
+        }
+        
+        result = truncatedLine + '...';
+        break;
+      }
+    }
+  }
+  
+  return result || content.substring(0, 250) + '...'; // フォールバック
+}
 
 // ============================================================================
 // ERROR HANDLING - エラーハンドリング
 // ============================================================================
 
 /**
- * Claude CLIの認証状態をチェック
+ * Claude SDKの認証状態をチェック
  */
 async function checkClaudeAuthentication(): Promise<boolean> {
   try {
-    // 簡単なテストクエリで認証を確認
+    console.log('🔍 Claude SDKチェック開始...');
+    
+    // SDKを使用してテスト
     const testResponse = await claude()
-      .withModel('haiku')
-      .withTimeout(5000)
+      .withModel('sonnet') // エイリアスを使用
+      .withTimeout(10000)
+      .skipPermissions()
       .query('Hello')
       .asText();
     
+    console.log('✅ Claude SDKチェック成功');
     return !!testResponse;
   } catch (error: any) {
-    console.error('Claude認証エラー:', error);
-    if (error?.message?.includes('login') || error?.message?.includes('authentication')) {
-      console.error('⚠️ Claude CLIで認証が必要です。以下を実行してください:');
-      console.error('  1. npm install -g @anthropic-ai/claude-code');
-      console.error('  2. claude login');
-    }
+    console.error('❌ Claude SDK認証エラー:', error);
+    console.error('Error message:', error?.message);
     return false;
   }
 }
+
+
 
 // ============================================================================
 // MAIN ENDPOINT FUNCTIONS - メインエンドポイント関数
@@ -84,7 +167,15 @@ export async function generateContent(input: ContentInput): Promise<GeneratedCon
     const prompt = buildContentPrompt(topic, contentType, targetAudience, maxLength, context);
     
     // Claude SDK品質確保付きコンテンツ生成
-    const rawContent = await generateWithClaudeQualityCheck(prompt, topic, contentType, qualityThreshold);
+    let rawContent = await generateWithClaudeQualityCheck(prompt, topic, contentType, qualityThreshold);
+    
+    // Twitter文字数制限チェックと自動短縮
+    const twitterLength = calculateTwitterLength(rawContent);
+    if (twitterLength > MAX_CONTENT_LENGTH) {
+      console.warn(`⚠️ コンテンツが長すぎます (${twitterLength}文字 > ${MAX_CONTENT_LENGTH}文字) - 自動短縮中...`);
+      rawContent = truncateForTwitter(rawContent);
+      console.log(`✅ 短縮完了: ${calculateTwitterLength(rawContent)}文字`);
+    }
     
     // 基本品質チェック
     const qualityScore = evaluateBasicQuality(rawContent, topic);
@@ -102,7 +193,7 @@ export async function generateContent(input: ContentInput): Promise<GeneratedCon
       hashtags,
       qualityScore,
       metadata: {
-        wordCount: rawContent.length,
+        wordCount: calculateTwitterLength(rawContent), // Twitter文字数カウント
         contentType,
         generatedAt: new Date().toISOString()
       }
@@ -120,12 +211,7 @@ export async function generateContent(input: ContentInput): Promise<GeneratedCon
  */
 export async function generateQuoteComment(originalTweet: any): Promise<string> {
   try {
-    // 開発・テスト環境ではモックを返す
-    if (shouldUseMock()) {
-      console.log('🔧 モックモード: 引用コメントのモックレスポンスを使用');
-      const originalContent = originalTweet?.content || originalTweet?.text || '';
-      return generateMockQuoteComment(originalContent);
-    }
+    // モック機能を削除 - 常に実際のClaude APIを使用
     
     const prompt = buildQuoteCommentPrompt(originalTweet);
 
@@ -144,9 +230,8 @@ export async function generateQuoteComment(originalTweet: any): Promise<string> 
       throw new Error('Claude CLI認証エラー: "claude login"を実行してください');
     }
     
-    // エラー時はフォールバックとしてモックを返す
-    const originalContent = originalTweet?.content || originalTweet?.text || '';
-    return generateMockQuoteComment(originalContent);
+    // 認証エラーの場合はエラーを投げる
+    throw new Error('Claude CLI認証が必要です。claude loginを実行してください。');
   }
 }
 
@@ -163,42 +248,97 @@ function buildContentPrompt(
   contentType: string, 
   targetAudience: string, 
   maxLength: number, 
-  context?: any
+  context?: SystemContext
 ): string {
-  return `投資教育Xアカウント用の高品質投稿を作成してください。
-
-トピック: ${topic}
-コンテンツタイプ: ${contentType}
-対象読者: ${targetAudience === 'beginner' ? '投資初心者' : targetAudience}
-最大文字数: ${maxLength}文字
-${context ? `コンテキスト: ${JSON.stringify(context)}` : ''}
-
-要件:
-- 教育的価値が高く、実践的な内容
-- ${targetAudience === 'beginner' ? '初心者にも' : ''}理解しやすい表現
-- 具体例や数値を含める
-- リスク注意点を適切に含める
-- エンゲージメントを促進する要素（質問など）
-- 日本語で自然な表現
-
-${maxLength}文字以内で投稿内容のみを返してください。`;
+  const audienceDescription = targetAudience === 'beginner' ? '投資初心者' : targetAudience;
+  
+  // 時間帯情報の取得
+  const now = new Date();
+  const hour = now.getHours();
+  const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][now.getDay()];
+  
+  // 時間帯に応じた挨拶やトーン
+  const timeContext = 
+    hour < 6 ? '早朝' :
+    hour < 10 ? '朝' :
+    hour < 12 ? '午前中' :
+    hour < 14 ? '昼' :
+    hour < 17 ? '午後' :
+    hour < 20 ? '夕方' :
+    '夜';
+  
+  // プロンプト構築
+  let prompt = `あなたは投資教育の専門家です。現在は${dayOfWeek}曜日の${timeContext}（${hour}時台）です。\n\n`;
+  
+  // アカウント状況を含める
+  if (context?.account) {
+    prompt += `【アカウント状況】\n`;
+    prompt += `・フォロワー数: ${context.account.followerCount}人\n`;
+    prompt += `・本日の投稿数: ${context.account.postsToday}回\n`;
+    prompt += `・平均エンゲージメント率: ${context.account.engagementRate.toFixed(1)}%\n`;
+    
+    if (context.account.lastPostTime) {
+      const lastPostHours = Math.floor((now.getTime() - new Date(context.account.lastPostTime).getTime()) / (1000 * 60 * 60));
+      prompt += `・前回投稿から: ${lastPostHours}時間経過\n`;
+    }
+    prompt += '\n';
+  }
+  
+  // 学習データを含める
+  if (context?.learningData) {
+    prompt += `【過去の成功パターン】\n`;
+    if (context.learningData.recentTopics && context.learningData.recentTopics.length > 0) {
+      prompt += `・最近高評価だったトピック: ${context.learningData.recentTopics.join('、')}\n`;
+    }
+    if (context.learningData.avgEngagement) {
+      prompt += `・最近の平均エンゲージメント: ${context.learningData.avgEngagement.toFixed(1)}%\n`;
+    }
+    prompt += '\n';
+  }
+  
+  // 市場状況を含める
+  if (context?.market) {
+    prompt += `【市場状況】\n`;
+    prompt += `・市場センチメント: ${context.market.sentiment === 'bullish' ? '強気' : context.market.sentiment === 'bearish' ? '弱気' : '中立'}\n`;
+    prompt += `・ボラティリティ: ${context.market.volatility === 'high' ? '高' : context.market.volatility === 'low' ? '低' : '中'}\n`;
+    if (context.market.trendingTopics && context.market.trendingTopics.length > 0) {
+      prompt += `・話題のトピック: ${context.market.trendingTopics.join('、')}\n`;
+    }
+    prompt += '\n';
+  }
+  
+  // メインの指示
+  prompt += `「${topic}」について、${audienceDescription}向けに価値ある情報を${maxLength}文字以内で投稿してください。\n\n`;
+  
+  // 時間帯別の投稿ガイドライン
+  if (hour < 10) {
+    prompt += `朝の時間帯なので、1日のスタートに役立つ情報や、前向きなメッセージを含めても良いでしょう。\n`;
+  } else if (hour >= 12 && hour < 14) {
+    prompt += `昼休みの時間帯なので、サクッと読めて実践的な内容が好まれます。\n`;
+  } else if (hour >= 20) {
+    prompt += `夜の時間帯なので、1日の振り返りや、明日に向けた準備に関する内容も良いでしょう。\n`;
+  }
+  
+  // 週末の特別な配慮
+  if (dayOfWeek === '土' || dayOfWeek === '日') {
+    prompt += `週末なので、じっくり学習できる内容や、来週に向けた準備の話題も適しています。\n`;
+  }
+  
+  prompt += `\n読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、${maxLength}文字以内で投稿内容のみを返してください。`;
+  
+  return prompt;
 }
 
 /**
- * 引用コメント用プロンプト構築
+ * 引用コメント用プロンプト構築（ビルダーパターンを使用）
  */
 function buildQuoteCommentPrompt(originalTweet: any): string {
-  const tweetContent = originalTweet?.content || originalTweet?.text || '（内容なし）';
-  return `投資教育の観点から、以下のツイートに価値を付加する引用コメントを150文字以内で作成してください。
-
-元ツイート: ${tweetContent}
-
-要件:
-- 建設的で教育的な観点
-- 投資初心者にも理解しやすい補足
-- 具体的で実践的なアドバイス
-- 必要に応じてリスク注意点を言及
-- 自然な日本語で記述`;
+  const builder = new ContentBuilder();
+  return builder.buildQuoteCommentPrompt({
+    originalTweet: originalTweet,
+    context: getSystemContextForContent(),
+    maxLength: 150
+  });
 }
 
 // ============================================================================
@@ -215,27 +355,17 @@ async function generateWithClaudeQualityCheck(
   contentType: string,
   qualityThreshold: number
 ): Promise<string> {
-  // 開発モードチェック（CLAUDE_SDK_DEV_MODE環境変数）
-  if (process.env.CLAUDE_SDK_DEV_MODE === 'true') {
-    if (!devModeWarningShown && !isTestEnvironment) {
-      console.warn('⚠️ CLAUDE_SDK_DEV_MODE: Claude CLIをスキップ（一時的な対応）');
-      devModeWarningShown = true;
-    }
-    return genMockContent(topic, contentType);
-  }
+  // 開発モードも常に実際のClaude APIを使用
+  console.log(`🎯 コンテンツ生成開始: ${topic} (${new Date().toLocaleTimeString('ja-JP')})`);
+  // モック機能を削除 - 常に実際のClaude APIを使用
 
-  // 開発・テスト環境ではモックを使用
-  if (shouldUseMock()) {
-    console.log('🔧 モックモード: Claude SDKをスキップし、モックレスポンスを使用');
-    return genMockContent(topic, contentType);
-  }
+  // モック機能を削除 - 常に実際Claude APIを使用
 
   // 認証チェック
   const isAuthenticated = await checkClaudeAuthentication();
   if (!isAuthenticated) {
     console.error('⚠️ Claude CLI認証が必要です。"claude login"を実行してください。');
-    // エラーを投げずにモックを返す（ワークフローの続行のため）
-    return genMockContent(topic, contentType);
+    throw new Error('Claude CLI認証が必要です。claude loginを実行してください。');
   }
 
   let attempts = 0;
@@ -244,10 +374,12 @@ async function generateWithClaudeQualityCheck(
 
   while (attempts < MAX_RETRIES) {
     try {
-      // 本番環境での Claude SDK 呼び出し
+      // SDKを使用してコンテンツ生成
+      console.log('🤖 Claude SDK呼び出し中...');
       const response = await claude()
         .withModel('sonnet')
         .withTimeout(CLAUDE_TIMEOUT)
+        .skipPermissions()
         .query(prompt)
         .asText();
 
@@ -268,12 +400,21 @@ async function generateWithClaudeQualityCheck(
 
     } catch (error) {
       console.error(`Generation attempt ${attempts + 1} failed:`, error);
+      console.error('Error details:', {
+        message: (error as any)?.message,
+        exitCode: (error as any)?.exitCode,
+        code: (error as any)?.code,
+        stack: (error as any)?.stack?.split('\n').slice(0, 5).join('\n')
+      });
       
-      // 特定のエラーメッセージを確認
-      if ((error as any)?.message?.includes('login') || (error as any)?.message?.includes('authentication')) {
-        console.error('Claude CLI認証エラー: "claude login"を実行してください');
-        // エラーを投げずにモックを返す
-        return genMockContent(topic, contentType);
+      // SDKエラーの詳細を表示
+      if ((error as any)?.exitCode === 1) {
+        console.error('❌ Claude SDK subprocess exited with code 1');
+        console.error('Possible causes:');
+        console.error('- Claude CLI is not authenticated (run: claude login)');
+        console.error('- Invalid model name');
+        console.error('- SDK subprocess issues');
+        throw error; // エラーをそのまま投げる
       } else if ((error as any)?.message?.includes('timeout')) {
         console.warn('タイムアウトエラー、再試行します...');
       }
@@ -288,8 +429,8 @@ async function generateWithClaudeQualityCheck(
   }
 
   // 最終的なフォールバック
-  console.warn('All attempts failed, using mock content as fallback');
-  return genMockContent(topic, contentType);
+  console.error('ℹ️ コンテンツ生成に失敗しました');
+  throw new Error('コンテンツ生成に失敗しました。Claude CLIの認証を確認してください。');
 }
 
 // ============================================================================
@@ -329,4 +470,37 @@ function generateHashtags(topic: string, contentType: string): string[] {
   };
 
   return [...baseHashtags, ...(typeSpecificHashtags[contentType as keyof typeof typeSpecificHashtags] || typeSpecificHashtags.general)];
+}
+
+/**
+ * コンテンツ生成用SystemContext取得関数
+ */
+function getSystemContextForContent(): SystemContext {
+  return {
+    timestamp: new Date().toISOString(),
+    account: {
+      followerCount: 1000,
+      postsToday: 0,
+      engagementRate: 2.5,
+      lastPostTime: new Date().toISOString()
+    },
+    system: {
+      health: {
+        all_systems_operational: true,
+        api_status: 'healthy',
+        rate_limits_ok: true
+      },
+      executionCount: { today: 0, total: 0 }
+    },
+    learningData: {
+      recentTopics: [],
+      avgEngagement: 2.5,
+      totalPatterns: 0
+    },
+    market: {
+      sentiment: 'neutral',
+      volatility: 'medium', 
+      trendingTopics: []
+    }
+  };
 }

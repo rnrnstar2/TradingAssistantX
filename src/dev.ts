@@ -6,9 +6,25 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 /**
- * schedule.yamlから固定アクションを取得
+ * コマンドライン引数を解析
  */
-async function loadFixedAction() {
+function parseCommandLineArgs(): { action?: string } {
+  const args = process.argv.slice(2);
+  const result: { action?: string } = {};
+  
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--action' && i + 1 < args.length) {
+      result.action = args[i + 1];
+    }
+  }
+  
+  return result;
+}
+
+/**
+ * schedule.yamlから指定されたアクションを取得
+ */
+async function loadActionFromSchedule(targetAction?: string) {
   try {
     const scheduleConfig = ScheduleLoader.load('data/config/schedule.yaml');
     const scheduleItems = ScheduleLoader.getTodaySchedule(scheduleConfig);
@@ -17,12 +33,25 @@ async function loadFixedAction() {
       throw new Error('スケジュールが設定されていません');
     }
     
-    // 最初のアクション（index 0）を固定で使用
-    const fixedAction = scheduleItems[0];
+    let selectedAction;
     
-    console.log(`🎯 開発モード: アクション '${fixedAction.action}' (${fixedAction.topic || fixedAction.target_query || '基本実行'}) を実行`);
+    if (targetAction) {
+      // 指定されたアクションを検索
+      selectedAction = scheduleItems.find(item => item.action === targetAction);
+      
+      if (!selectedAction) {
+        console.warn(`⚠️ 指定されたアクション '${targetAction}' が見つかりません。最初のアクションを使用します。`);
+        selectedAction = scheduleItems[0];
+      } else {
+        console.log(`🎯 コマンドライン指定: アクション '${selectedAction.action}' (${selectedAction.topic || selectedAction.target_query || '基本実行'}) を実行`);
+      }
+    } else {
+      // デフォルトは最初のアクション
+      selectedAction = scheduleItems[0];
+      console.log(`🎯 開発モード: アクション '${selectedAction.action}' (${selectedAction.topic || selectedAction.target_query || '基本実行'}) を実行`);
+    }
     
-    return fixedAction;
+    return selectedAction;
   } catch (error) {
     console.error('❌ スケジュール読み込みエラー:', error);
     throw error;
@@ -37,14 +66,17 @@ async function runDev() {
   console.log('🚀 開発モード実行開始');
   
   try {
-    // YAMLから固定アクションを取得
-    const fixedAction = await loadFixedAction();
+    // コマンドライン引数を解析
+    const cmdArgs = parseCommandLineArgs();
     
-    // MainWorkflowに固定アクションを渡す
+    // 指定されたアクションまたはデフォルトアクションを取得
+    const selectedAction = await loadActionFromSchedule(cmdArgs.action);
+    
+    // MainWorkflowに選択されたアクションを渡す
     const result = await MainWorkflow.execute({
-      scheduledAction: fixedAction.action,
-      scheduledTopic: fixedAction.topic,
-      scheduledQuery: fixedAction.target_query
+      scheduledAction: selectedAction.action,
+      scheduledTopic: selectedAction.topic,
+      scheduledQuery: selectedAction.target_query
     });
     
     if (result.success) {

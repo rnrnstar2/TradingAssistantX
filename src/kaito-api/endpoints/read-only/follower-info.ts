@@ -317,8 +317,7 @@ export class FollowerInfoEndpoint {
         this.ENDPOINTS.getFriendship,
         { 
           source_screen_name: sourceUser,
-          target_screen_name: targetUser,
-          headers
+          target_screen_name: targetUser
         }
       );
 
@@ -473,6 +472,7 @@ export class FollowerInfoEndpoint {
     return {
       id: apiUser.id_str || apiUser.id,
       username: apiUser.screen_name || apiUser.username,
+      name: apiUser.name || apiUser.display_name || '',
       displayName: apiUser.name || apiUser.display_name,
       bio: apiUser.description || '',
       profileImageUrl: apiUser.profile_image_url_https || apiUser.profile_image_url,
@@ -481,8 +481,7 @@ export class FollowerInfoEndpoint {
       followingCount: apiUser.friends_count || apiUser.following_count || 0,
       tweetCount: apiUser.statuses_count || apiUser.tweet_count || 0,
       likeCount: apiUser.favourites_count || apiUser.like_count || 0,
-      createdAt: apiUser.created_at ? new Date(apiUser.created_at) : new Date(),
-      isProtected: apiUser.protected || false
+      protected: apiUser.protected || false
     };
   }
 

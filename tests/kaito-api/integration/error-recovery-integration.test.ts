@@ -6,8 +6,7 @@
 import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import { KaitoAPIConfigManager } from '../../../src/kaito-api/core/config';
 import { KaitoTwitterAPIClient } from '../../../src/kaito-api/core/client';
-import { ActionEndpoints } from '../../../src/kaito-api/endpoints/action-endpoints';
-import { TweetEndpoints } from '../../../src/kaito-api/endpoints/tweet-endpoints';
+import { AuthManager } from '../../../src/kaito-api/core/auth-manager';
 import { 
   KaitoAPIConfig, 
   KaitoClientConfig, 
@@ -18,8 +17,7 @@ import {
 describe('Error Recovery Integration Tests', () => {
   let configManager: KaitoAPIConfigManager;
   let apiClient: KaitoTwitterAPIClient;
-  let actionEndpoints: ActionEndpoints;
-  let tweetEndpoints: TweetEndpoints;
+  let authManager: AuthManager;
   let testConfig: KaitoAPIConfig;
 
   // エラー回復統計
@@ -59,8 +57,10 @@ describe('Error Recovery Integration Tests', () => {
       'Content-Type': 'application/json'
     };
 
-    actionEndpoints = new ActionEndpoints(testConfig.api.baseUrl, headers);
-    tweetEndpoints = new TweetEndpoints(testConfig);
+    authManager = new AuthManager({
+      apiKey: testConfig.authentication.primaryKey,
+      preferredAuthMethod: 'v2'
+    });
 
     // 統計初期化
     recoveryStats = {
@@ -89,8 +89,7 @@ describe('Error Recovery Integration Tests', () => {
     // クリーンアップ
     configManager = null;
     apiClient = null;
-    actionEndpoints = null;
-    tweetEndpoints = null;
+    authManager = null;
     testConfig = null;
   });
 

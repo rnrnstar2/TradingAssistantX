@@ -397,20 +397,25 @@ export class ResponseHandler {
     
     // 2025年最新のAnthropic APIヘッダー形式を優先
     if (headers['anthropic-ratelimit-requests-limit'] || headers['anthropic-ratelimit-tokens-limit']) {
-      return {
+      const resetTime = headers['anthropic-ratelimit-requests-reset'] || headers['anthropic-ratelimit-tokens-reset'] || new Date().toISOString();
+      const rateLimitInfo: RateLimitInfo = {
         limit: parseInt(headers['anthropic-ratelimit-requests-limit'] || headers['anthropic-ratelimit-tokens-limit']) || 0,
         remaining: parseInt(headers['anthropic-ratelimit-requests-remaining'] || headers['anthropic-ratelimit-tokens-remaining']) || 0,
-        resetTime: headers['anthropic-ratelimit-requests-reset'] || headers['anthropic-ratelimit-tokens-reset'] || new Date().toISOString(),
+        reset: new Date(resetTime).getTime() || Date.now(),
+        resetTime: resetTime,
         retryAfter: headers['retry-after'] ? parseInt(headers['retry-after']) * 1000 : undefined
       };
+      return rateLimitInfo;
     }
     
     // 従来のX-RateLimit形式もサポート（後方互換性）
     if (headers['x-rate-limit-limit'] || headers['X-RateLimit-Limit']) {
-      return {
+      const resetTime = headers['x-rate-limit-reset'] || headers['X-RateLimit-Reset'] || new Date().toISOString();
+      const rateLimitInfo: RateLimitInfo = {
         limit: parseInt(headers['x-rate-limit-limit'] || headers['X-RateLimit-Limit']) || 0,
         remaining: parseInt(headers['x-rate-limit-remaining'] || headers['X-RateLimit-Remaining']) || 0,
-        resetTime: headers['x-rate-limit-reset'] || headers['X-RateLimit-Reset'] || new Date().toISOString(),
+        reset: new Date(resetTime).getTime() || Date.now(),
+        resetTime: resetTime,
         retryAfter: headers['retry-after'] ? parseInt(headers['retry-after']) * 1000 : undefined
       };
     }
@@ -593,7 +598,7 @@ export class ResponseHandler {
   private isRetryableError(error: KaitoAPIError): boolean {
     return error instanceof NetworkError || 
            error instanceof RateLimitError || 
-           (error instanceof KaitoAPIError && error.statusCode && error.statusCode >= 500);
+           (error instanceof KaitoAPIError && !!error.statusCode && error.statusCode >= 500);
   }
 
   private updateErrorStats(errorType: string): void {
@@ -689,7 +694,9 @@ const CACHE_SIZE = 1000;
 function manageCacheSize(): void {
   if (normalizationCache.size >= CACHE_SIZE) {
     const firstKey = normalizationCache.keys().next().value;
-    normalizationCache.delete(firstKey);
+    if (firstKey !== undefined) {
+      normalizationCache.delete(firstKey);
+    }
   }
 }
 

@@ -1,0 +1,19 @@
+timestamp: '2025-07-30T06:31:41.305Z'
+type: action-result
+data:
+  success: true
+  action: like
+  targetTweet: '1950429901493854467'
+  targetTweetText: >-
+    COP29で3000億ドルの気候資金目標も、従来の1000億ドルも未達成。最小限開発国への投資はわずか1%。大気汚染対策の経済リターンは大きいが、進展は遅い。#気候資金
+    #大気汚染
+  searchQuery: 投資 目標
+  result:
+    tweetId: '1950429901493854467'
+    timestamp: '2025-07-30T06:31:41.304Z'
+    success: true
+  claudeSelection:
+    score: 6
+    reasoning: 気候投資・経済リターンに言及し品質閾値をクリア。投資教育的価値があり関係構築可能性も高い。
+    expectedImpact: medium
+  timestamp: '2025-07-30T06:31:41.305Z'

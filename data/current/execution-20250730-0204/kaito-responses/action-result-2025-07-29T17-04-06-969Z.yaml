@@ -1,0 +1,8 @@
+timestamp: '2025-07-29T17:04:06.969Z'
+type: action-result
+data:
+  success: true
+  action: wait
+  reason: 'No tweets found for query: 市場分析 lang:ja'
+  query: 市場分析 lang:ja
+  timestamp: '2025-07-29T17:04:06.968Z'

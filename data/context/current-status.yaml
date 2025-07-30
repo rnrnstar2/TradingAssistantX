@@ -1,8 +1,8 @@
 account_status:
-  followers: 0
-  following: 0
+  followers: 5
+  following: 5
   tweets_today: 0
-  engagement_rate_24h: 0
+  engagement_rate_24h: 0.0125
 system_status:
   last_execution: '2025-07-28T08:51:25.512Z'
   next_execution: ''

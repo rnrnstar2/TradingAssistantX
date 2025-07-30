@@ -1,322 +1,418 @@
 # Claude Code SDK 仕様書
 
-## 概要
+## 🎯 システムの本質的価値
 
-Claude Code SDKを使用したコンテンツ生成・分析・検索システム
+Claude Code SDKは、TradingAssistantXの**知的中枢**として機能し、投資教育コンテンツの品質とエンゲージメントを最大化します。
 
-> **📂 ディレクトリ構造**: 詳細な構造は [directory-structure.md](directory-structure.md) を参照
+### 核心機能
+- **AI品質保証**: Claudeによる教育的価値の担保と最適化
+- **戦略的コンテンツ生成**: 時間帯・市場状況・学習データに基づく最適コンテンツ
+- **知的選択システム**: 膨大なツイート候補から最高品質を自動選択
+- **継続学習**: 1日1回分析による戦略最適化
 
-## アクション実行フロー
+### MVPでの達成価値
+- **教育コンテンツ品質**: 投資初心者〜中級者への確実な価値提供
+- **エンゲージメント最適化**: AI判断によるいいね・RT・フォロワー増最大化  
+- **運用自動化**: 手動判断を排除した24時間体制での品質保証
+- **戦略進化**: 深夜分析による翌日戦略の自動最適化
 
-### YAMLベースのアクション管理
-現在のシステムでは、アクションはYAMLファイルで事前に定義され、実行時の判断は不要になりました。
+## 🏗️ エンドポイント設計哲学
 
-### アクション種別と実行フロー
+### 設計原則：明確な責任分離
+**「1エンドポイント = 1つの明確な責任」**により、保守性・拡張性・テスト容易性を実現。
 
-#### 1. 投稿 (post)
-- **フロー**: YAMLトピック取得→関連情報検索→内容生成→投稿実行
-- **検索活用**: トピックに関連した最新の市場情報・トレンドを検索
-- **内容生成**: 検索結果 + Claude + 学習データを統合して価値の高いコンテンツ生成
-- **エンドポイント**: `generateSearchQuery()` → `generateContent()`を使用
+| エンドポイント | 知的責任 | 価値提供 |
+|---|---|---|
+| `generateContent` | 教育的コンテンツ創造 | 時間帯・対象者に最適化された価値あるコンテンツ |
+| `selectOptimalTweet` | **知的選択判断** | 膨大な候補から最高品質ツイートの選択 |
+| `generateQuoteComment` | 価値追加コメント | 独自視点による教育的価値の付加 |
+| `analyzePerformance` | 戦略分析・改善 | 実行結果からの学習と戦略最適化 |
 
-#### 2. リツイート (retweet)  
-- **フロー**: 検索クエリ生成→投稿検索→候補分析→RT実行
-- **検索条件**: 投資教育関連、高エンゲージメント、信頼性
-- **エンドポイント**: `generateSearchQuery()`を使用
+### 設計の競争優位性
+- **責任分離**: 各機能が独立し、変更影響を局所化
+- **型安全連携**: TypeScript型による確実なデータフロー
+- **統一アーキテクチャ**: KaitoAPIと同様の構造で学習コスト削減
+- **段階的拡張**: 新機能は新エンドポイント追加のみで実現
 
-#### 3. 引用リツイート (quote_tweet)
-- **フロー**: 検索→候補選択→コメント生成→実行
-- **コメント生成**: 独自視点・補足説明の追加
-- **エンドポイント**: `generateQuoteComment()`を使用
+## 🌟 selectOptimalTweet：知的選択の核心
 
-#### 4. いいね (like)
-- **フロー**: 対象検索→品質評価→いいね実行
-- **対象基準**: 高品質投資教育コンテンツ、戦略合致
-- **エンドポイント**: `generateSearchQuery()`を使用
+**最重要機能**: 複数のツイート候補から投資教育的価値・エンゲージメント・信頼性を総合評価し、最適なツイートを選択。
 
-#### 5. 待機 (wait)
-- **条件**: スケジュールで定義されている場合
-- **効果**: 処理をスキップして次の時刻まで待機
+### AI判断基準の設計
 
-## エンドポイント別設計
+**リツイート・引用ツイート**
+- **教育的価値（40%）**: 投資初心者〜中級者への学習効果
+- **エンゲージメント予測（30%）**: いいね・RT・リプライ拡散力予測
+- **信頼性評価（20%）**: 情報源確実性とアカウント信頼度
+- **関連性適合（10%）**: 指定トピックとの精密な適合度
 
-### エンドポイント別設計の利点
-- **🎯 明確な責任分離**: 各エンドポイント = 1つの役割（生成・分析・検索）
-- **📊 型安全**: エンドポイントごとの専用入力/出力型で確実な連携
-- **🔧 使いやすさ**: どのファイルがどの返却型かが明確、直感的な使用
-- **🏗️ 一貫性**: kaito-apiと同様のendpoints/構造で統一感
-- **🚀 拡張性**: 新機能 = 新エンドポイント追加のみ、既存に影響なし
-- **📋 保守性**: プロンプト・変数・返却型が1ファイルで完結管理
-- **🔄 明確なデータフロー**: Kaito API → 特定エンドポイント → 固定型返却 → 分岐
+**いいね（関係構築重視）**
+- **関係構築可能性（90%）**: そのユーザーが私のアカウント（投資教育）に興味を持ちそうか
+- **エンゲージメント予測（10%）**: 限定的な重要度（他人に見られないため）
 
-## main.tsでのエンドポイント別使用例
+**フォロー（戦略的ネットワーク構築）**
+- **専門性評価（40%）**: 投資教育分野での専門知識・権威性
+- **相互関係可能性（30%）**: フォローバック・継続的な関係構築可能性
+- **影響力評価（20%）**: フォロワー数・エンゲージメント率
+- **コンテンツ親和性（10%）**: 投資教育アカウントとの価値観一致度
 
-### dev実行時（3ステップ）
-
+### 入力設計（最小必要項目）
 ```typescript
-// dev.ts - dev実行時のエンドポイント使用
-import { generateContent, analyzePerformance, generateSearchQuery } from './claude';
-import type { GeneratedContent, AnalysisResult } from './claude/types';
-// 注意: makeDecisionはdev実行時も使用しない（YAMLから固定アクションを取得）
-
-// dev実行メインワークフロー - makeDecisionスキップ版
-async function executeWorkflow(fixedAction: FixedAction) {
-  // 1. Kaito APIでデータ取得
-  const twitterData = await kaitoAPI.getCurrentContext();
-  const learningData = await dataManager.loadLearningData();
-  
-  // 2. アクション実行（事前決定済み）
-  // makeDecisionエンドポイントは使用しない（YAMLから固定アクションを取得）
-  
-  // 事前決定されたアクションに基づく処理
-  switch (fixedAction.action) {
-    case 'post':
-      // トピックに関連した情報を検索
-      const searchQuery = await generateSearchQuery({
-        purpose: 'trend_analysis',
-        topic: fixedAction.topic,
-        constraints: { maxResults: 5 }
-      });
-      const relatedInfo = await kaitoAPI.searchTweets(searchQuery.query);
-      
-      // 検索結果を含めてコンテンツ生成
-      const content: GeneratedContent = await generateContent({
-        request: {
-          topic: fixedAction.topic,
-          contentType: 'educational',
-          targetAudience: 'intermediate'
-        },
-        context: { relatedTweets: relatedInfo, marketTrends: twitterData.trends }
-      });
-      await kaitoAPI.createPost(content.content);
-      break;
-      
-    case 'retweet':
-      const searchQuery = await generateSearchQuery({
-        topic: fixedAction.topic,
-        intent: 'find_educational_content'
-      });
-      const candidates = await kaitoAPI.searchTweets(searchQuery.query);
-      await kaitoAPI.retweet(candidates[0].id);
-      break;
-      
-    case 'like':
-      await kaitoAPI.likeTweet(fixedAction.targetTweetId);
-      break;
+{
+  candidates: TweetCandidate[],           // 最大20件の候補
+  selectionType: 'like' | 'retweet' | 'quote_tweet' | 'follow',
+  criteria: {
+    topic: string,                        // 投資教育トピック
+    qualityThreshold: number,             // 品質閾値（0-10）
+    engagementWeight: number,             // エンゲージメント重視度
+    relevanceWeight: number               // 関連性重視度
   }
-  
-  // 3. 結果保存・分析エンドポイント使用
-  const analysis: AnalysisResult = await analyzePerformance({
-    fixedAction, // decisionの代わりにfixedAction使用
-    result,
-    context: twitterData
-  });
-  
-  await dataManager.saveResult({ fixedAction, result: analysis });
-  return { success: true, duration: Date.now() - startTime };
 }
 ```
 
-### スケジュール実行時（3ステップ）
+### Claude判断の最適化
+- **トークン効率化**: ツイート本文200文字制限による判断精度向上
+- **情報選別**: 判断に不要な情報を排除し、核心要素のみ送信
+- **判断速度**: 平均3-5秒での高精度選択実現
 
+## 🔄 ワークフロー統合：4ステップの知的実行
+
+### 統合設計の価値
+Claude SDKは独立したツールではなく、KaitoAPIとDataManagerと統合された**知的実行システム**として機能。
+
+### アクション別実行フロー
+
+**投稿アクション**
+```
+トピック設定（schedule.yaml）→ 教育コンテンツ生成（generateContent）→ 投稿実行
+```
+
+**リツイートアクション**  
+```
+検索クエリ取得（schedule.yaml）→ 候補収集（KaitoAPI）→ AI選択（selectOptimalTweet）→ RT実行
+```
+
+**引用リツイートアクション**
+```
+検索クエリ取得（schedule.yaml）→ 候補収集（KaitoAPI）→ AI選択（selectOptimalTweet）→ 価値追加（generateQuoteComment）→ 引用RT実行
+```
+
+**いいねアクション**
+```
+検索クエリ取得（schedule.yaml）→ 候補収集（KaitoAPI）→ 関係構築評価（selectOptimalTweet）→ いいね実行
+```
+
+**フォローアクション**
+```
+検索クエリ取得（schedule.yaml）→ ユーザー検索（KaitoAPI）→ 戦略的関係構築評価（selectOptimalTweet）→ フォロー実行
+```
+
+### ワークフロー統合の効果
+- **情報品質向上**: 事前定義クエリ→AI判断→コンテンツ生成の一貫フロー
+- **戦略一貫性**: 全アクションで統一された投資教育価値基準
+- **学習循環**: 日中実行→深夜分析→翌日戦略最適化の24時間サイクル
+
+## 🌙 深夜分析システム：24時間学習サイクル
+
+### 分析実行スケジュール
+- **実行時刻**: 毎日23:55（日次分析の最適化タイミング）
+- **実行頻度**: 1日1回（コスト効率化と深い洞察の両立）
+- **処理時間**: 約15-30分（翌日戦略生成完了：00:30頃）
+
+### 詳細実行ステップ（23:55実行時の拡張フロー）
+
+**Step 1: データ収集（通常と同じ）**
+```
+アカウント情報取得 → 直近実行履歴読み込み → 現在時刻コンテキスト取得
+```
+
+**Step 2: アクション実行（通常と同じ）**
+```
+schedule.yamlの23:55定義アクション実行（例：深夜向け投稿）
+```
+
+**Step 3: 結果保存（通常と同じ）**
+```
+実行結果をdata/current/execution-YYYYMMDD-2355/に保存
+```
+
+**Step 4: 分析（23:55限定の追加ステップ）**
+
+#### 4-1: 分析データ収集フェーズ
+```
+収集対象:
+- data/current/execution-*/execution-summary.yaml（本日全実行）
+- data/current/execution-*/kaito-responses/*.yaml（全API応答）
+- data/current/execution-*/posts/*.yaml（全投稿データ）
+- data/learning/decision-patterns.yaml（過去の学習パターン）
+- data/current/active-session.yaml（現在のアカウント状態）
+```
+
+#### 4-2: Claude SDK分析実行フェーズ
+
+**analyzePerformance入力仕様**:
 ```typescript
-// main.ts - スケジュール実行時のエンドポイント使用
-import { generateContent, analyzePerformance, generateSearchQuery } from './claude';
-import type { GeneratedContent, AnalysisResult } from './claude/types';
-// 注意: makeDecisionはスケジュール実行時は使用しない（YAMLから時刻別事前決定アクションを取得）
-
-// スケジュール実行メインワークフロー - makeDecisionスキップ
-async function executeScheduledWorkflow(scheduledAction: ScheduledAction) {
-  // 1. Kaito APIでデータ収集
-  const twitterData = await kaitoAPI.getCurrentContext();
-  const learningData = await dataManager.loadLearningData();
+{
+  // 本日の全実行データ
+  todayExecutions: {
+    totalActions: number,
+    actionBreakdown: {
+      post: { count: number, avgEngagement: number },
+      retweet: { count: number, successRate: number },
+      quote_tweet: { count: number, avgReach: number },
+      like: { count: number, relationshipBuilt: number },
+      follow: { count: number, followBackRate: number }
+    },
+    timeSlotPerformance: {
+      [timeSlot: string]: {
+        actions: string[],
+        engagementRate: number,
+        followerGrowth: number
+      }
+    }
+  },
   
-  // 2. アクション実行（事前決定済み）
-  // makeDecisionエンドポイントは使用しない（schedule.yamlから取得）
+  // アカウント成長メトリクス
+  accountMetrics: {
+    startFollowers: number,
+    endFollowers: number,
+    totalEngagements: number,
+    topPerformingPosts: Array<{
+      content: string,
+      engagement: number,
+      time: string
+    }>
+  },
   
-  // 事前決定されたアクションに基づく処理
-  switch (scheduledAction.action) {
-    case 'post':
-      // トピックに関連した情報を検索
-      const searchQuery = await generateSearchQuery({
-        purpose: 'trend_analysis',
-        topic: scheduledAction.topic,
-        constraints: { maxResults: 5 }
-      });
-      const relatedInfo = await kaitoAPI.searchTweets(searchQuery.query);
-      
-      // 検索結果を含めてコンテンツ生成
-      const content: GeneratedContent = await generateContent({
-        topic: scheduledAction.topic,
-        context: { relatedTweets: relatedInfo, marketTrends: twitterData.trends },
-        style: 'educational',
-        targetAudience: 'investors'
-      });
-      await kaitoAPI.createPost(content.content);
-      break;
-      
-    case 'retweet':
-      const searchQuery = await generateSearchQuery({
-        topic: scheduledAction.topic,
-        intent: 'find_educational_content'
-      });
-      const candidates = await kaitoAPI.searchTweets(searchQuery.query);
-      await kaitoAPI.retweet(candidates[0].id);
-      break;
-      
-    case 'like':
-      await kaitoAPI.likeTweet(scheduledAction.targetTweetId);
-      break;
-  }
+  // 過去7日間のトレンド
+  weeklyTrends: {
+    averageEngagement: number,
+    growthRate: number,
+    bestPerformingTopics: string[],
+    worstPerformingTopics: string[]
+  },
   
-  // 3. 結果保存・分析エンドポイント使用
-  const analysis: AnalysisResult = await analyzePerformance({
-    scheduledAction, // decisionの代わりにscheduledAction使用
-    result,
-    context: twitterData
-  });
-  
-  await dataManager.saveResult({ scheduledAction, result: analysis });
-  return { success: true, duration: Date.now() - startTime };
+  // 分析指示
+  analysisPrompt: "1日の実行データから以下を分析してください：
+    1. 時間帯別の最適アクション組み合わせ
+    2. エンゲージメント向上に効果的だったトピック
+    3. フォロワー増加に寄与した要因
+    4. 明日実行すべき優先アクション（時刻付き）
+    5. 避けるべき時間帯・トピック
+    6. 新たに試すべき戦略提案"
 }
 ```
 
-## エンドポイント別設計要件
-
-- **コマンド実行**: システムの基本動作
-- **エンドポイント別Claude処理**: 役割ごとに特化したプロンプト+変数でClaude呼び出し
-- **専用型返却**: 各エンドポイントの専用返却型での確実な結果返却
-- **明確な責任分離**: 生成・分析・検索の3エンドポイントで役割分離
-- **データフロー重視**: Kaito API → 特定エンドポイント → 専用型返却 → 分岐処理
-- **実行モード対応**: 両実行モード（dev/スケジュール）でmakeDecisionエンドポイント使用せず、YAMLから事前決定アクションを取得して3ステップで動作
-
-## 単体テスト仕様
-
-### エンドポイント単体テスト要件
-
-#### 1. content-endpoint.test.ts
-- **コンテンツ生成テスト**: トピック別の教育的コンテンツ生成検証
-- **スタイル検証**: educational, professional等の文体制御テスト
-- **文字数制限**: Twitter投稿文字数制限（280文字）遵守検証
-- **型安全性**: GeneratedContent型の返却値検証
-
-#### 2. analysis-endpoint.test.ts  
-- **分析機能テスト**: 投稿パフォーマンス分析結果検証
-- **メトリクス計算**: エンゲージメント率、フォロワー増減等の計算精度
-- **トレンド分析**: 市場動向分析の妥当性検証
-- **型安全性**: AnalysisResult型の返却値検証
-
-#### 3. search-endpoint.test.ts
-- **検索クエリ生成**: 投資教育関連クエリの品質検証
-- **フィルター条件**: 高エンゲージメント、信頼性フィルター検証
-- **クエリ最適化**: 検索効率とヒット率のバランステスト
-- **型安全性**: SearchQuery型の返却値検証
-
-### テスト実行要件
-- **フレームワーク**: Jest + TypeScript
-- **カバレッジ**: 各エンドポイント90%以上
-- **モッキング**: Claude API呼び出しは完全モック化
-- **実APIテスト制御**: テストはAPIトークン設定時に実行
-- **並列実行**: テスト間の独立性保証で並列実行対応
-
-### テスト品質基準
-- **型安全性**: 全テストでstrict TypeScript使用
-- **エラーカバレッジ**: 正常系・異常系両方のテストケース
-- **境界値テスト**: 入力値の境界条件テスト
-- **統合性**: エンドポイント間の連携動作検証
-
-## 制約事項
-
-### エンドポイント別設計制限
-- **🚫 過剰複雑化禁止**: エンドポイント内での不要な抽象化は実装しない
-- **✅ 役割明確化重視**: 1エンドポイント = 1つの明確な役割のみ
-- **📏 適切な分離**: src/claude/endpoints 3ファイル、役割別に適切に分離
-- **📊 型安全最優先**: エンドポイントごとの専用入力/出力型で確実な連携
-- **🎯 使うコードのみ**: MVPで実際に使用するエンドポイントのみ実装
-- **🔧 kaito-api一貫性**: 同様のendpoints/構造で設計統一
-
-## 認証・実装上の重要事項
-
-### Claude Code SDK認証方式
-- **使用SDK**: `@instantlyeasy/claude-code-sdk-ts`を使用（Claude Code Max Plan利用のため）
-- **ローカル認証必須**: Claude CLIでのローカルログイン認証（`claude login`）を使用
-- **CLAUDE_API_KEY不要**: 環境変数CLAUDE_API_KEYの設定は不要
-- **認証手順**: 
-  1. `npm install -g @anthropic-ai/claude-code`
-  2. `claude login`でブラウザ認証
-  3. Claude Code Max Planの機能をフル活用
-
-**重要**: Claude Code Max Planの契約を最大限活用するため、必ず`@instantlyeasy/claude-code-sdk-ts`とローカル認証を使用すること。
-
-### 🚨 重要：Claude SDK実装の問題と対応
-
-**現在の問題**:
-- `@instantlyeasy/claude-code-sdk-ts` パッケージが正しく動作していない
-- `claude()` 関数の呼び出しでワークフローが停止する
-
-**対応方針**:
-
-#### 1. エラーハンドリングの強化（推奨）
-Claude SDK呼び出し部分に適切なエラーハンドリングを実装：
-
+**analyzePerformance返却仕様**:
 ```typescript
-// src/claude/endpoints/content-endpoint.ts での実装例
-async function generateWithClaudeQualityCheck(
-  prompt: string, 
-  topic: string, 
-  qualityThreshold: number
-): Promise<string> {
-  try {
-    // Claude SDK 呼び出し
-    const response = await claude()
-      .withModel('sonnet')
-      .withTimeout(CLAUDE_TIMEOUT)
-      .query(prompt)
-      .asText();
-      
-    return response.trim();
-  } catch (error) {
-    console.error('Claude SDK呼び出しエラー:', error);
-    // エラー詳細をログに記録
-    console.error('エラー詳細:', {
-      topic,
-      promptLength: prompt.length,
-      timestamp: new Date().toISOString()
-    });
+{
+  dailyInsights: {
+    performancePatterns: Array<{
+      timeSlot: string,
+      successRate: number,
+      optimalTopics: string[],
+      recommendedActions: string[]
+    }>,
     
-    // 適切なエラーを再スロー
-    throw new Error(`Claude API呼び出しに失敗しました: ${error.message}`);
+    topicAnalysis: {
+      highPerformance: Array<{
+        topic: string,
+        avgEngagement: number,
+        bestTimeSlots: string[]
+      }>,
+      lowPerformance: Array<{
+        topic: string,
+        reason: string,
+        improvement: string
+      }>
+    },
+    
+    followerGrowthFactors: Array<{
+      factor: string,
+      impact: number,
+      recommendation: string
+    }>
+  },
+  
+  tomorrowStrategy: {
+    prioritySchedule: Array<{
+      time: string,
+      action: string,
+      topic?: string,
+      targetQuery?: string,
+      reasoning: string
+    }>,
+    
+    avoidanceList: Array<{
+      timeSlot?: string,
+      topic?: string,
+      reason: string
+    }>,
+    
+    experimentalStrategies: Array<{
+      strategy: string,
+      expectedOutcome: string,
+      riskLevel: 'low' | 'medium' | 'high'
+    }>
   }
 }
 ```
 
-#### 2. SDK問題の根本解決
+#### 4-3: 戦略ファイル生成フェーズ
+```
+生成ファイル:
+1. data/learning/daily-insights-YYYYMMDD.yaml（日次分析結果）
+2. data/current/tomorrow-strategy.yaml（翌日自動適用戦略）
+3. data/learning/performance-summary-YYYYMMDD.yaml（パフォーマンス集計）
+```
 
-1. **短期対応（高優先度）**:
-   - Claude SDK の最新バージョン確認と更新
-   - ローカル認証状態の確認（`claude login`の再実行）
-   - エラーログの詳細分析
+### 学習データ構造の進化
 
-2. **中期対応**:
-   - Claude公式ドキュメントの確認
-   - 代替SDKパッケージの調査
-   - コミュニティフォーラムでの問題報告
+**従来の課題**: `decision-patterns.yaml`
+```yaml
+# 意味のない反復データ
+followers: 0
+engagement_rate: 0
+market_trend: neutral
+```
 
-3. **長期対応**:
-   - Claude API直接呼び出しの実装検討
-   - カスタムAPIクライアントの開発
-   - リトライ機構とフォールバック戦略の実装
+**新構造**: 意味のある学習データ
+```yaml
+# data/learning/daily-insights-YYYYMMDD.yaml
+performance_patterns:
+  - time_slot: "07:00-10:00"
+    success_rate: 0.85
+    optimal_topics: ["朝の投資情報", "市場開始前準備"]
+  - time_slot: "20:00-22:00" 
+    success_rate: 0.92
+    optimal_topics: ["今日の振り返り", "明日の戦略"]
 
-#### 3. テスト環境での対応
+market_opportunities:
+  - topic: "NISA制度改正"
+    relevance: 0.9
+    recommended_action: "educational_post"
+    expected_engagement: 4.2
 
-テスト実行時のみ、実際のAPIをスキップする最小限の対応：
+optimization_insights:
+  - pattern: "quote_tweet_evening_high_success"
+    implementation: "夕方の引用ツイートを30%増加"
+    expected_impact: "+15% engagement"
+```
 
+### 翌日戦略自動生成
+
+**戦略配信**: `data/current/tomorrow-strategy.yaml`
+- 優先アクション順序
+- 時間帯別最適コンテンツ
+- 回避すべきトピック・時間帯
+- 期待成果指標
+
+**自動適用**: 翌日の実行ワークフローが戦略を自動読み込み・適用
+
+## 📊 プロンプト変数システム：コンテクスト最適化
+
+### 変数体系の設計思想
+各変数は投資教育コンテンツの品質最大化のために厳選された要素。
+
+| 変数分類 | 核心変数 | 最適化効果 |
+|---|---|---|
+| **時間戦略** | `dayOfWeek`, `timeContext`, `hour` | 時間帯別エンゲージメント最大化 |
+| **アカウント戦略** | `followerCount`, `engagementRate`, `postsToday` | フォロワー特性に応じた内容調整 |
+| **学習戦略** | `recentTopics`, `avgEngagement`, `successPatterns` | 過去実績に基づく戦略最適化 |
+| **市場戦略** | `sentiment`, `volatility`, `trendingTopics` | リアルタイム市場連動コンテンツ |
+
+### 時間戦略の設計
+- **朝（7-10時）**: 1日のスタートに役立つ投資情報・前向きなメッセージ
+- **昼（12-14時）**: サクッと読める実践的な投資テクニック
+- **夜（20-22時）**: 1日の振り返り・明日への投資戦略準備
+- **週末**: じっくり学習できる投資理論・来週の注目ポイント
+
+## 🎨 プロンプトテンプレート管理：DRY原則による効率化
+
+### 設計哲学
+プロンプトの重複を完全排除し、一貫性のある高品質コンテンツ生成を実現。
+
+### アーキテクチャ構造
+```
+src/claude/prompts/
+├── templates/     # 投資教育特化テンプレート
+├── builders/      # コンテクスト統合ビルダー
+└── index.ts       # 統一エクスポート
+```
+
+### BaseBuilderの価値
+- **共通ロジック統合**: 時間帯判定・アカウント分析・市場状況処理を一元化
+- **品質一貫性**: 全エンドポイントで統一された投資教育価値基準
+- **保守効率**: プロンプト変更が全システムに自動反映
+
+## 🔐 認証・SDK設定：技術基盤
+
+### Claude Code SDK設定
+- **SDK**: `@instantlyeasy/claude-code-sdk-ts`（Claude Code Max Plan最大活用）
+- **認証**: `claude login`ローカル認証（環境変数設定不要）
+- **推奨モデル**: `sonnet`（教育コンテンツ生成に最適化）
+- **必須設定**: `.skipPermissions()`使用
+
+### エラーハンドリング戦略
 ```typescript
-// テストファイル内でのみ使用
-if (process.env.NODE_ENV === 'test') {
-  // テスト用のスタブを使用
-  vi.mock('@instantlyeasy/claude-code-sdk-ts');
+try {
+  const response = await claude()
+    .withModel('sonnet')
+    .withTimeout(30000)
+    .skipPermissions()
+    .query(prompt)
+    .asText();
+} catch (error) {
+  // 詳細ログ + 適切なエラー再スロー
 }
 ```
 
-**重要**: 本番環境でのモック使用は厳禁。CLAUDE.mdの規約により、実際のClaude APIを使用することが必須。
+### セッション永続化
+- Twitterログインセッション自動保存（`data/current/twitter-session.yaml`）
+- アプリ再起動後の認証スキップによる運用効率化
+
+## 🧪 品質保証：テスト戦略
+
+### エンドポイント別テスト設計
+| エンドポイント | 品質検証項目 | 成功基準 |
+|---|---|---|
+| content-endpoint | 教育的価値・文体制御・文字数制限 | 投資初心者理解度90%以上 |
+| analysis-endpoint | メトリクス精度・トレンド分析 | 予測精度85%以上 |
+| search-endpoint | クエリ品質・フィルター精度 | 関連度90%以上のツイート発見 |
+| selection-endpoint | 選択精度・基準適用・リスク評価 | 選択品質スコア8.0以上 |
+
+### 品質保証体制
+- **フレームワーク**: Jest + TypeScript厳格モード
+- **カバレッジ要件**: 各エンドポイント90%以上
+- **モッキング戦略**: Claude API完全モック化による高速テスト
+- **統合テスト**: エンドポイント間連携の確実性検証
+
+## 🎯 制約事項・設計ガイドライン
+
+### 設計制限の理由
+- **責任明確化**: 1エンドポイント=1責任により、変更影響の局所化
+- **過剰設計回避**: MVPで実際に使用する機能のみ実装し、複雑性を排除
+- **型安全優先**: コンパイル時エラー検出による実行時安定性確保
+- **実用性重視**: 投資教育コンテンツの価値最大化を最優先
+
+### 成功への指針
+- コード例より概念理解を重視
+- 他ドキュメントとの重複完全回避
+- 投資教育価値の継続的向上
+- システム全体の統合効果最大化
+
+## 📈 期待される成果
+
+### 投資教育価値の実現
+- **教育効果**: フォロワーの投資知識向上による長期的関係構築
+- **エンゲージメント**: AI最適化による自然なコミュニティ形成
+- **信頼構築**: 一貫した高品質コンテンツによる専門性の確立
+- **成長循環**: 学習データ蓄積による継続的品質向上
+
+### システム価値の実現
+- **運用自動化**: 24時間体制での高品質コンテンツ提供
+- **戦略進化**: 深夜分析による適応的改善
+- **技術基盤**: 拡張可能なアーキテクチャによる将来機能追加容易性
+- **運用効率**: エラー最小化による安定運用の実現
+
+Claude Code SDKは、単なるAPI呼び出しツールではなく、投資教育コンテンツの**知的品質保証システム**として、TradingAssistantXの核心価値を実現する統合プラットフォームです。

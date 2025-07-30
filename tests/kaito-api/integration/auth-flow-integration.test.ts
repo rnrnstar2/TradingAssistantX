@@ -14,7 +14,7 @@ import { AuthManager } from '../../../src/kaito-api/core/auth-manager';
 import { KaitoTwitterAPIClient } from '../../../src/kaito-api';
 import type { LoginResult, AuthStatus } from '../../../src/kaito-api/types';
 
-describe('3層認証統合テスト', () => {
+describe.skip('3層認証統合テスト（コスト発生のためスキップ）', () => {
   let authManager: AuthManager;
   let client: KaitoTwitterAPIClient;
   

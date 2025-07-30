@@ -59,6 +59,8 @@ export const WORKFLOW_CONSTANTS = {
     RETWEET: 'retweet',
     LIKE: 'like',
     QUOTE_TWEET: 'quote_tweet',
+    FOLLOW: 'follow',
+    ANALYZE: 'analyze',
     WAIT: 'wait'
   } as const
 } as const;
@@ -82,6 +84,16 @@ export interface WorkflowResult {
   executionId: string;
   decision: any;
   actionResult?: any;
+  deepNightAnalysis?: {  // 新規追加
+    success: boolean;
+    analysisTime: number;
+    insights: number;
+    opportunities: number;
+    strategies: number;
+    confidence: number;
+    filesGenerated: string[];
+    error?: string;
+  };
   error?: string;
   executionTime: number;
 }
@@ -118,5 +130,11 @@ export interface SystemContext {
     trendingTopics: string[];
     volatility: 'low' | 'medium' | 'high';
     sentiment: 'bearish' | 'neutral' | 'bullish';
+  };
+  timestamp?: string;
+  learningData?: {
+    recentTopics: string[];
+    totalPatterns: number;
+    avgEngagement: number;
   };
 }

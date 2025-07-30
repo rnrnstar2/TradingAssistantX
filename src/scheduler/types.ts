@@ -42,6 +42,19 @@ export interface ExecutionStats {
 }
 
 /**
+ * 拡張された実行統計 - 深夜大規模分析統計を含む
+ */
+export interface ExtendedExecutionStats extends ExecutionStats {
+  deepNightAnalysis?: {
+    totalAttempts: number;
+    successfulAnalysis: number;
+    averageAnalysisTime: number;
+    lastAnalysisDate: string;
+    lastAnalysisSuccess: boolean;
+  };
+}
+
+/**
  * エラー記録 - 個別エラーの詳細情報
  */
 export interface ErrorRecord {

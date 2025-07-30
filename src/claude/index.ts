@@ -5,7 +5,7 @@
  * 提供機能:
  * - コンテンツ生成エンドポイント: generateContent(), generateQuoteComment()
  * - 分析エンドポイント: analyzePerformance(), analyzeMarketContext(), recordExecution()
- * - 検索クエリエンドポイント: generateSearchQuery(), generateRetweetQuery(), generateLikeQuery(), generateQuoteQuery()
+ * - 選択エンドポイント: selectOptimalTweet() - Claude AI を使用した最適ツイート選択
  * 
  * 設計原則:
  * - 1エンドポイント = 1つの役割
@@ -33,13 +33,11 @@ export {
   generateImprovementSuggestions
 } from './endpoints/analysis-endpoint';
 
-// Search endpoint
+// Selection endpoint
 export { 
-  generateSearchQuery,
-  generateRetweetQuery,
-  generateLikeQuery,
-  generateQuoteQuery
-} from './endpoints/search-endpoint';
+  selectOptimalTweet,
+  convertTweetDataToCandidate
+} from './endpoints/selection-endpoint';
 
 // ============================================================================
 // TYPE DEFINITIONS EXPORT - 型定義統合エクスポート
@@ -49,17 +47,14 @@ export {
 export type {
   GeneratedContent,
   AnalysisResult,
-  SearchQuery
+  SelectedTweet
 } from './types';
 
 // Input types - 入力型
 export type {
   ContentInput,
   AnalysisInput,
-  SearchInput,
-  RetweetSearchInput,
-  LikeSearchInput,
-  QuoteSearchInput
+  TweetSelectionParams,
 } from './types';
 
 // Supporting types - 補助型
@@ -71,10 +66,13 @@ export type {
   PerformanceMetrics,
   ContentRequest,
   TwitterContext,
-  SearchRequest,
   ClaudeSDKConfig,
   ClaudeSDKError,
-  APIResponse
+  APIResponse,
+  TweetCandidate,
+  AccountInfo,
+  LearningData,
+  CompactTweetCandidate
 } from './types';
 
 // Additional analysis types - 追加分析型
@@ -93,7 +91,6 @@ export {
   VALID_ACTIONS,
   CONTENT_TYPES,
   TARGET_AUDIENCES,
-  SEARCH_PURPOSES,
   ANALYSIS_TYPES,
   SYSTEM_LIMITS
 } from './types';
@@ -102,5 +99,4 @@ export {
 export {
   isGeneratedContent,
   isAnalysisResult,
-  isSearchQuery
 } from './types';

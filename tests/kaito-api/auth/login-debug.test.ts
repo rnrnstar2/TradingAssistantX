@@ -6,7 +6,7 @@
 import { describe, test, expect, beforeEach } from 'vitest';
 import { AuthManager } from '../../../src/kaito-api/core/auth-manager';
 
-describe('ログインHTTP 400エラー詳細デバッグ', () => {
+describe.skip('ログインHTTP 400エラー詳細デバッグ（コスト発生のためスキップ）', () => {
   test('リクエスト詳細とレスポンス内容分析', async () => {
     console.log('=== HTTP 400エラー詳細分析 ===');
     

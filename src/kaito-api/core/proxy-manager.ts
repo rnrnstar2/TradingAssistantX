@@ -26,7 +26,7 @@ interface ProxiesConfig {
 }
 
 export class ProxyManager {
-  private config: ProxiesConfig;
+  private config!: ProxiesConfig;  // 後で初期化されるため!を付ける
   private currentProxyIndex: number = 0;
   private failedProxies: Map<string, number> = new Map(); // プロキシURL -> 失敗時刻
   private configPath: string;

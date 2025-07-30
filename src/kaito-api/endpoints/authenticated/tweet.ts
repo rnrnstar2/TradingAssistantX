@@ -75,60 +75,60 @@ export class TweetManagement {
     // 入力バリデーション
     const validation = this.validatePostRequest(request);
     if (!validation.isValid) {
-      return {
-        success: false,
-        error: `Validation failed: ${validation.errors.join(', ')}`
-      };
+      throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
     }
 
     // セキュリティチェック
-    const securityCheck = this.performSecurityCheck(request.content);
+    const securityCheck = this.performSecurityCheck(request.tweet_text);
     if (!securityCheck.isSafe) {
-      return {
-        success: false,
-        error: `Security check failed: ${securityCheck.issues.join(', ')}`
-      };
+      throw new Error(`Security check failed: ${securityCheck.issues.join(', ')}`);
     }
 
     try {
       // V2認証（login_cookie）取得
       const loginCookie = this.authManager.getUserSession();
       if (!loginCookie) {
-        return {
-          success: false,
-          error: 'No valid V2 login session available. Please authenticate first.'
-        };
+        throw new Error('No valid V2 login session available. Please authenticate first.');
       }
 
       console.log('📝 Creating tweet with V2 authentication...');
       
       // サニタイズされたコンテンツで投稿
-      const sanitizedContent = this.sanitizeContent(request.content);
+      const sanitizedContent = this.sanitizeContent(request.tweet_text);
       
       const response = await this.httpClient.post<CreateTweetV2Response>(
         this.ENDPOINTS.createTweet,
         {
           text: sanitizedContent,
           login_cookie: loginCookie,
-          ...(request.mediaIds && { media_ids: request.mediaIds })
+          ...(request.media_ids && { media_ids: request.media_ids })
         }
       );
 
       // create_tweet_v2の新レスポンス形式に対応
-      if (response.success && response.data) {
+      if (response.data) {
         return {
-          success: true,
-          tweetId: response.data.id,
-          createdAt: response.data.created_at
+          data: {
+            id: response.data.id,
+            text: sanitizedContent,
+            author_id: '',
+            created_at: response.data.created_at,
+            public_metrics: {
+              retweet_count: 0,
+              reply_count: 0,
+              like_count: 0,
+              quote_count: 0,
+              impression_count: 0
+            },
+            ...(request.is_note_tweet && { note_tweet: request.is_note_tweet }),
+            ...(request.reply_settings && { reply_settings: request.reply_settings })
+          }
         };
       } else {
-        return {
-          success: false,
-          error: response.error || 'Tweet creation failed'
-        };
+        throw new Error('Tweet creation failed');
       }
     } catch (error: any) {
-      return this.handleTweetError(error, 'createTweet');
+      this.handleTweetError(error, 'createTweet');
     }
   }
 
@@ -142,7 +142,6 @@ export class TweetManagement {
     if (!validation.isValid) {
       return {
         tweetId,
-        deleted: false,
         timestamp: new Date().toISOString(),
         success: false,
         error: validation.errors.join(', ')
@@ -165,7 +164,6 @@ export class TweetManagement {
 
       const result: DeleteTweetResult = {
         tweetId,
-        deleted: response.data?.deleted || true,
         timestamp: new Date().toISOString(),
         success: response.data?.deleted !== false
       };
@@ -178,7 +176,6 @@ export class TweetManagement {
       
       return {
         tweetId,
-        deleted: false,
         timestamp: new Date().toISOString(),
         success: false,
         error: error.message || 'Unknown error occurred'
@@ -194,20 +191,20 @@ export class TweetManagement {
     const errors: string[] = [];
 
     // コンテンツ基本検証
-    if (!request.content?.trim()) {
+    if (!request.tweet_text?.trim()) {
       errors.push('Content cannot be empty');
     }
 
-    if (request.content && request.content.length > this.VALIDATION_RULES.tweetContent.maxLength) {
+    if (request.tweet_text && request.tweet_text.length > this.VALIDATION_RULES.tweetContent.maxLength) {
       errors.push(`Content exceeds ${this.VALIDATION_RULES.tweetContent.maxLength} character limit`);
     }
 
     // メディアID検証
-    if (request.mediaIds) {
-      if (request.mediaIds.length > this.VALIDATION_RULES.mediaIds.maxCount) {
+    if (request.media_ids) {
+      if (request.media_ids.length > this.VALIDATION_RULES.mediaIds.maxCount) {
         errors.push(`Maximum ${this.VALIDATION_RULES.mediaIds.maxCount} media items allowed`);
       }
-      if (request.mediaIds.some(id => !this.isValidMediaId(id))) {
+      if (request.media_ids.some((id: string) => !this.isValidMediaId(id))) {
         errors.push('Invalid media ID format detected');
       }
     }
@@ -320,36 +317,24 @@ export class TweetManagement {
   // PRIVATE METHODS - ERROR HANDLING
   // ============================================================================
 
-  private handleTweetError(error: any, operation: string): PostResponse {
+  private handleTweetError(error: any, operation: string): never {
     console.error(`❌ ${operation} error (V2 API):`, error);
 
     // TwitterAPI.io V2 API特有エラーハンドリング
     if (error.response?.status === 429) {
-      return {
-        success: false,
-        error: 'Rate limit exceeded. Please try again later.'
-      };
+      throw new Error('Rate limit exceeded. Please try again later.');
     }
 
     if (error.response?.status === 401) {
-      return {
-        success: false,
-        error: 'V2 authentication failed. Please re-authenticate with login_cookie.'
-      };
+      throw new Error('V2 authentication failed. Please re-authenticate with login_cookie.');
     }
 
     if (error.response?.status === 403) {
-      return {
-        success: false,
-        error: 'Action forbidden. Check account permissions or login_cookie validity.'
-      };
+      throw new Error('Action forbidden. Check account permissions or login_cookie validity.');
     }
 
     if (error.response?.status === 422) {
-      return {
-        success: false,
-        error: 'Invalid request data for V2 API. Please check your input format.'
-      };
+      throw new Error('Invalid request data for V2 API. Please check your input format.');
     }
 
     // V2 API特有エラー（login_cookie関連）

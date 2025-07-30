@@ -158,7 +158,7 @@ export class TrendsEndpoint {
       
       const response = await this.httpClient.get<any>(
         this.ENDPOINTS.getTrends,
-        { id: woeid, headers }
+        { id: woeid }
       );
 
       // レスポンス正規化
@@ -234,8 +234,7 @@ export class TrendsEndpoint {
       const headers = this.authManager.getAuthHeaders();
       
       const response = await this.httpClient.get<any[]>(
-        this.ENDPOINTS.getLocations,
-        { headers }
+        this.ENDPOINTS.getLocations
       );
 
       // レスポンス正規化
@@ -339,10 +338,8 @@ export class TrendsEndpoint {
       url: trend.url || '',
       promotedContent: trend.promoted_content || null,
       query: trend.query || trend.name,
-      tweet_volume: trend.tweet_volume || null,
-      rank: trends.indexOf(trend) + 1,
-      category: this.categorizeTrend(trend.name),
-      woeid: apiResponse.locations?.[0]?.woeid || 1
+      tweetVolume: trend.tweet_volume || null,
+      rank: trends.indexOf(trend) + 1
     }));
   }
 

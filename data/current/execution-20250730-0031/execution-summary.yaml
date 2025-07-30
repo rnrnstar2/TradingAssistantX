@@ -1,0 +1,8 @@
+executionId: execution-20250730-0031
+startTime: '2025-07-29T15:31:03.666Z'
+decision: null
+actions: []
+metrics:
+  totalActions: 1
+  successCount: 1
+  errorCount: 0

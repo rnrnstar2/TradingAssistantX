@@ -17,7 +17,7 @@ import {
   HttpClient,
   TwitterAPITweetResponse,
   TwitterAPISearchResponse,
-  TwitterAPIError,
+  SimpleTwitterAPIError,
   APIResult,
   RateLimitInfo
 } from '../../utils/types';
@@ -36,39 +36,70 @@ import {
 // ============================================================================
 
 /**
- * ツイート取得レスポンス
- * APIResult型との整合性を保った統一レスポンス形式
+ * ツイート取得レスポンス（成功）
  */
-interface TweetResponse extends APIResult<TweetData> {
-  /** レート制限情報 */
+interface TweetResponse {
+  success: true;
+  data: TweetData;
+  timestamp: string;
   rateLimit?: RateLimitInfo;
 }
 
 /**
- * ツイート検索レスポンス
- * APIResult型との整合性を保った統一レスポンス形式
+ * ツイート取得レスポンス（エラー）
  */
-interface SearchResponse extends APIResult<{
-  tweets: TweetData[];
-  totalCount: number;
-  searchMetadata: {
-    query: string;
-    resultType?: string;
-    executedAt: string;
-    processedCount: number;
-    filteredCount?: number;
+interface TweetResponseError {
+  success: false;
+  error: SimpleTwitterAPIError;
+  timestamp: string;
+  rateLimit?: RateLimitInfo;
+}
+
+/**
+ * 完全ツイートレスポンス型
+ */
+type CompleteTweetResponse = TweetResponse | TweetResponseError;
+
+/**
+ * ツイート検索レスポンス（成功）
+ */
+interface SearchResponse {
+  success: true;
+  data: {
+    tweets: TweetData[];
+    totalCount: number;
+    searchMetadata: {
+      query: string;
+      resultType?: string;
+      executedAt: string;
+      processedCount: number;
+      filteredCount?: number;
+    };
   };
-}> {
-  /** ページネーション情報 */
+  timestamp: string;
   pagination?: {
     nextCursor?: string;
     hasMore: boolean;
     currentPage?: number;
     itemsPerPage?: number;
   };
-  /** レート制限情報 */
   rateLimit?: RateLimitInfo;
 }
+
+/**
+ * ツイート検索レスポンス（エラー）
+ */
+interface SearchResponseError {
+  success: false;
+  error: SimpleTwitterAPIError;
+  timestamp: string;
+  rateLimit?: RateLimitInfo;
+}
+
+/**
+ * 完全検索レスポンス型
+ */
+type CompleteSearchResponse = SearchResponse | SearchResponseError;
 
 // ============================================================================
 // SEARCH OPTIONS
@@ -149,8 +180,8 @@ export class TweetSearchEndpoint {
   private readonly ENDPOINTS = {
     searchTweets: '/twitter/tweet/advanced_search',
     getTweet: '/twitter/tweet/info',
-    searchRecent: '/twitter/tweet/search',
-    searchPopular: '/twitter/tweet/search/popular'
+    searchRecent: '/twitter/tweet/advanced_search',
+    searchPopular: '/twitter/tweet/advanced_search'
   } as const;
 
   private readonly RATE_LIMITS = {
@@ -171,6 +202,10 @@ export class TweetSearchEndpoint {
     'en', 'ja', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ko', 'ar',
     'hi', 'th', 'tr', 'nl', 'sv', 'da', 'no', 'fi'
   ] as const;
+  
+  // 警告ログ制御フラグ
+  private hasLoggedEmptyDateWarning = false;
+  private hasLoggedTweetStructure = false;
 
   constructor(
     private httpClient: HttpClient,
@@ -219,7 +254,7 @@ export class TweetSearchEndpoint {
  * 
  * @since 2.0.0
  */
-  async searchTweets(query: string, options?: AdvancedSearchOptions): Promise<SearchResponse> {
+  async searchTweets(query: string, options?: AdvancedSearchOptions): Promise<CompleteSearchResponse> {
     // 統一バリデーション処理
     const queryValidation = this.validateSearchQuery(query);
     if (!queryValidation.isValid) {
@@ -244,11 +279,13 @@ export class TweetSearchEndpoint {
         throw createAPIError('authentication', 'NO_API_KEY', 'APIキーが設定されていません。KAITO_API_TOKENを磺認してください。');
       }
       
-      // 最適化されたAPIパラメータ構築
+      // TwitterAPI.io公式仕様準拠パラメータ構築
       const params: Record<string, string | number | boolean> = { 
-        q: query.trim(),
-        count: options?.maxResults ? Math.min(Math.max(options.maxResults, 1), 100) : 20
+        query: query.trim(),
+        queryType: "Latest"  // "Latest" または "Top" - 最新ツイートを取得
       };
+      
+      console.log(`🔍 検索パラメータ: query="${query.trim()}", queryType="Latest"`);
       
       // オプションパラメータの効率的設定
       if (options?.lang && this.SUPPORTED_LANGUAGES.includes(options.lang as any)) {
@@ -281,11 +318,14 @@ export class TweetSearchEndpoint {
         filteredCount: filteredTweets.length
       };
 
-      return createSuccessResult({
-        tweets: filteredTweets,
-        totalCount: response.meta?.result_count || response.search_metadata?.count || filteredTweets.length,
-        searchMetadata
-      }, {
+      return {
+        success: true,
+        data: {
+          tweets: filteredTweets,
+          totalCount: response.meta?.result_count || response.search_metadata?.count || filteredTweets.length,
+          searchMetadata
+        },
+        timestamp: new Date().toISOString(),
         pagination: {
           nextCursor: response.meta?.next_token || response.search_metadata?.next_results,
           hasMore: !!(response.meta?.next_token || response.search_metadata?.next_results),
@@ -293,7 +333,7 @@ export class TweetSearchEndpoint {
           itemsPerPage: filteredTweets.length
         },
         rateLimit: response.rateLimit
-      });
+      };
 
     } catch (error: any) {
       return this.handleTweetSearchError(error, 'searchTweets', { query, options });
@@ -329,7 +369,7 @@ export class TweetSearchEndpoint {
    * 
    * @since 2.0.0
    */
-  async getTweetById(tweetId: string): Promise<TweetResponse> {
+  async getTweetById(tweetId: string): Promise<CompleteTweetResponse> {
     // 統一バリデーション処理
     const validation = this.validateTweetId(tweetId);
     if (!validation.isValid) {
@@ -346,7 +386,7 @@ export class TweetSearchEndpoint {
       
       const response = await this.httpClient.get<TwitterAPITweetResponse>(
         this.ENDPOINTS.getTweet,
-        { id: tweetId, tweet_mode: 'extended', headers }
+        { id: tweetId, tweet_mode: 'extended' }
       );
 
       const normalizedData = await this.normalizeTweetData(response);
@@ -354,6 +394,7 @@ export class TweetSearchEndpoint {
       return {
         success: true,
         data: normalizedData,
+        timestamp: new Date().toISOString(),
         rateLimit: response.rateLimit
       };
 
@@ -366,31 +407,31 @@ export class TweetSearchEndpoint {
    * 最新ツイート検索
    * APIキー認証のみで実行可能
    */
-  async searchRecentTweets(query: string, options?: { count?: number; lang?: string }): Promise<SearchResponse> {
+  async searchRecentTweets(query: string, options?: { count?: number; lang?: string }): Promise<CompleteSearchResponse> {
     const validation = this.validateSearchQuery(query);
     if (!validation.isValid) {
       throw new Error(`Invalid search query: ${validation.errors.join(', ')}`);
     }
 
     try {
-      const headers = this.authManager.getAuthHeaders();
+      // APIキー認証の確認
+      if (!this.authManager.isAuthenticated()) {
+        throw createAPIError('authentication', 'NO_API_KEY', 'APIキーが設定されていません。KAITO_API_TOKENを確認してください。');
+      }
       
       const params: any = { 
         q: query,
-        result_type: 'recent',
         count: Math.min(options?.count || 15, 100)
       };
       if (options?.lang) params.lang = options.lang;
 
       const response = await this.httpClient.get<TwitterAPISearchResponse>(
         this.ENDPOINTS.searchRecent,
-        { ...params, headers }
+        params
       );
 
-      const normalizedTweets = await Promise.all(
-        (response.statuses || response.tweets || []).map((tweet: any) => 
-          this.normalizeTweetData(tweet)
-        )
+      const normalizedTweets = await this.batchNormalizeTweets(
+        response.statuses || response.tweets || []
       );
 
       return {
@@ -401,9 +442,11 @@ export class TweetSearchEndpoint {
           searchMetadata: {
             query,
             resultType: 'recent',
-            executedAt: new Date()
+            executedAt: new Date().toISOString(),
+            processedCount: normalizedTweets.length
           }
-        }
+        },
+        timestamp: new Date().toISOString()
       };
 
     } catch (error: any) {
@@ -415,32 +458,31 @@ export class TweetSearchEndpoint {
    * 人気ツイート検索
    * APIキー認証のみで実行可能
    */
-  async searchPopularTweets(query: string, options?: { count?: number; lang?: string }): Promise<SearchResponse> {
+  async searchPopularTweets(query: string, options?: { count?: number; lang?: string }): Promise<CompleteSearchResponse> {
     const validation = this.validateSearchQuery(query);
     if (!validation.isValid) {
       throw new Error(`Invalid search query: ${validation.errors.join(', ')}`);
     }
 
     try {
-      const headers = this.authManager.getAuthHeaders();
+      // APIキー認証の確認
+      if (!this.authManager.isAuthenticated()) {
+        throw createAPIError('authentication', 'NO_API_KEY', 'APIキーが設定されていません。KAITO_API_TOKENを確認してください。');
+      }
       
       const params: any = { 
         q: query,
-        result_type: 'popular',
         count: Math.min(options?.count || 15, 100)
       };
       if (options?.lang) params.lang = options.lang;
 
       const response = await this.httpClient.get<TwitterAPISearchResponse>(
         this.ENDPOINTS.searchPopular,
-        params,
-        { headers }
+        params
       );
 
-      const normalizedTweets = await Promise.all(
-        (response.statuses || response.tweets || []).map((tweet: any) => 
-          this.normalizeTweetData(tweet)
-        )
+      const normalizedTweets = await this.batchNormalizeTweets(
+        response.statuses || response.tweets || []
       );
 
       return {
@@ -451,9 +493,11 @@ export class TweetSearchEndpoint {
           searchMetadata: {
             query,
             resultType: 'popular',
-            executedAt: new Date()
+            executedAt: new Date().toISOString(),
+            processedCount: normalizedTweets.length
           }
-        }
+        },
+        timestamp: new Date().toISOString()
       };
 
     } catch (error: any) {
@@ -494,12 +538,7 @@ export class TweetSearchEndpoint {
   private validateSearchOptions(options: AdvancedSearchOptions): ValidationResult {
     const errors: string[] = [];
 
-    if (options.count !== undefined) {
-      if (options.count < this.VALIDATION_RULES.maxResults.min || 
-          options.count > this.VALIDATION_RULES.maxResults.max) {
-        errors.push(`count must be between ${this.VALIDATION_RULES.maxResults.min} and ${this.VALIDATION_RULES.maxResults.max}`);
-      }
-    }
+    // count validation removed - not part of AdvancedSearchOptions interface
 
     if (options.lang && !this.VALIDATION_RULES.lang.test(options.lang)) {
       errors.push('lang must be a valid 2-letter language code');
@@ -517,37 +556,85 @@ export class TweetSearchEndpoint {
   // ============================================================================
 
   private async normalizeTweetData(apiTweet: any): Promise<TweetData> {
+    // デバッグ: 簡潔なデータ構造確認（開発時のみ）
+    if (!this.hasLoggedTweetStructure && process.env.NODE_ENV === 'development') {
+      console.log(`🔍 ツイートデータ取得: ID=${apiTweet.id}, 作者=${apiTweet.author?.userName || 'unknown'}`);
+      this.hasLoggedTweetStructure = true;
+    }
+    
+    // TwitterAPI.ioの実際の構造に基づく author_id 取得ロジック
+    const authorId = apiTweet.author?.id ||           // TwitterAPI.ioの構造
+                     apiTweet.user?.id_str || 
+                     apiTweet.user?.id || 
+                     apiTweet.author_id ||
+                     apiTweet.user?.rest_id ||
+                     apiTweet.authorId;
+    
     return {
       id: apiTweet.id_str || apiTweet.id,
       text: apiTweet.full_text || apiTweet.text || '',
-      createdAt: new Date(apiTweet.created_at),
-      authorId: apiTweet.user?.id_str || apiTweet.author_id,
-      authorUsername: apiTweet.user?.screen_name || apiTweet.author_username,
-      authorDisplayName: apiTweet.user?.name || apiTweet.author_display_name,
-      metrics: {
-        retweetCount: apiTweet.retweet_count || 0,
-        likeCount: apiTweet.favorite_count || apiTweet.like_count || 0,
-        replyCount: apiTweet.reply_count || 0,
-        quoteCount: apiTweet.quote_count || 0
+      created_at: this.safeDateToISO(apiTweet.createdAt || apiTweet.created_at, 'created_at'),
+      author_id: authorId,
+      public_metrics: {
+        retweet_count: apiTweet.public_metrics?.retweet_count || apiTweet.retweet_count || 0,
+        like_count: apiTweet.public_metrics?.like_count || apiTweet.favorite_count || 0,
+        reply_count: apiTweet.public_metrics?.reply_count || apiTweet.reply_count || 0,
+        quote_count: apiTweet.public_metrics?.quote_count || apiTweet.quote_count || 0,
+        impression_count: apiTweet.public_metrics?.impression_count || 0
       },
-      publicMetrics: {
-        retweetCount: apiTweet.public_metrics?.retweet_count || apiTweet.retweet_count || 0,
-        likeCount: apiTweet.public_metrics?.like_count || apiTweet.favorite_count || 0,
-        replyCount: apiTweet.public_metrics?.reply_count || apiTweet.reply_count || 0,
-        quoteCount: apiTweet.public_metrics?.quote_count || apiTweet.quote_count || 0
-      },
-      isRetweet: !!apiTweet.retweeted_status,
-      isReply: !!apiTweet.in_reply_to_status_id_str,
-      isQuoteTweet: !!apiTweet.is_quote_status,
       lang: apiTweet.lang || 'en',
-      source: apiTweet.source || 'unknown',
-      entities: {
-        hashtags: apiTweet.entities?.hashtags || [],
-        mentions: apiTweet.entities?.user_mentions || [],
-        urls: apiTweet.entities?.urls || [],
-        media: apiTweet.entities?.media || []
-      }
+      in_reply_to_user_id: apiTweet.in_reply_to_user_id_str,
+      conversation_id: apiTweet.conversation_id_str
     };
+  }
+
+  /**
+   * バッチツイート正規化（パフォーマンス向上）
+   * 大量ツイート処理時のエラーハンドリング強化
+   */
+  private async batchNormalizeTweets(tweets: any[]): Promise<TweetData[]> {
+    if (!Array.isArray(tweets) || tweets.length === 0) {
+      return [];
+    }
+
+    const normalizedTweets: TweetData[] = [];
+    
+    for (const tweet of tweets) {
+      try {
+        const normalized = await this.normalizeTweetData(tweet);
+        normalizedTweets.push(normalized);
+      } catch (error) {
+        console.warn('⚠️ Tweet normalization failed, skipping:', {
+          tweetId: tweet?.id || tweet?.id_str || 'unknown',
+          error: error instanceof Error ? error.message : String(error)
+        });
+        // エラーが発生したツイートはスキップして処理継続
+      }
+    }
+
+    console.log(`✅ Batch normalization completed: ${normalizedTweets.length}/${tweets.length} tweets processed`);
+    return normalizedTweets;
+  }
+
+  /**
+   * 投資教育コンテンツフィルタリング
+   * line 274で呼び出されるメソッド
+   */
+  private filterEducationalContent(tweets: TweetData[]): TweetData[] {
+    return tweets.filter(tweet => {
+      // 基本的な内容フィルタリング
+      if (!tweet.text || tweet.text.length < 10) {
+        return false;
+      }
+      
+      // スパム的な内容の除外
+      const spamPatterns = [
+        /(.)\1{10,}/,  // 同じ文字の過度な繰り返し
+        /^.{1,10}$/,   // 極端に短いツイート
+      ];
+      
+      return !spamPatterns.some(pattern => pattern.test(tweet.text));
+    });
   }
 
   // ============================================================================
@@ -578,5 +665,120 @@ export class TweetSearchEndpoint {
 
     // その他のエラー
     throw new Error(`API error in ${operation}: ${error.message || 'Unknown error'}`);
+  }
+
+  /**
+   * ツイート検索エラーハンドリング
+   */
+  private handleTweetSearchError(error: any, operation: string, context: any): CompleteSearchResponse {
+    console.error(`❌ ${operation} error:`, error);
+
+    let errorCode = 'UNKNOWN_ERROR';
+    let errorMessage = error.message || 'Unknown error occurred';
+
+    if (error.status === 401) {
+      errorCode = 'AUTHENTICATION_FAILED';
+      errorMessage = 'API authentication failed';
+    } else if (error.status === 429) {
+      errorCode = 'RATE_LIMIT_EXCEEDED';
+      errorMessage = 'Rate limit exceeded';
+    } else if (error.status === 404) {
+      errorCode = 'NOT_FOUND';
+      errorMessage = 'Resource not found';
+    }
+
+    return {
+      success: false,
+      error: {
+        code: errorCode,
+        message: errorMessage,
+        operation,
+        context
+      },
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  /**
+   * 安全な日時変換ヘルパー
+   * TwitterAPI.ioからの様々な日時フォーマットに対応
+   */
+  private safeDateToISO(dateValue: any, context?: string): string {
+    try {
+      // null/undefined/空文字列の場合は現在時刻を使用
+      if (!dateValue || dateValue === '') {
+        // 警告頻度を制限（初回のみ詳細警告、以降は簡潔に）
+        if (!this.hasLoggedEmptyDateWarning) {
+          console.warn(`⚠️ TwitterAPI.ioレスポンスでcreatedAt/created_atフィールドが空です。現在時刻を使用します。`);
+          console.warn(`📋 今後同様の警告は簡潔に表示されます。`);
+          this.hasLoggedEmptyDateWarning = true;
+        }
+        return new Date().toISOString();
+      }
+
+      // 既にDateオブジェクトの場合
+      if (dateValue instanceof Date) {
+        if (isNaN(dateValue.getTime())) {
+          console.warn('⚠️ Invalid Date object, using current time');
+          return new Date().toISOString();
+        }
+        return dateValue.toISOString();
+      }
+
+      // 文字列の場合、一般的なTwitter日付形式を正規化
+      if (typeof dateValue === 'string') {
+        let normalizedDate = dateValue.trim();
+        
+        // Twitter API v1.1形式: "Wed Oct 10 20:19:24 +0000 2018"
+        if (normalizedDate.match(/^\w{3} \w{3} \d{2} \d{2}:\d{2}:\d{2} [+-]\d{4} \d{4}$/)) {
+          // この形式はnew Date()で直接パースできるはず
+        }
+        // ISO 8601形式の場合はそのまま使用
+        else if (normalizedDate.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)) {
+          // そのまま使用
+        }
+        // その他の一般的な形式
+        else if (normalizedDate.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
+          normalizedDate = normalizedDate.replace(' ', 'T') + 'Z';
+        }
+        
+        const date = new Date(normalizedDate);
+        
+        // 無効な日時の場合
+        if (isNaN(date.getTime())) {
+          console.warn(`⚠️ Invalid date format: "${dateValue}", using current time`);
+          return new Date().toISOString();
+        }
+        
+        return date.toISOString();
+      }
+
+      // 数値の場合（Unix timestamp）
+      if (typeof dateValue === 'number') {
+        // ミリ秒かどうか判定（Unix timestampは通常10桁）
+        const timestamp = dateValue.toString().length === 10 ? dateValue * 1000 : dateValue;
+        const date = new Date(timestamp);
+        
+        if (isNaN(date.getTime())) {
+          console.warn(`⚠️ Invalid timestamp: ${dateValue}, using current time`);
+          return new Date().toISOString();
+        }
+        
+        return date.toISOString();
+      }
+
+      // その他の型は直接Dateコンストラクタに渡す
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) {
+        console.warn(`⚠️ Invalid date value: ${dateValue}, using current time`);
+        return new Date().toISOString();
+      }
+      
+      return date.toISOString();
+      
+    } catch (error) {
+      console.error(`❌ Date parsing error for "${dateValue}":`, error);
+      return new Date().toISOString();
+    }
   }
 }

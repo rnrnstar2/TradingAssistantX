@@ -1,0 +1,8 @@
+timestamp: '2025-07-29T16:21:09.797Z'
+type: workflow-error
+data:
+  error: >-
+    UNKNOWN_ERROR: Unknown error in like: HTTP 400: Bad Request -
+    {"detail":"login_cookies is required"}
+  executionTime: 11415
+  timestamp: '2025-07-29T16:21:09.797Z'

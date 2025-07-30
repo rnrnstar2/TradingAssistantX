@@ -27,19 +27,29 @@ TradingAssistantX/
 src/
 ├── workflows/                        # ワークフロー中核機能
 │   ├── main-workflow.ts              # メインワークフロー実行クラス
-│   ├── constants.ts                  # ワークフロー定数定義
-│   └── action-executor.ts            # アクション実行ロジック
+│   └── constants.ts                  # ワークフロー定数定義
 │
 ├── scheduler/                        # スケジューラー機能
 │   ├── time-scheduler.ts             # 時刻ベーススケジューラー
 │   ├── schedule-loader.ts            # YAML設定読込
 │   └── types.ts                      # スケジューラー型定義
 │
-├── claude/                           # Claude Code SDK - エンドポイント別設計 (5ファイル)
+├── claude/                           # Claude Code SDK - エンドポイント別設計
 │   ├── endpoints/                     # 役割別エンドポイント (3ファイル)
 │   │   ├── content-endpoint.ts        # コンテンツ生成: プロンプト+変数+GeneratedContent返却
 │   │   ├── analysis-endpoint.ts       # 分析: プロンプト+変数+AnalysisResult返却
-│   │   └── search-endpoint.ts         # 検索クエリ: プロンプト+変数+SearchQuery返却
+│   │   └── selection-endpoint.ts      # 🆕 最適ツイート選択: プロンプト+変数+SelectedTweet返却
+│   ├── prompts/                       # プロンプトテンプレート管理
+│   │   ├── templates/                 # プロンプトテンプレート
+│   │   │   ├── content.template.ts    # コンテンツ生成テンプレート
+│   │   │   ├── analysis.template.ts   # 分析テンプレート
+│   │   │   └── selection.template.ts  # 🆕 ツイート選択テンプレート
+│   │   ├── builders/                  # プロンプトビルダー
+│   │   │   ├── base-builder.ts        # 共通ビルダー（時間帯・曜日等）
+│   │   │   ├── content-builder.ts     # コンテンツ用ビルダー
+│   │   │   ├── analysis-builder.ts    # 分析用ビルダー
+│   │   │   └── selection-builder.ts   # 🆕 ツイート選択用ビルダー
+│   │   └── index.ts                   # プロンプトビルダーエクスポート
 │   ├── types.ts                       # エンドポイント型定義
 │   └── index.ts                       # エクスポート統合
 │
@@ -48,6 +58,7 @@ src/
 │   │   ├── auth-manager.ts          # 統合認証管理
 │   │   ├── client.ts                # HTTPクライアント・API通信
 │   │   ├── config.ts                # 設定管理・環境変数
+│   │   ├── proxy-manager.ts         # プロキシ管理・接続制御
 │   │   ├── session.ts               # セッション・Cookie管理
 │   │   ├── types.ts                 # 認証・設定型のみ
 │   │   └── index.ts                 # coreエクスポート
@@ -93,10 +104,9 @@ src/
 ```
 tests/
 ├── claude/                           # Claude エンドポイント単体テスト
-│   ├── endpoints/                    # エンドポイント別テスト (3ファイル)
+│   ├── endpoints/                    # エンドポイント別テスト (2ファイル)
 │   │   ├── content-endpoint.test.ts     # コンテンツ生成エンドポイントテスト
 │   │   ├── analysis-endpoint.test.ts    # 分析エンドポイントテスト
-│   │   └── search-endpoint.test.ts      # 検索クエリエンドポイントテスト
 │   ├── types.test.ts                    # 型定義テスト
 │   └── index.test.ts                    # エクスポート統合テスト
 ├── kaito-api/                        # KaitoAPI テスト
@@ -168,8 +178,8 @@ TradingAssistantX/
 ## アーキテクチャ設計原則
 
 ### ワークフローアーキテクチャ
-- **workflows/**: 統一された3ステップワークフロー実装
-  - スケジュール実行時: データ収集 → アクション実行（時刻別YAML指定） → 結果保存
+- **workflows/**: 統一されたワークフロー実装（通常3ステップ、深夜4ステップ）
+  - スケジュール実行時: データ収集 → アクション実行（時刻別YAML指定） → 結果保存 → [23:55のみ]深夜分析
   - dev実行時: データ収集 → アクション実行（固定YAML指定） → 結果保存
   - **注意**: 両モードともClaude判断ステップは不要、事前決定されたアクションを直接実行
 - **scheduler/**: 時刻ベースの自動実行機能
@@ -202,7 +212,7 @@ data/
 │   │   ├── claude-outputs/           # Claude各エンドポイント結果
 │   │   │   ├── content.yaml          # generateContent()結果
 │   │   │   ├── analysis.yaml         # analyzePerformance()結果
-│   │   │   └── search-query.yaml     # generateSearchQuery()結果
+│   │   │   └── search-query.yaml     # 検索クエリ結果（※現在未使用）
 │   │   ├── kaito-responses/          # Kaito API応答（最新20件制限）
 │   │   │   ├── account-info.yaml
 │   │   │   ├── post-result.yaml
@@ -211,7 +221,8 @@ data/
 │   │   │   ├── post-TIMESTAMP.yaml
 │   │   │   └── post-index.yaml       # 投稿一覧インデックス
 │   │   └── execution-summary.yaml     # 実行サマリー
-│   └── active-session.yaml           # 現在セッション状況
+│   ├── active-session.yaml           # 現在セッション状況
+│   └── tomorrow-strategy.yaml         # 🌙 翌日実行戦略（深夜23:55分析で生成）
 │
 ├── history/                          # 📚 過去実行サイクル（アーカイブ）
 │   └── YYYY-MM/                      # 月別フォルダ
@@ -222,9 +233,11 @@ data/
 │   └── session-memory.yaml           # セッション間引き継ぎ（現在セッション・実行履歴）
 │
 └── learning/                         # 📊 学習用データ格納
-    ├── decision-patterns.yaml        # 決定パターンの学習データ
+    ├── daily-insights-YYYYMMDD.yaml  # 🌙 日次分析結果（23:55生成）
+    ├── performance-summary-YYYYMMDD.yaml # 日次パフォーマンス集計
     ├── success-strategies.yaml       # 成功戦略の学習データ
-    └── action-results.yaml           # アクション結果の学習データ
+    ├── action-results.yaml           # アクション結果の学習データ
+    └── 🔄 decision-patterns.yaml (旧構造) # 段階的廃止予定（意味のないデータ）
 ```
 
 ### データ管理アーキテクチャ
@@ -232,6 +245,15 @@ data/
 - **src/shared/data-manager.ts**: ルートレベル/data/にアクセスするデータ管理クラス
 - **階層別サイズ制限**: current: 1MB、learning: 10MB
 - **自動アーカイブ**: currentからhistoryへの定期移動
+
+### 🌙 深夜分析システム（新設計）
+- **実行時刻**: 毎日23:55（日次分析の最適化タイミング）
+- **分析対象**: 1日分の実行データ（data/current/及びdata/learning/）
+- **生成ファイル**:
+  - `daily-insights-YYYYMMDD.yaml`: 時間帯別成功率・トピック効果・市場機会分析
+  - `performance-summary-YYYYMMDD.yaml`: 日次パフォーマンス集計
+  - `tomorrow-strategy.yaml`: 翌日実行戦略（07:00以降自動適用）
+- **学習データ進化**: 従来の意味のない反復データから実用的な洞察データへ移行
 
 ## 今後の計画
 

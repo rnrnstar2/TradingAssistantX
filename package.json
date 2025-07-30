@@ -5,6 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/dev.ts",
+    "dev:post": "tsx src/dev.ts --action post",
+    "dev:retweet": "tsx src/dev.ts --action retweet",
+    "dev:like": "tsx src/dev.ts --action like",
+    "dev:quote": "tsx src/dev.ts --action quote_tweet",
+    "dev:wait": "tsx src/dev.ts --action wait",
+    "dev:interactive": "tsx src/dev.ts --interactive",
     "start": "tsx src/main.ts",
     "manager": "ROLE=manager claude --dangerously-skip-permissions",
     "worker": "ROLE=worker claude --dangerously-skip-permissions",

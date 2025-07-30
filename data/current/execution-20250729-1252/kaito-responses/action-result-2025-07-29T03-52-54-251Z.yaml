@@ -1,7 +1,0 @@
-timestamp: '2025-07-29T03:52:54.251Z'
-type: action-result
-data:
-  success: true
-  action: wait
-  duration: 18000000
-  timestamp: '2025-07-29T03:52:54.251Z'

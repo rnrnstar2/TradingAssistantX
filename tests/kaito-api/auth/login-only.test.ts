@@ -5,9 +5,8 @@
 
 import { describe, test, expect, beforeEach } from 'vitest';
 import { AuthManager } from '../../../src/kaito-api/core/auth-manager';
-import { AuthDiagnostics } from '../../../src/kaito-api/utils/auth-diagnostics';
 
-describe('ログイン機能単体テスト', () => {
+describe.skip('ログイン機能単体テスト（コスト発生のためスキップ）', () => {
   let authManager: AuthManager;
   
   beforeEach(() => {
@@ -240,48 +239,39 @@ describe('ログイン機能単体テスト', () => {
       console.log('✅ 詳細ログ出力完了');
     });
     
-    test('認証エラー診断ツール実行', async () => {
-      console.log('=== 認証エラー診断ツール ===');
+    test('基本的なログイン結果確認', async () => {
+      console.log('=== 基本ログイン結果確認 ===');
       
       // ログイン実行
       const loginResult = await authManager.login();
       
       if (!loginResult.success && loginResult.error) {
-        console.log('🔍 エラー診断実行中...');
+        console.log('❌ ログイン失敗');
+        console.log('  - エラーメッセージ:', loginResult.error);
         
         // 現在の認証状態とデバッグ情報を取得
         const authStatus = authManager.getAuthStatus();
         const debugInfo = authManager.getDebugInfo();
         
-        // 診断レポート生成
-        const diagnosticReport = AuthDiagnostics.generateDiagnosticReport(
-          loginResult.error,
-          authStatus,
-          debugInfo
-        );
+        console.log('🔍 認証状態:');
+        console.log('  - APIキー有効:', authStatus.apiKeyValid);
+        console.log('  - セッション有効:', authStatus.userSessionValid);
+        console.log('  - 認証レベル:', authStatus.authLevel);
         
-        console.log(diagnosticReport);
+        console.log('🔧 デバッグ情報:');
+        console.log('  - 現在の認証レベル:', debugInfo.currentAuthLevel);
+        console.log('  - 環境変数状態:', debugInfo.environment);
         
-        // 環境変数診断
-        const envDiagnosis = AuthDiagnostics.diagnoseEnvironmentVariables();
-        console.log('🌍 環境変数診断結果:');
-        console.log('  - ステータス:', envDiagnosis.status);
-        console.log('  - 問題:', envDiagnosis.issues);
-        console.log('  - 推奨対策:', envDiagnosis.recommendations);
-        
-        // エラー分析
-        const errorAnalysis = AuthDiagnostics.analyzeAuthError(loginResult.error);
-        console.log('📊 エラー詳細分析:');
-        console.log('  - エラータイプ:', errorAnalysis.errorType);
-        console.log('  - 重要度:', errorAnalysis.severity);
-        console.log('  - 考えられる原因:', errorAnalysis.possibleCauses);
-        console.log('  - 推奨対策:', errorAnalysis.recommendedActions);
+        console.log('💡 基本的な対策:');
+        console.log('  1. 環境変数 KAITO_API_TOKEN, X_USERNAME, X_EMAIL, X_PASSWORD を確認');
+        console.log('  2. Twitter.comで直接ログインできるかテスト');
+        console.log('  3. ネットワーク接続を確認');
         
       } else if (loginResult.success) {
-        console.log('✅ ログイン成功 - 診断ツールはエラー時のみ使用されます');
+        console.log('✅ ログイン成功');
       }
       
-      console.log('✅ 認証エラー診断完了');
+      console.log('✅ ログイン結果確認完了');
     });
   });
 });

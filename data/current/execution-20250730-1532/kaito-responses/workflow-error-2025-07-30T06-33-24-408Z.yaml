@@ -1,0 +1,8 @@
+timestamp: '2025-07-30T06:33:24.408Z'
+type: workflow-error
+data:
+  error: >-
+    UNKNOWN_ERROR: Unknown error in retweet: HTTP 400: Bad Request -
+    {"detail":"tweet_id is required"}
+  executionTime: 35490
+  timestamp: '2025-07-30T06:33:24.407Z'

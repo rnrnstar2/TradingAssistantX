@@ -1,0 +1,13 @@
+timestamp: '2025-07-29T17:09:47.411Z'
+type: workflow-error
+data:
+  error: >-
+    UNKNOWN_ERROR: Unknown error in post: API_ERROR: {'message': 'Authorization:
+    Tweet needs to be a bit shorter. (186)', 'locations': [{'line': 18,
+    'column': 3}], 'path': ['create_tweet'], 'extensions': {'name':
+    'AuthorizationError', 'source': 'Client', 'code': 186, 'kind':
+    'Permissions', 'tracing': {'trace_id': '2839f67788d720e8'}}, 'code': 186,
+    'kind': 'Permissions', 'name': 'AuthorizationError', 'source': 'Client',
+    'tracing': {'trace_id': '2839f67788d720e8'}}
+  executionTime: 57712
+  timestamp: '2025-07-29T17:09:47.411Z'

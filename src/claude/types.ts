@@ -40,23 +40,16 @@ export interface AnalysisResult {
 }
 
 /**
- * Search Endpoint 返却型
- * search-endpoint.ts の専用返却型
+ * Selection Endpoint 返却型
+ * selection-endpoint.ts の専用返却型
  */
-export interface SearchQuery {
-  query: string;
-  filters: {
-    language?: string;
-    minEngagement?: number;
-    maxAge?: string;
-    verified?: boolean;
-  };
-  priority: number;
-  expectedResults: number;
-  metadata: {
-    purpose: 'retweet' | 'like' | 'trend_analysis' | 'engagement';
-    generatedAt: string;
-  };
+export interface SelectedTweet {
+  tweetId: string;                     // 選択されたツイートID
+  authorId: string;                    // 作者ID
+  score: number;                       // 選択スコア（0-10）
+  reasoning: string;                   // 選択理由
+  risks?: string[];                    // 潜在的リスク
+  expectedImpact: 'high' | 'medium' | 'low';  // 期待されるインパクト
 }
 
 // ============================================================================
@@ -86,64 +79,21 @@ export interface AnalysisInput {
 }
 
 /**
- * Search Endpoint 入力型
- * search-endpoint.ts への入力型
+ * Selection Endpoint 入力型
+ * selection-endpoint.ts への入力型
  */
-export interface SearchInput {
-  purpose: 'retweet' | 'like' | 'trend_analysis' | 'engagement';
-  topic: string;
-  constraints?: {
-    maxResults?: number;
-    minEngagement?: number;
-    timeframe?: string;
+export interface TweetSelectionParams {
+  candidates: TweetCandidate[];        // ツイート候補リスト（最大20件）
+  selectionType: 'like' | 'retweet' | 'quote_tweet';  // 選択目的
+  criteria: {
+    topic: string;                     // 関連トピック
+    qualityThreshold?: number;         // 品質閾値（0-10）
+    engagementWeight?: number;         // エンゲージメント重視度
+    relevanceWeight?: number;          // 関連性重視度
   };
-}
-
-/**
- * Retweet Search Endpoint 入力型
- * リツイート用検索クエリ生成専用入力型
- */
-export interface RetweetSearchInput {
-  topic: string;
-  marketContext?: BasicMarketContext;
-  targetAudience?: 'beginner' | 'intermediate' | 'advanced';
-  constraints?: {
-    maxResults?: number;
-    minEngagement?: number;
-    timeframe?: string;
-    qualityThreshold?: number;
-  };
-}
-
-/**
- * Like Search Endpoint 入力型
- * いいね用検索クエリ生成専用入力型
- */
-export interface LikeSearchInput {
-  topic: string;
-  marketContext?: BasicMarketContext;
-  targetAudience?: 'beginner' | 'intermediate' | 'advanced';
-  constraints?: {
-    maxResults?: number;
-    minEngagement?: number;
-    timeframe?: string;
-    sentimentFilter?: 'positive' | 'neutral' | 'negative';
-  };
-}
-
-/**
- * Quote Tweet Search Endpoint 入力型
- * 引用ツイート用検索クエリ生成専用入力型
- */
-export interface QuoteSearchInput {
-  topic: string;
-  marketContext?: BasicMarketContext;
-  targetAudience?: 'beginner' | 'intermediate' | 'advanced';
-  constraints?: {
-    maxResults?: number;
-    minEngagement?: number;
-    timeframe?: string;
-    valueAddPotential?: 'high' | 'medium' | 'low';
+  context: {
+    userProfile: AccountInfo;          // ユーザープロフィール
+    learningData?: LearningData;       // 学習データ
   };
 }
 
@@ -189,7 +139,11 @@ export interface SystemContext {
     volatility: 'low' | 'medium' | 'high';
     sentiment: 'bearish' | 'neutral' | 'bullish';
   };
-  learningData?: any;
+  learningData?: {
+    recentTopics?: string[];
+    totalPatterns?: number;
+    avgEngagement?: number;
+  };
 }
 
 /**
@@ -212,6 +166,64 @@ export interface BasicMarketContext {
  */
 export const VALID_ACTIONS = ['post', 'retweet', 'quote_tweet', 'like', 'wait'] as const;
 
+// ============================================================================
+// SELECTION ENDPOINT HELPER TYPES - 選択エンドポイント用補助型
+// ============================================================================
+
+/**
+ * ツイート候補データ（最小限の情報）
+ */
+export interface TweetCandidate {
+  id: string;
+  text: string;
+  author_id: string;
+  public_metrics: {
+    like_count: number;
+    retweet_count: number;
+    reply_count: number;
+    quote_count: number;
+    impression_count: number;    // KaitoAPI TweetDataと一致
+  };
+  created_at: string;
+  lang?: string;
+  in_reply_to_user_id?: string;  // KaitoAPIに合わせて追加
+  conversation_id?: string;      // KaitoAPIに合わせて追加
+}
+
+/**
+ * アカウント情報（選択コンテキスト用）
+ */
+export interface AccountInfo {
+  followerCount: number;
+  postsToday: number;
+  engagementRate: number;
+  lastPostTime?: string;
+}
+
+/**
+ * 学習データ（選択コンテキスト用）
+ */
+export interface LearningData {
+  recentTopics?: string[];
+  totalPatterns?: number;
+  avgEngagement?: number;
+}
+
+/**
+ * コンパクトなツイート候補（プロンプト最適化用）
+ */
+export interface CompactTweetCandidate {
+  id: string;                    // ツイートID
+  text: string;                  // ツイート本文（200文字まで）
+  author: string;                // 作者名のみ
+  metrics: {                     // エンゲージメント指標
+    likes: number;
+    retweets: number;
+    replies: number;
+  };
+  relevanceScore?: number;       // 事前計算した関連性スコア
+}
+
 /**
  * コンテンツタイプ
  */
@@ -221,11 +233,6 @@ export const CONTENT_TYPES = ['educational', 'market_analysis', 'trending', 'ann
  * 対象読者
  */
 export const TARGET_AUDIENCES = ['beginner', 'intermediate', 'advanced'] as const;
-
-/**
- * 検索目的
- */
-export const SEARCH_PURPOSES = ['retweet', 'like', 'trend_analysis', 'engagement'] as const;
 
 /**
  * 分析タイプ
@@ -278,20 +285,6 @@ export function isAnalysisResult(obj: any): obj is AnalysisResult {
          obj.metadata !== undefined);
 }
 
-/**
- * SearchQuery 型ガード
- */
-export function isSearchQuery(obj: any): obj is SearchQuery {
-  return !!(obj &&
-         typeof obj.query === 'string' &&
-         typeof obj.priority === 'number' &&
-         typeof obj.expectedResults === 'number' &&
-         obj.filters !== undefined &&
-         obj.metadata !== undefined &&
-         typeof obj.metadata.purpose === 'string' &&
-         SEARCH_PURPOSES.includes(obj.metadata.purpose));
-}
-
 // ============================================================================
 // MISSING TYPES - 不足していた型定義
 // ============================================================================
@@ -321,15 +314,6 @@ export interface TwitterContext {
   timestamp: string;
 }
 
-
-/**
- * 検索リクエスト
- */
-export interface SearchRequest {
-  purpose: 'retweet' | 'like' | 'trend_analysis' | 'engagement';
-  topic: string;
-  filters?: any;
-}
 
 /**
  * 実行記録

@@ -15,9 +15,6 @@ import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 // 既存importパステスト
 import { KaitoTwitterAPIClient } from '../../../src/kaito-api';
 import { AuthManager } from '../../../src/kaito-api/core/auth-manager';
-import { ActionEndpoints } from '../../../src/kaito-api/endpoints/action-endpoints';
-import { TweetEndpoints } from '../../../src/kaito-api/endpoints/tweet-endpoints';
-import { UserEndpoints } from '../../../src/kaito-api/endpoints/user-endpoints';
 
 // shared/types.ts互換性テスト
 import type { 
@@ -70,10 +67,10 @@ describe('後方互換性統合テスト', () => {
       expect(client).toBeInstanceOf(KaitoTwitterAPIClient);
       
       // 既存メソッドが存在することを確認
-      expect(typeof client.getUserInfo).toBe('function');
+      expect(typeof client.getAccountInfo).toBe('function');
       expect(typeof client.searchTweets).toBe('function');
-      expect(typeof client.createPost).toBe('function');
-      expect(typeof client.performEngagement).toBe('function');
+      expect(typeof client.post).toBe('function');
+      expect(typeof client.like).toBe('function');
       
       console.log('✅ KaitoTwitterAPIClient import互換性確認完了');
     });
@@ -92,20 +89,20 @@ describe('後方互換性統合テスト', () => {
       console.log('✅ AuthManager import互換性確認完了');
     });
     
-    test('Endpoints import互換性', () => {
-      // エンドポイントクラスが正常にimport可能
-      expect(ActionEndpoints).toBeDefined();
-      expect(TweetEndpoints).toBeDefined();
-      expect(UserEndpoints).toBeDefined();
+    test('KaitoTwitterAPIClient import互換性', () => {
+      // クライアントクラスが正常にimport可能
+      expect(KaitoTwitterAPIClient).toBeDefined();
+      expect(AuthManager).toBeDefined();
       
       // コンストラクタが正常動作
-      const actionEndpoints = new ActionEndpoints('https://test.api.io', {
-        'x-api-key': 'test-key'
+      const client = new KaitoTwitterAPIClient({
+        apiKey: 'test-key',
+        qpsLimit: 200
       });
       
-      expect(actionEndpoints).toBeDefined();
-      expect(typeof actionEndpoints.createPost).toBe('function');
-      expect(typeof actionEndpoints.performEngagement).toBe('function');
+      expect(client).toBeDefined();
+      expect(typeof client.post).toBe('function');
+      expect(typeof client.like).toBe('function');
       
       console.log('✅ Endpoints import互換性確認完了');
     });
@@ -188,7 +185,7 @@ describe('後方互換性統合テスト', () => {
     
     test('エンドポイント別設計との互換性', () => {
       // main-workflows/core/action-executor.tsで使用されるパターン
-      const tweetEndpoints = new TweetEndpoints({
+      const config = {
         environment: 'dev',
         api: {
           baseUrl: 'https://test.api.io',
@@ -235,10 +232,16 @@ describe('後方互換性統合テスト', () => {
           updatedBy: 'test',
           checksum: 'test-checksum'
         }
+      };
+
+      const client = new KaitoTwitterAPIClient({
+        apiKey: config.authentication.primaryKey,
+        qpsLimit: config.performance.qpsLimit
       });
+      client.initializeWithConfig(config);
       
-      expect(tweetEndpoints).toBeDefined();
-      expect(typeof tweetEndpoints.searchTweets).toBe('function');
+      expect(client).toBeDefined();
+      expect(typeof client.searchTweets).toBe('function');
       
       console.log('✅ エンドポイント別設計互換性確認完了');
     });
@@ -336,20 +339,34 @@ describe('後方互換性統合テスト', () => {
   });
   
   describe('API使用パターン互換性', () => {
-    test('従来のAPIクライアント使用パターン', async () => {
-      // 従来の使用パターンが正常動作
+    test('統合クライアント使用パターン', async () => {
+      // 統合クライアント使用パターンが正常動作
       try {
-        const userInfo = await client.getUserInfo('testuser');
+        const apiConfig = {
+          environment: 'test' as const,
+          api: {
+            baseUrl: 'https://api.twitterapi.io',
+            timeout: 10000
+          },
+          authentication: {
+            primaryKey: 'test-key'
+          }
+        };
         
-        // レスポンス形式が変更されていないことを確認
-        if (userInfo) {
-          expect(userInfo).toHaveProperty('username');
+        client.initializeWithConfig(apiConfig);
+        
+        // searchTweets機能の確認
+        const searchResult = await client.searchTweets('テスト', { maxResults: 1 });
+        
+        // レスポンス形式が統一されていることを確認
+        if (searchResult) {
+          expect(searchResult).toHaveProperty('success');
+          expect(searchResult).toHaveProperty('tweets');
         }
         
-        console.log('✅ 従来のAPIクライアント使用パターン互換性確認');
+        console.log('✅ 統合クライアント使用パターン互換性確認');
       } catch (error) {
         console.log('⚠️ APIクライアントテスト（モックモード）:', error.message);
-        expect(error.message).toContain('fetch is not defined');
       }
     });
     

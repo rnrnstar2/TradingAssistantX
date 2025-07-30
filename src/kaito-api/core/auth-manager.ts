@@ -720,6 +720,13 @@ export class AuthManager {
   }
 
   /**
+   * 認証状態確認
+   */
+  public isAuthenticated(): boolean {
+    return !!this.getUserSession() || !!this.apiKey;
+  }
+
+  /**
    * 統合ログアウト
    */
   async logout(): Promise<void> {
