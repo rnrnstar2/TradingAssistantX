@@ -22,15 +22,23 @@ TwitterAPI.io統合による投資教育コンテンツ自動投稿システム
 
 ### MVP重点機能: 投稿エンゲージメント分析
 
-MVPでは`getTweetsByIds`エンドポイントを使用して投稿エンゲージメントの最新メトリクスを一括取得します。
+MVPでは`/twitter/tweets`エンドポイントを使用して投稿エンゲージメントの最新メトリクスを一括取得します。
 
-**重要パラメータ**:
+**エンドポイント仕様**:
+- **URL**: `GET /twitter/tweets?tweet_ids=id1,id2,id3...`
 - **最大取得数**: 100個のTweet IDまで一度に処理可能
-- **必須フィールド**: `tweet.fields=public_metrics,created_at,id,text`
 - **認証レベル**: APIキーのみ（読み取り専用操作）
+- **ヘッダー**: `X-API-Key: {YOUR_API_KEY}`
 - **用途**: 最新50件の自分の投稿のエンゲージメント率計算・分析
 
-詳細な実装方法は[公式ドキュメント](https://docs.twitterapi.io/api-reference/endpoint/get_tweet_by_ids)を参照してください。
+**実装例**:
+```bash
+curl --request GET \
+  --url 'https://api.twitterapi.io/twitter/tweets?tweet_ids=1950214974585852117,1950403852894658733' \
+  --header 'X-API-Key: YOUR_API_KEY'
+```
+
+詳細な実装方法は[公式ドキュメント](https://twitterapi.io/api-reference/endpoint/get-tweets-by-ids)を参照してください。
 
 ### アカウント情報設定
 
@@ -52,7 +60,7 @@ MVPでは`getTweetsByIds`エンドポイントを使用して投稿エンゲー�
 
 **主な操作**:
 - ユーザー情報取得、ツイート検索、トレンド取得 → 公式ドキュメント参照
-- 投稿エンゲージメント分析用のツイート詳細一括取得 → `getTweetsByIds`使用
+- 投稿エンゲージメント分析用のツイート詳細一括取得 → `/twitter/tweets`エンドポイント使用
 - 投稿・エンゲージメント操作 → V2ログイン後に各種アクション実行
 
 具体的な実装方法は各エンドポイントの公式ドキュメントを参照してください。
@@ -73,6 +81,7 @@ MVPでは`getTweetsByIds`エンドポイントを使用して投稿エンゲー�
 
 ### 📝 投稿・アクション系（V2ログイン必須）
 - **ツイート作成**: `/twitter/create_tweet_v2` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/create_tweet_v2)
+  - **引用リツイート**: `attachment_url`パラメータに`https://x.com/i/status/{tweet_id}`形式のURLを指定
 - **ツイート削除**: `/twitter/delete_tweet_v2` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/delete_tweet_v2)
 - **いいね**: `/twitter/like_tweet_v2` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/like_tweet_v2)
 - **いいね取消**: `/twitter/unlike_tweet_v2` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/unlike_tweet_v2)
@@ -86,7 +95,7 @@ MVPでは`getTweetsByIds`エンドポイントを使用して投稿エンゲー�
 
 ### 🔍 検索・データ取得
 - **高度検索**: `/twitter/tweet/advanced_search` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/tweet-advanced-search)
-- **ツイートID一括取得**: `/twitter/tweet/get_by_ids` → [📖 Docs](https://docs.twitterapi.io/api-reference/endpoint/get_tweet_by_ids)
+- **ツイートID一括取得**: `/twitter/tweets` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/get-tweets-by-ids)
 - **トレンド**: `/twitter/trends` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/trends)
 - **ユーザー検索**: `/twitter/user/search` → [📖 Docs](https://twitterapi.io/api-reference/endpoint/user-search)
 
@@ -100,10 +109,12 @@ MVPでは`getTweetsByIds`エンドポイントを使用して投稿エンゲー�
 3. **プロキシ設定**: V2ログインにはプロキシが必須
 4. **レート制限**: 200 QPS、各エンドポイント別制限あり
 5. **レスポンス形式**: V2ログインのレスポンスは`status`と`login_cookies`（複数形）を使用
-6. **getTweetsByIds制限**: 
+6. **引用リツイート実装**: `quote_tweet_id`ではなく`attachment_url`パラメータを使用
+7. **ツイートID一括取得制限**: 
    - 最大100個のTweet IDを一度に取得可能
-   - `tweet.fields`パラメータで取得メトリクスを指定（`public_metrics`必須）
+   - エンドポイント: `/twitter/tweets?tweet_ids=id1,id2,id3...`
    - APIキーのみで実行可能（認証レベル: 読み取り専用）
+   - X-API-Keyヘッダー必須
 
 ## 🧪 テスト
 

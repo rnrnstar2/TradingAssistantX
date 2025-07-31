@@ -3,6 +3,7 @@ daily_schedule:
   - time: "06:00"
     action: "post"
     topic: "おはよう！今日の市場注目ポイント"
+    target_query: "投資 おはよう"
   - time: "06:05"
     action: "like"
     target_query: "投資 始めたい"
@@ -10,14 +11,16 @@ daily_schedule:
     action: "like"
     target_query: "投資初心者 質問"
   - time: "06:30"
-    action: "follow"
-    target_query: "投資 朝活"
+    action: "retweet"
+    target_query: "日経平均 OR 円相場 OR 経済指標 速報"
+    # 市場動向・経済ニュースのリツイート（リアルタイム情報）
   - time: "06:45"
     action: "retweet"
     target_query: "投資 基礎知識"
   - time: "07:00"
     action: "post"
     topic: "朝の投資教育：基礎から学ぶ資産形成"
+    target_query: "投資 基礎"
   - time: "07:05"
     action: "like"
     target_query: "NISA 始め方"
@@ -31,23 +34,27 @@ daily_schedule:
     action: "follow"
     target_query: "資産形成 アドバイザー"
   - time: "08:00"
-    action: "follow"
-    target_query: "投資家 初心者向け"
+    action: "quote_tweet"
+    target_query: "日銀 決定 OR FRB 発表 OR ECB 会合"
+    topic: "金融政策の投資への影響"
+    # 中央銀行関連ニュースに投資視点でコメント（リアルタイム情報）
   - time: "08:15"
     action: "like"
     target_query: "投資 不安"
   - time: "08:30"
     action: "quote_tweet"
-    target_query: "日経平均 寄り付き"
+    target_query: "日経平均 寄り付き OR 先物 OR 為替"
     topic: "市場オープン前の準備ポイント"
+    # 市場関連速報に投資初心者向けの解説を追加（ハイブリッド）
   - time: "08:45"
     action: "like"
     target_query: "株式投資 勉強"
-  
+
   # 午前中の活動（9-12時：市場時間）
   - time: "09:00"
     action: "post"
     topic: "市場オープン！今日の投資戦略"
+    target_query: "日経平均 OR ドル円 OR 米国株"
   - time: "09:15"
     action: "like"
     target_query: "日本株 初心者"
@@ -64,8 +71,9 @@ daily_schedule:
     action: "like"
     target_query: "投資信託 選び方"
   - time: "10:30"
-    action: "like"
-    target_query: "資産運用 相談"
+    action: "quote_tweet"
+    target_query: "GDP 発表 OR CPI 発表 OR 雇用統計"
+    topic: "経済指標の読み方と投資への活用"
   - time: "10:45"
     action: "follow"
     target_query: "投資コンサルタント"
@@ -82,11 +90,12 @@ daily_schedule:
     action: "quote_tweet"
     target_query: "日経平均 前場"
     topic: "午前の市場動向解説"
-  
+
   # お昼の活動（12-14時：昼休み時間帯に集中）
   - time: "12:00"
     action: "post"
     topic: "昼休みに学ぶ投資の基本"
+    target_query: "投資 OR 株 OR 為替"
   - time: "12:05"
     action: "like"
     target_query: "投資 ランチタイム"
@@ -95,7 +104,8 @@ daily_schedule:
     target_query: "投資 初心者 本"
   - time: "12:30"
     action: "retweet"
-    target_query: "NISA わからない OR つみたてNISA"
+    target_query: "AI 投資 OR DX ビジネス OR ESG"
+    # テクノロジー・ビジネストレンドのリツイート（リアルタイム情報）
   - time: "12:45"
     action: "follow"
     target_query: "投資系YouTuber"
@@ -107,12 +117,14 @@ daily_schedule:
     action: "like"
     target_query: "iDeCo 始め方"
   - time: "13:30"
-    action: "follow"
-    target_query: "投資教育 OR 資産形成アドバイザー"
+    action: "quote_tweet"
+    target_query: "決算発表 OR 業績予想 OR 企業"
+    topic: "注目企業の動向と投資機会"
+    # 企業ニュースに投資視点を追加（リアルタイム情報）
   - time: "13:45"
     action: "like"
     target_query: "投資 少額"
-  
+
   # 午後の活動（14-17時：市場後半）
   - time: "14:00"
     action: "retweet"
@@ -129,6 +141,7 @@ daily_schedule:
   - time: "15:00"
     action: "post"
     topic: "後場の注目ポイントと長期投資の視点"
+    target_query: "長期投資"
   - time: "15:15"
     action: "like"
     target_query: "投資 失敗談"
@@ -151,11 +164,12 @@ daily_schedule:
     action: "quote_tweet"
     target_query: "日経平均 クローズ"
     topic: "本日の市場総括"
-  
+
   # 夕方の活動（17-19時：帰宅時間帯）
   - time: "17:00"
     action: "post"
     topic: "今日の市場まとめと学んだこと"
+    target_query: "相場 まとめ OR 市場 総括"
   - time: "17:15"
     action: "like"
     target_query: "投資 成功体験"
@@ -167,22 +181,24 @@ daily_schedule:
     target_query: "経済アナリスト"
   - time: "18:00"
     action: "quote_tweet"
-    target_query: "投資ニュース"
+    target_query: "投資ニュース OR 市場分析"
     topic: "専門家視点での市場解説"
   - time: "18:15"
     action: "like"
     target_query: "投資 副業"
   - time: "18:30"
-    action: "follow"
-    target_query: "投資ブロガー OR ファイナンシャルプランナー"
+    action: "retweet"
+    target_query: "投資セミナー OR マネーセミナー"
+    # 投資家向けイベント情報のシェア（リアルタイム情報）
   - time: "18:45"
     action: "like"
     target_query: "投資 税金対策"
-  
+
   # 夜の活動（19-22時：ゴールデンタイム）
   - time: "19:00"
     action: "post"
     topic: "今夜の投資勉強会：テーマ別解説"
+    target_query: "投資 勉強"
   - time: "19:15"
     action: "like"
     target_query: "投資初心者 応援"
@@ -193,14 +209,16 @@ daily_schedule:
     action: "follow"
     target_query: "投資勉強垢"
   - time: "20:00"
-    action: "retweet"
-    target_query: "少額投資 OR 積立投資"
+    action: "post"
+    topic: "今日の市場ニュースまとめと明日の注目点"
+    target_query: "市場 まとめ OR 相場 総括 OR 投資"
+    # 検証済みアカウントの市場まとめを参考に（リアルタイム情報）
   - time: "20:15"
     action: "like"
     target_query: "投資 モチベーション"
   - time: "20:30"
     action: "quote_tweet"
-    target_query: "明日の相場"
+    target_query: "明日の相場 OR 市場予想"
     topic: "明日への投資戦略準備"
   - time: "20:45"
     action: "like"
@@ -208,6 +226,7 @@ daily_schedule:
   - time: "21:00"
     action: "post"
     topic: "明日の注目ポイントと投資の心構え"
+    target_query: "相場 予想 OR 市場 展望"
   - time: "21:15"
     action: "like"
     target_query: "投資 目標達成"
@@ -220,18 +239,20 @@ daily_schedule:
   - time: "22:00"
     action: "post"
     topic: "今日も投資の勉強お疲れ様でした"
-  
+    target_query: "投資 振り返り OR 市場 反省"
+
   # 深夜の活動（22:30-23:55：限定的）
   - time: "22:30"
-    action: "like"
-    target_query: "投資 継続 OR 投資 習慣"
+    action: "post"
+    topic: "米国市場開始前チェック"
+    target_query: "NYSE OR NASDAQ OR ダウ OR S&P500"
   - time: "23:00"
     action: "retweet"
     target_query: "米国株 OR 海外投資"
-  
+
   # 深夜大規模分析
   - time: "23:55"
     action: "analyze"
     # 日次パフォーマンス分析と翌日戦略の自動生成
-  
+
   # 深夜1-6時は活動なし（誰も見ない時間帯）

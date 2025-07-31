@@ -9,9 +9,11 @@ import {
   TweetSelectionParams, 
   SelectedTweet, 
   TweetCandidate, 
-  CompactTweetCandidate 
+  CompactTweetCandidate,
+  PromptLogData
 } from '../types';
 import { SelectionBuilder } from '../prompts/builders/selection-builder';
+import { ClaudePromptLogger } from '../utils/prompt-logger';
 
 // ============================================================================
 // TYPE CONVERSION FUNCTIONS - 型変換関数
@@ -110,16 +112,72 @@ export async function selectOptimalTweet(params: TweetSelectionParams): Promise<
     // Claude選択プロンプト構築
     const prompt = buildSelectionPrompt(params, compactCandidates);
 
+    // プロンプトログデータ準備
+    const promptLogData: PromptLogData = {
+      prompt_metadata: {
+        endpoint: 'selectOptimalTweet',
+        timestamp: new Date().toISOString(),
+        execution_id: params.context?.executionId || 'selection-' + new Date().toISOString().replace(/[-:]/g, '').replace(/\..+/, '').replace('T', '-').substring(0, 13),
+        model: 'sonnet',
+        timeout: CLAUDE_TIMEOUT
+      },
+      input_context: {
+        selection_type: params.selectionType,
+        candidates_count: params.candidates.length,
+        topic: params.criteria.topic,
+        quality_threshold: params.criteria.qualityThreshold
+      },
+      system_context: {
+        timestamp: new Date().toISOString(),
+        account: {
+          followerCount: params.context.userProfile.followerCount,
+          postsToday: params.context.userProfile.postsToday,
+          engagementRate: params.context.userProfile.engagementRate,
+          lastPostTime: params.context.userProfile.lastPostTime
+        },
+        system: {
+          health: {
+            all_systems_operational: true,
+            api_status: 'healthy',
+            rate_limits_ok: true
+          },
+          executionCount: { today: 0, total: 0 }
+        },
+        market: {
+          trendingTopics: [],
+          volatility: 'medium',
+          sentiment: 'neutral'
+        },
+        learningData: params.context.learningData
+      },
+      full_prompt: prompt
+    };
+
     // Claude APIを使用して選択実行
+    const startTime = Date.now();
     const response = await claude()
       .withModel('sonnet')
       .withTimeout(CLAUDE_TIMEOUT)
       .skipPermissions()
       .query(prompt)
       .asText();
+    const endTime = Date.now();
 
     // レスポンス解析
     const selectionResult = parseClaudeResponse(response, params.candidates);
+
+    // レスポンスメタデータを追加
+    promptLogData.response_metadata = {
+      content_length: response.length,
+      quality_score: selectionResult.score,
+      generation_time_ms: endTime - startTime
+    };
+
+    // プロンプトログ保存
+    await ClaudePromptLogger.logPrompt(promptLogData).catch(error => {
+      console.error('プロンプトログ保存エラー:', error);
+      // エラーでもワークフローを停止させない
+    });
 
     console.log(`✅ ツイート選択完了: ID=${selectionResult.tweetId}, スコア=${selectionResult.score}/10`);
     console.log(`💡 選択理由: ${selectionResult.reasoning}`);
@@ -164,8 +222,8 @@ function validateSelectionParams(params: TweetSelectionParams): void {
     errors.push('candidates配列が必要です');
   }
 
-  if (!['like', 'retweet', 'quote_tweet'].includes(params.selectionType)) {
-    errors.push('selectionTypeは like, retweet, quote_tweet のいずれかである必要があります');
+  if (!['like', 'retweet', 'quote_tweet', 'follow'].includes(params.selectionType)) {
+    errors.push('selectionTypeは like, retweet, quote_tweet, follow のいずれかである必要があります');
   }
 
   if (!params.criteria.topic || typeof params.criteria.topic !== 'string') {

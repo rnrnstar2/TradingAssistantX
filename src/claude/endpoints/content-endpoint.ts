@@ -5,8 +5,9 @@
  */
 
 import { claude } from '@instantlyeasy/claude-code-sdk-ts';
-import { ContentInput, GeneratedContent, SystemContext } from '../types';
+import { ContentInput, GeneratedContent, SystemContext, PromptLogData, GenerateContentParams, EnhancedContentRequest } from '../types';
 import { ContentBuilder } from '../prompts/builders/content-builder';
+import { ClaudePromptLogger } from '../utils/prompt-logger';
 
 // 警告表示フラグ（初回のみ表示）
 let devModeWarningShown = false;
@@ -142,20 +143,18 @@ async function checkClaudeAuthentication(): Promise<boolean> {
  * コンテンツ生成エンドポイント - Claude強み活用高品質コンテンツ生成
  * ContentGenerator.generatePost()からの機能移行
  */
-export async function generateContent(input: ContentInput): Promise<GeneratedContent> {
+export async function generateContent(params: GenerateContentParams): Promise<GeneratedContent> {
   try {
-    const {
-      request,
-      context,
-      qualityThreshold = QUALITY_THRESHOLD
-    } = input;
+    const { request, context } = params;
+    const qualityThreshold = QUALITY_THRESHOLD;
 
     const {
       topic,
       contentType = 'educational',
       targetAudience = 'beginner',
-      maxLength = MAX_CONTENT_LENGTH
-    } = request;
+      maxLength = MAX_CONTENT_LENGTH,
+      realtimeContext = false
+    } = request as EnhancedContentRequest;
 
     // 入力検証
     const validContentTypes = ['educational', 'market_analysis', 'trending', 'announcement', 'reply'];
@@ -166,8 +165,29 @@ export async function generateContent(input: ContentInput): Promise<GeneratedCon
     // Claude用プロンプト構築
     const prompt = buildContentPrompt(topic, contentType, targetAudience, maxLength, context);
     
+    // プロンプトログデータ準備
+    const promptLogData: PromptLogData = {
+      prompt_metadata: {
+        endpoint: 'generateContent',
+        timestamp: new Date().toISOString(),
+        execution_id: context?.executionId || 'unknown',
+        model: 'sonnet',
+        timeout: CLAUDE_TIMEOUT
+      },
+      input_context: {
+        topic,
+        content_type: contentType,
+        target_audience: targetAudience,
+        max_length: maxLength
+      },
+      system_context: context || getSystemContextForContent(),
+      full_prompt: prompt
+    };
+    
     // Claude SDK品質確保付きコンテンツ生成
+    const startTime = Date.now();
     let rawContent = await generateWithClaudeQualityCheck(prompt, topic, contentType, qualityThreshold);
+    const endTime = Date.now();
     
     // Twitter文字数制限チェックと自動短縮
     const twitterLength = calculateTwitterLength(rawContent);
@@ -182,11 +202,25 @@ export async function generateContent(input: ContentInput): Promise<GeneratedCon
     
     if (qualityScore < qualityThreshold) {
       console.warn(`Content quality (${qualityScore}) below threshold, regenerating...`);
-      return generateContent(input); // 再生成
+      return generateContent(params); // 再生成
     }
 
     // ハッシュタグ生成
     const hashtags = generateHashtags(topic, contentType);
+
+    // レスポンスメタデータを追加
+    promptLogData.response_metadata = {
+      content_length: rawContent.length,
+      twitter_length: calculateTwitterLength(rawContent),
+      quality_score: qualityScore,
+      generation_time_ms: endTime - startTime
+    };
+
+    // プロンプトログ保存
+    await ClaudePromptLogger.logPrompt(promptLogData).catch(error => {
+      console.error('プロンプトログ保存エラー:', error);
+      // エラーでもワークフローを停止させない
+    });
 
     return {
       content: rawContent,
@@ -209,19 +243,54 @@ export async function generateContent(input: ContentInput): Promise<GeneratedCon
  * 引用ツイート用コメント生成
  * ContentGenerator.generateQuoteComment()からの機能移行
  */
-export async function generateQuoteComment(originalTweet: any): Promise<string> {
+export async function generateQuoteComment(originalTweet: any, context?: SystemContext): Promise<string> {
   try {
     // モック機能を削除 - 常に実際のClaude APIを使用
     
     const prompt = buildQuoteCommentPrompt(originalTweet);
 
+    // プロンプトログデータ準備
+    const promptLogData: PromptLogData = {
+      prompt_metadata: {
+        endpoint: 'generateQuoteComment',
+        timestamp: new Date().toISOString(),
+        execution_id: context?.executionId || 'unknown',
+        model: 'sonnet',
+        timeout: 10000
+      },
+      input_context: {
+        original_tweet_id: originalTweet.id || 'unknown',
+        original_tweet_text: originalTweet.text || originalTweet.full_text || '',
+        original_author: originalTweet.user?.screen_name || originalTweet.author_id || 'unknown'
+      },
+      system_context: context || getSystemContextForContent(),
+      full_prompt: prompt
+    };
+
+    const startTime = Date.now();
     const response = await claude()
       .withModel('sonnet')
       .withTimeout(10000)
       .query(prompt)
       .asText();
+    const endTime = Date.now();
 
-    return response.trim().substring(0, 150);
+    const result = response.trim().substring(0, 150);
+
+    // レスポンスメタデータを追加
+    promptLogData.response_metadata = {
+      content_length: result.length,
+      twitter_length: calculateTwitterLength(result),
+      generation_time_ms: endTime - startTime
+    };
+
+    // プロンプトログ保存
+    await ClaudePromptLogger.logPrompt(promptLogData).catch(error => {
+      console.error('プロンプトログ保存エラー:', error);
+      // エラーでもワークフローを停止させない
+    });
+
+    return result;
 
   } catch (error) {
     console.error('Quote comment generation failed:', error);
@@ -305,6 +374,16 @@ function buildContentPrompt(
       prompt += `・話題のトピック: ${context.market.trendingTopics.join('、')}\n`;
     }
     prompt += '\n';
+  }
+  
+  // 参考ツイートを含める（存在する場合）
+  if (context?.referenceTweets && context.referenceTweets.length > 0) {
+    prompt += `【高エンゲージメント参考ツイート】\n`;
+    context.referenceTweets.forEach((tweet, index) => {
+      prompt += `${index + 1}. ${tweet.text.substring(0, 100)}${tweet.text.length > 100 ? '...' : ''}\n`;
+    });
+    prompt += `\n上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。\n`;
+    prompt += `ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。\n\n`;
   }
   
   // メインの指示

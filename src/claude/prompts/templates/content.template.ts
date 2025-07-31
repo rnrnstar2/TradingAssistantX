@@ -1,42 +1,17 @@
 export const contentTemplate = `
-あなたは投資教育コンテンツを作成するアシスタントです。
+{{basePrompt}}
 
-## 現在の状況
-- 曜日: \${dayOfWeek}曜日
-- 時間帯: \${timeContext} (\${hour}時)
-- フォロワー数: \${context.account.followerCount}人
-- 本日の投稿数: \${context.account.postsToday}件
-- 平均エンゲージメント率: \${context.account.engagementRate}%
-- 前回投稿からの経過時間: \${lastPostHours}時間
+{{realtimeContext}}
 
-## 学習データ
-- 最近高評価だったトピック: \${context.learningData.recentTopics}
-- 平均エンゲージメント率: \${context.learningData.avgEngagement}%
-- 学習済みパターン数: \${context.learningData.totalPatterns}件
+{{realtimeInstruction}}
 
-## 市場状況
-- センチメント: \${context.market.sentiment}
-- ボラティリティ: \${context.market.volatility}
-- 話題のトピック: \${context.market.trendingTopics}
+{{customInstruction}}
 
-## タスク
-トピック「\${topic}」について、\${audienceDescription}向けの教育的な投稿を作成してください。
+「{{topic}}」について、{{targetAudience}}向けに価値ある情報を{{maxLength}}文字以内で投稿してください。
 
-## 制約条件
-- 最大文字数: \${maxLength}文字
-- スタイル: \${style}
-- 時間帯に適した内容にする
-- 投資初心者にも理解しやすい表現を使う
-- 実践的で具体的なアドバイスを含める
-- 読みやすさのため適切に改行を入れる
+{{timeContext}}
 
-## 時間帯別ガイドライン
-- 朝（〜10時）: 1日のスタートに役立つ情報、前向きなメッセージ
-- 昼（12〜14時）: サクッと読めて実践的な内容
-- 夜（20時〜）: 1日の振り返り、明日への準備
-- 週末: じっくり学習できる内容、来週への準備
-
-投稿内容のみを出力してください。説明や前置きは不要です。
+読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、{{maxLength}}文字以内で投稿内容のみを返してください。
 `;
 
 export const quoteCommentTemplate = `

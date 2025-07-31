@@ -23,10 +23,10 @@ Claude Code SDKは、TradingAssistantXの**知的中枢**として機能し、�
 
 | エンドポイント | 知的責任 | 価値提供 |
 |---|---|---|
-| `generateContent` | 教育的コンテンツ創造 | 時間帯・対象者に最適化された価値あるコンテンツ |
+| `generateContent` | 教育的コンテンツ創造 | 時間帯・対象者・高エンゲージメント参考ツイートに基づく最適化されたコンテンツ |
 | `selectOptimalTweet` | 知的選択判断 | 膨大な候補から最高品質ツイートの選択 |
 | `generateQuoteComment` | 価値追加コメント | 独自視点による教育的価値の付加 |
-| `analyzePerformance` | 戦略分析・改善 | （深夜分析機能実装時に追加予定） |
+| `analyzePerformance` | 戦略分析・改善 | （**未実装** - 深夜分析機能実装時に追加予定） |
 
 ### 設計の競争優位性
 - **責任分離**: 各機能が独立し、変更影響を局所化
@@ -84,8 +84,10 @@ Claude SDKは独立したツールではなく、KaitoAPIとDataManagerと統合
 
 **投稿アクション**
 ```
-トピック設定（schedule.yaml）→ 教育コンテンツ生成（generateContent）→ 投稿実行
+トピック設定（schedule.yaml）→ [target_query検索（オプション）]→ 教育コンテンツ生成（generateContent）→ 投稿実行
 ```
+- target_queryが指定されている場合、高エンゲージメントツイートを検索して参考にする
+- 参考ツイートはプロンプトに含まれ、より魅力的なコンテンツ生成に活用される
 
 **リツイートアクション**  
 ```
@@ -134,6 +136,7 @@ Claude SDKは独立したツールではなく、KaitoAPIとDataManagerと統合
 | **アカウント戦略** | `followerCount`, `engagementRate`, `postsToday` | フォロワー特性に応じた内容調整 |
 | **学習戦略** | `recentTopics`, `avgEngagement`, `successPatterns` | 過去実績に基づく戦略最適化 |
 | **市場戦略** | `sentiment`, `volatility`, `trendingTopics` | リアルタイム市場連動コンテンツ |
+| **参考戦略** | `referenceTweets` | 高エンゲージメントツイートを参考にした魅力的なコンテンツ生成 |
 
 ### 時間戦略の設計
 - **朝（7-10時）**: 1日のスタートに役立つ投資情報・前向きなメッセージ
@@ -158,6 +161,7 @@ src/claude/prompts/
 - **共通ロジック統合**: 時間帯判定・アカウント分析・市場状況処理を一元化
 - **品質一貫性**: 全エンドポイントで統一された投資教育価値基準
 - **保守効率**: プロンプト変更が全システムに自動反映
+
 
 ## 🔐 認証・SDK設定：技術基盤
 

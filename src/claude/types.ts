@@ -84,7 +84,7 @@ export interface AnalysisInput {
  */
 export interface TweetSelectionParams {
   candidates: TweetCandidate[];        // ツイート候補リスト（最大20件）
-  selectionType: 'like' | 'retweet' | 'quote_tweet';  // 選択目的
+  selectionType: 'like' | 'retweet' | 'quote_tweet' | 'follow';  // 選択目的
   criteria: {
     topic: string;                     // 関連トピック
     qualityThreshold?: number;         // 品質閾値（0-10）
@@ -94,6 +94,7 @@ export interface TweetSelectionParams {
   context: {
     userProfile: AccountInfo;          // ユーザープロフィール
     learningData?: LearningData;       // 学習データ
+    executionId?: string;              // 実行ID（プロンプトログ用）
   };
 }
 
@@ -111,6 +112,37 @@ export interface ContentRequest {
   contentType?: 'educational' | 'market_analysis' | 'trending' | 'announcement' | 'reply';
   targetAudience?: 'beginner' | 'intermediate' | 'advanced';
   maxLength?: number;
+  realtimeContext?: boolean;  // 新規追加：リアルタイムコンテキストを重視するか
+}
+
+/**
+ * ContentGenerationRequest (ContentRequestのエイリアス)
+ * TASK-003: コンテンツ生成改善用
+ */
+export interface ContentGenerationRequest extends ContentRequest {
+  contentType?: 'educational' | 'market_analysis' | 'trending' | 'announcement' | 'reply';
+  targetAudience?: 'beginner' | 'intermediate' | 'advanced';
+}
+
+/**
+ * EnhancedContentRequest
+ * TASK-006: 既存の型と整合性を保つための独立した型定義
+ */
+export interface EnhancedContentRequest {
+  topic: string;
+  contentType: 'educational' | 'market_analysis' | 'beginner_tips' | 'news_commentary';
+  targetAudience: 'beginner' | 'intermediate' | 'general';
+  maxLength?: number;
+  realtimeContext?: boolean;
+}
+
+/**
+ * GenerateContentParams
+ * TASK-006: generateContent関数のパラメータ型
+ */
+export interface GenerateContentParams {
+  request: EnhancedContentRequest;
+  context?: SystemContext;
 }
 
 /**
@@ -119,6 +151,7 @@ export interface ContentRequest {
  */
 export interface SystemContext {
   timestamp?: string;
+  executionId?: string;
   account: {
     followerCount: number;
     lastPostTime?: string;
@@ -134,7 +167,8 @@ export interface SystemContext {
     };
     executionCount: { today: number; total: number };
   };
-  market: {
+  // TypeScript互換性修正（TASK-005）: workflows/constants.tsと統一
+  market?: {
     trendingTopics: string[];
     volatility: 'low' | 'medium' | 'high';
     sentiment: 'bearish' | 'neutral' | 'bullish';
@@ -144,6 +178,14 @@ export interface SystemContext {
     totalPatterns?: number;
     avgEngagement?: number;
   };
+  referenceTweets?: Array<{  // 新規追加：参考ツイート情報
+    text: string;
+    qualityScore?: number;
+    relevanceScore?: number;
+    realtimeScore?: number;
+    reason?: string;
+  }>;
+  instruction?: string;  // 新規追加：追加指示
 }
 
 /**
@@ -390,3 +432,41 @@ export interface APIResponse<T> {
  * 分析リクエスト（既存コード互換性のためのエイリアス）
  */
 export type AnalysisRequest = AnalysisInput;
+
+// ============================================================================
+// PROMPT LOGGING TYPES - プロンプトログ用型定義
+// ============================================================================
+
+/**
+ * プロンプトログメタデータ
+ */
+export interface PromptLogMetadata {
+  endpoint: string;
+  timestamp: string;
+  execution_id: string;
+  model: string;
+  timeout: number;
+}
+
+/**
+ * プロンプトログデータ
+ */
+export interface PromptLogData {
+  prompt_metadata: PromptLogMetadata;
+  input_context: Record<string, any>;
+  system_context: SystemContext;
+  full_prompt: string;
+  response_metadata?: {
+    content_length?: number;
+    twitter_length?: number;
+    quality_score?: number;
+    generation_time_ms?: number;
+  };
+}
+
+/**
+ * プロンプトロガーインターフェース
+ */
+export interface PromptLogger {
+  logPrompt(data: PromptLogData): Promise<void>;
+}

@@ -65,7 +65,7 @@ TradingAssistantXのメインワークフローは、Kaito API、Claude SDK、�
 - `wait`: 待機（何もしない）
 
 **実行詳細**:
-- **post**: Claude SDKでコンテンツ生成 → 投稿
+- **post**: target_queryで高エンゲージメントツイート検索（オプション）→ Claude SDKでコンテンツ生成 → 投稿
 - **retweet**: YAMLで定義された検索クエリ使用 → **Claude AI最適選択** → リツイート
 - **quote_tweet**: YAMLで定義された検索クエリ使用 → **Claude AI最適選択** → 引用コメント生成 → 引用RT
 - **like**: YAMLで定義された検索クエリ使用 → **Claude AI関係構築評価選択** → いいね
@@ -88,15 +88,15 @@ TradingAssistantXのメインワークフローは、Kaito API、Claude SDK、�
 - 実行結果
 - パフォーマンス分析
 
-**保存先**: `data/history/YYYY-MM/DD-HHMM/`
-- `actionInput.yaml`: アクション入力内容
-- `result.yaml`: 実行結果
-- `analysis.yaml`: パフォーマンス分析
+**保存先**: `data/current/execution-YYYYMMDD-HHMM/`（`data/history/`へ自動アーカイブ）
+- `post.yaml`: 投稿データ（全実行情報統合）※post/quote_tweetアクションのみ
 
-### Step 4: 深夜分析（23:55のみ）
+### analyzeアクション詳細（23:55のみ）
 **目的**: 1日分の実行データを包括分析し、翌日戦略を自動生成
 
 **詳細仕様**: [docs/deep-night-analysis.md](../deep-night-analysis.md)
+
+**注意**: analyzeアクションは通常の3ステップワークフロー完了後に独立して実行される特別なアクションです。
 
 ## スケジュール実行システム
 
@@ -115,7 +115,7 @@ YAMLファイルで定義された時刻に自動的にワークフローを実�
 - **深夜23:55: 深夜分析（翌日戦略生成）※未実装**
 
 **特別処理**:
-- **23:55**: 通常のアクション実行に加え、深夜分析を実行（**※未実装**）
+- **23:55**: analyzeアクション（深夜分析）を実行（**※未実装**）
 - 詳細は[docs/deep-night-analysis.md](../deep-night-analysis.md)を参照
 
 ### 設定項目説明
@@ -125,14 +125,14 @@ YAMLファイルで定義された時刻に自動的にワークフローを実�
 - **アクション決定不要**: スケジュール実行時はアクションが事前決定されているため、Claude判断ステップをスキップ
 
 #### アクション別パラメータ
-| アクション | 必須パラメータ | 用途 |
-|-----------|---------------|------|
-| post | topic | 投稿トピック指定 |
-| retweet | target_query | 検索クエリ（Claude AI選択） |
-| quote_tweet | target_query, topic | 検索クエリ（Claude AI選択）と引用コメントトピック |
-| like | target_query | 検索クエリ（Claude AI選択） |
-| follow | target_query | ユーザー検索クエリ（Claude AI選択） |
-| analyze | なし | 深夜分析（23:55自動実行）**※未実装** |
+| アクション | 必須パラメータ | オプションパラメータ | 用途 |
+|-----------|---------------|----------------------|------|
+| post | topic | target_query | 投稿トピック指定、高エンゲージメント参考ツイート検索 |
+| retweet | target_query | - | 検索クエリ（Claude AI選択） |
+| quote_tweet | target_query, topic | - | 検索クエリ（Claude AI選択）と引用コメントトピック |
+| like | target_query | - | 検索クエリ（Claude AI選択） |
+| follow | target_query | - | ユーザー検索クエリ（Claude AI選択） |
+| analyze | なし | - | 深夜分析（23:55自動実行）**※未実装** |
 
 ### スケジューラー動作仕様
 
