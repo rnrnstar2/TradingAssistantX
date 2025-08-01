@@ -1,0 +1,64 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-07-30T16:18:52.968Z'
+  execution_id: execution-20250731-0118
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 今日も投資の勉強お疲れ様でした
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 5
+    postsToday: 0
+    engagementRate: 0.5
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-07-30T16:18:52.968Z'
+  executionId: execution-20250731-0118
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は木曜日の早朝（1時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 5人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 0.5%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  「今日も投資の勉強お疲れ様でした」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+  朝の時間帯なので、1日のスタートに役立つ情報や、前向きなメッセージを含めても良いでしょう。
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 102
+  twitter_length: 103
+  quality_score: 90
+  generation_time_ms: 34312

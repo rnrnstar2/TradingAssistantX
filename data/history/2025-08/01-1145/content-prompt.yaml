@@ -1,0 +1,48 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-08-01T01:31:18.759Z'
+  execution_id: unknown
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 経済指標の読み方と投資への活用
+  content_type: educational
+  target_audience: intermediate
+  max_length: 140
+system_context:
+  timestamp: '2025-08-01T01:31:18.759Z'
+  account:
+    followerCount: 1000
+    postsToday: 0
+    engagementRate: 2.5
+    lastPostTime: '2025-08-01T01:31:18.759Z'
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 0
+  learningData:
+    recentTopics: []
+    avgEngagement: 2.5
+    totalPatterns: 0
+  market:
+    sentiment: neutral
+    volatility: medium
+    trendingTopics: []
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は金曜日の午前中（10時台）です。
+
+
+  「経済指標の読み方と投資への活用」について、intermediate向けに価値ある情報を140文字以内で投稿してください。
+
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 132
+  twitter_length: 135
+  quality_score: 90
+  generation_time_ms: 25161

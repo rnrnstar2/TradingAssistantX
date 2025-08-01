@@ -1,0 +1,154 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-07-31T08:00:27.523Z'
+  execution_id: execution-20250731-1700
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 今日の市場まとめと学んだこと
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 7
+    postsToday: 0
+    engagementRate: 0.7000000000000001
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-07-31T08:00:27.523Z'
+  executionId: execution-20250731-1700
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: |-
+        ＃BTC　　
+
+        7月値動き　　まとめ
+
+        1️⃣7/9　～　7/14　（約5日間上昇トレンド）
+
+        2️⃣7/15　～　7/28　レンジ
+
+        3️⃣　ETF　動向
+        7/9　～　超絶流入を記録！
+
+        7/18　～　流出へ
+
+        総括
+        ETF相場でFlowと連動してる感
+
+        そして現在は夏枯れ相場っ😂
+      engagement: 0
+      author: '3382360819'
+    - text: |-
+        ⑩
+        🎯総括：
+        ・AIはクオンツ運用を加速
+        ・規制環境は改善中＝機関参入の“風が吹いている”
+        ・BTCトレジャリー戦略が新たな潮流に
+        ・秋相場前の夏相場は“仕込み”か“爆発”のどちらか
+        👇これが「第2波」の仮想通貨市場。乗り遅れるな。
+        #Crypto #MilkRoadShow #BTC最高値 #クオンツ運用 #AIトレーディング
+      engagement: 0
+      author: '1376704222456995840'
+    - text: >-
+        Don't miss my new long-form podcast with @rockthejvm, where we dive into
+        topics like:
+
+         - The new show I'm creating (@theultcoder)
+         - The death of conferences
+         - Becoming a better speaker
+         - Staying relevant in an age of AI
+
+        Check it out now!👇
+
+
+        https://t.co/OIusx4pECH
+      engagement: 0
+      author: '17271117'
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は木曜日の夕方（17時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 7人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 0.7%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. (エンゲージメント: 0) ＃BTC　　
+
+
+  7月値動き　　まとめ
+
+
+  1️⃣7/9　～　7/14　（約5日間上昇トレンド）
+
+
+  2️⃣7/15　～　7/28　レンジ
+
+
+  3️⃣　ETF　動向
+
+  7/9　～　超絶流入を記録！
+
+
+  7/18　...
+
+  2. (エンゲージメント: 0) ⑩
+
+  🎯総括：
+
+  ・AIはクオンツ運用を加速
+
+  ・規制環境は改善中＝機関参入の“風が吹いている”
+
+  ・BTCトレジャリー戦略が新たな潮流に
+
+  ・秋相場前の夏相場は“仕込み”か“爆発”のどちらか
+
+  👇これが「第...
+
+  3. (エンゲージメント: 0) Don't miss my new long-form podcast with @rockthejvm, where
+  we dive into topics like:
+
+   - The new sh...
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「今日の市場まとめと学んだこと」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 127
+  twitter_length: 128
+  quality_score: 100
+  generation_time_ms: 42308

@@ -1,8 +1,9 @@
 REQUIREMENTS.md
 この要件定義を実現したい。
 
-あなたの役割は tests/kaito-apiの実装を完璧にしてほしい。
-    
+あなたの役割は以下の事項
+docs/deep-night-analysis.mdこの実装を完璧にしてほしい。
+MVPとして余計な実装をしないことを一番に考えて進めてほしい。
 
 docs/directory-structure.md, docs/workflow.md, docs/kaito-api.md, docs/claude.md
 これらのドキュメントの中で関連ファイルは必ず参照すること。
@@ -31,5 +32,5 @@ docs/directory-structure.md, docs/workflow.md, docs/kaito-api.md
 ```
 
 ```
-
+tests/kaito-apiの実装を完璧にしてほしい。
 ```

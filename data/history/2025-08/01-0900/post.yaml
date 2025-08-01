@@ -1,0 +1,37 @@
+executionId: execution-20250801-0830
+actionType: quote_tweet
+timestamp: '2025-07-31T23:32:39.304Z'
+content: |-
+  金曜朝の準備チェック✨
+
+  ・前日NY市場とドル円を確認
+  ・保有銘柄の材料ニュース  
+  ・週末持越しするか判断
+
+  金曜は利確売りが出やすい日。
+  焦らず今週を振り返って
+  来週に向けて準備しましょう！
+targetTweetId: '1951062833212563684'
+result:
+  id: '1951063487138111583'
+  originalTweetId: '1951062833212563684'
+  comment: |-
+    金曜朝の準備チェック✨
+
+    ・前日NY市場とドル円を確認
+    ・保有銘柄の材料ニュース  
+    ・週末持越しするか判断
+
+    金曜は利確売りが出やすい日。
+    焦らず今週を振り返って
+    来週に向けて準備しましょう！
+  timestamp: '2025-07-31T23:32:39.304Z'
+  success: true
+engagement:
+  likes: 0
+  retweets: 0
+  replies: 0
+claudeSelection:
+  score: 8
+  reasoning: 具体的な先物レンジ分析と海外株価との相関解説で投資教育価値が高く、市場オープン前準備に最適
+  expectedImpact: high

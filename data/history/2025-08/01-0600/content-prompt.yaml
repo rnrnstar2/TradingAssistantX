@@ -1,0 +1,136 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-07-31T13:30:03.512Z'
+  execution_id: execution-20250731-2230
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 米国市場開始前チェック
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 7
+    postsToday: 0
+    engagementRate: 0.7000000000000001
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-07-31T13:30:03.512Z'
+  executionId: execution-20250731-2230
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: >-
+        DeFi’s Nasdaq moment
+
+
+        1.  Most DeFi just niche toys.
+
+
+        2. dYdX = institutional making it a grade:
+
+
+        3. High-speed execution. In milliseconds 
+
+
+        4. Billion  in real volume.
+
+
+        5. Proven reliability and scale bility
+
+
+        6 If DeFi will ever rival traditional finance and  it needs a flagship.
+        dYdX will do it 
+
+
+        @gala_nft2
+         
+        @dYdX
+      engagement: 0
+      author: '1834958380575883264'
+    - text: >-
+        As someone who uses Figma every other day, it's remarkable to see the
+        company go public!
+
+
+        The stock $FIG started trading on the NYSE today, valued at a strong
+        $19.3B. Great to see this collaborative design leader finally hit the
+        market. Huge congrats to the entire team!
+
+
+        @figma https://t.co/iN12jr3wth
+      engagement: 0
+      author: '341581685'
+    - text: ダウマンが普通に信頼勝ち取ってるのがすごい
+      engagement: 0
+      author: '1122094615'
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は木曜日の夜（22時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 7人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 0.7%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. (エンゲージメント: 0) DeFi’s Nasdaq moment
+
+
+  1.  Most DeFi just niche toys.
+
+
+  2. dYdX = institutional making it a grade:
+
+
+  3....
+
+  2. (エンゲージメント: 0) As someone who uses Figma every other day, it's remarkable to
+  see the company go public!
+
+
+  The stock ...
+
+  3. (エンゲージメント: 0) ダウマンが普通に信頼勝ち取ってるのがすごい
+
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「米国市場開始前チェック」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+  夜の時間帯なので、1日の振り返りや、明日に向けた準備に関する内容も良いでしょう。
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 123
+  twitter_length: 125
+  quality_score: 90
+  generation_time_ms: 61988

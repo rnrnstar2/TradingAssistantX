@@ -1,0 +1,25 @@
+executionId: execution-20250731-1645
+actionType: quote_tweet
+timestamp: '2025-07-31T07:52:24.344Z'
+content: |-
+  現在のリアルタイム市場データにアクセスできないため、具体的な本日の市場総括を作成できません。
+
+  このプロジェクトのシステムを使用して実際の市場データを取得し、適切な投稿を生成する必要があります。
+targetTweetId: '1948880981639020651'
+result:
+  id: '1950826865762971780'
+  originalTweetId: '1948880981639020651'
+  comment: |-
+    現在のリアルタイム市場データにアクセスできないため、具体的な本日の市場総括を作成できません。
+
+    このプロジェクトのシステムを使用して実際の市場データを取得し、適切な投稿を生成する必要があります。
+  timestamp: '2025-07-31T07:52:24.344Z'
+  success: true
+engagement:
+  likes: 0
+  retweets: 0
+  replies: 0
+claudeSelection:
+  score: 8.5
+  reasoning: 日経平均・売買代金・セクター動向・債券・商品市場まで包括的に分析。投資教育価値が最も高く、専門知識で補足解説しやすい内容。
+  expectedImpact: high

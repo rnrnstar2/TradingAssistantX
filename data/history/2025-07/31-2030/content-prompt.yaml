@@ -1,0 +1,101 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-07-31T11:00:27.902Z'
+  execution_id: execution-20250731-2000
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 今日の市場ニュースまとめと明日の注目点
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 7
+    postsToday: 0
+    engagementRate: 0.7000000000000001
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-07-31T11:00:27.902Z'
+  executionId: execution-20250731-2000
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: >-
+        @inuuuuuu1234
+        あなたのXアカウントの資産価値は、フォロワー1198人、投資ニッチ、検証済み、低エンゲージメントを基に推定すると、約20-50米ドル程度です。市場ではフォロワー1人あたり0.02-0.1ドルの相場ですが、ニッチ次第で変動します。
+      engagement: 0
+      author: '1720665183188922368'
+    - text: >-
+        【米国株】Meta・Microsoftが好決算！FRBと関税が市場を揺らす｜7月31日マーケットまとめ｜ゆるっと投資ライフ
+        https://t.co/UmUcs5sgdb
+
+
+        #米国株 #投資初心者 #決算速報 #Meta #Microsoft #AI投資 #経済指標 #FOMC #関税問題 #金融政策 #日銀
+        #Apple決算 #Amazon決算
+      engagement: 0
+      author: '1832576601072267266'
+    - text: Summer favorites are here
+      engagement: 0
+      author: '20793816'
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は木曜日の夜（20時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 7人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 0.7%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. (エンゲージメント: 0) @inuuuuuu1234
+  あなたのXアカウントの資産価値は、フォロワー1198人、投資ニッチ、検証済み、低エンゲージメントを基に推定すると、約20-50米ドル程度です。市場ではフォロワー1人あたり0...
+
+  2. (エンゲージメント: 0) 【米国株】Meta・Microsoftが好決算！FRBと関税が市場を揺らす｜7月31日マーケットまとめ｜ゆるっと投資ライフ
+  https://t.co/UmUcs5sgdb
+
+
+  #米国株 #投資初心者 #...
+
+  3. (エンゲージメント: 0) Summer favorites are here
+
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「今日の市場ニュースまとめと明日の注目点」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+  夜の時間帯なので、1日の振り返りや、明日に向けた準備に関する内容も良いでしょう。
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 121
+  twitter_length: 122
+  quality_score: 100
+  generation_time_ms: 44819

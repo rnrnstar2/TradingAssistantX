@@ -1,0 +1,123 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-07-30T21:00:53.558Z'
+  execution_id: execution-20250731-0600
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: おはよう！今日の市場注目ポイント
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 5
+    postsToday: 0
+    engagementRate: 0.5
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-07-30T21:00:53.557Z'
+  executionId: execution-20250731-0600
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: >-
+        おはようございます☀木曜日。企業型DCの導入サポートを行っています。退職金の無い中小企業や、中退共からの移管で選択することが多い。投資に興味のない従業員には、解りづらかったり、給与規定・給与明細の変更などを伴うので、面倒だし、説明が大変…でも、退職後の年金の補完にはいい制度だと思います。少しは経済や株式投資に興味が湧くしね。
+
+        #コンサルティング
+
+        #マネジメント
+
+        #人事制度
+
+        #社労士法人
+      engagement: 0
+      author: '1689034183711367168'
+    - text: |-
+        @setsu_uts せつさん
+        おはようございます☀
+
+        気づかないうちにインフレという波に飲まれてしまわないよう、投資を上手く活用していきたいですね💡
+
+        今日もよろしくお願いします🤗
+        素敵な木曜日を✨️
+      engagement: 0
+      author: '1416310953000402952'
+    - text: >-
+        Topstep payouts just got closer. We’ve updated our payout policy to help
+        more traders get paid. Starting today, just 5 winning days of $150 earn
+        your payout!
+
+
+        Get started with TopstepX today: https://t.co/Hb25rPulwq
+        https://t.co/J8hX8HnigE
+      engagement: 0
+      author: '146128105'
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は木曜日の朝（6時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 5人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 0.5%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. (エンゲージメント: 0)
+  おはようございます☀木曜日。企業型DCの導入サポートを行っています。退職金の無い中小企業や、中退共からの移管で選択することが多い。投資に興味のない従業員には、解りづらかったり、給与規定・給与明細の変更...
+
+  2. (エンゲージメント: 0) @setsu_uts せつさん
+
+  おはようございます☀
+
+
+  気づかないうちにインフレという波に飲まれてしまわないよう、投資を上手く活用していきたいですね💡
+
+
+  今日もよろしくお願いします🤗
+
+  素敵な木曜日...
+
+  3. (エンゲージメント: 0) Topstep payouts just got closer. We’ve updated our payout
+  policy to help more traders get paid. Star...
+
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「おはよう！今日の市場注目ポイント」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+  朝の時間帯なので、1日のスタートに役立つ情報や、前向きなメッセージを含めても良いでしょう。
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 128
+  twitter_length: 130
+  quality_score: 100
+  generation_time_ms: 33087

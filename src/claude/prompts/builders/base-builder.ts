@@ -114,6 +114,55 @@ export abstract class BaseBuilder {
       .replace(/\${context\.market\.trendingTopics}/g, trendingTopics);
   }
 
+  /**
+   * 参考アカウント情報の要約を生成
+   */
+  protected summarizeReferenceAccounts(referenceAccountTweets?: any[]): string {
+    if (!referenceAccountTweets || referenceAccountTweets.length === 0) {
+      return '';
+    }
+
+    const accountSummaries = referenceAccountTweets.map(account => {
+      const tweetCount = account.tweets.length;
+      const latestTweet = account.tweets[0];
+      const avgEngagement = this.calculateAverageEngagement(account.tweets);
+      
+      return `@${account.username}: ${tweetCount}件の最新情報（平均エンゲージメント: ${avgEngagement.toFixed(1)}）`;
+    });
+
+    return `参考情報源: ${accountSummaries.join(', ')}`;
+  }
+
+  /**
+   * ツイートの平均エンゲージメントを計算
+   */
+  private calculateAverageEngagement(tweets: any[]): number {
+    if (!tweets || tweets.length === 0) return 0;
+    
+    const totalEngagement = tweets.reduce((sum, tweet) => {
+      const metrics = tweet.public_metrics || {};
+      return sum + (metrics.like_count || 0) + (metrics.retweet_count || 0);
+    }, 0);
+    
+    return totalEngagement / tweets.length;
+  }
+
+  /**
+   * 情報の新鮮度を評価
+   */
+  protected evaluateFreshness(tweets: any[]): string {
+    if (!tweets || tweets.length === 0) return 'データなし';
+    
+    const now = new Date();
+    const latestTweetTime = new Date(tweets[0].created_at);
+    const hoursDiff = (now.getTime() - latestTweetTime.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursDiff < 1) return '1時間以内の最新情報';
+    if (hoursDiff < 6) return '6時間以内の情報';
+    if (hoursDiff < 24) return '24時間以内の情報';
+    return '1日以上前の情報';
+  }
+
   // 抽象メソッド：各ビルダーで実装必須
   abstract buildPrompt(params: unknown): string;
 }

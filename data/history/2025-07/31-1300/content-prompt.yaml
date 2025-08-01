@@ -1,0 +1,108 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-07-31T03:00:52.046Z'
+  execution_id: execution-20250731-1200
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 昼休みに学ぶ投資の基本
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 5
+    postsToday: 0
+    engagementRate: 0.5
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-07-31T03:00:52.046Z'
+  executionId: execution-20250731-1200
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: |-
+        ケビンさんのGOLDエントリーポイント、精度高すぎて感動！😭自分でも勉強しなきゃな💦
+
+        米国株/デイトレ/ドル円ショート/エヌビディア/日本株/裁量EA/日経先物/投資初心者/GOLD/NISA
+      engagement: 0
+      author: '1797671789373587456'
+    - text: |-
+        難しそう？まずは「投票履歴」と「資金配分先」だけ見てみて。
+        @arbitrum  DAOでは、どんなDappsがどんな理由で資金を得てるか見える。
+        勉強にも、将来の投資判断にも◎。
+        @KaitoAI
+      engagement: 0
+      author: '1516448498693988357'
+    - text: >-
+        https://t.co/K4HCDWNxWN This week we're making Popcorn!  Healthy,
+        Delicious, Easy, Stovetop Popcorn!  Every Kernel Pops... Every time! 
+        Happy Birthday America! @elonmusk @richwashburn
+      engagement: 0
+      author: '1722747439700996096'
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は木曜日の昼（12時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 5人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 0.5%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. (エンゲージメント: 0) ケビンさんのGOLDエントリーポイント、精度高すぎて感動！😭自分でも勉強しなきゃな💦
+
+
+  米国株/デイトレ/ドル円ショート/エヌビディア/日本株/裁量EA/日経先物/投資初心者/GOLD/NISA
+
+  2. (エンゲージメント: 0) 難しそう？まずは「投票履歴」と「資金配分先」だけ見てみて。
+
+  @arbitrum  DAOでは、どんなDappsがどんな理由で資金を得てるか見える。
+
+  勉強にも、将来の投資判断にも◎。
+
+  @KaitoAI
+
+  3. (エンゲージメント: 0) https://t.co/K4HCDWNxWN This week we're making Popcorn! 
+  Healthy, Delicious, Easy, Stovetop Popcorn!...
+
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「昼休みに学ぶ投資の基本」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+  昼休みの時間帯なので、サクッと読めて実践的な内容が好まれます。
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 85
+  twitter_length: 85
+  quality_score: 100
+  generation_time_ms: 45895

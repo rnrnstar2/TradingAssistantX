@@ -77,7 +77,12 @@ ID: ${tweet.id}
       // レスポンスのパース
       let selectedTweets = [];
       try {
-        selectedTweets = JSON.parse(response);
+        // Markdownコードブロックを除去
+        const cleanedResponse = response
+          .replace(/^```json\s*\n?/i, '')
+          .replace(/\n?```\s*$/i, '')
+          .trim();
+        selectedTweets = JSON.parse(cleanedResponse);
       } catch (parseError) {
         console.error('❌ Claude応答のパースエラー:', parseError);
         // フォールバック: エンゲージメント順で選択

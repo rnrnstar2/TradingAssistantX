@@ -113,16 +113,34 @@ export class FollowManagement {
         userId: this.maskSensitiveData(userId) 
       });
 
-      // TwitterAPI.ioフォローエンドポイント
+      // プロキシ設定を取得
+      const currentProxy = this.authManager.getCurrentProxy();
+      if (!currentProxy) {
+        return {
+          userId,
+          following: false,
+          timestamp: new Date().toISOString(),
+          success: false,
+          error: 'No available proxy for follow action. Proxy is required for TwitterAPI.io follow_user_v2.'
+        };
+      }
+
+      // TwitterAPI.ioフォローエンドポイント（API仕様準拠）
       const requestData: any = {
-        login_cookie: loginCookie
+        login_cookies: loginCookie,  // 複数形
+        user_id: this.isNumericUserId(userId) ? userId : undefined,
+        proxy: currentProxy
       };
 
-      // userIdが数値IDかユーザー名かを判定
-      if (this.isNumericUserId(userId)) {
-        requestData.userId = userId;
-      } else {
-        requestData.userName = userId.replace(/^@/, '');
+      // ユーザー名の場合は別途ユーザーID取得が必要
+      if (!this.isNumericUserId(userId)) {
+        return {
+          userId,
+          following: false,
+          timestamp: new Date().toISOString(),
+          success: false,
+          error: 'Username-based follow not supported. Please provide numeric user ID.'
+        };
       }
 
       const response = await this.httpClient.post(
@@ -130,11 +148,14 @@ export class FollowManagement {
         requestData
       ) as any;
 
+      // TwitterAPI.ioレスポンス: {"status":"success","message":"follow_user success."}
+      const isSuccess = response?.status === "success";
+      
       const result: FollowResult = {
         userId,
-        following: Boolean(response.data?.following || response.success),
+        following: isSuccess,
         timestamp: new Date().toISOString(),
-        success: Boolean(response.data?.following || response.success)
+        success: isSuccess
       };
 
       console.log(`${result.success ? '✅' : '❌'} User follow ${result.success ? 'completed' : 'failed'}:`, {
@@ -191,16 +212,34 @@ export class FollowManagement {
         userId: this.maskSensitiveData(userId) 
       });
 
-      // TwitterAPI.ioアンフォローエンドポイント
+      // プロキシ設定を取得
+      const currentProxy = this.authManager.getCurrentProxy();
+      if (!currentProxy) {
+        return {
+          userId,
+          unfollowed: false,
+          timestamp: new Date().toISOString(),
+          success: false,
+          error: 'No available proxy for unfollow action. Proxy is required for TwitterAPI.io unfollow_user_v2.'
+        };
+      }
+
+      // TwitterAPI.ioアンフォローエンドポイント（API仕様準拠）
       const requestData: any = {
-        login_cookie: loginCookie
+        login_cookies: loginCookie,  // 複数形
+        user_id: this.isNumericUserId(userId) ? userId : undefined,
+        proxy: currentProxy
       };
 
-      // userIdが数値IDかユーザー名かを判定
-      if (this.isNumericUserId(userId)) {
-        requestData.userId = userId;
-      } else {
-        requestData.userName = userId.replace(/^@/, '');
+      // ユーザー名の場合は別途ユーザーID取得が必要
+      if (!this.isNumericUserId(userId)) {
+        return {
+          userId,
+          unfollowed: false,
+          timestamp: new Date().toISOString(),
+          success: false,
+          error: 'Username-based unfollow not supported. Please provide numeric user ID.'
+        };
       }
 
       const response = await this.httpClient.post(
@@ -208,11 +247,14 @@ export class FollowManagement {
         requestData
       ) as any;
 
+      // TwitterAPI.ioレスポンス: {"status":"success","message":"unfollow_user success."}
+      const isSuccess = response?.status === "success";
+      
       const result: UnfollowResult = {
         userId,
-        unfollowed: Boolean(response.data?.unfollowed || response.success),
+        unfollowed: isSuccess,
         timestamp: new Date().toISOString(),
-        success: Boolean(response.data?.unfollowed || response.success)
+        success: isSuccess
       };
 
       console.log(`${result.success ? '✅' : '❌'} User unfollow ${result.success ? 'completed' : 'failed'}:`, {
@@ -249,14 +291,21 @@ export class FollowManagement {
 
       console.log('🔍 Checking following status with V2 authentication...');
 
+      // プロキシ設定を取得
+      const currentProxy = this.authManager.getCurrentProxy();
+      if (!currentProxy) {
+        throw new Error('No available proxy for follow status check');
+      }
+
       const requestData: any = {
-        login_cookie: loginCookie
+        login_cookies: loginCookie,  // 複数形
+        user_id: this.isNumericUserId(userId) ? userId : undefined,
+        proxy: currentProxy
       };
 
-      if (this.isNumericUserId(userId)) {
-        requestData.userId = userId;
-      } else {
-        requestData.userName = userId.replace(/^@/, '');
+      // ユーザー名の場合は別途ユーザーID取得が必要
+      if (!this.isNumericUserId(userId)) {
+        throw new Error('Username-based follow status check not supported. Please provide numeric user ID.');
       }
 
       const response = await this.httpClient.get(

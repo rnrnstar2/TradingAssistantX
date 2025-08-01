@@ -37,18 +37,18 @@ src/
 ├── claude/                           # Claude Code SDK - エンドポイント別設計
 │   ├── endpoints/                     # 役割別エンドポイント (3ファイル)
 │   │   ├── content-endpoint.ts        # コンテンツ生成: プロンプト+変数+GeneratedContent返却
-│   │   ├── analysis-endpoint.ts       # 分析: プロンプト+変数+AnalysisResult返却
-│   │   └── selection-endpoint.ts      # 🆕 最適ツイート選択: プロンプト+変数+SelectedTweet返却
+│   │   ├── selection-endpoint.ts      # 最適ツイート選択: プロンプト+変数+SelectedTweet返却
+│   │   └── analysis-endpoint.ts       # 📊 深夜分析: プロンプト+変数+AnalysisResult返却（**※未実装**）
 │   ├── prompts/                       # プロンプトテンプレート管理
 │   │   ├── templates/                 # プロンプトテンプレート
 │   │   │   ├── content.template.ts    # コンテンツ生成テンプレート
-│   │   │   ├── analysis.template.ts   # 分析テンプレート
-│   │   │   └── selection.template.ts  # 🆕 ツイート選択テンプレート
+│   │   │   ├── selection.template.ts  # ツイート選択テンプレート
+│   │   │   └── analysis.template.ts   # 📊 深夜分析テンプレート（**※未実装**）
 │   │   ├── builders/                  # プロンプトビルダー
 │   │   │   ├── base-builder.ts        # 共通ビルダー（時間帯・曜日等）
 │   │   │   ├── content-builder.ts     # コンテンツ用ビルダー
-│   │   │   ├── analysis-builder.ts    # 分析用ビルダー
-│   │   │   └── selection-builder.ts   # 🆕 ツイート選択用ビルダー
+│   │   │   ├── selection-builder.ts   # ツイート選択用ビルダー
+│   │   │   └── analysis-builder.ts    # 📊 深夜分析用ビルダー（**※未実装**）
 │   │   └── index.ts                   # プロンプトビルダーエクスポート
 │   ├── types.ts                       # エンドポイント型定義
 │   └── index.ts                       # エクスポート統合
@@ -104,9 +104,10 @@ src/
 ```
 tests/
 ├── claude/                           # Claude エンドポイント単体テスト
-│   ├── endpoints/                    # エンドポイント別テスト (2ファイル)
+│   ├── endpoints/                    # エンドポイント別テスト (3ファイル)
 │   │   ├── content-endpoint.test.ts     # コンテンツ生成エンドポイントテスト
-│   │   ├── analysis-endpoint.test.ts    # 分析エンドポイントテスト
+│   │   ├── selection-endpoint.test.ts   # ツイート選択エンドポイントテスト
+│   │   └── analysis-endpoint.test.ts    # 📊 深夜分析エンドポイントテスト（**※未実装**）
 │   ├── types.test.ts                    # 型定義テスト
 │   └── index.test.ts                    # エクスポート統合テスト
 ├── kaito-api/                        # KaitoAPI テスト
@@ -204,12 +205,14 @@ TradingAssistantX/
 ```
 data/
 ├── config/                           # 設定ファイル（MVP最小構成）
+│   ├── proxies.yaml                  # プロキシ一覧
 │   ├── system.yaml                   # システム設定（実行間隔・タイムゾーン等）
 │   ├── schedule.yaml                 # スケジュール設定（時刻別アクション）
 │   └── twitter-session.yaml          # KaitoAPI認証セッション（24時間有効）
 │
 ├── current/                          # 🔄 現在実行サイクル（実行毎更新）
-│   ├── execution-YYYYMMDD-HHMM/      # タイムスタンプ付き実行ディレクトリ
+│   ├── execution-YYYYMMDD-HHMM/      # タイムスタンプ付き実行ディレクトリ（post/quote_tweetアクションのみ）
+│   │   ├── content-prompt.yaml       # コンテンツ生成プロンプト
 │   │   └── post.yaml                 # 投稿データ（全実行情報統合）
 │   └── strategy-analysis.yaml        # 🌙 戦略分析結果（深夜23:55分析で生成）
 │

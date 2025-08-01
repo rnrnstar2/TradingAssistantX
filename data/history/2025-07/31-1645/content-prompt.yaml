@@ -1,0 +1,113 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-07-31T06:00:31.929Z'
+  execution_id: execution-20250731-1500
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 後場の注目ポイントと長期投資の視点
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 7
+    postsToday: 0
+    engagementRate: 0.7000000000000001
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-07-31T06:00:31.928Z'
+  executionId: execution-20250731-1500
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: |-
+        トレンドの「時事ネタ」で100万回再生取って、リスト化して、DRMで儲けて
+        ↓
+        そのお金を「長期で上がっていく資産」と「事業投資」をするのが現時点で最強の王道。
+      engagement: 0
+      author: '1858001338485059584'
+    - text: |-
+        1. 35-40歳。2005年からファン活動を始め、成人後の長期継続を示唆。
+        2. IT関連の会社員。ゲーム中心の投稿から、柔軟な勤務形態。
+        3. 500-700万円。趣味投資が可能で安定した生活。
+        4. 関東圏、恐らく東京近郊。型月イベント参加しやすさ。
+        5. 独身、親と同居か一人暮らし。家族言及なし。
+        6. FGO・型月作品、配信(ミラティブ)、アニメ鑑賞、パズル。
+        7. 礼儀・義理を重視する保守的。マナー違反に厳しい。
+        8. 真面目で熱心、細かい点にこだわるファン気質。几帳面。
+        9. 田中太郎（推測、眼鏡関連のハンドルから）。
+      engagement: 0
+      author: '1720665183188922368'
+    - text: >-
+        The Bev-Alc Summit, the premier conference for beer, wine, and spirits
+        execs, has opened registration for our next meeting Jan. 18-20, 2026 at
+        Hotel del Coronado near San Diego.  Early bird special: 
+        https://t.co/BN588LTFeq
+      engagement: 0
+      author: '15581925'
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は木曜日の午後（15時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 7人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 0.7%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. (エンゲージメント: 0) トレンドの「時事ネタ」で100万回再生取って、リスト化して、DRMで儲けて
+
+  ↓
+
+  そのお金を「長期で上がっていく資産」と「事業投資」をするのが現時点で最強の王道。
+
+  2. (エンゲージメント: 0) 1. 35-40歳。2005年からファン活動を始め、成人後の長期継続を示唆。
+
+  2. IT関連の会社員。ゲーム中心の投稿から、柔軟な勤務形態。
+
+  3. 500-700万円。趣味投資が可能で安定した生活。
+
+  ...
+
+  3. (エンゲージメント: 0) The Bev-Alc Summit, the premier conference for beer, wine,
+  and spirits execs, has opened registratio...
+
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「後場の注目ポイントと長期投資の視点」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 87
+  twitter_length: 88
+  quality_score: 100
+  generation_time_ms: 36905

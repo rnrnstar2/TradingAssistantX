@@ -1,0 +1,41 @@
+executionId: execution-20250731-2030
+actionType: quote_tweet
+timestamp: '2025-07-31T11:32:46.623Z'
+content: |-
+  今夜やっておきたい投資準備🌙
+
+  □ 明日の重要指標をメモ
+  □ 保有銘柄の業績発表日確認  
+  □ 損切りラインの再確認
+
+  夜の静かな時間こそ、感情に
+  左右されない冷静な戦略を
+  立てるベストタイミング📈
+
+  明日も一歩ずつ前進しましょう
+targetTweetId: '1950881629208969577'
+result:
+  id: '1950882323970347471'
+  originalTweetId: '1950881629208969577'
+  comment: |-
+    今夜やっておきたい投資準備🌙
+
+    □ 明日の重要指標をメモ
+    □ 保有銘柄の業績発表日確認  
+    □ 損切りラインの再確認
+
+    夜の静かな時間こそ、感情に
+    左右されない冷静な戦略を
+    立てるベストタイミング📈
+
+    明日も一歩ずつ前進しましょう
+  timestamp: '2025-07-31T11:32:46.623Z'
+  success: true
+engagement:
+  likes: 0
+  retweets: 0
+  replies: 0
+claudeSelection:
+  score: 8.5
+  reasoning: 明日のFOMC発表等重要経済指標の具体的スケジュール情報で、投資戦略準備に直結する高い教育価値を持つ
+  expectedImpact: medium

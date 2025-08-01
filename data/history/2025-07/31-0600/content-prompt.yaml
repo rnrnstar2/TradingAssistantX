@@ -1,0 +1,117 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-07-30T18:40:15.930Z'
+  execution_id: execution-20250731-0340
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 今日の市場まとめと学んだこと
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 5
+    postsToday: 0
+    engagementRate: 0.5
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-07-30T18:40:15.929Z'
+  executionId: execution-20250731-0340
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: 2018年8月相場まとめ（１）：何はともあれトルコリラ。 https://t.co/s0NAI3f8f1
+      engagement: 0
+      author: '900429397773041664'
+    - text: |-
+        五等分の花嫁カードゲーム 偶然のない夏休みの当たりカードリストとフラゲ買取相場情報まとめ
+
+        ↓当たりカードリスト↓
+        https://t.co/ZZ6MPm9Uiu
+
+        ↓最新相場↓
+        https://t.co/h6hZEBPIid
+
+        #五等分TCG  #ごとカド
+        #五等分の花嫁TCG  
+        昂る想い 中野 五月 SSSPサイン
+        https://t.co/KakS145ptM
+      engagement: 0
+      author: '1566286993776340992'
+    - text: >-
+        🌊The Ben Smith Perugia Linen Shirt, crafted from breathable cotton and
+        linen, combines comfort and durability, making it ideal for summer. It
+        softens with each wash, ensuring long-lasting comfort for all your
+        travels.
+
+        Shop now 👉https://t.co/zpfbu5RHWN https://t.co/6HzJQJEGcR
+      engagement: 0
+      author: '1843692246517870592'
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は木曜日の早朝（3時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 5人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 0.5%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. (エンゲージメント: 0) 2018年8月相場まとめ（１）：何はともあれトルコリラ。 https://t.co/s0NAI3f8f1
+
+  2. (エンゲージメント: 0) 五等分の花嫁カードゲーム 偶然のない夏休みの当たりカードリストとフラゲ買取相場情報まとめ
+
+
+  ↓当たりカードリスト↓
+
+  https://t.co/ZZ6MPm9Uiu
+
+
+  ↓最新相場↓
+
+  https://t....
+
+  3. (エンゲージメント: 0) 🌊The Ben Smith Perugia Linen Shirt, crafted from breathable
+  cotton and linen, combines comfort and ...
+
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「今日の市場まとめと学んだこと」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+  朝の時間帯なので、1日のスタートに役立つ情報や、前向きなメッセージを含めても良いでしょう。
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 136
+  twitter_length: 137
+  quality_score: 100
+  generation_time_ms: 29067

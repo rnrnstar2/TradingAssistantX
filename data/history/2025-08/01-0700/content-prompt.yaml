@@ -1,0 +1,131 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-07-31T21:00:30.029Z'
+  execution_id: execution-20250801-0600
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: おはよう！今日の市場注目ポイント
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 7
+    postsToday: 0
+    engagementRate: 0.7000000000000001
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-07-31T21:00:30.029Z'
+  executionId: execution-20250801-0600
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: |-
+        おはようなのだ。
+        出勤なのだ。
+
+        夏枯れなのだ。
+        個別株を買う時期がやってきたと思うのだ。
+
+        チキンなわいがとうとう投資への一歩踏み出す1ヶ月になる予定なのだ。
+      engagement: 0
+      author: '4314791237'
+    - text: >-
+        おはようございます☀👋 報道 探です😎
+
+        ⏰6:00からプレミア公開します🤗
+
+
+        【日本が3500億ドル肩代わり❗❓フザケンナの声が噴出…💦「勝手に滅べば良いと思うよ♪」】韓国関税交渉合意で相互関税関税15％！？対米投資3500億ドルでEU・日本と同条件だが…FTA特権を喪失か？
+
+        ➥ https://t.co/frvfMs2sCZ
+
+
+        韓国は、これまで享受してきたFTAによる貿易上の“特権”を今回の合意によって実質的に手放しました。
+
+        新協定のもとでは、韓国はEUや日本と同様の「対等な関税条件」で米国と競争せねばならなくなります。
+
+        FTAの恩恵を失った韓国は、果たして今後、世界経済の中でどのように立ち回っていくのか？
+
+
+        お気軽にコメントで皆様の意見をお聞かせください！
+
+
+        #米韓貿易協定 #韓国関税15 #韓国の反応 #韓国対米投資 #李在明外交 #HotchPotch
+      engagement: 0
+      author: '1033225488578240512'
+    - text: Shop sports and outdoors
+      engagement: 0
+      author: '20793816'
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は金曜日の朝（6時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 7人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 0.7%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. (エンゲージメント: 0) おはようなのだ。
+
+  出勤なのだ。
+
+
+  夏枯れなのだ。
+
+  個別株を買う時期がやってきたと思うのだ。
+
+
+  チキンなわいがとうとう投資への一歩踏み出す1ヶ月になる予定なのだ。
+
+  2. (エンゲージメント: 0) おはようございます☀👋 報道 探です😎
+
+  ⏰6:00からプレミア公開します🤗
+
+
+  【日本が3500億ドル肩代わり❗❓フザケンナの声が噴出…💦「勝手に滅べば良いと思うよ♪」】韓国関税交渉合意で相互関...
+
+  3. (エンゲージメント: 0) Shop sports and outdoors
+
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「おはよう！今日の市場注目ポイント」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+  朝の時間帯なので、1日のスタートに役立つ情報や、前向きなメッセージを含めても良いでしょう。
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 127
+  twitter_length: 128
+  quality_score: 100
+  generation_time_ms: 30911

@@ -1,0 +1,120 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-08-01T00:00:26.997Z'
+  execution_id: execution-20250801-0900
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 市場オープン！今日の投資戦略
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 10
+    postsToday: 0
+    engagementRate: 1
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-08-01T00:00:26.997Z'
+  executionId: execution-20250801-0900
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: >-
+        ドル円は７月〆で、１５１.20~50を越えられませんでした。一旦ここで又短期足をならして、中期足の調整下げ期に入るか？どうか？様子を見てからエントリーポイントを定めます。投資の基本は待つのが仕事ｗｗ
+
+        #ドル円 
+
+        #usdjpy
+      engagement: 0
+      author: '1331260875236204544'
+    - text: |-
+        ■8/1　本日の見通し
+
+        東京為替見通し＝ドル円、今夜の米7月雇用統計への警戒感から上値が重い展開か
+        https://t.co/kBywDRFdb3
+        #ドル円 #為替
+      engagement: 0
+      author: '1296511010761609216'
+    - text: |-
+        @kei_toshi__ おはようです✌️😁✨
+
+        冷やし中華がもう完全に“夏”って感じですね🍜✨
+        今週ラスト、しっかり締めて華金楽しみましょう！
+        しかしドル円150円突破はインパクト大ですね…👀
+      engagement: 0
+      author: '822780912962146304'
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は金曜日の朝（9時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 10人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 1.0%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. (エンゲージメント: 0)
+  ドル円は７月〆で、１５１.20~50を越えられませんでした。一旦ここで又短期足をならして、中期足の調整下げ期に入るか？どうか？様子を見てからエントリーポイントを定めます。投資の基本は待つのが仕事ｗｗ
+
+  ...
+
+  2. (エンゲージメント: 0) ■8/1　本日の見通し
+
+
+  東京為替見通し＝ドル円、今夜の米7月雇用統計への警戒感から上値が重い展開か
+
+  https://t.co/kBywDRFdb3
+
+  #ドル円 #為替
+
+  3. (エンゲージメント: 0) @kei_toshi__ おはようです✌️😁✨
+
+
+  冷やし中華がもう完全に“夏”って感じですね🍜✨
+
+  今週ラスト、しっかり締めて華金楽しみましょう！
+
+  しかしドル円150円突破はインパクト大ですね…👀
+
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「市場オープン！今日の投資戦略」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+  朝の時間帯なので、1日のスタートに役立つ情報や、前向きなメッセージを含めても良いでしょう。
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 122
+  twitter_length: 123
+  quality_score: 100
+  generation_time_ms: 45958

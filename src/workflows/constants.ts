@@ -77,6 +77,7 @@ export interface WorkflowOptions {
   scheduledAction?: string;
   scheduledTopic?: string;
   scheduledQuery?: string;
+  scheduledReferenceUsers?: string[];
 }
 
 export interface WorkflowResult {
@@ -84,7 +85,7 @@ export interface WorkflowResult {
   executionId: string;
   decision: any;
   actionResult?: any;
-  // TODO: deepNightAnalysis - 深夜分析機能の実装待ち
+  deepAnalysisResult?: any; // 深夜分析結果 - TASK-004実装完了
   error?: string;
   executionTime: number;
 }
@@ -123,10 +124,32 @@ export interface SystemContext {
     sentiment: 'bearish' | 'neutral' | 'bullish';
   };
   timestamp?: string;
+  executionId?: string;
   learningData?: {
     recentTopics: string[];
     totalPatterns?: number;
     avgEngagement: number;
     optimalTimeSlot?: string;
   };
+  // 深夜分析機能用 - 参考ツイート情報（TASK-005で追加）
+  referenceTweets?: {
+    text: string;
+    engagement: number;
+    author: string;
+  }[];
+  // 参考ユーザーのツイート情報（TASK-003で追加）
+  referenceAccountTweets?: {
+    username: string;
+    tweets: {
+      id: string;
+      text: string;
+      created_at: string;
+      public_metrics: {
+        like_count: number;
+        retweet_count: number;
+        reply_count: number;
+        quote_count: number;
+      };
+    }[];
+  }[];
 }

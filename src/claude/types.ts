@@ -186,6 +186,16 @@ export interface SystemContext {
     reason?: string;
   }>;
   instruction?: string;  // 新規追加：追加指示
+  // 参考アカウントの最新ツイート（オプション）
+  referenceAccountTweets?: Array<{
+    username: string;
+    tweets: Array<{
+      id: string;
+      text: string;
+      created_at: string;
+      public_metrics?: any;
+    }>;
+  }>;
 }
 
 /**

@@ -1,0 +1,128 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-07-31T13:00:04.061Z'
+  execution_id: execution-20250731-2200
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 今日も投資の勉強お疲れ様でした
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 7
+    postsToday: 0
+    engagementRate: 0.7000000000000001
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-07-31T13:00:04.060Z'
+  executionId: execution-20250731-2200
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: |-
+        #読書メモ
+        ・トレードは脳トレです
+        ・村上世彰さんは天才です
+        ・投資信託に回す費用があるなら、
+        個別銘柄で取引した方がよっぽどいいです
+        ・市場が活発じゃない時には手を出さない、一つ一つの取引を反省する、大きな経済の流れを確認する
+        ・売るべし、買うべし、休むべし
+        （シゲルさんの教え）
+      engagement: 0
+      author: '1294848255709163520'
+    - text: |-
+        いずれ日本市場にも現れるはず。メタプラのイーサリアム版
+
+        メタプラの反省を込め、今度は初動で仕込みたい😇
+
+        "一部の上場企業がイーサリアムを投資対象として注目する理由"  https://t.co/V8VxhU5HVe
+      engagement: 0
+      author: '1254104617316573184'
+    - text: |-
+        Shock-absorbing sole minimizes strain.
+
+        See more finds: https://t.co/U5gWs6JXxE
+
+        👉 It's waiting—video button or comments https://t.co/nno1vOpMHf
+      engagement: 0
+      author: '4311524855'
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は木曜日の夜（22時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 7人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 0.7%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. (エンゲージメント: 0) #読書メモ
+
+  ・トレードは脳トレです
+
+  ・村上世彰さんは天才です
+
+  ・投資信託に回す費用があるなら、
+
+  個別銘柄で取引した方がよっぽどいいです
+
+  ・市場が活発じゃない時には手を出さない、一つ一つの取引を反省する...
+
+  2. (エンゲージメント: 0) いずれ日本市場にも現れるはず。メタプラのイーサリアム版
+
+
+  メタプラの反省を込め、今度は初動で仕込みたい😇
+
+
+  "一部の上場企業がイーサリアムを投資対象として注目する理由"  https://t.co/...
+
+  3. (エンゲージメント: 0) Shock-absorbing sole minimizes strain.
+
+
+  See more finds: https://t.co/U5gWs6JXxE
+
+
+  👉 It's waiting—vid...
+
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「今日も投資の勉強お疲れ様でした」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+  夜の時間帯なので、1日の振り返りや、明日に向けた準備に関する内容も良いでしょう。
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 82
+  twitter_length: 82
+  quality_score: 90
+  generation_time_ms: 53978

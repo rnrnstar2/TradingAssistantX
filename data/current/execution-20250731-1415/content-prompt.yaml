@@ -1,0 +1,246 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-07-31T05:16:45.041Z'
+  execution_id: execution-20250731-1415
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 今夜の投資勉強会：テーマ別解説
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 6
+    postsToday: 0
+    engagementRate: 0.6000000000000001
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-07-31T05:16:45.040Z'
+  executionId: execution-20250731-1415
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: >-
+        株の広告ガチでウザくて草
+
+        YouTubeくんこういう変な広告要らないんで早く消してください...聞く気もないのにこっちが不愉快になるだけなんで
+        https://t.co/OVnvpBJi68
+      qualityScore: 5
+      relevanceScore: 5
+      realtimeScore: 5
+      reason: フォールバック選択
+    - text: >-
+        第12回 運用資産に関わる常識を疑え！（その1）銀行預金ではインフレに負けるから投資すべき？ https://t.co/PDoCDpmReA
+        @finasee_moneyより
+      qualityScore: 5
+      relevanceScore: 5
+      realtimeScore: 5
+      reason: フォールバック選択
+    - text: |-
+        A foundation for strategic work.
+
+        👉Link to the product is already in the comments 
+
+        Keep discovering: https://t.co/D29IM9evNS https://t.co/pbsIyZZMA1
+      qualityScore: 5
+      relevanceScore: 5
+      realtimeScore: 5
+      reason: フォールバック選択
+    - text: |-
+        割安な小型株じゃなくて適正価格の大型株を買いなさいとバフェットかマンガーが言ってたな
+        確かに低位株は不確実性が高く、大口が売るとあっという間に急転直下
+        資産を増やす手段ではあるが、ボラが大きく持ち続けるのは困難
+        資産運用はご安全に🫡
+      qualityScore: 5
+      relevanceScore: 5
+      realtimeScore: 5
+      reason: フォールバック選択
+    - text: |-
+        @tama_jus じゃすさん
+        老人の方用のAl自動運転車の開発ですよ！
+        需要は、需要だらけです！
+        投資したらもうかりますよ！
+        車は山間部が多いから小さめということで、三菱自動車さんどうかな！
+        上手くいったら、ファジのサポーターになってもらう。
+        いいことずくめですね！
+        でも、自動運転自動車はマジで必要です。
+      qualityScore: 5
+      relevanceScore: 5
+      realtimeScore: 5
+      reason: フォールバック選択
+    - text: |-
+        東証では何故か
+        中身ハイテクなのに
+        市場評価はバリュー株扱いなのよね
+        だったといったほうがいいかな
+        だからなおさら
+        プライム大型の中にあるハイテク要素
+        次世代テクノロジーをみているのであります
+        そんな感じー🍵ﾋﾏﾃﾞｼｮｗ
+      qualityScore: 5
+      relevanceScore: 5
+      realtimeScore: 5
+      reason: フォールバック選択
+    - text: |-
+        @MrMisery_S 思ったより投資に回していない？
+        わりと浪費家ですか？（笑）
+      qualityScore: 5
+      relevanceScore: 5
+      realtimeScore: 5
+      reason: フォールバック選択
+    - text: >-
+        Luka Dončić appeared on NBC’s Today Show!
+
+        Always worth a watch when he speaks off the court.
+
+
+        📺 Catch the full segment here: https://t.co/v9yCa2TGux
+        https://t.co/Ai83LVpcC9
+      qualityScore: 5
+      relevanceScore: 5
+      realtimeScore: 5
+      reason: フォールバック選択
+    - text: |-
+        🌹尼崎9R🌹
+
+        貴方の競艇物語はここから🌌🪄︎︎
+        投資対効果に拘った予想です🌹🪄︎︎
+        もはやギャンブルではなくて投資ですね🌓🪄︎︎
+
+        https://t.co/0Jq3pgqeqc
+      qualityScore: 5
+      relevanceScore: 5
+      realtimeScore: 5
+      reason: フォールバック選択
+    - text: >-
+        だから。立憲も何もするな。今は馬鹿騒ぎをしない。綺麗事も喚かない。でも堅実に。いずれ乱立したもの同士で争いになる。今戦争が各地で発生しているのはそれ。株が暴騰しているからこそ。そして、暴落して。その時に何もしていない。つまり、利害で動かない。それが、求心に繋がるんよ。
+      qualityScore: 5
+      relevanceScore: 5
+      realtimeScore: 5
+      reason: フォールバック選択
+  instruction: 参考ツイートで言及されている最新の動向を踏まえて、初心者にも分かりやすく価値ある情報を提供してください。
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は木曜日の午後（14時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 6人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 0.6%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. 株の広告ガチでウザくて草
+
+  YouTubeくんこういう変な広告要らないんで早く消してください...聞く気もないのにこっちが不愉快になるだけなんで
+  https://t.co/OVnvpBJi68
+
+  2. 第12回 運用資産に関わる常識を疑え！（その1）銀行預金ではインフレに負けるから投資すべき？ https://t.co/PDoCDpmReA
+  @finasee_moneyより
+
+  3. A foundation for strategic work.
+
+
+  👉Link to the product is already in the comments 
+
+
+  Keep discoverin...
+
+  4. 割安な小型株じゃなくて適正価格の大型株を買いなさいとバフェットかマンガーが言ってたな
+
+  確かに低位株は不確実性が高く、大口が売るとあっという間に急転直下
+
+  資産を増やす手段ではあるが、ボラが大きく持ち続け...
+
+  5. @tama_jus じゃすさん
+
+  老人の方用のAl自動運転車の開発ですよ！
+
+  需要は、需要だらけです！
+
+  投資したらもうかりますよ！
+
+  車は山間部が多いから小さめということで、三菱自動車さんどうかな！
+
+  上手く...
+
+  6. 東証では何故か
+
+  中身ハイテクなのに
+
+  市場評価はバリュー株扱いなのよね
+
+  だったといったほうがいいかな
+
+  だからなおさら
+
+  プライム大型の中にあるハイテク要素
+
+  次世代テクノロジーをみているのであります
+
+  そんな...
+
+  7. @MrMisery_S 思ったより投資に回していない？
+
+  わりと浪費家ですか？（笑）
+
+  8. Luka Dončić appeared on NBC’s Today Show!
+
+  Always worth a watch when he speaks off the court.
+
+
+  📺 Cat...
+
+  9. 🌹尼崎9R🌹
+
+
+  貴方の競艇物語はここから🌌🪄︎︎
+
+  投資対効果に拘った予想です🌹🪄︎︎
+
+  もはやギャンブルではなくて投資ですね🌓🪄︎︎
+
+
+  https://t.co/0Jq3pgqeqc
+
+  10.
+  だから。立憲も何もするな。今は馬鹿騒ぎをしない。綺麗事も喚かない。でも堅実に。いずれ乱立したもの同士で争いになる。今戦争が各地で発生しているのはそれ。株が暴騰しているからこそ。そして、暴落して。その時...
+
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「今夜の投資勉強会：テーマ別解説」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 134
+  twitter_length: 135
+  quality_score: 100
+  generation_time_ms: 30713

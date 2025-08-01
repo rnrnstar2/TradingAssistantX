@@ -1,0 +1,103 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-07-31T10:00:45.118Z'
+  execution_id: execution-20250731-1900
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 今夜の投資勉強会：テーマ別解説
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 7
+    postsToday: 0
+    engagementRate: 0.7000000000000001
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-07-31T10:00:45.118Z'
+  executionId: execution-20250731-1900
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: >-
+        NISAの初心者で始め方や口座開設の仕方を勉強したい人には不安を解消できる嬉しい無料相談サービスね🦒
+
+        どのような株式
+        投資信託に投資を選ぶかポイントを知りたい人、積立で具体的な投資方法や戦略、証券会社や特徴手数料など比較検討している人にもおすすめよね✨
+
+        [PR]
+
+        https://t.co/ZqpROc16Tx
+      engagement: 0
+      author: '1273956512742834176'
+    - text: |-
+        ギャンブラーってリスクを取る経験があるし、借金することもあるので不動産投資の基本マインドを持ち合わせている様に思う💴
+        あとは不動産の勉強と良い借金を借りれる属性を作り上げるだけ✨️
+      engagement: 0
+      author: '703539235014340608'
+    - text: >-
+        @katsumoku__
+        スキマ時間に投資の勉強ができて、マイルがたまる‼️これが、習慣となりました。テレビのニュースだけでは、本質がつかめません。本物の情報がここにあります。この情報があるかないかで、この先大きな差となるでしょう✨
+      engagement: 0
+      author: '1930173532287447044'
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は木曜日の夕方（19時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 7人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 0.7%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. (エンゲージメント: 0) NISAの初心者で始め方や口座開設の仕方を勉強したい人には不安を解消できる嬉しい無料相談サービスね🦒
+
+  どのような株式 投資信託に投資を選ぶかポイントを知りたい人、積立で具体的な投資方法や戦略、証券会...
+
+  2. (エンゲージメント: 0) ギャンブラーってリスクを取る経験があるし、借金することもあるので不動産投資の基本マインドを持ち合わせている様に思う💴
+
+  あとは不動産の勉強と良い借金を借りれる属性を作り上げるだけ✨️
+
+  3. (エンゲージメント: 0) @katsumoku__
+  スキマ時間に投資の勉強ができて、マイルがたまる‼️これが、習慣となりました。テレビのニュースだけでは、本質がつかめません。本物の情報がここにあります。この情報があるかないかで...
+
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「今夜の投資勉強会：テーマ別解説」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 115
+  twitter_length: 116
+  quality_score: 100
+  generation_time_ms: 26322

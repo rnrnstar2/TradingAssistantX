@@ -1,7 +1,0 @@
-action: "post"
-reasoning: "フォロワーのアクティブ時間帯であり、投資教育コンテンツへの関心が高い時間"
-parameters:
-  topic: "investment_basics"
-  style: "educational"
-confidence: 0.85
-timestamp: "2025-07-24T10:00:30Z"

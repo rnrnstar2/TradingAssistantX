@@ -101,6 +101,35 @@ interface SearchResponseError {
  */
 type CompleteSearchResponse = SearchResponse | SearchResponseError;
 
+/**
+ * ツイート一括取得レスポンス（成功）
+ */
+interface TweetBatchResponse {
+  success: true;
+  data: {
+    tweets: TweetData[];
+    notFound: string[];  // 見つからなかったID
+    errors: Array<{id: string; error: string}>;  // 個別エラー
+  };
+  timestamp: string;
+  rateLimit?: RateLimitInfo;
+}
+
+/**
+ * ツイート一括取得レスポンス（エラー）
+ */
+interface TweetBatchResponseError {
+  success: false;
+  error: SimpleTwitterAPIError;
+  timestamp: string;
+  rateLimit?: RateLimitInfo;
+}
+
+/**
+ * 完全ツイート一括取得レスポンス型
+ */
+type CompleteTweetBatchResponse = TweetBatchResponse | TweetBatchResponseError;
+
 // ============================================================================
 // SEARCH OPTIONS
 // ============================================================================
@@ -181,13 +210,15 @@ export class TweetSearchEndpoint {
     searchTweets: '/twitter/tweet/advanced_search',
     getTweet: '/twitter/tweet/info',
     searchRecent: '/twitter/tweet/advanced_search',
-    searchPopular: '/twitter/tweet/advanced_search'
+    searchPopular: '/twitter/tweet/advanced_search',
+    getTweetsByIds: '/twitter/tweets'
   } as const;
 
   private readonly RATE_LIMITS = {
     search: { limit: 450, window: 3600 }, // 450/hour
     getTweet: { limit: 900, window: 3600 }, // 900/hour
-    advancedSearch: { limit: 180, window: 3600 } // 180/hour
+    advancedSearch: { limit: 180, window: 3600 }, // 180/hour
+    getTweetsByIds: { limit: 300, window: 3600 } // 300/hour
   } as const;
 
   private readonly VALIDATION_RULES = {
@@ -502,6 +533,148 @@ export class TweetSearchEndpoint {
 
     } catch (error: any) {
       throw this.handleAPIKeyError(error, 'searchPopularTweets');
+    }
+  }
+
+  /**
+   * ツイートID一括取得
+   * 
+   * @description 複数のツイートIDを指定して一括でツイート情報を取得します
+   * MVP投稿エンゲージメント分析のための最新メトリクス一括取得機能
+   * 
+   * @param tweetIds - 取得対象のツイートID配列（最大100個）
+   * @returns ツイートの詳細情報配列、見つからなかったID、個別エラー
+   * 
+   * @throws {Error} 入力バリデーションエラー（空配列、ID形式不正、100個超過）
+   * @throws {Error} API認証・権限エラー
+   * @throws {Error} レート制限エラー
+   * 
+   * @example
+   * ```typescript
+   * const result = await tweetEndpoint.getTweetsByIds([
+   *   '1950214974585852117',
+   *   '1950403852894658733'
+   * ]);
+   * 
+   * if (result.success) {
+   *   console.log(`取得成功: ${result.data.tweets.length}件`);
+   *   console.log(`見つからなかったID: ${result.data.notFound.join(', ')}`);
+   * }
+   * ```
+   * 
+   * @since 2.2.0
+   */
+  async getTweetsByIds(tweetIds: string[]): Promise<CompleteTweetBatchResponse> {
+    // 入力バリデーション
+    if (!Array.isArray(tweetIds) || tweetIds.length === 0) {
+      throw createAPIError('validation', 'INVALID_INPUT', 'tweetIds must be a non-empty array');
+    }
+    
+    if (tweetIds.length > 100) {
+      throw createAPIError('validation', 'TOO_MANY_IDS', 'Maximum 100 tweet IDs allowed per request');
+    }
+    
+    // 各IDのバリデーション
+    const invalidIds: string[] = [];
+    tweetIds.forEach(id => {
+      if (!id || typeof id !== 'string' || !this.VALIDATION_RULES.tweetId.test(id)) {
+        invalidIds.push(id);
+      }
+    });
+    
+    if (invalidIds.length > 0) {
+      throw createAPIError('validation', 'INVALID_TWEET_IDS', `Invalid tweet IDs: ${invalidIds.join(', ')}`);
+    }
+
+    try {
+      // APIキー認証の確認
+      if (!this.authManager.isAuthenticated()) {
+        throw createAPIError('authentication', 'NO_API_KEY', 'APIキーが設定されていません。KAITO_API_TOKENを確認してください。');
+      }
+      
+      // パラメータ構築
+      const params = {
+        tweet_ids: tweetIds.join(',')
+      };
+      
+      console.log(`🔍 ツイート一括取得: ${tweetIds.length}件のツイートを取得`);
+      
+      const response = await this.httpClient.get<any>(
+        this.ENDPOINTS.getTweetsByIds,
+        params
+      );
+      
+      // レスポンス処理
+      const tweets = response.data || response.tweets || [];
+      const normalizedTweets: TweetData[] = [];
+      const notFound: string[] = [];
+      const errors: Array<{id: string; error: string}> = [];
+      
+      // 取得されたツイートのIDセット
+      const foundIds = new Set<string>();
+      
+      // ツイートの正規化
+      for (const tweet of tweets) {
+        try {
+          const normalized = await this.normalizeTweetData(tweet);
+          normalizedTweets.push(normalized);
+          foundIds.add(normalized.id);
+        } catch (error) {
+          errors.push({
+            id: tweet?.id || tweet?.id_str || 'unknown',
+            error: error instanceof Error ? error.message : String(error)
+          });
+        }
+      }
+      
+      // 見つからなかったIDの検出
+      for (const requestedId of tweetIds) {
+        if (!foundIds.has(requestedId)) {
+          notFound.push(requestedId);
+        }
+      }
+      
+      console.log(`✅ ツイート一括取得完了: 取得${normalizedTweets.length}件, 見つからない${notFound.length}件, エラー${errors.length}件`);
+
+      return {
+        success: true,
+        data: {
+          tweets: normalizedTweets,
+          notFound,
+          errors
+        },
+        timestamp: new Date().toISOString(),
+        rateLimit: response.rateLimit
+      };
+
+    } catch (error: any) {
+      // エラーレスポンスの作成
+      console.error(`❌ getTweetsByIds error:`, error);
+      
+      let errorCode = 'UNKNOWN_ERROR';
+      let errorMessage = error.message || 'Unknown error occurred';
+      
+      if (error.status === 401) {
+        errorCode = 'AUTHENTICATION_FAILED';
+        errorMessage = 'API authentication failed - check KAITO_API_TOKEN';
+      } else if (error.status === 429) {
+        errorCode = 'RATE_LIMIT_EXCEEDED';
+        errorMessage = 'Rate limit exceeded for batch tweet retrieval';
+      } else if (error.status === 400) {
+        errorCode = 'BAD_REQUEST';
+        errorMessage = 'Invalid request parameters';
+      }
+      
+      return {
+        success: false,
+        error: {
+          code: errorCode,
+          message: errorMessage,
+          operation: 'getTweetsByIds',
+          context: { tweetIds }
+        },
+        timestamp: new Date().toISOString()
+      };
     }
   }
 

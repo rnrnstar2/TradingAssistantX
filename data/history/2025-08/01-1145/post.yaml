@@ -1,0 +1,45 @@
+executionId: execution-20250801-1030
+actionType: quote_tweet
+timestamp: '2025-08-01T01:31:46.197Z'
+content: |-
+  📊経済指標チェックのコツ
+
+  金曜の今、今週発表された指標を
+  振り返ってみませんか？
+
+  ✅予想値と実際の乖離幅
+  ✅前回から改善 or 悪化
+  ✅他指標との整合性
+
+  単体で見るより「流れ」で判断。
+  来週の相場への影響も
+  セットで考えると
+  投資判断の精度が上がります💡
+targetTweetId: '1950928914353639776'
+result:
+  id: '1951093463296123246'
+  originalTweetId: '1950928914353639776'
+  comment: |-
+    📊経済指標チェックのコツ
+
+    金曜の今、今週発表された指標を
+    振り返ってみませんか？
+
+    ✅予想値と実際の乖離幅
+    ✅前回から改善 or 悪化
+    ✅他指標との整合性
+
+    単体で見るより「流れ」で判断。
+    来週の相場への影響も
+    セットで考えると
+    投資判断の精度が上がります💡
+  timestamp: '2025-08-01T01:31:46.196Z'
+  success: true
+engagement:
+  likes: 0
+  retweets: 0
+  replies: 0
+claudeSelection:
+  score: 8
+  reasoning: GDPNow見通しの詳細分析付きで教育価値が最も高い。純輸出・個人消費等の要因分析で経済指標の読み方を学べる。
+  expectedImpact: medium

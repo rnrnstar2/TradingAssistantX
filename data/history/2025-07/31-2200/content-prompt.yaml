@@ -1,0 +1,140 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-07-31T12:00:27.065Z'
+  execution_id: execution-20250731-2100
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 明日の注目ポイントと投資の心構え
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 7
+    postsToday: 0
+    engagementRate: 0.7000000000000001
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-07-31T12:00:27.065Z'
+  executionId: execution-20250731-2100
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: |-
+        エミンユルマズ(@yurumazu)noteで記事公開！
+
+        ●今回のポイント
+        ・日銀の年内利上げは厳しくなったか？
+        ・ハト派姿勢に株式市場はポジティブに反応
+        ・展望レポートのインフレ上振れ要因は？
+
+        【EM257】7月日銀金融政策決定会合【エミンの見解＆相場展望】
+        https://t.co/qwSItoI0G1
+      engagement: 0
+      author: '1558124360652562433'
+    - text: |-
+        これにて8月の #GOLD  #XAUUSD 展望予想は以上となります。
+        日足〜15分足の値動きを踏まえつつ、各ポイントでエントリー狙えるか注目しつつ来月も相場の波に乗れるよう頑張っていきましょう。
+
+        参考になったって方は、一番上の投稿に『いいね』でリアクションくれると励みになります👌
+      engagement: 0
+      author: '1887454408272977922'
+    - text: |-
+        【8月 #XAUUSD #GOLD 相場展望予想】
+
+        米英間の関税交渉締結、
+        FOMC＆パウエル議長の発言による
+        9月利下げの後退など…
+
+        今月も大荒れとなったゴールドですが
+        果たして来月はどう値動きするのか…？
+
+        FX初心者でも分かりやすく解説したので
+        すぐ見返せるよう『いいね』押してから読み進めて下さい↓ https://t.co/MkO7FeOeyK
+      engagement: 0
+      author: '1887454408272977922'
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は木曜日の夜（21時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 7人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 0.7%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. (エンゲージメント: 0) エミンユルマズ(@yurumazu)noteで記事公開！
+
+
+  ●今回のポイント
+
+  ・日銀の年内利上げは厳しくなったか？
+
+  ・ハト派姿勢に株式市場はポジティブに反応
+
+  ・展望レポートのインフレ上振れ要因は？
+
+
+  ...
+
+  2. (エンゲージメント: 0) これにて8月の #GOLD  #XAUUSD 展望予想は以上となります。
+
+  日足〜15分足の値動きを踏まえつつ、各ポイントでエントリー狙えるか注目しつつ来月も相場の波に乗れるよう頑張っていきましょう。
+
+  ...
+
+  3. (エンゲージメント: 0) 【8月 #XAUUSD #GOLD 相場展望予想】
+
+
+  米英間の関税交渉締結、
+
+  FOMC＆パウエル議長の発言による
+
+  9月利下げの後退など…
+
+
+  今月も大荒れとなったゴールドですが
+
+  果たして来月はどう値動き...
+
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「明日の注目ポイントと投資の心構え」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+  夜の時間帯なので、1日の振り返りや、明日に向けた準備に関する内容も良いでしょう。
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 121
+  twitter_length: 124
+  quality_score: 100
+  generation_time_ms: 48472

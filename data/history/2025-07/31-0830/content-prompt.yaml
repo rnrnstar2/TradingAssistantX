@@ -1,0 +1,124 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-07-30T22:00:56.008Z'
+  execution_id: execution-20250731-0700
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 朝の投資教育：基礎から学ぶ資産形成
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 5
+    postsToday: 0
+    engagementRate: 0.5
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-07-30T22:00:56.008Z'
+  executionId: execution-20250731-0700
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: |-
+        新NISAで投資をはじめるなら知っておきたいキーワード40選をレベル別でまとめました。見返すだけでマネーリテラシがアップします。
+
+        ・レベル1 基礎用語編
+        ・レベル2 リスク管理に関する用語編
+        ・レベル3 株式投資関連編
+        ・レベル4 重要な用語編 https://t.co/UflWqDLlb1
+      engagement: 0
+      author: '940587758774398976'
+    - text: |-
+        米国株配当金の入金です
+        52ドル位もらえました
+        3株購入コツコツ再投資します
+        カレンダー投資の7月結果は配当金
+        7万円弱もらえます
+        月の老齢基礎年金位は確保です😅
+        年金は将来的にはあてにならない
+        ので株投資で構築します https://t.co/3EAAUriLea
+      engagement: 0
+      author: '3315874112'
+    - text: Entertain effortlessly.
+      engagement: 0
+      author: '20793816'
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は木曜日の朝（7時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 5人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 0.5%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. (エンゲージメント: 0)
+  新NISAで投資をはじめるなら知っておきたいキーワード40選をレベル別でまとめました。見返すだけでマネーリテラシがアップします。
+
+
+  ・レベル1 基礎用語編
+
+  ・レベル2 リスク管理に関する用語編
+
+  ・レベ...
+
+  2. (エンゲージメント: 0) 米国株配当金の入金です
+
+  52ドル位もらえました
+
+  3株購入コツコツ再投資します
+
+  カレンダー投資の7月結果は配当金
+
+  7万円弱もらえます
+
+  月の老齢基礎年金位は確保です😅
+
+  年金は将来的にはあてにならない
+
+  の...
+
+  3. (エンゲージメント: 0) Entertain effortlessly.
+
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「朝の投資教育：基礎から学ぶ資産形成」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+  朝の時間帯なので、1日のスタートに役立つ情報や、前向きなメッセージを含めても良いでしょう。
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 107
+  twitter_length: 111
+  quality_score: 100
+  generation_time_ms: 26435

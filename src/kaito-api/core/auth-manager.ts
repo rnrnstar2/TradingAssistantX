@@ -10,7 +10,7 @@
  */
 
 /* global fetch */
-import type { LoginResult, AuthStatus, SessionData } from "../utils/types";
+import type { LoginResult, AuthStatus, SessionData } from "./types";
 import { validateEnvironmentVariables } from "./config";
 import { SessionManager } from "./session";
 import { ProxyManager } from "./proxy-manager";

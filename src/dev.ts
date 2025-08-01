@@ -22,6 +22,26 @@ function parseCommandLineArgs(): { action?: string } {
 }
 
 /**
+ * アクション必須チェックとヘルプ表示
+ */
+function displayAvailableActions(scheduleItems: any[]) {
+  console.error('❌ アクション指定が必要です。以下のいずれかを使用してください:');
+  console.log('');
+  console.log('📋 利用可能なコマンド:');
+  
+  const actionTypes = [...new Set(scheduleItems.map(item => item.action))];
+  actionTypes.forEach(action => {
+    const examples = scheduleItems.filter(item => item.action === action).slice(0, 2);
+    const exampleDesc = examples[0]?.topic || examples[0]?.target_query || '基本実行';
+    console.log(`  pnpm dev:${action.padEnd(8)} # ${action}テスト (例: ${exampleDesc})`);
+  });
+  
+  console.log('');
+  console.log('📖 詳細: docs/workflow.md を参照');
+  console.log('🔍 スケジュール: data/config/schedule.yaml に定義済み');
+}
+
+/**
  * schedule.yamlから指定されたアクションを取得
  */
 async function loadActionFromSchedule(targetAction?: string) {
@@ -36,25 +56,33 @@ async function loadActionFromSchedule(targetAction?: string) {
     let selectedAction;
     
     if (targetAction) {
-      // 指定されたアクションを検索
-      selectedAction = scheduleItems.find(item => item.action === targetAction);
+      // 指定されたアクションの全候補を取得
+      const actionCandidates = scheduleItems.filter(item => item.action === targetAction);
       
-      if (!selectedAction) {
+      if (actionCandidates.length === 0) {
         console.warn(`⚠️ 指定されたアクション '${targetAction}' が見つかりません。最初のアクションを使用します。`);
         selectedAction = scheduleItems[0];
       } else {
-        console.log(`🎯 コマンドライン指定: アクション '${selectedAction.action}' (${selectedAction.topic || selectedAction.target_query || '基本実行'}) を実行`);
+        // ランダムに1つ選択
+        const randomIndex = Math.floor(Math.random() * actionCandidates.length);
+        selectedAction = actionCandidates[randomIndex];
+        console.log(`🎲 ランダム選択: アクション '${selectedAction.action}' (${selectedAction.topic || selectedAction.target_query || '基本実行'}) を実行 [${randomIndex + 1}/${actionCandidates.length}]`);
       }
     } else {
-      // デフォルトは最初のアクション
-      selectedAction = scheduleItems[0];
-      console.log(`🎯 開発モード: アクション '${selectedAction.action}' (${selectedAction.topic || selectedAction.target_query || '基本実行'}) を実行`);
+      // アクション指定なしはエラー
+      displayAvailableActions(scheduleItems);
+      throw new Error('Action specification required');
     }
     
     return selectedAction;
   } catch (error) {
-    console.error('❌ スケジュール読み込みエラー:', error);
-    throw error;
+    if (error instanceof Error && error.message === 'Action specification required') {
+      // アクション指定エラーの場合は適切なexit code
+      process.exit(1);
+    } else {
+      console.error('❌ スケジュール読み込みエラー:', error);
+      process.exit(1);
+    }
   }
 }
 
