@@ -211,7 +211,7 @@ export class TweetSearchEndpoint {
     getTweet: '/twitter/tweet/info',
     searchRecent: '/twitter/tweet/advanced_search',
     searchPopular: '/twitter/tweet/advanced_search',
-    getTweetsByIds: '/twitter/tweet/get_tweet_by_ids'
+    getTweetsByIds: '/twitter/tweets'
   } as const;
 
   private readonly RATE_LIMITS = {

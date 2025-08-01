@@ -25,7 +25,7 @@ TwitterAPI.io統合によるFX教育コンテンツ自動投稿システム
 MVPでは`/twitter/tweet/get_tweet_by_ids`エンドポイントを使用して投稿エンゲージメントの最新メトリクスを一括取得します。
 
 **エンドポイント仕様**:
-- **URL**: `GET /twitter/tweet/get_tweet_by_ids?tweet_ids=id1%0Aid2%0Aid3...`
+- **URL**: `GET /twitter/tweets?tweet_ids=id1%0Aid2%0Aid3...`
 - **最大取得数**: 100個のTweet IDまで一度に処理可能
 - **認証レベル**: APIキーのみ（読み取り専用操作）
 - **ヘッダー**: `X-API-Key: {YOUR_API_KEY}`
@@ -35,7 +35,7 @@ MVPでは`/twitter/tweet/get_tweet_by_ids`エンドポイントを使用して�
 **実装例**:
 ```bash
 curl --request GET \
-  --url 'https://api.twitterapi.io/twitter/tweet/get_tweet_by_ids?tweet_ids=1950214974585852117%0A1950403852894658733' \
+  --url 'https://api.twitterapi.io/twitter/tweets?tweet_ids=1950214974585852117%0A1950403852894658733' \
   --header 'X-API-Key: YOUR_API_KEY'
 ```
 
