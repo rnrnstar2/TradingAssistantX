@@ -484,33 +484,6 @@ export interface ExecutionTrace {
   error?: string;
 }
 
-export interface DataFlowIntegration {
-  claudeOutputs: {
-    decision?: any;
-    content?: any;
-    analysis?: any;
-    searchQuery?: any;
-  };
-  kaitoResponses: Record<string, any>;
-  posts: Array<{
-    id: string;
-    timestamp: string;
-    content: string;
-    metrics?: {
-      likes: number;
-      retweets: number;
-      replies: number;
-    };
-  }>;
-  executionSummary: {
-    executionId: string;
-    startTime: string;
-    endTime?: string;
-    totalActions: number;
-    successCount: number;
-    errorCount: number;
-  };
-}
 
 // エラーハンドリング・リカバリー用型定義
 export interface RetryConfig {
@@ -585,60 +558,6 @@ export function isCollectedData(obj: any): obj is CollectedData {
     typeof obj.timestamp === 'string';
 }
 
-// ============================================================================
-// LEGACY COMPATIBILITY TYPES
-// ============================================================================
-
-export interface Post {
-  id: string;
-  text: string;
-  created_at: string;
-  engagement: {
-    likes: number;
-    retweets: number;
-    replies: number;
-    total: number;
-  };
-  performance_score: number;
-}
-
-export interface EngagementAnalysis {
-  time_range: string;
-  average_rate: number;
-  peak_hours: string[];
-  best_performing_posts: Post[];
-  engagement_trends: {
-    likes: number;
-    retweets: number;
-    replies: number;
-  };
-  recommendations: string[];
-  timestamp: string;
-}
-
-export interface FollowerInfo {
-  count: number;
-  growth_rate_24h: number;
-  growth_rate_7d: number;
-  top_followers: Array<{
-    username: string;
-    follower_count: number;
-    engagement_rate: number;
-  }>;
-  demographics: {
-    active_hours: string[];
-    interests: string[];
-  };
-  timestamp: string;
-}
-
-export interface CompetitorAnalysis {
-  accounts: string[];
-  comparison: { [account: string]: any };
-  insights: string[];
-  opportunities: string[];
-  timestamp: string;
-}
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -845,6 +764,75 @@ export const KAITO_API_CONSTANTS = {
   MAX_BATCH_SIZE: 10,
   ROLLBACK_TIMEOUT_MS: 300000 // 5 minutes
 } as const;
+
+// ============================================================================
+// CLAUDE OUTPUT TYPES - Claude出力保存機能用型定義
+// ============================================================================
+
+/**
+ * Claude出力パス定義
+ */
+export interface ClaudeOutputPaths {
+  prompts: {
+    content: string;
+    selection: string;
+    quote: string;
+    analysis: string;
+  };
+  results: {
+    content: string;
+    decision: string;
+    analysis: string;
+  };
+}
+
+/**
+ * DataManager設定
+ */
+export interface DataManagerConfig {
+  dataDir: string;
+  currentExecutionId?: string;
+  claudeOutputPaths?: ClaudeOutputPaths;
+}
+
+/**
+ * Claude出力関連エラークラス
+ */
+export class ClaudeOutputError extends Error {
+  constructor(message: string, public readonly path?: string) {
+    super(message);
+    this.name = 'ClaudeOutputError';
+  }
+}
+
+// ============================================================================
+// REFERENCE ACCOUNTS TYPES - リファレンスアカウント設定
+// ============================================================================
+
+// リファレンスアカウント設定
+export interface ReferenceAccount {
+  username: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+  categories: string[];
+}
+
+export interface ReferenceAccountsConfig {
+  reference_accounts: {
+    market_news: ReferenceAccount[];
+    investment_experts: ReferenceAccount[];
+    economic_data: ReferenceAccount[];
+  };
+  search_settings: {
+    max_tweets_per_account: number;
+    priority_weights: {
+      high: number;
+      medium: number;
+      low: number;
+    };
+    categories_enabled: string[];
+  };
+}
 
 // ============================================================================
 // 深夜分析システム型定義 (未実装機能用)

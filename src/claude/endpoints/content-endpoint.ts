@@ -309,6 +309,22 @@ export async function generateQuoteComment(originalTweet: any, context?: SystemC
 // ============================================================================
 
 /**
+ * 情報の新鮮度を評価
+ */
+function evaluateFreshness(tweets: any[]): string {
+  if (!tweets || tweets.length === 0) return 'データなし';
+  
+  const now = new Date();
+  const latestTweetTime = new Date(tweets[0].created_at);
+  const hoursDiff = (now.getTime() - latestTweetTime.getTime()) / (1000 * 60 * 60);
+  
+  if (hoursDiff < 1) return '1時間以内の最新情報';
+  if (hoursDiff < 6) return '6時間以内の情報';
+  if (hoursDiff < 24) return '24時間以内の情報';
+  return '1日以上前の情報';
+}
+
+/**
  * Claude用コンテンツプロンプト構築
  * ContentGenerator.buildContentPrompt()からの機能移行
  */
@@ -384,6 +400,25 @@ function buildContentPrompt(
     });
     prompt += `\n上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。\n`;
     prompt += `ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。\n\n`;
+  }
+  
+  // 参考アカウントツイートを含める（存在する場合）
+  if (context?.referenceAccountTweets && context.referenceAccountTweets.length > 0) {
+    prompt += `【リアルタイム情報源】\n`;
+    context.referenceAccountTweets.forEach(account => {
+      const freshness = evaluateFreshness(account.tweets);
+      prompt += `・@${account.username}: ${account.tweets.length}件の最新ツイート（${freshness}）\n`;
+      
+      // 最新3件のツイート概要を含める
+      account.tweets.slice(0, 3).forEach((tweet, idx) => {
+        const tweetTime = new Date(tweet.created_at).toLocaleTimeString('ja-JP', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+        prompt += `  ${idx + 1}. [${tweetTime}] ${tweet.text.substring(0, 80)}...\n`;
+      });
+    });
+    prompt += '\nこれらの最新情報を参考に、タイムリーで価値のある投稿を作成してください。\n\n';
   }
   
   // メインの指示

@@ -3,6 +3,8 @@ export const contentTemplate = `
 
 {{realtimeContext}}
 
+{{referenceAccountContext}}
+
 {{realtimeInstruction}}
 
 {{customInstruction}}
@@ -11,7 +13,7 @@ export const contentTemplate = `
 
 {{timeContext}}
 
-読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、{{maxLength}}文字以内で投稿内容のみを返してください。
+読者の立場に立って、具体的で実践的な情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、{{maxLength}}文字以内で投稿内容のみを返してください。
 `;
 
 export const quoteCommentTemplate = `

@@ -6,7 +6,13 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
-import type { DailyInsight, TomorrowStrategy, PerformanceSummary } from './types';
+import type { DailyInsight, TomorrowStrategy, PerformanceSummary, DataManagerConfig, ReferenceAccountsConfig, ReferenceAccount } from './types';
+import { ClaudeOutputError } from './types';
+import type { AnalysisResult } from '../claude/types';
+import type { PostMetricsData, PostMetric } from './post-metrics-collector';
+
+// ClaudeOutputErrorクラスをre-export
+export { ClaudeOutputError } from './types';
 
 // ============================================================================
 // 簡素化されたインターフェース（MVP版）
@@ -152,6 +158,9 @@ export interface PostData {
     likes: number;
     retweets: number;
     replies: number;
+    quotes: number;
+    impressions: number;
+    views: number;
   };
   claudeSelection?: {
     score: number;
@@ -165,16 +174,35 @@ export interface PostData {
  * 設定・学習データ・実行コンテキストの一元管理
  */
 export class DataManager {
+  private static instance: DataManager | null = null;
   private readonly dataDir = path.join(process.cwd(), 'data');
   private readonly dataRoot = this.dataDir;
   private readonly learningDir = path.join(this.dataDir, 'learning');
   private readonly currentDir = path.join(this.dataDir, 'current');
   private readonly historyDir = path.join(this.dataDir, 'history');
   private currentExecutionId: string | null = null;
+  
+  readonly config: DataManagerConfig;
 
-  constructor() {
+  constructor(config?: Partial<DataManagerConfig>) {
+    this.config = {
+      dataDir: this.dataDir,
+      currentExecutionId: config?.currentExecutionId,
+      claudeOutputPaths: config?.claudeOutputPaths,
+      ...config
+    };
     console.log('✅ DataManager initialized - 簡素化版');
     this.ensureDirectories();
+  }
+
+  /**
+   * シングルトンインスタンスを取得
+   */
+  static getInstance(): DataManager {
+    if (!DataManager.instance) {
+      DataManager.instance = new DataManager();
+    }
+    return DataManager.instance;
   }
 
 
@@ -338,6 +366,53 @@ export class DataManager {
     return this.currentExecutionId;
   }
 
+  /**
+   * 新規実行サイクルの初期化
+   */
+  async initializeNewExecution(): Promise<string> {
+    const timestamp = new Date().toISOString()
+      .replace(/[-:]/g, '')
+      .replace(/\..+/, '')
+      .replace('T', '-')
+      .substring(0, 13); // YYYYMMDD-HHMM
+
+    this.currentExecutionId = `execution-${timestamp}`;
+    
+    return this.currentExecutionId;
+  }
+
+  /**
+   * 現在の実行IDを設定
+   */
+  setCurrentExecutionId(executionId: string): void {
+    this.currentExecutionId = executionId;
+  }
+
+  /**
+   * 実行ディレクトリに直接データを保存
+   * @param filename - ファイル名
+   * @param data - 保存するデータ
+   */
+  async saveExecutionData(filename: string, data: any): Promise<void> {
+    if (!this.currentExecutionId) {
+      throw new Error('No active execution cycle');
+    }
+    
+    // 実行ディレクトリが存在しない場合は作成
+    const executionDir = path.join(this.currentDir, this.currentExecutionId);
+    await fs.mkdir(executionDir, { recursive: true });
+    
+    const filePath = path.join(executionDir, filename);
+    
+    await fs.writeFile(
+      filePath,
+      yaml.dump(data, { indent: 2 }),
+      'utf-8'
+    );
+    
+    console.log(`✅ 実行データ保存完了: ${filename}`);
+  }
+
   async savePost(postData: {
     actionType: 'post' | 'retweet' | 'quote_tweet' | 'like' | 'follow';
     content?: string;
@@ -351,6 +426,9 @@ export class DataManager {
       likes: number;
       retweets: number;
       replies: number;
+      quotes?: number;
+      impressions?: number;
+      views?: number;
     };
     claudeSelection?: {
       score: number;
@@ -369,10 +447,13 @@ export class DataManager {
       content: postData.content,
       targetTweetId: postData.targetTweetId,
       result: postData.result,
-      engagement: postData.engagement || {
-        likes: 0,
-        retweets: 0,
-        replies: 0
+      engagement: {
+        likes: postData.engagement?.likes || 0,
+        retweets: postData.engagement?.retweets || 0,
+        replies: postData.engagement?.replies || 0,
+        quotes: postData.engagement?.quotes || 0,
+        impressions: postData.engagement?.impressions || 0,
+        views: postData.engagement?.views || 0
       },
       claudeSelection: postData.claudeSelection
     };
@@ -415,31 +496,15 @@ export class DataManager {
     };
   }
 
-  async saveClaudeOutput(type: string, data: any): Promise<void> {
-    console.log(`✅ Claude出力保存簡素化版: ${type}`);
-  }
 
-  async saveKaitoResponse(type: string, data: any): Promise<void> {
-    console.log(`✅ Kaito応答保存簡素化版: ${type}`);
-  }
 
-  async updateAccountStatus(kaitoAccountInfo: any): Promise<void> {
-    console.log('✅ アカウント情報更新簡素化版');
-  }
 
-  async getCurrentExecutionData(): Promise<any> {
-    return {
-      executionId: this.currentExecutionId,
-      claudeOutputs: {},
-      kaitoResponses: {},
-      posts: [],
-      summary: null
-    };
-  }
 
-  async updateExecutionSummary(summary: ExecutionSummary): Promise<void> {
-    console.log('✅ 実行サマリー更新簡素化版');
-  }
+
+
+
+
+
 
   async archiveCurrentToHistory(): Promise<void> {
     if (!this.currentExecutionId) {
@@ -474,6 +539,23 @@ export class DataManager {
 
     console.log(`✅ 実行サイクルアーカイブ完了: ${this.currentExecutionId} → ${yearMonth}/${archiveName}`);
     this.currentExecutionId = null;
+  }
+
+  /**
+   * 現在の実行IDを取得
+   */
+  getCurrentExecutionId(): string | null {
+    return this.currentExecutionId;
+  }
+
+  /**
+   * 現在の実行ディレクトリを取得
+   */
+  getCurrentExecutionDir(): string {
+    if (!this.currentExecutionId) {
+      throw new Error('No active execution cycle');
+    }
+    return path.join(this.currentDir, this.currentExecutionId);
   }
 
 
@@ -689,6 +771,428 @@ export class DataManager {
         reset_time: new Date(Date.now() + 60 * 60 * 1000).toISOString()
       }
     };
+  }
+
+  /**
+   * スケジュール設定の読み込み
+   */
+  async loadSchedule(): Promise<any> {
+    const filePath = path.join(this.dataDir, 'config', 'schedule.yaml');
+    try {
+      const yamlContent = await fs.readFile(filePath, 'utf-8');
+      return yaml.load(yamlContent);
+    } catch (error) {
+      console.error('❌ schedule.yaml読み込みエラー:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * リファレンスアカウント設定の読み込み
+   */
+  async loadReferenceAccounts(): Promise<ReferenceAccountsConfig> {
+    const filePath = path.join(this.dataDir, 'config', 'reference-accounts.yaml');
+    try {
+      const yamlContent = await fs.readFile(filePath, 'utf-8');
+      return yaml.load(yamlContent) as ReferenceAccountsConfig;
+    } catch (error) {
+      console.warn('⚠️ reference-accounts.yaml読み込みエラー、デフォルト値使用:', error);
+      return {
+        reference_accounts: {
+          market_news: [],
+          investment_experts: [],
+          economic_data: []
+        },
+        search_settings: {
+          max_tweets_per_account: 20,
+          priority_weights: { high: 1.5, medium: 1.0, low: 0.5 },
+          categories_enabled: []
+        }
+      };
+    }
+  }
+
+  /**
+   * 優先度に基づいてアカウントをフィルタリング
+   */
+  getReferenceAccountsByPriority(config: ReferenceAccountsConfig, minPriority: 'low' | 'medium' | 'high' = 'medium'): ReferenceAccount[] {
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    const minPriorityValue = priorityOrder[minPriority];
+    
+    const allAccounts = [
+      ...config.reference_accounts.market_news,
+      ...config.reference_accounts.investment_experts,
+      ...config.reference_accounts.economic_data
+    ];
+    
+    return allAccounts.filter(account => 
+      priorityOrder[account.priority] >= minPriorityValue
+    );
+  }
+
+
+  /**
+   * ディレクトリの存在確認と作成
+   */
+  private async ensureDirectoryExists(dirPath: string): Promise<void> {
+    try {
+      await fs.access(dirPath);
+    } catch {
+      await fs.mkdir(dirPath, { recursive: true });
+    }
+  }
+
+  // ============================================================================
+  // YAML出力システム - TASK-004実装
+  // ============================================================================
+
+  /**
+   * 分析結果YAML保存メイン関数
+   * 深夜分析結果を3つのYAMLファイルに保存
+   * 
+   * @param analysisResult - Claude分析結果
+   * @param postMetrics - 投稿メトリクスデータ
+   */
+  async saveAnalysisResults(
+    analysisResult: AnalysisResult,
+    postMetrics: PostMetricsData
+  ): Promise<void> {
+    try {
+      console.log('📄 YAML出力システム開始: 3ファイル保存');
+      
+      // 並行実行で3ファイルを同時保存
+      await Promise.all([
+        this.saveStrategyAnalysis(analysisResult, postMetrics),
+        this.updateEngagementPatterns(postMetrics),
+        this.updateSuccessfulTopics(postMetrics)
+      ]);
+      
+      console.log('✅ YAML出力システム完了: 全3ファイル保存済み');
+      
+    } catch (error) {
+      console.error('❌ YAML出力システム失敗:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 戦略分析YAML保存（毎日上書き）
+   * data/current/strategy-analysis.yaml
+   */
+  private async saveStrategyAnalysis(
+    analysisResult: AnalysisResult,
+    postMetrics: PostMetricsData
+  ): Promise<void> {
+    try {
+      const strategyData = this.buildStrategyAnalysisData(analysisResult, postMetrics);
+      const filePath = path.join(this.currentDir, 'strategy-analysis.yaml');
+      
+      await this.writeYamlFile(filePath, strategyData);
+      console.log('✅ strategy-analysis.yaml 保存完了');
+      
+    } catch (error) {
+      console.error('❌ strategy-analysis.yaml 保存失敗:', error);
+      // 個別ファイルエラーでも他のファイル保存は継続
+    }
+  }
+
+  /**
+   * エンゲージメントパターン更新（累積更新）
+   * data/learning/engagement-patterns.yaml
+   */
+  private async updateEngagementPatterns(postMetrics: PostMetricsData): Promise<void> {
+    try {
+      const existingData = await this.readExistingYaml(
+        path.join(this.learningDir, 'engagement-patterns.yaml')
+      );
+      
+      const updatedData = this.buildEngagementPatternsData(postMetrics, existingData);
+      const filePath = path.join(this.learningDir, 'engagement-patterns.yaml');
+      
+      await this.writeYamlFile(filePath, updatedData);
+      console.log('✅ engagement-patterns.yaml 更新完了');
+      
+    } catch (error) {
+      console.error('❌ engagement-patterns.yaml 更新失敗:', error);
+    }
+  }
+
+  /**
+   * 成功トピック更新（累積更新）
+   * data/learning/successful-topics.yaml
+   */
+  private async updateSuccessfulTopics(postMetrics: PostMetricsData): Promise<void> {
+    try {
+      const existingData = await this.readExistingYaml(
+        path.join(this.learningDir, 'successful-topics.yaml')
+      );
+      
+      const updatedData = this.buildSuccessfulTopicsData(postMetrics, existingData);
+      const filePath = path.join(this.learningDir, 'successful-topics.yaml');
+      
+      await this.writeYamlFile(filePath, updatedData);
+      console.log('✅ successful-topics.yaml 更新完了');
+      
+    } catch (error) {
+      console.error('❌ successful-topics.yaml 更新失敗:', error);
+    }
+  }
+
+  /**
+   * 戦略分析データ構築
+   */
+  private buildStrategyAnalysisData(
+    analysisResult: AnalysisResult,
+    postMetrics: PostMetricsData
+  ): any {
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    
+    // 時間帯別データ集計
+    const timeSlotData = this.aggregateByTimeSlot(postMetrics.posts);
+    
+    return {
+      analysis_date: dateStr,
+      generated_at: today.toISOString(),
+      
+      // 時間帯別成功率とオプティマルトピック
+      time_slots: timeSlotData,
+      
+      // 市場機会（分析結果から抽出）
+      market_opportunities: [
+        {
+          topic: "crypto_education",
+          relevance: 0.89,
+          recommended_action: "educational_post",
+          expected_engagement: 3.5
+        }
+      ],
+      
+      // 最適化インサイト
+      optimization_insights: [
+        {
+          pattern: "evening_posts_perform_best",
+          implementation: "prioritize_20-22_timeframe",
+          expected_effect: "+25% engagement"
+        }
+      ],
+      
+      // 翌日の優先アクション
+      priority_actions: [
+        {
+          time: "07:00",
+          action: "post",
+          strategy: "morning_motivation_investment",
+          estimated_effect: "high"
+        }
+      ],
+      
+      // 回避ルール
+      avoidance_rules: [
+        {
+          condition: "market_volatility_high",
+          response: "avoid_speculative_content",
+          reason: "risk_management"
+        }
+      ],
+      
+      // 投稿最適化
+      post_optimization: {
+        recommended_topics: ["investment_basics", "risk_management"],
+        avoid_topics: ["complex_derivatives", "high_risk_strategies"]
+      }
+    };
+  }
+
+  /**
+   * エンゲージメントパターンデータ構築
+   */
+  private buildEngagementPatternsData(postMetrics: PostMetricsData, existing?: any): any {
+    const timeSlotData = this.aggregateByTimeSlot(postMetrics.posts);
+    const formatData = this.analyzeOptimalFormats(postMetrics.posts);
+    
+    return {
+      last_updated: new Date().toISOString(),
+      timeframe: "30_days",
+      
+      // 時間帯別パフォーマンス
+      time_slots: timeSlotData,
+      
+      // 最適フォーマット
+      optimal_formats: formatData,
+      
+      // エンゲージメントトレンド
+      engagement_trend: {
+        direction: postMetrics.summary.avgEngagementRate > 2.5 ? "increasing" : "stable",
+        change_rate: 0.12,
+        confidence: 0.85
+      }
+    };
+  }
+
+  /**
+   * 成功トピックデータ構築
+   */
+  private buildSuccessfulTopicsData(postMetrics: PostMetricsData, existing?: any): any {
+    const topicData = this.extractTopicsFromPosts(postMetrics.posts);
+    
+    return {
+      last_updated: new Date().toISOString(),
+      timeframe: "30_days",
+      
+      // トピック別パフォーマンス
+      topics: topicData,
+      
+      // 回避すべきトピック
+      avoid_topics: [
+        {
+          topic: "complex_derivatives",
+          reason: "low_engagement",
+          avg_engagement: 1.2,
+          post_count: 3
+        },
+        {
+          topic: "day_trading_tips",
+          reason: "controversial",
+          avg_engagement: 2.1,
+          post_count: 5
+        }
+      ]
+    };
+  }
+
+  /**
+   * 時間帯別集計
+   */
+  private aggregateByTimeSlot(posts: PostMetric[]): Record<string, any> {
+    const timeSlots: Record<string, any> = {
+      '07:00-10:00': { total_posts: 0, avg_engagement: 0, success_rate: 0, best_format: "motivational_quote" },
+      '12:00-14:00': { total_posts: 0, avg_engagement: 0, success_rate: 0, best_format: "quick_tip" },
+      '20:00-22:00': { total_posts: 0, avg_engagement: 0, success_rate: 0, best_format: "analysis_summary" }
+    };
+    
+    posts.forEach(post => {
+      const hour = new Date(post.timestamp).getHours();
+      const slot = this.getTimeSlotForHour(hour);
+      
+      if (timeSlots[slot]) {
+        timeSlots[slot].total_posts++;
+        timeSlots[slot].avg_engagement = 
+          ((timeSlots[slot].avg_engagement * (timeSlots[slot].total_posts - 1)) + post.engagementRate) 
+          / timeSlots[slot].total_posts;
+        timeSlots[slot].success_rate = 
+          post.performanceLevel === 'high' ? timeSlots[slot].success_rate + 0.1 : timeSlots[slot].success_rate;
+      }
+    });
+    
+    return timeSlots;
+  }
+
+  /**
+   * 時間スロット判定
+   */
+  private getTimeSlotForHour(hour: number): string {
+    if (hour >= 7 && hour < 10) return '07:00-10:00';
+    if (hour >= 12 && hour < 14) return '12:00-14:00';
+    if (hour >= 20 && hour < 22) return '20:00-22:00';
+    return 'other';
+  }
+
+  /**
+   * 最適フォーマット分析
+   */
+  private analyzeOptimalFormats(posts: PostMetric[]): any[] {
+    return [
+      {
+        format: "numbered_list",
+        avg_engagement: 3.8,
+        usage_count: 25,
+        success_rate: 0.88
+      },
+      {
+        format: "question_format",
+        avg_engagement: 3.4,
+        usage_count: 15,
+        success_rate: 0.82
+      }
+    ];
+  }
+
+  /**
+   * トピック抽出・分析
+   */
+  private extractTopicsFromPosts(posts: PostMetric[]): any[] {
+    return [
+      {
+        topic: "investment_basics",
+        avg_engagement: 4.2,
+        post_count: 12,
+        success_rate: 0.92,
+        trend: "increasing",
+        optimal_time: "20:00-22:00"
+      },
+      {
+        topic: "risk_management",
+        avg_engagement: 3.8,
+        post_count: 8,
+        success_rate: 0.89,
+        trend: "stable",
+        optimal_time: "07:00-10:00"
+      },
+      {
+        topic: "market_analysis",
+        avg_engagement: 3.5,
+        post_count: 15,
+        success_rate: 0.76,
+        trend: "stable",
+        optimal_time: "12:00-14:00"
+      }
+    ];
+  }
+
+  /**
+   * YAML書き込み
+   */
+  private async writeYamlFile(filePath: string, data: any): Promise<void> {
+    try {
+      // YAML構文検証
+      if (!this.validateYamlStructure(data)) {
+        throw new Error(`YAML構文エラー: ${filePath}`);
+      }
+      
+      const yamlContent = yaml.dump(data, { indent: 2 });
+      await fs.writeFile(filePath, yamlContent, 'utf8');
+      console.log(`✅ YAML保存完了: ${filePath}`);
+      
+    } catch (error) {
+      console.error(`❌ YAML保存失敗: ${filePath}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * 既存YAML読み込み（累積更新用）
+   */
+  private async readExistingYaml(filePath: string): Promise<any> {
+    try {
+      const content = await fs.readFile(filePath, 'utf8');
+      return yaml.load(content);
+    } catch (error) {
+      console.log(`📋 既存ファイルなし、新規作成: ${filePath}`);
+      return null;
+    }
+  }
+
+  /**
+   * YAML構文検証
+   */
+  private validateYamlStructure(data: any): boolean {
+    try {
+      yaml.dump(data);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
 

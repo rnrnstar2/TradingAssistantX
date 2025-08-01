@@ -4,6 +4,9 @@ daily_schedule:
     action: "post"
     topic: "おはよう！今日の市場注目ポイント"
     target_query: "投資 おはよう"
+    reference_users:  # 新規追加パラメータ（オプション）
+      - "financialjuice"
+      - "marketwatch"
   - time: "06:05"
     action: "like"
     target_query: "投資 始めたい"
@@ -55,6 +58,10 @@ daily_schedule:
     action: "post"
     topic: "市場オープン！今日の投資戦略"
     target_query: "日経平均 OR ドル円 OR 米国株"
+    reference_users:  # リアルタイム市場情報アカウント
+      - "financialjuice"
+      - "jimcramer"
+      - "stlouisfed"
   - time: "09:15"
     action: "like"
     target_query: "日本株 初心者"
@@ -212,6 +219,10 @@ daily_schedule:
     action: "post"
     topic: "今日の市場ニュースまとめと明日の注目点"
     target_query: "市場 まとめ OR 相場 総括 OR 投資"
+    reference_users:  # 市場まとめ・アナリストアカウント
+      - "financialjuice"
+      - "MarketWatch"
+      - "NikkeiAsia"
     # 検証済みアカウントの市場まとめを参考に（リアルタイム情報）
   - time: "20:15"
     action: "like"

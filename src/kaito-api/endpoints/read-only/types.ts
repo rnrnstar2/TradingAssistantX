@@ -192,3 +192,74 @@ export interface AdvancedSearchOptions {
   /** 拡張情報 */
   expansions?: string[];
 }
+
+// ============================================================================
+// ユーザー最新ツイート取得型
+// ============================================================================
+
+/**
+ * ユーザー最新ツイート取得パラメータ
+ * APIキー認証で実行可能な読み取り専用操作
+ */
+export interface UserLastTweetsParams {
+  /** ユーザー名（@マークなし、必須） */
+  userName: string;
+  /** 取得する最大ツイート数（デフォルト: 20） */
+  limit?: number;
+  /** リプライを含めるか（デフォルト: false） */
+  includeReplies?: boolean;
+  /** ページネーション用カーソル */
+  cursor?: string;
+}
+
+/**
+ * ユーザー最新ツイート取得レスポンス
+ * 特定ユーザーの最新ツイート情報を返す
+ */
+export interface UserLastTweetsResponse {
+  /** 成功フラグ */
+  success: boolean;
+  /** ツイートデータ配列 */
+  tweets: Tweet[];
+  /** 次のページ取得用カーソル */
+  cursor?: string;
+  /** さらに取得可能なデータがあるか */
+  has_more?: boolean;
+  /** エラー情報（失敗時） */
+  error?: string;
+}
+
+/**
+ * Tweet型定義（TwitterAPI.io互換）
+ */
+export interface Tweet {
+  /** ツイートID */
+  id: string;
+  /** ツイート本文 */
+  text: string;
+  /** 投稿者ID */
+  author_id: string;
+  /** 投稿者ユーザー名 */
+  author_username?: string;
+  /** 作成日時 */
+  created_at: string;
+  /** パブリックメトリクス */
+  public_metrics: {
+    /** いいね数 */
+    like_count: number;
+    /** リツイート数 */
+    retweet_count: number;
+    /** 返信数 */
+    reply_count: number;
+    /** 引用ツイート数 */
+    quote_count: number;
+  };
+  /** エンティティ情報 */
+  entities?: any;
+  /** 参照ツイート情報 */
+  referenced_tweets?: any;
+  /** 言語コード */
+  lang?: string;
+  /** センシティブコンテンツフラグ */
+  possibly_sensitive?: boolean;
+}

@@ -20,10 +20,14 @@ import {
   TweetData,
   UserData,
   PostResult,
+  FollowResult,
 } from "../utils/types";
+import type { UserLastTweetsParams, UserLastTweetsResponse } from "../endpoints/read-only/types";
 import { AuthManager } from "./auth-manager";
 import { API_ENDPOINTS } from "../utils/constants";
 import { TweetSearchEndpoint } from "../endpoints/read-only/tweet-search";
+import { UserLastTweetsEndpoint } from "../endpoints/read-only/user-last-tweets";
+import { FollowManagement } from "../endpoints/authenticated/follow";
 
 // TwitterAPI.io specific types
 type TwitterAPIResponse<T> = TwitterAPIBaseResponse<T>;
@@ -180,7 +184,21 @@ class HttpClient {
         );
       }
 
-      return await response.json();
+      const responseText = await response.text();
+      console.log(`📋 HTTP Response: ${responseText.substring(0, 200)}${responseText.length > 200 ? '...' : ''}`);
+      
+      if (!responseText || responseText.trim() === '') {
+        console.warn('⚠️ Empty response body detected');
+        return null as any;
+      }
+      
+      try {
+        return JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('❌ JSON parse error:', parseError);
+        console.error('Response text:', responseText);
+        throw new Error(`Failed to parse JSON response: ${parseError}`);
+      }
     } catch (error) {
       clearTimeout(timeoutId);
 
@@ -217,7 +235,21 @@ class HttpClient {
         );
       }
 
-      return await response.json();
+      const responseText = await response.text();
+      console.log(`📋 HTTP Response: ${responseText.substring(0, 200)}${responseText.length > 200 ? '...' : ''}`);
+      
+      if (!responseText || responseText.trim() === '') {
+        console.warn('⚠️ Empty response body detected');
+        return null as any;
+      }
+      
+      try {
+        return JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('❌ JSON parse error:', parseError);
+        console.error('Response text:', responseText);
+        throw new Error(`Failed to parse JSON response: ${parseError}`);
+      }
     } catch (error) {
       clearTimeout(timeoutId);
 
@@ -640,6 +672,8 @@ export class KaitoTwitterAPIClient {
   private costTracker: CostTracker;
   private authManager: AuthManager;
   private tweetSearchEndpoint: TweetSearchEndpoint | null = null;
+  private userLastTweetsEndpoint: UserLastTweetsEndpoint | null = null;
+  private followManagement: FollowManagement | null = null;
   private rateLimits: RateLimitStatus = {
     remaining: 300,
     limit: 300,
@@ -709,6 +743,8 @@ export class KaitoTwitterAPIClient {
     this.apiConfig = apiConfig;
     this.httpClient = new HttpClient(apiConfig);
     this.tweetSearchEndpoint = new TweetSearchEndpoint(this.httpClient, this.authManager);
+    this.userLastTweetsEndpoint = new UserLastTweetsEndpoint(this.httpClient, this.authManager);
+    this.followManagement = new FollowManagement(this.httpClient, this.authManager);
 
     console.log(`🔧 API設定でクライアント初期化: ${apiConfig.environment}環境`);
   }
@@ -986,6 +1022,61 @@ export class KaitoTwitterAPIClient {
   }
 
   /**
+   * TwitterAPI.ioを使用してユーザーをフォローします
+   *
+   * @param userId - フォロー対象のユーザーID（数値IDのみ対応）
+   * @returns フォロー結果（成功フラグ、タイムスタンプ）
+   *
+   * @example
+   * ```typescript
+   * const result = await client.follow('1234567890');
+   * console.log(`フォロー完了: ${result.success}`);
+   * ```
+   *
+   * @throws {Error} API認証エラー、レート制限エラー、プロキシ設定エラー
+   */
+  async follow(userId: string): Promise<FollowResult> {
+    try {
+      if (!this.followManagement) {
+        throw new Error("Follow management not initialized. Call initializeWithConfig() first.");
+      }
+
+      await this.ensureAuthenticated();
+      await this.qpsController.enforceQPS();
+      await this.enforceRateLimit("general");
+
+      console.log("👤 フォロー実行中...", { userId: this.maskUserId(userId) });
+
+      // 実API呼び出し (リトライ無効化 - クレジット節約)
+      const result = await TwitterAPIErrorHandler.retryWithExponentialBackoff(
+        async () => {
+          return await this.followManagement!.followUser(userId);
+        },
+        0, // リトライ無効化
+        this.config.retryPolicy?.backoffMs ?? 1000,
+      );
+
+      // レート制限カウンター更新
+      this.updateRateLimit("general");
+
+      // コスト追跡更新
+      this.costTracker.trackRequest("action");
+
+      console.log("✅ フォロー完了:", { userId: this.maskUserId(userId), success: result.success });
+      return result;
+    } catch (error) {
+      const handledError = TwitterAPIErrorHandler.handleError(error, "follow");
+      return {
+        userId,
+        following: false,
+        timestamp: new Date().toISOString(),
+        success: false,
+        error: handledError.message,
+      };
+    }
+  }
+
+  /**
    * TwitterAPI.ioを使用してアカウント情報を取得します
    *
    * @returns アカウント情報（ID、ユーザー名、フォロワー数等）
@@ -1095,6 +1186,59 @@ export class KaitoTwitterAPIClient {
   }
 
   /**
+   * ツイートID一括取得 - TweetSearchEndpoint統合版
+   * @param tweetIds ツイートID配列（最大100件）
+   * @returns ツイート詳細データ
+   */
+  async getTweetsByIds(tweetIds: string[]): Promise<{
+    success: boolean;
+    tweets: TweetData[];
+    notFound: string[];
+    errors: Array<{id: string; error: string}>;
+  }> {
+    try {
+      if (!this.tweetSearchEndpoint) {
+        throw new Error("Tweet search endpoint not initialized. Call initializeWithConfig() first.");
+      }
+
+      await this.ensureAuthenticated();
+      await this.qpsController.enforceQPS();
+      await this.enforceRateLimit("general");
+
+      console.log(`🔍 ツイート一括取得: ${tweetIds.length}件`);
+
+      const result = await this.tweetSearchEndpoint.getTweetsByIds(tweetIds);
+      
+      if (result.success && result.data) {
+        console.log(`✅ ツイート一括取得完了: 取得${result.data.tweets.length}件, 未発見${result.data.notFound.length}件`);
+        return {
+          success: true,
+          tweets: result.data.tweets,
+          notFound: result.data.notFound,
+          errors: result.data.errors
+        };
+      } else {
+        console.warn(`⚠️ ツイート一括取得失敗`);
+        return {
+          success: false,
+          tweets: [],
+          notFound: [],
+          errors: []
+        };
+      }
+
+    } catch (error: any) {
+      console.error(`❌ ツイート一括取得エラー: ${error.message}`);
+      return {
+        success: false,
+        tweets: [],
+        notFound: [],
+        errors: [{id: 'unknown', error: error.message}]
+      };
+    }
+  }
+
+  /**
    * ツイート検索 - TweetSearchEndpoint統合版
    * @param query 検索クエリ
    * @param options 検索オプション
@@ -1154,6 +1298,71 @@ export class KaitoTwitterAPIClient {
         tweets: [],
         error: error.message
       };
+    }
+  }
+
+  /**
+   * 特定ユーザーの最新ツイートを取得
+   * @param params - 取得パラメータ
+   * @returns ユーザーの最新ツイート
+   */
+  async getUserLastTweets(params: UserLastTweetsParams): Promise<UserLastTweetsResponse> {
+    try {
+      if (!this.userLastTweetsEndpoint) {
+        throw new Error("User last tweets endpoint not initialized. Call initializeWithConfig() first.");
+      }
+
+      await this.ensureAuthenticated();
+      await this.qpsController.enforceQPS();
+      await this.enforceRateLimit("general");
+
+      console.log(`🔍 ユーザー最新ツイート取得中: @${params.userName}`);
+
+      const result = await this.userLastTweetsEndpoint.getUserLastTweets(params);
+
+      if (result.success) {
+        console.log(`✅ 取得完了: ${result.tweets.length}件のツイートが見つかりました`);
+      } else {
+        console.warn(`⚠️ 取得失敗: ${result.error}`);
+      }
+
+      return result;
+
+    } catch (error: any) {
+      console.error(`❌ ユーザー最新ツイート取得エラー: ${error.message}`);
+      return {
+        success: false,
+        tweets: [],
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * 複数ユーザーの最新ツイートをバッチ取得
+   * @param usernames - ユーザー名のリスト
+   * @param limit - 各ユーザーから取得する最大ツイート数
+   * @returns ユーザーごとの最新ツイート
+   */
+  async getBatchUserLastTweets(usernames: string[], limit: number = 20): Promise<Map<string, UserLastTweetsResponse>> {
+    try {
+      if (!this.userLastTweetsEndpoint) {
+        throw new Error("User last tweets endpoint not initialized. Call initializeWithConfig() first.");
+      }
+
+      await this.ensureAuthenticated();
+
+      console.log(`🔍 バッチユーザー最新ツイート取得中: ${usernames.length}ユーザー`);
+
+      const result = await this.userLastTweetsEndpoint.getBatchUserLastTweets(usernames, limit);
+
+      console.log(`✅ バッチ取得完了`);
+
+      return result;
+
+    } catch (error: any) {
+      console.error(`❌ バッチユーザー最新ツイート取得エラー: ${error.message}`);
+      return new Map();
     }
   }
 
@@ -1327,26 +1536,6 @@ export class KaitoTwitterAPIClient {
     };
   }
 
-  /**
-   * ユーザーの最新ツイートを取得（execution-flow.tsで使用）
-   */
-  async getUserLastTweets(
-    userId: string,
-    count: number = 20,
-  ): Promise<TweetData[]> {
-    try {
-      console.log(`📄 ユーザーの最新ツイート取得中: ${userId}, ${count}件`);
-
-      // 簡易実装 - 空の配列を返す
-      const mockTweets: TweetData[] = [];
-
-      console.log(`✅ ユーザーの最新ツイート取得完了: ${mockTweets.length}件`);
-      return mockTweets;
-    } catch (error) {
-      console.error("❌ ユーザーの最新ツイート取得エラー:", error);
-      return [];
-    }
-  }
 
   // MVP要件 - 詳細メトリクス機能を削除（過剰実装のため）
 
@@ -1553,7 +1742,8 @@ export class KaitoTwitterAPIClient {
         throw new Error('No available proxy for retweet action');
       }
       
-      const endpoint = String(this.endpoints.tweet.retweet);
+      // TwitterAPI.io公式エンドポイント
+      const endpoint = '/twitter/retweet_tweet_v2';
       const postData = {
         login_cookies: loginCookie,
         tweet_id: tweetId,
@@ -1562,19 +1752,22 @@ export class KaitoTwitterAPIClient {
       
       console.log(`🔍 リツイートAPI送信データ: tweetId=${tweetId}, proxy=${currentProxy.split('@')[1] || 'masked'}`);
       
-      const response = await this.httpClient!.post<
-        TwitterAPIResponse<{
-          retweeted: boolean;
-        }>
-      >(endpoint, postData);
+      const response = await this.httpClient!.post<{
+        status: string;
+        msg: string;
+      }>(endpoint, postData);
 
       console.log(`📋 リツイートAPI応答:`, JSON.stringify(response, null, 2));
+
+      // TwitterAPI.ioドキュメントに基づくレスポンス処理
+      // 空レスポンスまたはnullレスポンスも成功として扱う
+      const success = !response || response === null || response?.status === "success";
 
       return {
         id: `retweet_${Date.now()}`,
         originalTweetId: tweetId,
         timestamp: new Date().toISOString(),
-        success: response.data.retweeted,
+        success: success,
       };
     } catch (error) {
       console.error(`❌ リツイート実行エラー (${tweetId}):`, error);
@@ -1600,13 +1793,13 @@ export class KaitoTwitterAPIClient {
       const postData = {
         login_cookies: loginCookie,
         tweet_text: comment,
-        quote_tweet_id: tweetId,
+        attachment_url: `https://x.com/i/status/${tweetId}`,
         proxy: currentProxy,
       };
       
-      console.log(`🔍 引用ツイートAPI送信データ: quote_tweet_id=${tweetId}, proxy=${currentProxy.split('@')[1] || 'masked'}`);
+      console.log(`🔍 引用ツイートAPI送信データ: attachment_url=https://x.com/i/status/${tweetId}, proxy=${currentProxy.split('@')[1] || 'masked'}`);
 
-      const response = await this.httpClient!.post<any>(String(this.endpoints.tweet.quote), postData);
+      const response = await this.httpClient!.post<any>(String(this.endpoints.tweet.create), postData);
 
       console.log(`📋 引用ツイートAPI応答:`, JSON.stringify(response, null, 2));
 
@@ -1871,6 +2064,11 @@ export class KaitoTwitterAPIClient {
     const nextHour = new Date();
     nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
     return nextHour.toISOString();
+  }
+
+  private maskUserId(userId: string): string {
+    if (!userId || userId.length < 4) return '***';
+    return userId.substring(0, 3) + '***';
   }
 
   // MVP要件 - 高度な機能初期化メソッドとヘルパーメソッドを削除（過剰実装のため）

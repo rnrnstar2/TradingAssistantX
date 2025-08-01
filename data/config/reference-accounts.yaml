@@ -1,0 +1,44 @@
+# リアルタイム投資情報を提供する参考アカウントリスト
+reference_accounts:
+  # 市場速報・ニュース系
+  market_news:
+    - username: "financialjuice"
+      description: "リアルタイム金融ニュース・市場速報"
+      priority: "high"
+      categories: ["news", "market_updates", "breaking_news"]
+    - username: "marketwatch"
+      description: "市場動向・経済ニュース"
+      priority: "medium"
+      categories: ["market_analysis", "economic_news"]
+    
+  # 投資分析・専門家
+  investment_experts:
+    - username: "jimcramer"
+      description: "投資アドバイス・市場分析"
+      priority: "medium"
+      categories: ["investment_advice", "stock_picks"]
+    
+  # 経済指標・統計
+  economic_data:
+    - username: "stlouisfed"
+      description: "経済指標・統計データ"
+      priority: "medium"  
+      categories: ["economic_indicators", "statistics"]
+
+# 検索設定
+search_settings:
+  max_tweets_per_account: 20  # 各アカウントから取得する最大ツイート数
+  priority_weights:           # 優先度による重み付け
+    high: 1.5
+    medium: 1.0
+    low: 0.5
+  categories_enabled:         # 有効なカテゴリ
+    - "news"
+    - "market_updates"
+    - "breaking_news"
+    - "market_analysis"
+    - "economic_news"
+    - "investment_advice"
+    - "stock_picks"
+    - "economic_indicators"
+    - "statistics"

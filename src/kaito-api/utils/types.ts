@@ -11,12 +11,12 @@
  * @see https://docs.twitterapi.io/authentication
  */
 
-// 認証・設定関連型はcore/types.tsからインポート
-import { 
+// 認証・設定関連型はcore/types.tsから直接インポート
+import type { 
   LoginCredentials, 
   UserLoginV2Response, 
   LoginResult, 
-  AuthStatus, 
+  AuthStatus,
   KaitoAPIConfig, 
   KaitoClientConfig, 
   EndpointConfig, 
@@ -29,7 +29,7 @@ export {
   LoginCredentials, 
   UserLoginV2Response, 
   LoginResult, 
-  AuthStatus, 
+  AuthStatus,
   KaitoAPIConfig, 
   KaitoClientConfig, 
   EndpointConfig, 

@@ -58,7 +58,7 @@ export class ContentBuilder extends BaseBuilder {
     });
     const template = contentTemplate;
     
-    // リアルタイムコンテキストの構築
+    // 既存のリアルタイムコンテキスト（検索結果）
     let realtimeContextSection = '';
     if (context.referenceTweets && context.referenceTweets.length > 0) {
       realtimeContextSection = `
@@ -72,14 +72,40 @@ ${context.referenceTweets.map((tweet, index) =>
 `;
     }
 
-    // リアルタイム性を重視した追加指示
+    // 新規追加：参考アカウントのコンテキスト
+    let referenceAccountContextSection = '';
+    if (context.referenceAccountTweets && context.referenceAccountTweets.length > 0) {
+      referenceAccountContextSection = `
+【リアルタイム情報源からの最新ツイート】
+${context.referenceAccountTweets.map(account => {
+  const latestTweets = account.tweets.slice(0, 3); // 各アカウントから最新3件
+  return `
+◆ @${account.username}の最新情報:
+${latestTweets.map((tweet, idx) => 
+  `${idx + 1}. ${tweet.text.substring(0, 150)}${tweet.text.length > 150 ? '...' : ''}`
+).join('\n')}`;
+}).join('\n')}
+
+上記の信頼できる情報源からの最新情報を踏まえて、
+初心者にも分かりやすく、タイムリーで価値のある投稿を作成してください。
+具体的な数値や出来事に言及する場合は、情報源を参考にしながら正確に伝えてください。
+`;
+    }
+
+    // リアルタイム性を重視した追加指示の強化
     let realtimeInstruction = '';
-    if (request.realtimeContext) {
+    if (request.realtimeContext || referenceAccountContextSection) {
       realtimeInstruction = `
 【リアルタイム性重視】
-参考ツイートで言及されている最新の市場動向やニュースを踏まえて、
-初心者にも分かりやすく解説する投稿を作成してください。
-具体的な数値や出来事に言及することで、リアルタイム性を高めてください。
+${referenceAccountContextSection ? '信頼できる情報源の最新ツイートと、' : ''}
+${realtimeContextSection ? '高エンゲージメントツイートを参考に、' : ''}
+今まさに注目すべき情報を初心者にも分かりやすく解説してください。
+
+重要なポイント：
+- 最新の市場動向やニュースに言及する場合は、具体的かつ正確に
+- 専門用語は必要最小限にとどめ、使う場合は簡潔な説明を追加
+- 情報の鮮度を活かしつつ、教育的価値を提供
+- 読者が今すぐ行動できる実践的なアドバイスを含める
 `;
     }
 
@@ -93,6 +119,7 @@ ${context.referenceTweets.map((tweet, index) =>
       .replace('{{targetAudience}}', this.getAudienceDescription(request.targetAudience || 'beginner'))
       .replace('{{maxLength}}', (request.maxLength || 140).toString())
       .replace('{{realtimeContext}}', realtimeContextSection)
+      .replace('{{referenceAccountContext}}', referenceAccountContextSection)
       .replace('{{realtimeInstruction}}', realtimeInstruction)
       .replace('{{customInstruction}}', customInstruction)
       .replace('{{timeContext}}', this.getTimeContextPrompt(context));
@@ -146,18 +173,7 @@ ${context.referenceTweets.map((tweet, index) =>
 
   // ヘルパーメソッド: 時間コンテキストプロンプトを取得
   private getTimeContextPrompt(context: SystemContext): string {
-    const hour = new Date().getHours();
-    
-    if (hour >= 6 && hour < 9) {
-      return '朝の時間帯なので、1日のスタートに役立つ前向きな投資情報を提供してください。';
-    } else if (hour >= 9 && hour < 15) {
-      return '市場時間中なので、リアルタイムの動向を踏まえた実践的な内容にしてください。';
-    } else if (hour >= 12 && hour < 14) {
-      return '昼休みの時間帯なので、サクッと読めて実践的な内容が好まれます。';
-    } else if (hour >= 20 && hour < 22) {
-      return '夜の時間帯なので、1日の振り返りと明日への準備に役立つ内容にしてください。';
-    }
-    
-    return '読者の立場に立って、今この時間に価値を感じる情報を提供してください。';
+    // 時間帯を意識した内容ではなく、いつでも読める汎用的な内容を生成
+    return '投資初心者が今すぐ価値を感じられる情報を、具体的かつ実践的に提供してください。特定の時間やイベント開催を想定した表現（“今夜”、“○時スタート”等）は避け、いつ読んでも有益な内容にしてください。';
   }
 }

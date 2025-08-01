@@ -85,7 +85,8 @@ export class MainWorkflow {
         action: options.scheduledAction,
         parameters: {
           topic: options.scheduledTopic,
-          query: options.scheduledQuery
+          query: options.scheduledQuery,
+          reference_users: options.scheduledReferenceUsers
         },
         confidence: 1.0,
         reasoning: `スケジュール指定によるアクション: ${options.scheduledAction}`
@@ -392,6 +393,49 @@ export class MainWorkflow {
       // システムコンテキストの構築
       const systemContext = this.buildSystemContext(profile);
       
+      // 参考ユーザーのツイート取得（新規追加）
+      let referenceAccountTweets: any[] | null = null;
+      if (decision.parameters?.reference_users && decision.parameters.reference_users.length > 0) {
+        console.log(`👥 参考ユーザーの最新ツイート取得中: ${decision.parameters.reference_users.join(', ')}`);
+        
+        try {
+          // reference-accounts.yamlから設定を読み込み
+          const referenceConfig = await this.getDataManager().loadReferenceAccounts();
+          
+          // 指定されたユーザーの最新ツイートをバッチ取得
+          const userTweetsMap = await this.kaitoClient.getBatchUserLastTweets(
+            decision.parameters.reference_users,
+            referenceConfig.search_settings.max_tweets_per_account || 20
+          );
+          
+          // 取得結果を整形
+          referenceAccountTweets = [];
+          for (const [username, response] of userTweetsMap.entries()) {
+            if (response.success && response.tweets.length > 0) {
+              referenceAccountTweets.push({
+                username,
+                tweets: response.tweets.map(tweet => ({
+                  id: tweet.id,
+                  text: tweet.text,
+                  created_at: tweet.created_at,
+                  public_metrics: tweet.public_metrics
+                }))
+              });
+              console.log(`✅ @${username}: ${response.tweets.length}件のツイート取得`);
+            } else {
+              console.warn(`⚠️ @${username}: ツイート取得失敗`);
+            }
+          }
+          
+          if (referenceAccountTweets.length > 0) {
+            console.log(`📊 参考ユーザーツイート取得完了: ${referenceAccountTweets.length}アカウント`);
+          }
+        } catch (error) {
+          console.error('❌ 参考ユーザーツイート取得エラー:', error);
+          // エラー時はnullのまま続行（参考ツイートなしで生成）
+        }
+      }
+
       // target_queryがある場合、参考ツイートを検索（複数戦略実装）
       let referenceTweets = null;
       if (decision.parameters?.target_query || decision.parameters?.query) {
@@ -518,11 +562,24 @@ export class MainWorkflow {
         };
       }
 
+      // SystemContextに参考ユーザーツイートを追加
+      if (referenceAccountTweets) {
+        systemContext.referenceAccountTweets = referenceAccountTweets;
+      }
+      
       // 参考ツイートをコンテキストに追加
       if (referenceTweets) {
         systemContext.referenceTweets = referenceTweets;
       }
       
+      // 参考ユーザーツイートの使用状況をログ出力
+      if (systemContext.referenceAccountTweets && systemContext.referenceAccountTweets.length > 0) {
+        console.log('📱 参考ユーザーツイートを含めてコンテンツ生成:');
+        systemContext.referenceAccountTweets.forEach(account => {
+          console.log(`  - @${account.username}: ${account.tweets.length}件`);
+        });
+      }
+
       // コンテンツ生成
       const content = await generateContent({
         request: {
@@ -540,8 +597,9 @@ export class MainWorkflow {
             realtimeScore: tweet.realtimeScore,
             reason: tweet.reason
           })) : undefined,
-          instruction: referenceTweets && referenceTweets.length > 0 
-            ? '参考ツイートで言及されている最新の動向を踏まえて、初心者にも分かりやすく価値ある情報を提供してください。'
+          referenceAccountTweets: referenceAccountTweets || undefined,
+          instruction: (referenceTweets && referenceTweets.length > 0) || (referenceAccountTweets && referenceAccountTweets.length > 0)
+            ? '参考ツイートや特定アカウントの最新ツイートで言及されている動向を踏まえて、初心者にも分かりやすく価値ある情報を提供してください。'
             : undefined
         }
       });
@@ -1170,6 +1228,30 @@ export class MainWorkflow {
       tweets: otherstweets,
       currentUser: currentUser
     };
+  }
+
+  /**
+   * スケジュールデータの読み込みとreference_usersパラメータの検証
+   */
+  private static async loadScheduleData(): Promise<any> {
+    try {
+      const scheduleData = await this.getDataManager().loadSchedule();
+      
+      // reference_usersパラメータの検証を追加
+      if (scheduleData.daily_schedule) {
+        scheduleData.daily_schedule.forEach((task: any, index: number) => {
+          if (task.reference_users && !Array.isArray(task.reference_users)) {
+            console.warn(`⚠️ スケジュール[${index}]: reference_usersは配列である必要があります`);
+            task.reference_users = [];
+          }
+        });
+      }
+      
+      return scheduleData;
+    } catch (error) {
+      console.error('❌ スケジュールデータ読み込みエラー:', error);
+      throw error;
+    }
   }
 
   /**
