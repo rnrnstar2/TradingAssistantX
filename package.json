@@ -23,7 +23,7 @@
     "test:kaito": "tsx tests/kaito-api/run-tests.ts",
     "test:kaito:watch": "vitest watch tests/kaito-api",
     "test:kaito:coverage": "vitest run --coverage --coverage.include='src/kaito-api/**/*.ts' --coverage.exclude='src/kaito-api/types.ts' --coverage.exclude='src/kaito-api/index.ts' --coverage.reportsDirectory=tasks/outputs/coverage tests/kaito-api",
-    "test:login": "node scripts/test-login-only.js",
+    "test:login": "tsx tests/auth/login-test.ts",
     "test:login:debug": "vitest run tests/kaito-api/auth/login-only.test.ts --reporter=verbose"
   },
   "dependencies": {
