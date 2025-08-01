@@ -1,0 +1,17 @@
+executionId: execution-20250801-1259
+actionType: post
+content: |-
+  現在のリアルタイム市場データにアクセスできないため、具体的な本日の市場総括を作成できません。
+
+  このプロジェクトのシステムを使用して実際の市場データを取得し、適切な投稿を生成する必要があります。
+result:
+  id: '1950826865762971780'
+  url: https://twitter.com/i/status/1950826865762971780
+  success: true
+engagement:
+  likes: 0
+  retweets: 0
+  replies: 0
+  quotes: 0
+  impressions: 0
+  bookmarks: 0

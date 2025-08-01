@@ -38,7 +38,10 @@ export {
 export type {
   GeneratedContent,
   AnalysisResult,
-  SelectedTweet
+  SelectedTweet,
+  TargetQueryInsights,
+  ReferenceUserInsights,
+  CombinedAnalysisInsights
 } from './types';
 
 // Input types - 入力型
@@ -46,6 +49,9 @@ export type {
   ContentInput,
   AnalysisInput,
   TweetSelectionParams,
+  DataAnalysisParams,
+  AnalyzeTargetQueryParams,
+  AnalyzeReferenceUserParams
 } from './types';
 
 // Supporting types - 補助型

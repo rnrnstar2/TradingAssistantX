@@ -7,6 +7,12 @@
  * • エラーメッセージ統一
  * • 最小限の設定値のみ
  */
+
+// SystemContext型のインポート（重複排除）
+import type { SystemContext } from '../shared/types';
+
+// 他のファイルとの互換性のため、SystemContextを再エクスポート
+export type { SystemContext };
 export const WORKFLOW_CONSTANTS = {
   // ===================================================================
   // API制限・レート制限関連
@@ -99,57 +105,3 @@ export interface ActionResult {
   error?: string;
 }
 
-// ===================================================================
-// システムコンテキスト型定義
-// ===================================================================
-export interface SystemContext {
-  account: {
-    followerCount: number;
-    lastPostTime?: string;
-    postsToday: number;
-    engagementRate: number;
-    accountHealth?: any;
-  };
-  system: {
-    health: {
-      all_systems_operational: boolean;
-      api_status: 'healthy' | 'degraded' | 'error';
-      rate_limits_ok: boolean;
-    };
-    executionCount: { today: number; total: number };
-  };
-  market?: {
-    trendingTopics: string[];
-    volatility: 'low' | 'medium' | 'high';
-    sentiment: 'bearish' | 'neutral' | 'bullish';
-  };
-  timestamp?: string;
-  executionId?: string;
-  learningData?: {
-    recentTopics: string[];
-    totalPatterns?: number;
-    avgEngagement: number;
-    optimalTimeSlot?: string;
-  };
-  // 深夜分析機能用 - 参考ツイート情報（TASK-005で追加）
-  referenceTweets?: {
-    text: string;
-    engagement: number;
-    author: string;
-  }[];
-  // 参考ユーザーのツイート情報（TASK-003で追加）
-  referenceAccountTweets?: {
-    username: string;
-    tweets: {
-      id: string;
-      text: string;
-      created_at: string;
-      public_metrics: {
-        like_count: number;
-        retweet_count: number;
-        reply_count: number;
-        quote_count: number;
-      };
-    }[];
-  }[];
-}

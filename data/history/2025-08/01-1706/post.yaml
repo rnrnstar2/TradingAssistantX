@@ -1,0 +1,21 @@
+executionId: execution-20250801-1706
+actionType: retweet
+timestamp: '2025-08-01T08:06:19.403Z'
+targetTweetId: target_ag7pam0ke
+result:
+  success: true
+  message: v1-sessionでのretweet完了
+  data:
+    sessionType: v1-session
+    actionType: retweet
+    executionId: execution-20250801-1706
+engagement:
+  likes: 3
+  retweets: 3
+  replies: 3
+  quotes: 0
+  impressions: 0
+claudeSelection:
+  score: 8.969867436812095
+  reasoning: v1-sessionでの最適retweetアクション
+  expectedImpact: medium

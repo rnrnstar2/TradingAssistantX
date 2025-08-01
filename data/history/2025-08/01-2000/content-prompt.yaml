@@ -1,0 +1,205 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-08-01T10:03:00.845Z'
+  execution_id: 20250801-1900
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 今夜のFX勉強会：NY市場のトレード戦略
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 18
+    postsToday: 0
+    engagementRate: 1.8
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-08-01T10:03:00.840Z'
+  executionId: 20250801-1900
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  analysisInsights:
+    referenceUserInsights: []
+    overallTheme: 市場分析データが不足しています
+    actionableInsights: []
+  referenceTweets:
+    - text: |-
+        ■最新為替相場（買いレート）
+        ドル円：150.620
+        豪ドル円：96.733
+        英ポンド：198.217
+        ユーロ円：171.833
+        NZドル円：88.333
+        #為替
+        #経済
+      qualityScore: 9
+      relevanceScore: 10
+      realtimeScore: 10
+      reason: 最新の為替相場データ（ドル円、ユーロ円等）でFX勉強会に直結する情報
+    - text: |-
+        2025年08月01日(金) 19:00の為替FXレート
+        🇺🇸🇯🇵 米ドル円 150.493
+        🇪🇺🇯🇵 ユーロ円 171.581 
+        🇬🇧🇯🇵 ポンド円 197.853 
+        🇦🇺🇯🇵 豪ドル円 96.625  
+        🇳🇿🇯🇵 NZドル円 88.227 
+        🇨🇦🇯🇵 カナダドル円 108.435 
+        🇨🇭🇯🇵 スイスフラン円 184.344
+
+        【PR】新規口座開設ボーナス13,000円 XM
+        https://t.co/2vZgv61XAs
+      qualityScore: 9
+      relevanceScore: 10
+      realtimeScore: 10
+      reason: 2025年8月1日19:00の為替FXレート詳細データ
+    - text: |-
+        8/1(🌺金)現時刻の月齢は7.6🌓
+        欧州はお昼前🤤
+
+        🇪🇺STOXX600:539.5☔-1.2%
+        🇯🇵日経先物:40,520☔-0.8%
+        日米国債
+        🇺🇸US02Y:3.951% 🇯🇵JP02Y:0.816%
+        🇺🇸US10Y:4.392% 🇯🇵JP10Y:1.552%
+        🇺🇸US30Y:4.926% 🇯🇵JP30Y:3.108%
+        ドル円:150.50🤖
+        https://t.co/ATS4W2ZNo1
+      qualityScore: 9
+      relevanceScore: 9
+      realtimeScore: 10
+      reason: リアルタイム市場データ（株価指数、国債利回り、ドル円等）
+    - text: 雇用統計直前までドル円しょーとや！
+      qualityScore: 7
+      relevanceScore: 10
+      realtimeScore: 10
+      reason: 雇用統計直前のドル円ショートポジション、リアルタイムトレード情報
+    - text: |-
+        8/1 10:30時点の株式新聞トップニュース
+        【東エレクがストップ安、想定外の下方修正で市場動揺――半導体株ショックに】
+
+        ニュースの続きは、
+        スマホアプリ(ノーマルモード)：[≡](メニュー)＞[投資情報]
+        https://t.co/GDYYoqUOZb
+
+        DMM 株では株式新聞Webを無料で購読可能 https://t.co/hqvftB6gcu
+      qualityScore: 9
+      relevanceScore: 7
+      realtimeScore: 9
+      reason: 東京エレクトロンストップ安の重要市場ニュース
+    - text: ドルは底堅さ増す、日本の政局で円売り圧力も＝来週の外為市場 https://t.co/fRTVrt5o7E
+      qualityScore: 8
+      relevanceScore: 9
+      realtimeScore: 8
+      reason: 来週の外為市場予測、ドルの底堅さと円売り圧力分析
+    - text: |-
+        今週も明朝7時から「塚本俊太郎のゼロからのお金の学校」スペース開催します。
+        今週のトピックはこちら
+        経済・金融ニュース
+        ・トランプ関税8月7日発動
+        ・FOMC金利据え置き
+        ・米PCEデフレーター上昇
+        ・速報米雇用統計
+        ・日銀金融政策決定会合
+        ・ドル円150円に
+
+        投資Q&A
+        質問はLINEオープンチャット↓で受け付けています。
+        https://t.co/VIIShQyO1W
+      qualityScore: 8
+      relevanceScore: 9
+      realtimeScore: 8
+      reason: 今週のFOMC、米雇用統計、日銀政策等の投資勉強会告知
+    - text: ドル円150円おかえり
+      qualityScore: 6
+      relevanceScore: 9
+      realtimeScore: 9
+      reason: ドル円150円回復のリアルタイム市場観察
+    - text: >-
+        【1時間ごとのニュースアップデート】
+
+
+        1. Galaxy Digitalが警告:
+        企業が暗号資産をバランスシートに積むことで市場が「構造的に脆弱」に。1920年代の投資信託ブームに似た状況と指摘。https://t.co/hzkmuAbhOf
+
+
+        2. Cel
+        AI、ロンドン証券取引所からAQSEに移転計画。ビットコイン戦略を強化し、現在5.28BTCを保有。https://t.co/U8CeIV7Avw
+
+
+        3.
+        黄立成氏のETH、HYPE、PUMPポジションが約1億4800万ドルに、浮動損失は1190万ドル超。ETH価格下落が影響。https://t.co/pGPuTeSVAE
+
+
+        4.
+        USDTのクロスチェーン転送量、BNBチェーンがイーサリアムを上回る。最近のデータでは平均52億9000万ドル。https://t.co/xr044wL36H
+
+
+        5. メタプラネットが最大5550億円の永久優先株を発行へ。資金調達戦略の一環と考えられる。https://t.co/JvStTk538I
+
+
+        6.
+        BNBチェーンのアクティブユーザー、BSCとopBNBでそれぞれ227万人と179万人に達し、7日間の取引量は430億8000万ドル。https://t.co/9Ba2ag3DiE
+
+
+        7. Binance AlphaがMOMOFUNを8月3日に上場予定。エアドロップ報酬も提供。https://t.co/yIayQmkUIJ
+
+
+        8. ビットコインは通常8月と9月に低迷するとされ、調整局面に入る可能性。https://t.co/IDvrDHQjW2
+
+
+        9. ETHは3,598ドルで取引中、前日比5.02%の下落。市場の動向に影響を受けている。https://t.co/FzVVOqyfcb
+
+
+        10.
+        AIプロジェクト「Billions」が3000万ドルの資金調達を完了。人間とAIのネットワーク構築を目指す。https://t.co/UAhk0eR5ej
+
+
+        #ニュースまとめ #暗号資産 #ブロックチェーン
+
+
+        ========
+
+        ⭐️無料のメールアドレス登録で、毎日の最新ニュース10選とその中で1つをピックアップした詳細解説を毎日18時にお届けします。
+
+        https://t.co/AMBbxyM23B
+      qualityScore: 9
+      relevanceScore: 7
+      realtimeScore: 10
+      reason: 暗号資産・ブロックチェーンの詳細な最新ニュースまとめ
+    - text: |-
+        【2025-08-01 19:00 夜間取引売買代金ランキング】
+        ※単位、百万円、百万円以下切捨
+
+        3350 ﾒﾀﾌﾟﾗﾈｯﾄ： 359
+        1570 NF日経ﾚﾊ： 319
+        8035 東ｴﾚｸ： 290
+        3195 ジェネパ： 167
+        1357 NF日経ﾀﾞ： 140
+
+        #株クラ
+        #投資家さんと繋がりたい
+        #投資
+        #NISA
+      qualityScore: 8
+      relevanceScore: 7
+      realtimeScore: 9
+      reason: 2025年8月1日夜間取引売買代金ランキング
+  instruction: 参考ツイートや特定アカウントの最新ツイートで言及されている動向を踏まえて、初心者にも分かりやすく価値ある情報を提供してください。
+full_prompt: "あなたは投資教育の専門家です。現在は金曜日の夕方（19時台）です。\n\n【アカウント状況】\n・フォロワー数: 18人\n・本日の投稿数: 0回\n・平均エンゲージメント率: 1.8%\n\n【過去の成功パターン】\n・最近高評価だったトピック: market_analysis、educational_content\n・最近の平均エンゲージメント: 2.5%\n\n【市場分析インサイト】\n【総合分析】\n市場分析データが不足しています\n\n上記の分析インサイトを踏まえて、初心者にも分かりやすく価値ある投稿を作成してください。\n\n【高エンゲージメント参考ツイート】\n1. ■最新為替相場（買いレート）\nドル円：150.620\n豪ドル円：96.733\n英ポンド：198.217\nユーロ円：171.833\nNZドル円：88.333\n#為替\n#経済\n2. 2025年08月01日(金) 19:00の為替FXレート\n🇺🇸🇯🇵 米ドル円 150.493\n🇪🇺🇯🇵 ユーロ円 171.581 \n🇬🇧🇯🇵 ポンド円 197.853 \n🇦\uD83C...\n3. 8/1(🌺金)現時刻の月齢は7.6🌓\n欧州はお昼前🤤\n\n🇪🇺STOXX600:539.5☔-1.2%\n🇯🇵日経先物:40,520☔-0.8%\n日米国債\n🇺🇸US02Y:3.951% ...\n4. 雇用統計直前までドル円しょーとや！\n5. 8/1 10:30時点の株式新聞トップニュース\n【東エレクがストップ安、想定外の下方修正で市場動揺――半導体株ショックに】\n\nニュースの続きは、\nスマホアプリ(ノーマルモード)：[≡](メニュー)＞[...\n6. ドルは底堅さ増す、日本の政局で円売り圧力も＝来週の外為市場 https://t.co/fRTVrt5o7E\n7. 今週も明朝7時から「塚本俊太郎のゼロからのお金の学校」スペース開催します。\n今週のトピックはこちら\n経済・金融ニュース\n・トランプ関税8月7日発動\n・FOMC金利据え置き\n・米PCEデフレーター上昇\n...\n8. ドル円150円おかえり\n9. 【1時間ごとのニュースアップデート】\n\n1. Galaxy Digitalが警告: 企業が暗号資産をバランスシートに積むことで市場が「構造的に脆弱」に。1920年代の投資信託ブームに似た状況と指摘。h...\n10. 【2025-08-01 19:00 夜間取引売買代金ランキング】\n※単位、百万円、百万円以下切捨\n\n3350 ﾒﾀﾌﾟﾗﾈｯﾄ： 359\n1570 NF日経ﾚﾊ： 319\n8035 東ｴﾚｸ： 290...\n\n上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。\nただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。\n\n「今夜のFX勉強会：NY市場のトレード戦略」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。\n\n\n読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。"
+response_metadata:
+  content_length: 113
+  twitter_length: 113
+  quality_score: 100
+  generation_time_ms: 41287

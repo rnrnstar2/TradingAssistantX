@@ -1,0 +1,255 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-08-01T13:32:24.946Z'
+  execution_id: 20250801-2231
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 深夜FX戦略：米国経済指標とドルインデックスの影響
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 19
+    postsToday: 0
+    engagementRate: 1.9000000000000001
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-08-01T13:32:24.945Z'
+  executionId: 20250801-2231
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  analysisInsights:
+    referenceUserInsights: []
+    overallTheme: 市場分析データが不足しています
+    actionableInsights: []
+  referenceTweets:
+    - text: >-
+        MARKET: Fed holds rates at 4.25%-4.50%, DXY surges to 2-month high above
+        99.98, putting pressure on Bitcoin which dips amid dollar strength. BTC
+        struggles as strong dollar revives inverse correlation with crypto
+        markets. https://t.co/GsByfYumYA
+      qualityScore: 9
+      relevanceScore: 10
+      realtimeScore: 9
+      reason: FOMC金利据え置き結果とDXY（ドルインデックス）への直接的言及、ビットコインへの影響分析
+    - text: >-
+        Revisions lower on prior NFPs clearly catching many people offsides. The
+        DXY and TLT hourly candles since NFP release clearly show it.
+        Consistently revising prior numbers down will blindside the Fed.
+      qualityScore: 8
+      relevanceScore: 10
+      realtimeScore: 9
+      reason: NFP修正値とDXY、TLTの相関関係を分析、Fed政策への影響を言及
+    - text: >-
+        ドル円
+
+        151円まで上げ続けて雇用統計で3円落ちヤバすぎますね⋯植田総裁ゼンモからさらにトランプブチギレで戻るのかな⋯？
+        https://t.co/MCisUtX3Xp
+      qualityScore: 7
+      relevanceScore: 9
+      realtimeScore: 9
+      reason: ドル円151円から3円急落と雇用統計の関連性、植田総裁・トランプ言及
+    - text: >-
+        何の信頼性も無い事で有名なADPの方がまだマシとかいうイカれた世界線が来てんのか…マジで今回はドル円3円落ちとかありそうだな　　まぁでもISMでさすがに調整してくんのかな　　トランプはそういう露骨なハメ方をマジでやってきそうだから本当に怖い　　全部相場操作だよなホント、キショ過ぎる
+      qualityScore: 7
+      relevanceScore: 9
+      realtimeScore: 9
+      reason: ADP雇用統計とドル円3円落ちの関連分析、相場操作への言及
+    - text: |-
+        8月1日(金)22:30時点の為替FXレート
+
+        通貨ペア / 現在値 / 始値比
+        🇺🇸🇯🇵 米ドル円 148.209　⬇️ -251.2pips
+        🇪🇺🇯🇵 ユーロ円 171.456　↘️ -60.4pips
+        🇬🇧🇯🇵 ポンド円 196.969　⬇️ -203.9pips
+        🇪🇺🇺🇸 ユーロドル 1.15689　⬆️ +154.5pips
+        🇬🇧🇺🇸 ポンドドル 1.32951　↗️ +86.9pips
+
+        https://t.co/5AEtbnrF6x
+      qualityScore: 8
+      relevanceScore: 9
+      realtimeScore: 8
+      reason: 8月1日22:30時点の詳細な為替レート情報、複数通貨ペアの具体的数値
+    - text: >-
+        Given the U.S. economy's Q2 2025 GDP growth of 3.0%, core inflation at
+        2.9% (near 2% excluding tariff effects), and unemployment at 4.1-4.2%
+        with rising downside risks, a modest Fed rate cut could make sense to
+        support employment without fueling inflation. However, the FOMC's July
+        30 hold at 4.25-4.5% reflects caution amid uncertainty. Substantial cuts
+        risk overheating.
+      qualityScore: 9
+      relevanceScore: 8
+      realtimeScore: 7
+      reason: GDP3.0%、コアインフレ2.9%、失業率4.1-4.2%を踏まえたFed政策分析
+    - text: |-
+        今日やったこと
+        ・個別株投資動画視聴
+        ・買い物動画企画台本完成
+        ・AI活用動画視聴
+        ・産後スケジュール(プライベート)案作成
+
+        明日やること
+        ・AI副業合宿参加
+        ・個別株投資動画視聴
+      qualityScore: 8
+      relevanceScore: 8
+      realtimeScore: 8
+      reason: Powell議長の失業率重視発言とNFP修正値に関する分析
+    - text: ⤵【🇺🇸ドル円 USD／JPY】 -1.51% 148.134 https://t.co/jnp1mQ8EMl
+      qualityScore: 6
+      relevanceScore: 10
+      realtimeScore: 8
+      reason: ドル円の具体的変動率-1.51%をリアルタイムで報告
+    - text: |-
+        🇺🇸クリーブランド-ハマック総裁
+        ⚪︎FRBの政策はやや制限的で中立には程遠い
+        ⚪︎雇用市場は年末にかけて弱含みとなる見通し
+        ⚪︎関税引き上げでインフレ率が上昇すると予想
+        ⚪︎FOMCの決定は正しかったと確信している
+        ⚪︎雇用市場は注視が必要
+      qualityScore: 8
+      relevanceScore: 7
+      realtimeScore: 8
+      reason: クリーブランド連銀総裁の重要発言、雇用市場弱含み予想と関税影響
+    - text: |-
+        22:30
+        米国市場、寄付き⇩⇩
+
+        🇺🇸📉ダウ 43,734.96(-396.02)
+        🇺🇸📉ナスダック 20,831.61(-290.84)
+        🇺🇸📉S&amp;P500  6,276.33(-63.06)
+        🇺🇸恐怖指数⤴ 18.92(+2.20)
+         #vix NYダウ nasdaq 米国株 https://t.co/KXn26NP1Td
+      qualityScore: 6
+      relevanceScore: 7
+      realtimeScore: 9
+      reason: 米国市場寄付き時の主要指数下落データ、VIX上昇を含む包括的情報
+  instruction: 参考ツイートや特定アカウントの最新ツイートで言及されている動向を踏まえて、初心者にも分かりやすく価値ある情報を提供してください。
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は金曜日の夜（22時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 19人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 1.9%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【市場分析インサイト】
+
+  【総合分析】
+
+  市場分析データが不足しています
+
+
+  上記の分析インサイトを踏まえて、初心者にも分かりやすく価値ある投稿を作成してください。
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. MARKET: Fed holds rates at 4.25%-4.50%, DXY surges to 2-month high above
+  99.98, putting pressure on ...
+
+  2. Revisions lower on prior NFPs clearly catching many people offsides. The
+  DXY and TLT hourly candles ...
+
+  3. ドル円
+
+  151円まで上げ続けて雇用統計で3円落ちヤバすぎますね⋯植田総裁ゼンモからさらにトランプブチギレで戻るのかな⋯？
+  https://t.co/MCisUtX3Xp
+
+  4.
+  何の信頼性も無い事で有名なADPの方がまだマシとかいうイカれた世界線が来てんのか…マジで今回はドル円3円落ちとかありそうだな　　まぁでもISMでさすがに調整してくんのかな　　トランプはそういう露骨なハ...
+
+  5. 8月1日(金)22:30時点の為替FXレート
+
+
+  通貨ペア / 現在値 / 始値比
+
+  🇺🇸🇯🇵 米ドル円 148.209　⬇️ -251.2pips
+
+  🇪🇺🇯🇵 ユーロ円 171.456　↘...
+
+  6. Given the U.S. economy's Q2 2025 GDP growth of 3.0%, core inflation at 2.9%
+  (near 2% excluding tarif...
+
+  7. 今日やったこと
+
+  ・個別株投資動画視聴
+
+  ・買い物動画企画台本完成
+
+  ・AI活用動画視聴
+
+  ・産後スケジュール(プライベート)案作成
+
+
+  明日やること
+
+  ・AI副業合宿参加
+
+  ・個別株投資動画視聴
+
+  8. ⤵【🇺🇸ドル円 USD／JPY】 -1.51% 148.134 https://t.co/jnp1mQ8EMl
+
+  9. 🇺🇸クリーブランド-ハマック総裁
+
+  ⚪︎FRBの政策はやや制限的で中立には程遠い
+
+  ⚪︎雇用市場は年末にかけて弱含みとなる見通し
+
+  ⚪︎関税引き上げでインフレ率が上昇すると予想
+
+  ⚪︎FOMCの決定は正し...
+
+  10. 22:30
+
+  米国市場、寄付き⇩⇩
+
+
+  🇺🇸📉ダウ 43,734.96(-396.02)
+
+  🇺🇸📉ナスダック 20,831.61(-290.84)
+
+  🇺🇸📉S&amp;P500  6,276...
+
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「深夜FX戦略：米国経済指標とドルインデックスの影響」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+  夜の時間帯なので、1日の振り返りや、明日に向けた準備に関する内容も良いでしょう。
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 138
+  twitter_length: 139
+  quality_score: 85
+  generation_time_ms: 28553

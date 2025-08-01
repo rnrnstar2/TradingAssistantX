@@ -20,8 +20,9 @@
 // Claude SDK Types
 import type { 
   GeneratedContent, 
-  AnalysisResult, 
-  SystemContext
+  AnalysisResult,
+  CombinedAnalysisInsights,
+  AccountInfo
 } from '../claude/types';
 
 // KaitoAPI Types for internal use
@@ -34,8 +35,7 @@ import type {
 
 export type { 
   GeneratedContent, 
-  AnalysisResult, 
-  SystemContext
+  AnalysisResult
 };
 
 // kaito-api型定義をre-exportして重複を解消
@@ -57,6 +57,41 @@ export type {
   LikeResult,      // 追加
   AccountInfo      // 追加
 } from '../kaito-api/utils/types';
+
+// SystemContext型定義
+export interface SystemContext {
+  timestamp?: string;
+  executionId?: string;
+  account?: AccountInfo;
+  system?: {
+    health: {
+      all_systems_operational: boolean;
+      api_status: string;
+      rate_limits_ok: boolean;
+    };
+    executionCount: {
+      today: number;
+      total: number;
+    };
+  };
+  learningData?: {
+    recentTopics?: string[];
+    avgEngagement?: number;
+    totalPatterns?: number;
+    optimalTimeSlot?: string;
+  };
+  market?: {
+    sentiment: 'bullish' | 'bearish' | 'neutral';
+    volatility: 'high' | 'medium' | 'low';
+    trendingTopics: string[];
+  };
+  referenceTweets?: any[];
+  referenceAccountTweets?: any[];
+  instruction?: string;
+  
+  // 新規追加：分析インサイトフィールド
+  analysisInsights?: CombinedAnalysisInsights;
+}
 
 // メインワークフロー型定義
 export interface ExecutionContext {
@@ -99,7 +134,9 @@ export interface Tweet {
     likes: number;
     retweets: number;
     replies: number;
+    quotes?: number;
     views?: number;
+    bookmarks?: number;
   };
   engagement: {
     rate: number;

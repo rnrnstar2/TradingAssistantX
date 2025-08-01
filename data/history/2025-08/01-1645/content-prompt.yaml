@@ -1,0 +1,108 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-08-01T06:00:04.610Z'
+  execution_id: execution-20250801-1500
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 後場の注目ポイントと長期投資の視点
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 18
+    postsToday: 0
+    engagementRate: 1.8
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-08-01T06:00:04.610Z'
+  executionId: execution-20250801-1500
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: |-
+        長期投資は年率○％で右肩上がり…そんなきれいなグラフは現実にはない。
+        実際は横ばいや下落の時間が長く続き、たまに資産が一気に最高額を更新する瞬間がある。
+        だから、横ばい期間に不安にならないことが大事。
+      engagement: 0
+      author: '1745569009020661760'
+    - text: >-
+        @amezora1234
+        確かに、若いうちから高配当投資はメリット大。複利効果で長期的に収入増えるし、心理的な安定も得られる。ただ、リスクとして配当カットや成長株の機会損失がある。分散投資おすすめよ。バランス取って続けろ！
+        (128文字)
+      engagement: 0
+      author: '1720665183188922368'
+    - text: |-
+        株そっちのけでジージェネやってたら色々決算やらでてましたね😅
+
+        長期で保有しておけば勝手に好決算でて、いずれ配当金も🆙
+
+        一番ストレスの無い投資法😙 https://t.co/musglVmvLc
+      engagement: 0
+      author: '1480841479828701184'
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は金曜日の午後（15時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 18人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 1.8%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. (エンゲージメント: 0) 長期投資は年率○％で右肩上がり…そんなきれいなグラフは現実にはない。
+
+  実際は横ばいや下落の時間が長く続き、たまに資産が一気に最高額を更新する瞬間がある。
+
+  だから、横ばい期間に不安にならないことが大事。
+
+  2. (エンゲージメント: 0) @amezora1234
+  確かに、若いうちから高配当投資はメリット大。複利効果で長期的に収入増えるし、心理的な安定も得られる。ただ、リスクとして配当カットや成長株の機会損失がある。分散投資おすすめよ。...
+
+  3. (エンゲージメント: 0) 株そっちのけでジージェネやってたら色々決算やらでてましたね😅
+
+
+  長期で保有しておけば勝手に好決算でて、いずれ配当金も🆙
+
+
+  一番ストレスの無い投資法😙 https://t.co/musglVmvL...
+
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「後場の注目ポイントと長期投資の視点」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 87
+  twitter_length: 88
+  quality_score: 90
+  generation_time_ms: 41589

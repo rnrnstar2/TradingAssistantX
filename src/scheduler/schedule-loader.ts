@@ -249,9 +249,9 @@ export class ScheduleLoader {
         
       case 'retweet':
       case 'quote_tweet':
-        // retweet/quote_tweetにはtarget_queryが推奨
-        if (!item.target_query) {
-          console.warn(`⚠️  スケジュールアイテム[${index}]: ${item.action}アクションですがtarget_queryが未設定です`);
+        // retweet/quote_tweetにはtarget_queryまたはreference_usersが必要
+        if (!item.target_query && !item.reference_users) {
+          console.warn(`⚠️  スケジュールアイテム[${index}]: ${item.action}アクションですがtarget_queryもreference_usersも未設定です`);
         }
         break;
         

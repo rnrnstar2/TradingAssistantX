@@ -32,5 +32,15 @@ docs/directory-structure.md, docs/workflow.md, docs/kaito-api.md
 ```
 
 ```
-tests/kaito-apiの実装を完璧にしてほしい。
+scriptsディレクトリを作成してそこに１つファイルを作成してほしい。
+内容は私の投稿全てを取得して、data/currentディレクトリにpost.yamlを作成すること。
+https://docs.twitterapi.io/api-reference/endpoint/get_user_last_tweets
+has_next_pageなどのレスポンスを見て全て取得できるようにすること。
+20250801-1616などの日付と時間も正確に。
+今までのデータをクリーンアップするので、一から作成していきたい。
+MVPとして余計な実装をしないことを考えて進めてほしい。
+
+docs/directory-structure.md, docs/workflow.md, docs/kaito-api.md, docs/claude.md
+これらのドキュメントの中で関連ファイルは必ず参照すること。
+現在の実装もチェックして、完璧なディレクトリとファイルを作成すること。
 ```

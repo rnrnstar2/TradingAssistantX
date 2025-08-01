@@ -1,0 +1,42 @@
+executionId: 20250801-2030
+actionType: quote_tweet
+timestamp: '2025-08-01T11:31:52.338Z'
+content: |-
+  今週もお疲れさまでした📊
+
+  米国金利↑→ドル高・円安  
+  米国金利↓→ドル安・円高
+
+  この基本を押さえておくとFXの動きが見えてきます✨
+
+  週末はゆっくり休んで、来週も一緒に学びましょう🌟
+
+  #投資教育 #FX
+targetTweetId: '1951244035550748974'
+result:
+  id: '1951244483930030081'
+  originalTweetId: '1951244035550748974'
+  comment: |-
+    今週もお疲れさまでした📊
+
+    米国金利↑→ドル高・円安  
+    米国金利↓→ドル安・円高
+
+    この基本を押さえておくとFXの動きが見えてきます✨
+
+    週末はゆっくり休んで、来週も一緒に学びましょう🌟
+
+    #投資教育 #FX
+  timestamp: '2025-08-01T11:31:52.337Z'
+  success: true
+engagement:
+  likes: 0
+  retweets: 0
+  replies: 0
+  quotes: 0
+  impressions: 0
+  bookmarks: 0
+claudeSelection:
+  score: 3
+  reasoning: FFRの仕組みを具体的に説明し教育的価値があるが、日本語要件未充足で大幅減点
+  expectedImpact: low

@@ -8,6 +8,7 @@ export const KAITO_API_BASE_URL = 'https://api.twitterapi.io';
 export const API_ENDPOINTS = {
   // Read-only endpoints
   userInfo: '/twitter/user/info',
+  userLastTweets: '/twitter/user/last_tweets',
   tweetSearch: '/twitter/tweet/advanced_search',
   trends: '/twitter/trends',
   followerInfo: '/twitter/user/followers',

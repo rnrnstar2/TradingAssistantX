@@ -1,0 +1,131 @@
+prompt_metadata:
+  endpoint: generateContent
+  timestamp: '2025-08-01T03:00:02.998Z'
+  execution_id: execution-20250801-1200
+  model: sonnet
+  timeout: 15000
+input_context:
+  topic: 昼休みに学ぶ投資の基本
+  content_type: educational
+  target_audience: beginner
+  max_length: 140
+system_context:
+  account:
+    followerCount: 16
+    postsToday: 0
+    engagementRate: 1.6
+  system:
+    health:
+      all_systems_operational: true
+      api_status: healthy
+      rate_limits_ok: true
+    executionCount:
+      today: 0
+      total: 1
+  timestamp: '2025-08-01T03:00:02.997Z'
+  executionId: execution-20250801-1200
+  learningData:
+    recentTopics:
+      - market_analysis
+      - educational_content
+    optimalTimeSlot: optimal_fallback
+    avgEngagement: 2.5
+  referenceTweets:
+    - text: >-
+        【限定公開】 プロが使うエントリーチェックリストを無料公開します もちろん株、仮想通貨にも使えます。 
+        エントリーする時にここで入って良いのかな？他の人はどっちなんだろう？って気になる人いると思います。
+        このシートがあればそんな悩みは１ミリも沸きません。  そのチェックシートがまとめ終わりました。 プレゼントしても
+        やる人はごく一部なので教えます笑  1日5分あれば十分です。  欲しい人は ①いいね ②「投資」とリプ ②プロフのリンクから登録して待機 
+        締め切りは8月1日 23:59
+      engagement: 0
+      author: '899235479941390336'
+    - text: |-
+        月1万円のシェアオフィスからはじまって
+        年商1億円まで。
+
+        家賃を売上の2%以下に抑える鉄則を守り続けました。
+
+        見栄で高い事務所を借りる同業者を横目に、
+        利益率50%を実現。
+
+        固定費をケチることは、
+        実は最高の投資戦略だったんです。
+      engagement: 0
+      author: '1800302283126956032'
+    - text: >-
+        Don't miss my new long-form podcast with @rockthejvm, where we dive into
+        topics like:
+
+         - The new show I'm creating (@theultcoder)
+         - The death of conferences
+         - Becoming a better speaker
+         - Staying relevant in an age of AI
+
+        Check it out now!👇
+
+
+        https://t.co/OIusx4pECH
+      engagement: 0
+      author: '17271117'
+full_prompt: >-
+  あなたは投資教育の専門家です。現在は金曜日の昼（12時台）です。
+
+
+  【アカウント状況】
+
+  ・フォロワー数: 16人
+
+  ・本日の投稿数: 0回
+
+  ・平均エンゲージメント率: 1.6%
+
+
+  【過去の成功パターン】
+
+  ・最近高評価だったトピック: market_analysis、educational_content
+
+  ・最近の平均エンゲージメント: 2.5%
+
+
+  【高エンゲージメント参考ツイート】
+
+  1. (エンゲージメント: 0) 【限定公開】 プロが使うエントリーチェックリストを無料公開します もちろん株、仮想通貨にも使えます。 
+  エントリーする時にここで入って良いのかな？他の人はどっちなんだろう？って気になる人いると思います...
+
+  2. (エンゲージメント: 0) 月1万円のシェアオフィスからはじまって
+
+  年商1億円まで。
+
+
+  家賃を売上の2%以下に抑える鉄則を守り続けました。
+
+
+  見栄で高い事務所を借りる同業者を横目に、
+
+  利益率50%を実現。
+
+
+  固定費をケチることは...
+
+  3. (エンゲージメント: 0) Don't miss my new long-form podcast with @rockthejvm, where
+  we dive into topics like:
+
+   - The new sh...
+
+  上記の高エンゲージメントツイートを参考に、より魅力的で価値のある投稿を作成してください。
+
+  ただし、内容をそのまま真似るのではなく、投資初心者に分かりやすく、独自の視点で価値を提供してください。
+
+
+  「昼休みに学ぶ投資の基本」について、投資初心者向けに価値ある情報を140文字以内で投稿してください。
+
+
+  昼休みの時間帯なので、サクッと読めて実践的な内容が好まれます。
+
+
+  読者の立場に立って、今この時間に価値を感じる情報を自然で親しみやすい文章で伝えてください。読みやすさのため適切に改行を入れて、140文字以内で投稿内容のみを返してください。
+response_metadata:
+  content_length: 116
+  twitter_length: 119
+  quality_score: 100
+  generation_time_ms: 37959

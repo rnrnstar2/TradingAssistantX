@@ -211,7 +211,7 @@ export class TweetSearchEndpoint {
     getTweet: '/twitter/tweet/info',
     searchRecent: '/twitter/tweet/advanced_search',
     searchPopular: '/twitter/tweet/advanced_search',
-    getTweetsByIds: '/twitter/tweets'
+    getTweetsByIds: '/twitter/tweet/get_tweet_by_ids'
   } as const;
 
   private readonly RATE_LIMITS = {
@@ -594,7 +594,7 @@ export class TweetSearchEndpoint {
       
       // パラメータ構築
       const params = {
-        tweet_ids: tweetIds.join(',')
+        tweet_ids: tweetIds.join('\n')
       };
       
       console.log(`🔍 ツイート一括取得: ${tweetIds.length}件のツイートを取得`);

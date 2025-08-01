@@ -55,11 +55,19 @@ export class SelectionBuilder extends BaseBuilder {
       .replace(/\${candidateList}/g, this.formatCandidateList(params.candidates))
       .replace(/\${actionSpecificCriteria}/g, criteriaMap[params.selectionType]);
 
-    // フォロワー数、投稿数、エンゲージメント率の注入
-    prompt = prompt
-      .replace(/\${followerCount}/g, params.context.account.followerCount.toString())
-      .replace(/\${postsToday}/g, params.context.account.postsToday.toString())
-      .replace(/\${engagementRate}/g, params.context.account.engagementRate.toFixed(1));
+    // フォロワー数、投稿数、エンゲージメント率の注入（null安全性確保）
+    const account = params.context.account;
+    if (account) {
+      prompt = prompt
+        .replace(/\${followerCount}/g, account.followerCount.toString())
+        .replace(/\${postsToday}/g, account.postsToday.toString())
+        .replace(/\${engagementRate}/g, account.engagementRate.toFixed(1));
+    } else {
+      prompt = prompt
+        .replace(/\${followerCount}/g, '0')
+        .replace(/\${postsToday}/g, '0')
+        .replace(/\${engagementRate}/g, '0.0');
+    }
 
     // 学習データの注入（最近の高評価トピック）
     const recentTopicsText = params.context.learningData?.recentTopics 

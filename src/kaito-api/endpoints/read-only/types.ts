@@ -253,6 +253,10 @@ export interface Tweet {
     reply_count: number;
     /** 引用ツイート数 */
     quote_count: number;
+    /** インプレッション数 */
+    impression_count?: number;
+    /** ブックマーク数 */
+    bookmark_count?: number;
   };
   /** エンティティ情報 */
   entities?: any;

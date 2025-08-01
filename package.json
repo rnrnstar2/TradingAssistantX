@@ -9,6 +9,7 @@
     "dev:like": "tsx src/dev.ts --action like",
     "dev:quote": "tsx src/dev.ts --action quote_tweet",
     "dev:follow": "tsx src/dev.ts --action follow",
+    "dev:analyze": "tsx src/dev.ts --action analyze",
     "start": "tsx src/main.ts",
     "manager": "ROLE=manager claude --dangerously-skip-permissions",
     "worker": "ROLE=worker claude --dangerously-skip-permissions",
@@ -41,7 +42,8 @@
     "node-fetch": "^3.3.2",
     "otplib": "^12.0.1",
     "rss-parser": "^3.13.0",
-    "tsx": "^4.20.0"
+    "tsx": "^4.20.0",
+    "yaml": "^2.8.0"
   },
   "devDependencies": {
     "@types/cheerio": "^1.0.0",

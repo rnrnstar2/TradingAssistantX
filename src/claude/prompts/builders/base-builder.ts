@@ -45,7 +45,7 @@ export abstract class BaseBuilder {
   }
 
   // アカウント状況フォーマット
-  protected formatAccountStatus(account: SystemContext['account']): AccountStatus {
+  protected formatAccountStatus(account: NonNullable<SystemContext['account']>): AccountStatus {
     return {
       followerCount: account.followerCount,
       postsToday: account.postsToday,
@@ -55,14 +55,14 @@ export abstract class BaseBuilder {
   }
 
   // エンゲージメント率計算
-  private calculateEngagementRate(account: SystemContext['account']): number {
+  private calculateEngagementRate(account: NonNullable<SystemContext['account']>): number {
     // 最近の投稿のエンゲージメント率を計算
     // TODO: 実際の計算ロジックは学習データから取得
     return account.engagementRate || 2.5; // デフォルト値
   }
 
   // 前回投稿からの経過時間計算
-  private getHoursSinceLastPost(account: SystemContext['account']): number {
+  private getHoursSinceLastPost(account: NonNullable<SystemContext['account']>): number {
     if (account.lastPostTime) {
       const lastPost = new Date(account.lastPostTime);
       const now = new Date();
@@ -74,16 +74,30 @@ export abstract class BaseBuilder {
   // 共通変数の注入
   protected injectCommonVariables(template: string, context: SystemContext): string {
     const timeContext = this.getTimeContext();
-    const accountStatus = this.formatAccountStatus(context.account);
     
+    // null安全性の確保
+    if (context?.account) {
+      const accountStatus = this.formatAccountStatus(context.account);
+      
+      return template
+        .replace(/\${dayOfWeek}/g, timeContext.dayOfWeek)
+        .replace(/\${timeContext}/g, timeContext.timeContext)
+        .replace(/\${hour}/g, timeContext.hour.toString())
+        .replace(/\${context\.account\.followerCount}/g, accountStatus.followerCount.toString())
+        .replace(/\${context\.account\.postsToday}/g, accountStatus.postsToday.toString())
+        .replace(/\${context\.account\.engagementRate}/g, accountStatus.engagementRate.toString())
+        .replace(/\${lastPostHours}/g, accountStatus.lastPostHours.toString());
+    }
+    
+    // アカウント情報がない場合は時間情報のみ置換
     return template
       .replace(/\${dayOfWeek}/g, timeContext.dayOfWeek)
       .replace(/\${timeContext}/g, timeContext.timeContext)
       .replace(/\${hour}/g, timeContext.hour.toString())
-      .replace(/\${context\.account\.followerCount}/g, accountStatus.followerCount.toString())
-      .replace(/\${context\.account\.postsToday}/g, accountStatus.postsToday.toString())
-      .replace(/\${context\.account\.engagementRate}/g, accountStatus.engagementRate.toString())
-      .replace(/\${lastPostHours}/g, accountStatus.lastPostHours.toString());
+      .replace(/\${context\.account\.followerCount}/g, '0')
+      .replace(/\${context\.account\.postsToday}/g, '0')
+      .replace(/\${context\.account\.engagementRate}/g, '0')
+      .replace(/\${lastPostHours}/g, '0');
   }
 
   // 学習データ変数の注入

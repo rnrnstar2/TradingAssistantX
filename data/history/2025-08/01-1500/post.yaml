@@ -1,0 +1,41 @@
+executionId: execution-20250801-1330
+actionType: quote_tweet
+timestamp: '2025-08-01T04:32:36.837Z'
+content: |-
+  📈金曜昼の投資チェック！
+
+  今週の決算発表企業で
+  売上・利益ともに予想超えの
+  会社はありましたか？
+
+  株価が反応していない場合は
+  来週の押し目買いチャンス。
+
+  ただし、業績好調の要因が
+  継続性あるかは要確認です📊
+targetTweetId: '1951138524180181076'
+result:
+  id: '1951138974480613662'
+  originalTweetId: '1951138524180181076'
+  comment: |-
+    📈金曜昼の投資チェック！
+
+    今週の決算発表企業で
+    売上・利益ともに予想超えの
+    会社はありましたか？
+
+    株価が反応していない場合は
+    来週の押し目買いチャンス。
+
+    ただし、業績好調の要因が
+    継続性あるかは要確認です📊
+  timestamp: '2025-08-01T04:32:36.837Z'
+  success: true
+engagement:
+  likes: 0
+  retweets: 0
+  replies: 0
+claudeSelection:
+  score: 8.5
+  reasoning: 急騰銘柄のリスク認識を促す投資教育的価値の高い内容。専門知識でテクニカル分析や市場心理の解説を追加できる。
+  expectedImpact: high

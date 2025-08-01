@@ -1,57 +1,65 @@
-# リアルタイム投資情報を提供する参考アカウントリスト
+# FX中級者向け参考アカウントリスト
 reference_accounts:
-  # 市場速報・ニュース系
-  market_news:
+  # リアルタイム為替ニュース
+  fx_realtime_news:
     - username: "financialjuice"
-      description: "リアルタイム金融ニュース・市場速報"
+      description: "リアルタイム為替ニュース・主要通貨ペア速報"
       priority: "high"
-      categories: ["news", "market_updates", "breaking_news"]
+      categories: ["fx_news", "currency_updates", "breaking_news", "central_bank_news"]
 
-  # 投資分析・専門家
-  investment_experts:
-    - username: "RagingVentures"
-      description: "Bill Martin - 元Raging Capital CIO（10億ドルヘッジファンド）ミッドキャップ投資専門（372フォロワーの隠れた宝石）"
+  # FXテクニカル分析・トレーダー
+  fx_traders_analysts:
+    - username: "kathylienfx"
+      description: "Kathy Lien - 20年以上の経験を持つ通貨ストラテジスト・JPMorgan出身・テクニカルとファンダメンタルズ融合分析"
       priority: "high"
-      categories: ["investment_advice", "hedge_fund_analysis", "midcap_stocks", "hidden_gems"]
-    - username: "10kdiver"
-      description: "複雑な金融概念を分かりやすいスレッドで解説・投資教育コンテンツの参考源"
+      categories: ["fx_technical", "macro_analysis", "currency_correlation", "real_time_trading"]
+    - username: "PeterLBrandt"
+      description: "Peter L. Brandt - 1975年からのチャートパターン専門家・先物市場の伝説的トレーダー・テクニカル分析の第一人者"
       priority: "high"
-      categories: ["educational_content", "investment_education", "financial_concepts"]
+      categories: ["fx_technical", "chart_patterns", "price_action", "trading_strategies"]
     - username: "unusual_whales"
-      description: "リアルタイムオプションフロー・市場データ分析・最速金融情報配信"
+      description: "リアルタイム市場センチメント・リスクオン/オフ指標・機関投資家の動向"
       priority: "high"
-      categories: ["real_time_data", "options_analysis", "market_data", "trading_signals"]
-    - username: "NonGaap"
-      description: "企業ガバナンス・ストックオプション分析専門・詳細企業分析ニュースレター発行"
+      categories: ["market_sentiment", "risk_indicators", "institutional_flow", "volatility_analysis"]
+    - username: "alaidi"
+      description: "Ashraf Laidi - 著名なFXアナリスト・「Currency Trading & Intermarket Analysis」著者・マクロ経済と通貨市場のリアルタイム分析（71,000フォロワー）"
       priority: "high"
-      categories: ["corporate_analysis", "governance_analysis", "stock_options", "deep_analysis"]
-    - username: "BespokeInvest"
-      description: "Bespoke Investment Group - データ視覚化・市場トレンド分析・機関投資家レベルの市場洞察"
+      categories: ["macro_analysis", "currency_correlation", "intermarket_analysis", "fx_education"]
+    - username: "50Pips"
+      description: "50Pips - 独立FXプロフェッショナル・高速ニュース更新・重要なサポート/レジスタンスゾーンに焦点"
       priority: "high"
-      categories: ["data_analysis", "market_trends", "institutional_analysis", "data_visualization"]
+      categories: ["fx_technical", "support_resistance", "fx_news", "real_time_trading"]
+    - username: "FXstreetNews"
+      description: "FXstreet - 24/5でFXニュース・分析・意見を提供する大手FXポータル・ブレーキングニュースとチャート分析"
+      priority: "high"
+      categories: ["fx_news", "breaking_news", "chart_analysis", "market_analysis", "currency_updates"]
+    - username: "ForexLive"
+      description: "ForexLive - 非常に高速なアップデート・市場動向の洞察・リアルタイム市場情報のエキスパート"
+      priority: "high"
+      categories: ["fx_news", "real_time_trading", "breaking_news", "market_sentiment", "dealer_analysis"]
     
-  # 経済指標・統計
-  economic_data:
+  # 中央銀行・経済指標分析
+  economic_indicators:
     - username: "stlouisfed"
-      description: "セントルイス連邦準備銀行公式 - FRED経済データベース・リアルタイム経済指標チャート配信（127,500フォロワー）"
+      description: "セントルイス連邦準備銀行公式 - 米国経済指標とドルの動向・金利政策分析（127,500フォロワー）"
       priority: "high"
-      categories: ["economic_indicators", "data_visualization", "federal_reserve", "economic_data", "statistics"]
+      categories: ["fed_policy", "usd_analysis", "interest_rates", "inflation_data", "employment_data"]
     - username: "charliebilello"
-      description: "Charlie Bilello - Creative Planning首席市場戦略家・チャート重視の市場統計分析（661,700フォロワー）"
+      description: "Charlie Bilello - チャート重視のFXテクニカル分析・主要通貨ペアのトレンド分析（661,700フォロワー）"
       priority: "high"
-      categories: ["market_analysis", "data_visualization", "market_trends", "statistical_analysis", "chart_analysis"]
+      categories: ["fx_technical", "chart_patterns", "currency_trends", "technical_indicators", "price_action"]
     - username: "JustinWolfers"
-      description: "Justin Wolfers - ミシガン大学経済学教授・Peterson研究所シニアフェロー・NY Times寄稿者（200,000+フォロワー）"
+      description: "Justin Wolfers - マクロ経済学教授・米国経済政策がFX市場に与える影響分析（200,000+フォロワー）"
       priority: "high"
-      categories: ["economic_analysis", "academic_research", "policy_analysis", "macroeconomics", "labor_economics"]
+      categories: ["macro_analysis", "fed_policy", "policy_analysis", "employment_data", "usd_analysis"]
     - username: "BBGVisualData"
-      description: "Bloomberg Graphics - 経済データ視覚化専門チーム・インタラクティブチャート・データジャーナリズム（78,700フォロワー）"
+      description: "Bloomberg Graphics - FX市場データ視覚化・通貨ペアのインタラクティブチャート（78,700フォロワー）"
       priority: "high"
-      categories: ["data_visualization", "economic_data", "interactive_charts", "data_journalism", "financial_visualization"]
+      categories: ["data_visualization", "fx_technical", "chart_analysis", "currency_trends", "financial_visualization"]
     - username: "OECD"
-      description: "経済協力開発機構公式 - 37ヶ国国際経済機関・政策提言・世界経済統計（656,000フォロワー）"
+      description: "経済協力開発機構公式 - 主要国経済動向と為替相場への影響・国際経済ファンダメンタルズ（656,000フォロワー）"
       priority: "high"
-      categories: ["international_economics", "policy_analysis", "economic_statistics", "global_trends", "development_economics"]
+      categories: ["international_economics", "policy_analysis", "global_trends", "macro_analysis", "currency_correlation"]
 
 # 検索設定
 search_settings:
@@ -60,52 +68,48 @@ search_settings:
     high: 1.5
     medium: 1.0
     low: 0.5
-  categories_enabled:         # 有効なカテゴリ
-    - "news"
-    - "market_updates"
+  categories_enabled:         # FX中級者向けカテゴリ
+    # 為替ニュース・速報
+    - "fx_news"
+    - "currency_updates"
     - "breaking_news"
-    - "market_analysis"
-    - "economic_news"
-    - "investment_advice"
-    - "stock_picks"
+    - "central_bank_news"
+    # テクニカル分析
+    - "fx_technical"
+    - "chart_patterns"
+    - "currency_trends"
+    - "technical_indicators"
+    - "price_action"
+    # リアルタイムトレード
+    - "real_time_trading"
+    - "scalping"
+    - "dealer_analysis"
+    - "support_resistance"
+    # 経済指標・中央銀行
+    - "fed_policy"
+    - "usd_analysis"
+    - "interest_rates"
+    - "inflation_data"
+    - "employment_data"
     - "economic_indicators"
-    - "statistics"
-    - "educational_content"
-    - "trading_info"
-    - "official_data"
-    - "international_news"
-    - "financial_data"
-    - "international_markets"
-    - "monetary_policy"
-    - "hedge_fund_analysis"
-    - "midcap_stocks"
-    - "hidden_gems"
-    - "investment_education"
-    - "financial_concepts"
-    - "real_time_data"
-    - "options_analysis"
-    - "trading_signals"
-    - "corporate_analysis"
-    - "governance_analysis"
-    - "stock_options"
-    - "deep_analysis"
-    - "data_analysis"
-    - "market_trends"
+    # 市場センチメント
+    - "market_sentiment"
+    - "risk_indicators"
+    - "institutional_flow"
+    - "volatility_analysis"
+    # FX教育・分析
+    - "fx_education"
+    - "macro_analysis"
+    - "currency_correlation"
+    - "trading_strategies"
+    - "market_analysis"
     - "institutional_analysis"
+    - "intermarket_analysis"
+    # データ視覚化
     - "data_visualization"
-    - "federal_reserve"
-    - "economic_data"
-    - "statistical_analysis"
     - "chart_analysis"
-    - "economic_analysis"
-    - "academic_research"
-    - "policy_analysis"
-    - "macroeconomics"
-    - "labor_economics"
-    - "interactive_charts"
-    - "data_journalism"
     - "financial_visualization"
+    # 国際経済
     - "international_economics"
-    - "economic_statistics"
     - "global_trends"
-    - "development_economics"
+    - "policy_analysis"

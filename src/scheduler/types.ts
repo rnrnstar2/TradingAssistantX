@@ -10,6 +10,7 @@ export interface ScheduleItem {
   action: ActionType;     // 実行するアクション種別
   topic?: string;         // postアクション用のトピック
   target_query?: string;  // retweet/quote_tweet用の検索クエリ
+  reference_users?: string[];  // 参考ユーザーリスト（post/retweet用）
 }
 
 /**
@@ -139,6 +140,16 @@ export function isValidScheduleItem(item: any): item is ScheduleItem {
   
   if (item.target_query !== undefined && typeof item.target_query !== 'string') {
     return false;
+  }
+  
+  if (item.reference_users !== undefined) {
+    if (!Array.isArray(item.reference_users)) {
+      return false;
+    }
+    // 配列の各要素が文字列であることを確認
+    if (!item.reference_users.every((user: any) => typeof user === 'string')) {
+      return false;
+    }
   }
   
   return true;

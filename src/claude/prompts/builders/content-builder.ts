@@ -174,6 +174,68 @@ ${realtimeContextSection ? '高エンゲージメントツイートを参考に�
   // ヘルパーメソッド: 時間コンテキストプロンプトを取得
   private getTimeContextPrompt(context: SystemContext): string {
     // 時間帯を意識した内容ではなく、いつでも読める汎用的な内容を生成
-    return '投資初心者が今すぐ価値を感じられる情報を、具体的かつ実践的に提供してください。特定の時間やイベント開催を想定した表現（“今夜”、“○時スタート”等）は避け、いつ読んでも有益な内容にしてください。';
+    return '投資初心者が今すぐ価値を感じられる情報を、具体的かつ実践的に提供してください。特定の時間やイベント開催を想定した表現（"今夜"、"○時スタート"等）は避け、いつ読んでも有益な内容にしてください。';
+  }
+
+  // FX特化メソッド群
+  buildFXMarketContext(): string {
+    const hour = new Date().getHours();
+    const market = this.getActiveMarket(hour);
+    
+    return `
+現在の${market}市場時間帯
+主要通貨ペア動向: ${this.getMarketTrends()}
+ボラティリティ: ${this.getVolatilityLevel()}
+注目イベント: ${this.getUpcomingEvents()}
+    `.trim();
+  }
+  
+  buildContrarianAnalysis(insights: any): string {
+    if (!insights?.contrarianViews || insights.contrarianViews.length === 0) {
+      return '市場のコンセンサスに対する独自の視点を提供';
+    }
+    
+    return `
+【逆張り的視点】
+${insights.contrarianViews.map((view: string) => `・${view}`).join('\n')}
+    `.trim();
+  }
+  
+  buildPredictionVerification(insights: any): string {
+    if (!insights?.predictions || insights.predictions.length === 0) {
+      return '';
+    }
+    
+    return `
+【本日の予測】
+${insights.predictions.map((p: any) => 
+  `・${p.pair}: ${p.direction === 'up' ? '上昇' : '下落'}目標 ${p.target} (${p.timeframe})`
+).join('\n')}
+    `.trim();
+  }
+  
+  private getActiveMarket(hour: number): string {
+    // JST基準
+    if (hour >= 9 && hour < 15) return '東京';
+    if (hour >= 16 && hour < 21) return 'ロンドン';
+    if (hour >= 21 || hour < 2) return 'ニューヨーク';
+    if (hour >= 15 && hour < 16) return '東京-ロンドン重複';
+    if (hour >= 21 && hour < 24) return 'ロンドン-NY重複';
+    return 'オセアニア';
+  }
+
+  private getMarketTrends(): string {
+    // 実際の実装では外部データソースから取得
+    return 'USD/JPY上昇、EUR/USD下降、GBP/JPY横ばい';
+  }
+
+  private getVolatilityLevel(): string {
+    // 実際の実装では外部データソースから取得
+    return '中程度（通常の1.2倍）';
+  }
+
+  private getUpcomingEvents(): string {
+    // 実際の実装では外部データソースから取得
+    return 'ECB政策発表（21:30）、米雇用統計（明日）';
   }
 }

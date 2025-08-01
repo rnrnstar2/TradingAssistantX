@@ -3,13 +3,15 @@
  * MVP要件: 深夜分析用の投稿エンゲージメントメトリクス一括取得
  * 
  * 機能概要:
+ * - dataディレクトリから保存済み投稿データを読み込み
  * - 最新50件の自分の投稿のエンゲージメント率を計算
- * - KaitoAPIの/twitter/tweetsエンドポイントを使用
  * - パフォーマンス要件: 50件処理を30秒以内で完了
  */
 
 import { KaitoTwitterAPIClient } from '../kaito-api';
-import { TweetData } from '../kaito-api/utils/types';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import * as yaml from 'js-yaml';
 
 // ============================================================================
 // 型定義
@@ -43,7 +45,6 @@ export interface PostMetric {
     replies: number;
     quotes: number;
     impressions: number;
-    views: number;
   };
   engagementRate: number;
   performanceLevel: 'high' | 'medium' | 'low'; // 3.0%以上、1.5-3.0%、1.5%未満
@@ -55,47 +56,48 @@ export interface PostMetric {
 
 /**
  * 投稿メトリクス収集メイン関数
- * 最新50件の自分の投稿のエンゲージメントメトリクスを取得
+ * dataディレクトリから投稿データを読み込み、最新メトリクスでAPI更新
  * 
- * @param kaitoClient - KaitoTwitterAPIクライアント
+ * @param kaitoClient - KaitoTwitterAPIクライアント（メトリクス更新用）
  * @returns 投稿メトリクスデータ
  */
 export async function collectPostMetrics(
-  kaitoClient: KaitoTwitterAPIClient
+  kaitoClient?: KaitoTwitterAPIClient
 ): Promise<PostMetricsData> {
   const startTime = Date.now();
   
   try {
     console.log(`📊 投稿メトリクス収集開始`);
     
-    // 1. 最新投稿ID取得
-    const postIds = await getLatestPostIds(kaitoClient, 50);
-    console.log(`📋 ${postIds.length}件の投稿IDを取得`);
+    // Step 1: dataディレクトリから投稿データを読み込み
+    const posts = await loadPostsFromDataDirectory();
+    console.log(`📋 ${posts.length}件の投稿データを取得`);
     
-    if (postIds.length === 0) {
+    if (posts.length === 0) {
       console.warn('⚠️ 投稿が見つかりませんでした');
       return createEmptyMetricsData();
     }
     
-    // 2. メトリクス一括取得
-    const tweets = await fetchMetricsBatch(kaitoClient, postIds);
-    console.log(`✅ ${tweets.length}件のメトリクスを取得`);
+    // Step 2: 最新メトリクスで更新（深夜分析用）
+    let updatedPosts = posts;
+    if (kaitoClient) {
+      console.log('🔄 最新メトリクスで更新中...');
+      updatedPosts = await updatePostsWithLatestMetrics(posts, kaitoClient);
+      console.log(`✅ ${updatedPosts.length}件のメトリクス更新完了`);
+    }
     
-    // 3. メトリクスデータ変換
-    const posts = tweets.map(tweet => transformToPostMetric(tweet));
-    
-    // 4. サマリー計算
-    const avgEngagementRate = calculateAverageEngagementRate(posts);
+    // サマリー計算
+    const avgEngagementRate = calculateAverageEngagementRate(updatedPosts);
     const elapsedTime = Math.round((Date.now() - startTime) / 1000);
     
     console.log(`✅ メトリクス取得完了: 平均エンゲージメント率 ${avgEngagementRate.toFixed(2)}% (${elapsedTime}秒)`);
     
     return {
-      posts,
+      posts: updatedPosts,
       summary: {
-        totalPosts: posts.length,
+        totalPosts: updatedPosts.length,
         avgEngagementRate,
-        timeframe: `最新${posts.length}件`,
+        timeframe: `最新${updatedPosts.length}件`,
         generatedAt: new Date().toISOString()
       }
     };
@@ -111,115 +113,163 @@ export async function collectPostMetrics(
 // ============================================================================
 
 /**
- * 最新投稿ID取得
- * 自分の最新N件の投稿IDを取得
+ * dataディレクトリから投稿データを読み込み
+ * current/とhistory/から最新50件の投稿を取得
  * 
- * @param kaitoClient - KaitoTwitterAPIクライアント
- * @param limit - 取得件数（最大50）
- * @returns 投稿ID配列
+ * @returns 投稿メトリクス配列
  */
-async function getLatestPostIds(
-  kaitoClient: KaitoTwitterAPIClient, 
-  limit: number = 50
-): Promise<string[]> {
+async function loadPostsFromDataDirectory(): Promise<PostMetric[]> {
+  const posts: PostMetric[] = [];
+  const dataDir = path.join(process.cwd(), 'data');
+  
   try {
-    // 環境変数からユーザー名取得
-    const username = process.env.X_USERNAME;
-    if (!username) {
-      throw new Error('X_USERNAME環境変数が設定されていません');
+    // 1. current/ディレクトリから読み込み
+    const currentDir = path.join(dataDir, 'current');
+    const currentPosts = await loadPostsFromDirectory(currentDir);
+    posts.push(...currentPosts);
+    
+    // 2. 不足分をhistory/から読み込み
+    const historyDir = path.join(dataDir, 'history');
+    const targetCount = 50;
+    
+    if (posts.length < targetCount) {
+      const historyPosts = await loadPostsFromHistoryDirectory(historyDir, targetCount - posts.length);
+      posts.push(...historyPosts);
     }
     
-    // from:username検索クエリで自分の投稿を取得
-    const searchQuery = `from:${username}`;
-    console.log(`🔍 検索クエリ: ${searchQuery}`);
+    // 3. 時系列でソート（新しい順）
+    posts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     
-    const searchResult = await kaitoClient.searchTweets(searchQuery, {
-      maxResults: limit
-    });
-    
-    if (!searchResult.success || !searchResult.tweets) {
-      console.warn('⚠️ 投稿検索に失敗しました');
-      return [];
-    }
-    
-    // 投稿IDのみ抽出
-    const postIds = searchResult.tweets
-      .map(tweet => tweet.id)
-      .filter(id => id && id.length > 0)
-      .slice(0, limit);
-    
-    return postIds;
+    // 4. 最新50件に制限
+    return posts.slice(0, targetCount);
     
   } catch (error) {
-    console.error('❌ 最新投稿ID取得エラー:', error);
-    return [];
+    console.error('❌ 投稿データ読み込みエラー:', error);
+    return posts;
   }
 }
 
 /**
- * メトリクス一括取得
- * 複数の投稿IDからメトリクス情報を一括取得
+ * 指定ディレクトリから投稿データを読み込み
  * 
- * @param kaitoClient - KaitoTwitterAPIクライアント
- * @param tweetIds - 投稿ID配列
- * @returns ツイートデータ配列
+ * @param dirPath - ディレクトリパス
+ * @returns 投稿メトリクス配列
  */
-async function fetchMetricsBatch(
-  kaitoClient: KaitoTwitterAPIClient,
-  tweetIds: string[]
-): Promise<TweetData[]> {
+async function loadPostsFromDirectory(dirPath: string): Promise<PostMetric[]> {
+  const posts: PostMetric[] = [];
+  
   try {
-    console.log(`🔍 メトリクス一括取得: ${tweetIds.length}件`);
+    const exists = await fs.stat(dirPath).catch(() => null);
+    if (!exists) return posts;
     
-    // TwitterAPI.ioのgetTweetsByIdsエンドポイントを使用
-    // このエンドポイントは最大100件のツイートIDを一度に処理可能
-    const result = await kaitoClient.getTweetsByIds(tweetIds);
+    const entries = await fs.readdir(dirPath, { withFileTypes: true });
     
-    if (!result.success || !result.tweets) {
-      console.warn('⚠️ メトリクス一括取得に失敗しました');
-      return [];
+    for (const entry of entries) {
+      if (entry.isDirectory() && entry.name.match(/^\d{8}-\d{4}$/)) {
+        const postYamlPath = path.join(dirPath, entry.name, 'post.yaml');
+        const post = await loadPostYaml(postYamlPath);
+        if (post) posts.push(post);
+      }
     }
     
-    console.log(`✅ メトリクス取得成功: ${result.tweets.length}件取得`);
-    
-    // 取得したツイートを返す
-    return result.tweets;
-    
+    return posts;
   } catch (error) {
-    console.error('❌ メトリクス一括取得エラー:', error);
-    // エラー時は部分的なデータでも継続
-    return [];
+    console.error(`❌ ディレクトリ読み込みエラー: ${dirPath}`, error);
+    return posts;
   }
 }
 
 /**
- * ツイートデータをPostMetricに変換
+ * historyディレクトリから投稿データを再帰的に読み込み
  * 
- * @param tweet - ツイートデータ
- * @returns 投稿メトリクス
+ * @param historyDir - historyディレクトリパス
+ * @param needed - 必要な件数
+ * @returns 投稿メトリクス配列
  */
-function transformToPostMetric(tweet: TweetData): PostMetric {
-  const metrics = {
-    likes: tweet.public_metrics?.like_count || 0,
-    retweets: tweet.public_metrics?.retweet_count || 0,
-    replies: tweet.public_metrics?.reply_count || 0,
-    quotes: tweet.public_metrics?.quote_count || 0,
-    impressions: tweet.public_metrics?.impression_count || 0,
-    views: tweet.public_metrics?.impression_count || 0  // viewsはimpression_countと同じ
-  };
+async function loadPostsFromHistoryDirectory(historyDir: string, needed: number): Promise<PostMetric[]> {
+  const posts: PostMetric[] = [];
   
-  const engagementRate = calculateEngagementRate(metrics);
-  const performanceLevel = determinePerformanceLevel(engagementRate);
-  
-  return {
-    id: tweet.id,
-    text: tweet.text || '',
-    timestamp: tweet.created_at || new Date().toISOString(),
-    metrics,
-    engagementRate,
-    performanceLevel
-  };
+  try {
+    const exists = await fs.stat(historyDir).catch(() => null);
+    if (!exists) return posts;
+    
+    // 年月フォルダを取得（新しい順）
+    const yearMonths = await fs.readdir(historyDir, { withFileTypes: true });
+    const sortedYearMonths = yearMonths
+      .filter(e => e.isDirectory() && /^\d{4}-\d{2}$/.test(e.name))
+      .sort((a, b) => b.name.localeCompare(a.name));
+    
+    for (const yearMonth of sortedYearMonths) {
+      if (posts.length >= needed) break;
+      
+      const ymDir = path.join(historyDir, yearMonth.name);
+      const dayTimes = await fs.readdir(ymDir, { withFileTypes: true });
+      const sortedDayTimes = dayTimes
+        .filter(e => e.isDirectory())
+        .sort((a, b) => b.name.localeCompare(a.name));
+      
+      for (const dayTime of sortedDayTimes) {
+        if (posts.length >= needed) break;
+        
+        const postYamlPath = path.join(ymDir, dayTime.name, 'post.yaml');
+        const post = await loadPostYaml(postYamlPath);
+        if (post) posts.push(post);
+      }
+    }
+    
+    return posts;
+  } catch (error) {
+    console.error('❌ historyディレクトリ読み込みエラー:', error);
+    return posts;
+  }
 }
+
+/**
+ * post.yamlファイルを読み込んでPostMetricに変換
+ * 
+ * @param yamlPath - YAMLファイルパス
+ * @returns PostMetricまたはnull
+ */
+async function loadPostYaml(yamlPath: string): Promise<PostMetric | null> {
+  try {
+    const exists = await fs.stat(yamlPath).catch(() => null);
+    if (!exists) return null;
+    
+    const yamlContent = await fs.readFile(yamlPath, 'utf-8');
+    const data = yaml.load(yamlContent) as any;
+    
+    // post.yamlのデータ構造から必要な情報を抽出
+    if (!data?.result?.id || !data?.timestamp) {
+      return null;
+    }
+    
+    const metrics = {
+      likes: data.engagement?.likes || 0,
+      retweets: data.engagement?.retweets || 0,
+      replies: data.engagement?.replies || 0,
+      quotes: data.engagement?.quotes || 0,
+      impressions: data.engagement?.impressions || 100 // インプレッションがない場合はデフォルト値
+    };
+    
+    const engagementRate = calculateEngagementRate(metrics);
+    const performanceLevel = determinePerformanceLevel(engagementRate);
+    
+    return {
+      id: data.result.id,
+      text: data.content || '',
+      timestamp: data.timestamp,
+      metrics,
+      engagementRate,
+      performanceLevel
+    };
+    
+  } catch (error) {
+    // エラーは無視（ファイルが存在しない場合など）
+    return null;
+  }
+}
+
+
 
 /**
  * エンゲージメント率計算
@@ -233,7 +283,6 @@ function calculateEngagementRate(metrics: {
   replies: number;
   quotes: number;
   impressions: number;
-  views: number;
 }): number {
   // ゼロ除算回避
   if (metrics.impressions === 0) {
@@ -298,6 +347,83 @@ function createEmptyMetricsData(): PostMetricsData {
       generatedAt: new Date().toISOString()
     }
   };
+}
+
+/**
+ * 最新メトリクスで投稿データを更新
+ * 
+ * @param posts - 元の投稿データ
+ * @param kaitoClient - KaitoTwitterAPIクライアント
+ * @returns 更新された投稿データ
+ */
+async function updatePostsWithLatestMetrics(
+  posts: PostMetric[], 
+  kaitoClient: KaitoTwitterAPIClient
+): Promise<PostMetric[]> {
+  try {
+    // 投稿IDリストを作成
+    const tweetIds = posts.map(post => post.id).filter(id => id && id.length > 0);
+    
+    if (tweetIds.length === 0) {
+      console.warn('⚠️ 更新対象の投稿IDがありません');
+      return posts;
+    }
+    
+    console.log(`🔍 最新メトリクス取得中: ${tweetIds.length}件`);
+    
+    // KaitoAPIで最新メトリクス一括取得
+    const result = await kaitoClient.getTweetsByIds(tweetIds);
+    
+    if (!result.success || !result.tweets) {
+      console.warn('⚠️ 最新メトリクス取得失敗、元データを使用');
+      return posts;
+    }
+    
+    console.log(`📊 最新メトリクス取得成功: ${result.tweets.length}件`);
+    
+    // メトリクスマップを作成
+    const metricsMap = new Map();
+    result.tweets.forEach(tweet => {
+      metricsMap.set(tweet.id, tweet.public_metrics);
+    });
+    
+    // 投稿データを更新
+    const updatedPosts = posts.map(post => {
+      const latestMetrics = metricsMap.get(post.id);
+      
+      if (!latestMetrics) {
+        console.warn(`⚠️ ID ${post.id} のメトリクスが見つかりません`);
+        return post;
+      }
+      
+      // 最新メトリクスで更新
+      const updatedMetrics = {
+        likes: latestMetrics.like_count || 0,
+        retweets: latestMetrics.retweet_count || 0,
+        replies: latestMetrics.reply_count || 0,
+        quotes: latestMetrics.quote_count || 0,
+        impressions: latestMetrics.impression_count || post.metrics.impressions // インプレッションがない場合は元の値を保持
+      };
+      
+      const engagementRate = calculateEngagementRate(updatedMetrics);
+      const performanceLevel = determinePerformanceLevel(engagementRate);
+      
+      return {
+        ...post,
+        metrics: updatedMetrics,
+        engagementRate,
+        performanceLevel
+      };
+    });
+    
+    console.log(`✅ メトリクス更新完了: ${updatedPosts.length}件`);
+    return updatedPosts;
+    
+  } catch (error) {
+    console.error('❌ 最新メトリクス更新エラー:', error);
+    // エラー時は元のデータを返す
+    return posts;
+  }
 }
 
 // ============================================================================

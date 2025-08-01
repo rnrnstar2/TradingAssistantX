@@ -392,6 +392,73 @@ function buildContentPrompt(
     prompt += '\n';
   }
   
+  // 分析インサイトを含める（TASK-004で追加）
+  if (context?.analysisInsights) {
+    prompt += `【市場分析インサイト】\n`;
+    
+    // Target Query分析結果
+    if (context.analysisInsights.targetQueryInsights) {
+      const insights = context.analysisInsights.targetQueryInsights;
+      prompt += `${insights.summary}\n`;
+      
+      // 重要なポイントを追加
+      const criticalPoints = insights.keyPoints.filter((p: any) => p.importance === 'critical' || p.importance === 'high');
+      if (criticalPoints.length > 0) {
+        prompt += '\n重要ポイント:\n';
+        criticalPoints.forEach((point: any) => {
+          prompt += `・${point.point}\n`;
+        });
+      }
+      
+      // 市場センチメントがある場合
+      if (insights.marketSentiment) {
+        const sentimentJa = insights.marketSentiment === 'bullish' ? '強気' : 
+                          insights.marketSentiment === 'bearish' ? '弱気' : '中立';
+        prompt += `・現在の市場センチメント: ${sentimentJa}\n`;
+      }
+      prompt += '\n';
+    }
+    
+    // Reference User分析結果
+    if (context.analysisInsights.referenceUserInsights.length > 0) {
+      prompt += `【専門家の最新見解】\n`;
+      
+      // 信頼性の高い上位3名の見解を表示
+      const topExperts = context.analysisInsights.referenceUserInsights
+        .sort((a: any, b: any) => b.reliability - a.reliability)
+        .slice(0, 3);
+      
+      topExperts.forEach((expert: any) => {
+        prompt += `@${expert.username} (${expert.expertise.join('・')}専門):\n`;
+        prompt += `${expert.summary}\n`;
+        
+        // 高信頼度の見解を表示
+        const highConfidenceViews = expert.latestViews.filter((v: any) => v.confidence === 'high');
+        if (highConfidenceViews.length > 0) {
+          highConfidenceViews.forEach((view: any) => {
+            prompt += `  - ${view.topic}: ${view.stance}\n`;
+          });
+        }
+        prompt += '\n';
+      });
+    }
+    
+    // 全体テーマと行動可能なインサイト
+    if (context.analysisInsights.overallTheme) {
+      prompt += `【総合分析】\n${context.analysisInsights.overallTheme}\n\n`;
+    }
+    
+    if (context.analysisInsights.actionableInsights.length > 0) {
+      prompt += `【投稿に活用すべきポイント】\n`;
+      context.analysisInsights.actionableInsights.forEach((insight: any) => {
+        prompt += `・${insight}\n`;
+      });
+      prompt += '\n';
+    }
+    
+    prompt += `上記の分析インサイトを踏まえて、初心者にも分かりやすく価値ある投稿を作成してください。\n\n`;
+  }
+  
   // 参考ツイートを含める（存在する場合）
   if (context?.referenceTweets && context.referenceTweets.length > 0) {
     prompt += `【高エンゲージメント参考ツイート】\n`;

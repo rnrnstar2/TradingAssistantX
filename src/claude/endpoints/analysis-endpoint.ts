@@ -26,7 +26,9 @@ export interface PostEngagementData {
       likes: number;
       retweets: number;
       replies: number;
+      quotes?: number;
       impressions: number;
+      bookmarks?: number;
     };
     engagementRate: number;
   }>;
@@ -237,9 +239,14 @@ function buildEngagementAnalysisPrompt(
 ): string {
   // エンゲージメント分析専用のプロンプトを構築
   const totalImpressions = engagementData.posts.reduce((sum, post) => sum + post.metrics.impressions, 0);
+  const totalQuotes = engagementData.posts.reduce((sum, post) => sum + (post.metrics.quotes || 0), 0);
+  const totalBookmarks = engagementData.posts.reduce((sum, post) => sum + (post.metrics.bookmarks || 0), 0);
   const avgEngagement = calculateAverageEngagement(engagementData.posts);
   const topPost = engagementData.posts.reduce((best, current) => 
     current.engagementRate > best.engagementRate ? current : best
+  );
+  const mostQuotedPost = engagementData.posts.reduce((best, current) => 
+    (current.metrics.quotes || 0) > (best.metrics.quotes || 0) ? current : best
   );
   
   // 時間帯情報の取得
@@ -260,8 +267,11 @@ function buildEngagementAnalysisPrompt(
   prompt += `【分析期間: ${engagementData.timeframe}】\n`;
   prompt += `・総投稿数: ${engagementData.totalPosts}件\n`;
   prompt += `・総インプレッション: ${totalImpressions.toLocaleString()}回\n`;
+  prompt += `・総引用数: ${totalQuotes}回（平均${(totalQuotes / engagementData.totalPosts).toFixed(1)}回/投稿）\n`;
+  prompt += `・総ブックマーク数: ${totalBookmarks}回\n`;
   prompt += `・平均エンゲージメント率: ${avgEngagement}%\n`;
-  prompt += `・最高パフォーマンス投稿: ${topPost.engagementRate}%\n\n`;
+  prompt += `・最高パフォーマンス投稿: ${topPost.engagementRate}%\n`;
+  prompt += `・最多引用投稿: ${mostQuotedPost.metrics.quotes || 0}回引用\n\n`;
   
   // 個別投稿詳細（最大5件まで）
   prompt += `【投稿詳細分析】\n`;
@@ -269,7 +279,12 @@ function buildEngagementAnalysisPrompt(
   postsToAnalyze.forEach((post, index) => {
     prompt += `${index + 1}. ID: ${post.id}\n`;
     prompt += `   内容: "${post.text.substring(0, 100)}${post.text.length > 100 ? '...' : ''}"\n`;
-    prompt += `   メトリクス: いいね${post.metrics.likes}, RT${post.metrics.retweets}, 返信${post.metrics.replies}, インプレッション${post.metrics.impressions}\n`;
+    let metricsText = `いいね${post.metrics.likes}, RT${post.metrics.retweets}, 返信${post.metrics.replies}`;
+    if (post.metrics.quotes !== undefined) metricsText += `, 引用${post.metrics.quotes}`;
+    // views フィールドは削除済み
+    if (post.metrics.bookmarks !== undefined) metricsText += `, ブックマーク${post.metrics.bookmarks}`;
+    metricsText += `, インプレッション${post.metrics.impressions}`;
+    prompt += `   メトリクス: ${metricsText}\n`;
     prompt += `   エンゲージメント率: ${post.engagementRate}%\n`;
     prompt += `   投稿時刻: ${new Date(post.timestamp).toLocaleString('ja-JP')}\n\n`;
   });
@@ -288,10 +303,16 @@ function buildEngagementAnalysisPrompt(
   // 分析指示
   prompt += `【分析要求】\n`;
   prompt += `1. 投稿パフォーマンスの成功要因を特定\n`;
+  prompt += `   - 特に引用ツイート数が多い投稿の特徴を分析\n`;
+  prompt += `   - インプレッション数とエンゲージメントの相関関係を評価\n`;
   prompt += `2. エンゲージメントが低かった投稿の改善点を分析\n`;
+  prompt += `   - インプレッション数は多いがエンゲージメントが低い投稿の原因を特定\n`;
   prompt += `3. コンテンツタイプ別の効果を評価\n`;
+  prompt += `   - 引用されやすいコンテンツの特徴を抽出\n`;
   prompt += `4. 投稿時間帯とパフォーマンスの関係を分析\n`;
-  prompt += `5. 具体的で実行可能な改善提案を作成\n\n`;
+  prompt += `5. 新指標（引用数、インプレッション数、ブックマーク数）を活用した改善提案を作成\n`;
+  prompt += `   - 引用を促すコンテンツ戦略\n`;
+  prompt += `   - インプレッション数を増やすための投稿タイミング最適化\n\n`;
   
   // 出力形式指定
   prompt += `【出力形式】\n`;
@@ -299,9 +320,13 @@ function buildEngagementAnalysisPrompt(
   prompt += `{\n`;
   prompt += `  "analysisType": "performance",\n`;
   prompt += `  "insights": [\n`;
+  prompt += `    "引用数が多い投稿は〇〇の特徴がある",\n`;
+  prompt += `    "インプレッション数に対してエンゲージメント率が高い投稿は〇〇",\n`;
   prompt += `    "具体的な成功要因や課題の分析結果（3-5件）"\n`;
   prompt += `  ],\n`;
   prompt += `  "recommendations": [\n`;
+  prompt += `    "引用を促すために〇〇を含めた投稿を増やす",\n`;
+  prompt += `    "インプレッション数を最大化するため〇時台の投稿を強化",\n`;
   prompt += `    "実行可能な具体的改善提案（3-5件）"\n`;
   prompt += `  ],\n`;
   prompt += `  "confidence": 0.85,\n`;
@@ -368,15 +393,20 @@ function parseAnalysisResponse(response: string, originalData: PostEngagementDat
     });
     
     // フォールバック分析結果
+    const totalQuotes = originalData.posts.reduce((sum, post) => sum + (post.metrics.quotes || 0), 0);
+    const avgQuotes = (totalQuotes / originalData.totalPosts).toFixed(1);
+    
     return {
       analysisType: 'performance',
       insights: [
         `${originalData.totalPosts}件の投稿を分析しました`,
         `平均エンゲージメント率: ${calculateAverageEngagement(originalData.posts)}%`,
+        `平均引用数: ${avgQuotes}回/投稿`,
         'レスポンス解析エラーのため詳細分析は利用できません'
       ],
       recommendations: [
-        '投稿内容の多様化を検討してください',
+        '引用されやすい内容（議論を促す質問等）を増やしてください',
+        'インプレッション数とエンゲージメントのバランスを改善してください',
         '投稿時間帯の最適化を図ってください',
         '詳細な分析のためにClaude接続を確認してください'
       ],

@@ -4,6 +4,15 @@
  * 各エンドポイントの入力・出力型定義
  */
 
+// KaitoAPI型のインポート
+import type { TweetData } from '../kaito-api/utils/types';
+
+// SystemContext型のインポート（重複排除）
+import type { SystemContext } from '../shared/types';
+
+// 他のファイルとの互換性のため、SystemContextを再エクスポート
+export type { SystemContext };
+
 // ============================================================================
 // ENDPOINT RETURN TYPES - エンドポイント別返却型
 // ============================================================================
@@ -37,6 +46,108 @@ export interface AnalysisResult {
     timeframe: string;
     generatedAt: string;
   };
+}
+
+/**
+ * FX特化分析インサイト
+ * FX専門的な分析に特化した型定義
+ */
+export interface FXSpecificInsights {
+  mentionedPairs: string[];
+  technicalLevels: {
+    [pair: string]: {
+      support: number[];
+      resistance: number[];
+    };
+  };
+  contrarianViews: string[];
+  predictions: Array<{
+    pair: string;
+    direction: 'up' | 'down' | 'range';
+    target?: number;
+    timeframe: string;
+    confidence: number;
+  }>;
+  riskWarnings: string[];
+}
+
+/**
+ * Target Query分析結果
+ * データ分析エンドポイントで使用する分析結果の型（FX特化機能を含む）
+ */
+export interface TargetQueryInsights {
+  summary: string;
+  keyPoints: Array<{
+    point: string;
+    importance: 'critical' | 'high' | 'medium';
+    category: 'warning' | 'news' | 'trend' | 'analysis' | 'technical' | 'fundamental' | 'sentiment' | 'prediction';
+    uniquenessScore?: number;
+  }>;
+  marketSentiment?: 'bullish' | 'bearish' | 'neutral';
+  mentionedPairs?: string[];
+  confidence: number;
+  analyzedAt: string;
+  dataPoints: number;
+  
+  // TASK-005で追加されたFX特化フィールドを統合
+  technicalLevels: {
+    [pair: string]: {
+      support: number[];
+      resistance: number[];
+    };
+  };
+  contrarianViews: string[];
+  predictions: Array<{
+    pair: string;
+    direction: 'up' | 'down' | 'range';
+    target?: number;
+    timeframe: string;
+    confidence: number;
+  }>;
+  riskWarnings: string[];
+}
+
+/**
+ * Reference User分析結果
+ * 参照ユーザーのツイート分析結果
+ */
+export interface ReferenceUserInsights {
+  /** ユーザー名 */
+  username: string;
+  /** 150文字以内の要約 */
+  summary: string;
+  /** 専門分野（例：["FX", "金融政策", "テクニカル分析"]） */
+  expertise: string[];
+  /** 最新の見解リスト */
+  latestViews: Array<{
+    /** トピック */
+    topic: string;
+    /** スタンス */
+    stance: string;
+    /** 信頼度 */
+    confidence: 'high' | 'medium' | 'low';
+  }>;
+  /** 0-1の信頼性スコア */
+  reliability: number;
+  /** ISO timestamp形式の分析時刻 */
+  analyzedAt: string;
+  /** 分析したツイート数 */
+  tweetCount: number;
+}
+
+/**
+ * 統合分析結果
+ * Target QueryとReference Userの統合分析結果
+ */
+export interface CombinedAnalysisInsights {
+  /** Target Query分析結果（オプション） */
+  targetQueryInsights?: TargetQueryInsights;
+  /** Reference User分析結果の配列 */
+  referenceUserInsights: ReferenceUserInsights[];
+  /** 全体的なテーマ */
+  overallTheme: string;
+  /** 投稿に活用すべきポイント */
+  actionableInsights: string[];
 }
 
 /**
@@ -98,6 +209,59 @@ export interface TweetSelectionParams {
   };
 }
 
+/**
+ * データ分析パラメータ
+ * 分析エンドポイント共通の入力パラメータ型
+ */
+export interface DataAnalysisParams {
+  /** Target Query分析用データ（オプション） */
+  targetQuery?: {
+    /** 検索クエリ */
+    query: string;
+    /** 分析対象のツイートデータ配列 */
+    tweets: TweetData[];
+    /** トピック */
+    topic: string;
+  };
+  /** Reference User分析用データ（オプション） */
+  referenceUsers?: Array<{
+    /** ユーザー名 */
+    username: string;
+    /** ユーザーのツイートデータ配列 */
+    tweets: TweetData[];
+  }>;
+  /** システムコンテキスト（オプション） */
+  context?: SystemContext;
+}
+
+/**
+ * Target Query分析パラメータ
+ * analyzeTargetQuery エンドポイント用の入力パラメータ
+ */
+export interface AnalyzeTargetQueryParams {
+  /** 分析対象のツイートデータ配列 */
+  tweets: TweetData[];
+  /** 検索クエリ */
+  query: string;
+  /** トピック */
+  topic: string;
+  /** システムコンテキスト（オプション） */
+  context?: SystemContext;
+}
+
+/**
+ * Reference User分析パラメータ
+ * analyzeReferenceUser エンドポイント用の入力パラメータ
+ */
+export interface AnalyzeReferenceUserParams {
+  /** 分析対象のツイートデータ配列 */
+  tweets: TweetData[];
+  /** ユーザー名 */
+  username: string;
+  /** システムコンテキスト（オプション） */
+  context?: SystemContext;
+}
+
 // ============================================================================
 // AUXILIARY TYPES - 補助型定義（既存コードから抽出）
 // ============================================================================
@@ -145,58 +309,6 @@ export interface GenerateContentParams {
   context?: SystemContext;
 }
 
-/**
- * システムコンテキスト
- * decision-engine.ts から抽出
- */
-export interface SystemContext {
-  timestamp?: string;
-  executionId?: string;
-  account: {
-    followerCount: number;
-    lastPostTime?: string;
-    postsToday: number;
-    engagementRate: number;
-    accountHealth?: any;
-  };
-  system: {
-    health: {
-      all_systems_operational: boolean;
-      api_status: 'healthy' | 'degraded' | 'error';
-      rate_limits_ok: boolean;
-    };
-    executionCount: { today: number; total: number };
-  };
-  // TypeScript互換性修正（TASK-005）: workflows/constants.tsと統一
-  market?: {
-    trendingTopics: string[];
-    volatility: 'low' | 'medium' | 'high';
-    sentiment: 'bearish' | 'neutral' | 'bullish';
-  };
-  learningData?: {
-    recentTopics?: string[];
-    totalPatterns?: number;
-    avgEngagement?: number;
-  };
-  referenceTweets?: Array<{  // 新規追加：参考ツイート情報
-    text: string;
-    qualityScore?: number;
-    relevanceScore?: number;
-    realtimeScore?: number;
-    reason?: string;
-  }>;
-  instruction?: string;  // 新規追加：追加指示
-  // 参考アカウントの最新ツイート（オプション）
-  referenceAccountTweets?: Array<{
-    username: string;
-    tweets: Array<{
-      id: string;
-      text: string;
-      created_at: string;
-      public_metrics?: any;
-    }>;
-  }>;
-}
 
 /**
  * 基本市場コンテキスト

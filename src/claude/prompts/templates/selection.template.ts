@@ -81,3 +81,23 @@ export const baseSelectionTemplate = `【ツイート選択タスク】
   "reasoning": "選択理由（100文字以内）",
   "expectedImpact": "high|medium|low"
 }`;
+
+// FX特化の選択基準
+export const fxSelectionCriteria = {
+  retweet: {
+    uniqueness: 0.5,      // 独自性最重視
+    fxRelevance: 0.3,     // FX関連性
+    predictions: 0.15,    // 予測価値
+    engagement: 0.05      // エンゲージメント（最小化）
+  },
+  like: {
+    expertise: 0.7,       // FX専門性
+    contrarian: 0.2,      // 逆張り視点
+    relationship: 0.1     // 関係構築
+  },
+  follow: {
+    influence: 0.5,       // 業界影響力
+    uniqueInfo: 0.3,      // 独自情報源
+    fxFocus: 0.2         // FX特化度
+  }
+};

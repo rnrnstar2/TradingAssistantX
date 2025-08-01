@@ -49,3 +49,37 @@ export const quoteCommentTemplate = `
 
 引用コメント内容のみを出力してください。説明や前置きは不要です。
 `;
+
+// FX特化テンプレート
+export const fxContentTemplate = `
+{{basePrompt}}
+
+【FX市場状況】
+{{fxMarketContext}}
+
+【独自分析視点】
+{{contrarianAnalysis}}
+
+【予測と検証】
+{{predictionVerification}}
+
+{{analysisInsights}}
+
+以下の点を必ず含めてください：
+1. 具体的な通貨ペアと価格レベル
+2. 他のアナリストとは異なる独自の見解
+3. リスク管理の実践的アドバイス
+4. エントリー/エグジットの具体的戦略
+
+{{customInstruction}}
+
+読者の立場に立って、FX中級者にとって本当に価値ある情報を、
+独自性とエッジを効かせて280文字以内で投稿してください。`;
+
+// 時間帯別FXテンプレート
+export const fxTimeBasedTemplates = {
+  tokyo: `東京市場の特性（USD/JPY中心、日銀政策注目）を踏まえて`,
+  london: `ロンドン市場の特性（EUR/GBP活発、ボラティリティ上昇）を踏まえて`,
+  newyork: `NY市場の特性（米経済指標影響大、ドルストレート注目）を踏まえて`,
+  overlap: `市場オーバーラップ時間の高ボラティリティを活用して`
+};

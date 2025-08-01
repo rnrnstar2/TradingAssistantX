@@ -2,14 +2,15 @@ import {
   TwitterAPIError,
   createAPIError,
   ValidationError,
-  KaitoAPIError
+  KaitoAPIError,
+  API_ENDPOINTS
 } from '../../utils';
 import { UserLastTweetsParams, UserLastTweetsResponse, Tweet } from './types';
 
 /**
  * 特定ユーザーの最新ツイートを取得
  * 
- * @endpoint GET /twitter/user_last_tweets
+ * @endpoint GET /twitter/user/last_tweets
  * @docs https://docs.twitterapi.io/api-reference/endpoint/get_user_last_tweets
  * @auth APIキーのみ（読み取り専用）
  */
@@ -53,7 +54,7 @@ export class UserLastTweetsEndpoint {
       }
 
       // APIリクエスト
-      const response = await this.httpClient.get('/twitter/user_last_tweets', Object.fromEntries(queryParams));
+      const response = await this.httpClient.get(API_ENDPOINTS.userLastTweets, Object.fromEntries(queryParams));
 
       // レスポンスの正規化
       return this.normalizeResponse(response);
@@ -102,23 +103,71 @@ export class UserLastTweetsEndpoint {
    * レスポンスの正規化
    */
   private normalizeResponse(rawResponse: any): UserLastTweetsResponse {
-    if (!rawResponse.success) {
+
+    // レスポンスの基本検証
+    if (!rawResponse) {
+      console.warn('⚠️ Empty response received');
       return {
         success: false,
-        error: rawResponse.error || 'Failed to fetch user tweets',
+        error: 'Empty response from API',
         tweets: []
       };
     }
 
-    const tweets = Array.isArray(rawResponse.tweets) 
-      ? rawResponse.tweets.map((tweet: any) => this.normalizeTweet(tweet))
-      : [];
+    // パターン1: 直接tweets配列
+    if (Array.isArray(rawResponse.tweets)) {
+      return {
+        success: true,
+        tweets: rawResponse.tweets.map((tweet: any) => this.normalizeTweet(tweet)),
+        cursor: rawResponse.next_cursor || rawResponse.cursor,
+        has_more: rawResponse.has_next_page || rawResponse.has_more || false
+      };
+    }
 
+    // パターン2: data でラップされている
+    if (rawResponse.data && Array.isArray(rawResponse.data.tweets)) {
+      return {
+        success: true,
+        tweets: rawResponse.data.tweets.map((tweet: any) => this.normalizeTweet(tweet)),
+        cursor: rawResponse.next_cursor || rawResponse.data.next_cursor || rawResponse.data.cursor,
+        has_more: rawResponse.has_next_page || rawResponse.data.has_next_page || rawResponse.data.has_more || false
+      };
+    }
+
+    // パターン3: results配列
+    if (Array.isArray(rawResponse.results)) {
+      return {
+        success: true,
+        tweets: rawResponse.results.map((tweet: any) => this.normalizeTweet(tweet)),
+        cursor: rawResponse.meta?.next_token || rawResponse.meta?.cursor,
+        has_more: rawResponse.meta?.has_next_page || rawResponse.meta?.has_more || false
+      };
+    }
+
+    // パターン4: 空のレスポンス（ツイートなし）
+    if (rawResponse.success === true && !rawResponse.tweets) {
+      return {
+        success: true,
+        tweets: [],
+        cursor: undefined,
+        has_more: false
+      };
+    }
+
+    // パターン5: success: false
+    if (rawResponse.success === false) {
+      return {
+        success: false,
+        error: rawResponse.error || rawResponse.message || 'API request failed',
+        tweets: []
+      };
+    }
+
+    // 未知の構造
     return {
-      success: true,
-      tweets,
-      cursor: rawResponse.cursor,
-      has_more: rawResponse.has_more || false
+      success: false,
+      error: 'Unknown response structure from API',
+      tweets: []
     };
   }
 
@@ -136,7 +185,10 @@ export class UserLastTweetsEndpoint {
         like_count: tweet.public_metrics?.like_count || tweet.favorite_count || 0,
         retweet_count: tweet.public_metrics?.retweet_count || tweet.retweet_count || 0,
         reply_count: tweet.public_metrics?.reply_count || 0,
-        quote_count: tweet.public_metrics?.quote_count || 0
+        quote_count: tweet.public_metrics?.quote_count || 0,
+        // 追加: impressionsとbookmarksの取得
+        impression_count: tweet.public_metrics?.impression_count || tweet.impression_count || 0,
+        bookmark_count: tweet.public_metrics?.bookmark_count || tweet.bookmark_count || 0
       },
       entities: tweet.entities,
       referenced_tweets: tweet.referenced_tweets,
